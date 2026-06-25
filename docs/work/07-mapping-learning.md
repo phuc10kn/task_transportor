@@ -66,6 +66,7 @@ insert into mapping_rules:
   to_value = 'feature'
   source_type = 'ai_auto'
   confidence = 0.75
+  approval_status = 'pending'
 ```
 
 Chỉ cần học 1 mapping mới (B→CIS). Mapping CIS→Jira (direction_from='cis', direction_to='jira', from_value='feature', to_value='Task') đã có sẵn, không cần học lại.
@@ -89,6 +90,7 @@ insert into mapping_rules:
   direction_to = 'cis'
   from_value = 'Deployed PRD'
   to_value = 'deployed_prd'
+  approval_status = 'pending'
 ```
 
 ### Sync ngược — CIS → Backlog
@@ -118,6 +120,8 @@ AI propose: 機能改善 → feature (direction_from='backlog', direction_to='ci
 User confirm: ✅
   → mapping_rules.confidence = 1.0
   → mapping_rules.source_type = 'ai_learned'
+  → mapping_rules.approval_status = 'approved'
+  → mapping_rules.approved_by / approved_at được cập nhật
   → Lần sau AI học pattern: type có prefix "機能" → feature
   → CIS→Jira (feature→Task) đã có → issue sẽ ra Task
 ```
@@ -127,7 +131,9 @@ User confirm: ✅
 ```
 AI propose: 機能改善 → bug (direction_from='backlog', direction_to='cis', confidence: 0.6)
 User reject: ❌, chọn "feature" thay vì "bug"
-  → mapping_rules ghi nhận: negative example
+  → mapping_rules.approval_status = 'rejected'
+  → mapping_rules.rejected_reason ghi lý do/giá trị user chọn
+  → negative example được lưu để AI học
   → AI học: "機能" prefix không map vào bug
   → Lần sau propose khác
 ```
@@ -138,24 +144,28 @@ User reject: ❌, chọn "feature" thay vì "bug"
 User tạo mapping thủ công:
   (backlog→cis):    from_value='機能改善', to_value='feature'
   (cis→jira):       from_value='feature', to_value='Task'
-  → Cả 2 dòng đều source_type = 'manual', confidence = 1.0
+  → Cả 2 dòng đều source_type = 'manual', confidence = 1.0, approval_status = 'approved'
   → AI không propose lại cho các cặp này nữa
 ```
 
 ### Batch propose query
 
 ```sql
-SELECT DISTINCT i.issue_type
+SELECT DISTINCT r.issue_type
 FROM issues i
+JOIN issue_revisions r
+  ON r.issue_id = i.id
+ AND r.revision = i.current_revision
 WHERE i.project_id = 'new-project'
   AND i.source = 'backlog'
-  AND i.issue_type NOT IN (
+  AND r.issue_type NOT IN (
     SELECT mr.from_value
     FROM mapping_rules mr
     WHERE mr.project_id = 'new-project'
       AND mr.mapping_type = 'issue_type'
       AND mr.direction_from = 'backlog'
       AND mr.direction_to = 'cis'
+      AND mr.approval_status IN ('pending', 'approved')
   )
 ```
 
@@ -182,11 +192,11 @@ Với mỗi issue type chưa có mapping:
 ## Mapping rules lifecycle
 
 ```
-1. AI propose (confidence: 0.5-0.8)    → chờ confirm
-2. User confirm                         → confidence: 1.0
-3. Dùng trong sync, tracking usage_count
+1. AI propose (confidence: 0.5-0.8)    → approval_status = 'pending'
+2. User confirm                         → approval_status = 'approved', confidence = 1.0
+3. Chỉ rule approved mới được dùng trong sync thật, tracking usage_count
 4. Nếu usage_count = 0 sau 90 ngày     → stale, đề nghị xoá
-5. Nếu conflict xảy ra với mapping này  → giảm confidence, cần re-confirm
+5. Nếu conflict xảy ra với mapping này  → giảm confidence, chuyển lại pending nếu cần re-confirm
 ```
 
 ## Kết hợp với translation

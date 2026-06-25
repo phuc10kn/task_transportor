@@ -6,7 +6,7 @@ This file applies to the whole `task_transportor` repository.
 
 The current product direction is the Central Sync Hub documented in `docs/work`. Treat those files as the source of truth for new implementation work.
 
-Do not use the old `backlog2jira` implementation as a design source unless the user explicitly asks for migration or comparison work.
+Ignore the old `backlog2jira` directory for normal Codex work. Do not read, search, modify, or use it as a design source unless the user explicitly asks for migration, comparison, or cleanup work involving `backlog2jira`.
 
 ## Product Model
 
@@ -62,4 +62,3 @@ The current `npm test` script is a placeholder. If implementation adds tests, up
   - `webhook_events`: raw inbound event log.
   - `sync_jobs`: internal job queue for inbound/outbound work.
   - `sync_journal`: audit trail of job results and state changes.
-

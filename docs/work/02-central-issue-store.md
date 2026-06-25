@@ -8,9 +8,9 @@
 
 ---
 
-## 1. `projects` — Kế thừa từ thiết kế cũ
+## 1. `projects` — Cấu hình project
 
-Giữ nguyên từ `backlog2jira` với bổ sung:
+Mỗi project giữ cấu hình kết nối Backlog/Jira, context cho AI và chính sách sync. File config chỉ dùng để seed/bootstrap ban đầu; SQLite là nguồn chính khi hệ thống chạy.
 
 ```sql
 CREATE TABLE projects (
@@ -187,11 +187,52 @@ CREATE INDEX idx_comments_issue ON issue_comments(issue_id);
 
 ---
 
+## 4.1. `issue_attachments` — File đính kèm
+
+MVP cần copy file thật qua CIS: tải từ Backlog/Jira về storage nội bộ, lưu metadata/hash trong database, sau đó upload/copy sang Jira khi sync outbound.
+
+```sql
+CREATE TABLE issue_attachments (
+    id                     TEXT PRIMARY KEY,          -- UUID
+    issue_id               TEXT NOT NULL REFERENCES issues(id),
+    comment_id             TEXT REFERENCES issue_comments(id),
+
+    source                 TEXT NOT NULL CHECK(source IN ('backlog', 'jira', 'manual')),
+    backlog_attachment_id  TEXT,
+    jira_attachment_id     TEXT,
+
+    original_filename      TEXT NOT NULL,
+    stored_path            TEXT NOT NULL,             -- path tương đối dưới storage/
+    mime_type              TEXT,
+    size_bytes             INTEGER,
+    sha256                 TEXT,
+
+    download_status        TEXT NOT NULL DEFAULT 'pending'
+                           CHECK(download_status IN ('pending', 'downloaded', 'failed', 'skipped')),
+    sync_status            TEXT NOT NULL DEFAULT 'pending'
+                           CHECK(sync_status IN ('pending', 'synced', 'skipped', 'failed')),
+    error_message          TEXT,
+
+    created_at_source      TEXT,
+    created_at_cis         TEXT DEFAULT (datetime('now')),
+
+    UNIQUE(issue_id, source, backlog_attachment_id),
+    UNIQUE(issue_id, source, jira_attachment_id)
+);
+
+CREATE INDEX idx_attachments_issue ON issue_attachments(issue_id);
+CREATE INDEX idx_attachments_status ON issue_attachments(download_status, sync_status);
+CREATE INDEX idx_attachments_hash ON issue_attachments(issue_id, sha256);
+```
+
+---
+
 ## 5. `translation_queue` — Hàng chờ dịch
 
 ```sql
 CREATE TABLE translation_queue (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id        TEXT NOT NULL REFERENCES projects(id),
     issue_id          TEXT NOT NULL REFERENCES issues(id),
     comment_id        TEXT REFERENCES issue_comments(id),  -- NULL nếu là issue, không phải comment
     
@@ -216,6 +257,7 @@ CREATE TABLE translation_queue (
 );
 
 CREATE INDEX idx_translation_queue_status ON translation_queue(review_status);
+CREATE INDEX idx_translation_queue_project ON translation_queue(project_id, review_status, created_at);
 CREATE INDEX idx_translation_queue_issue ON translation_queue(issue_id);
 ```
 
@@ -232,12 +274,15 @@ CREATE TABLE sync_journal (
     sync_job_id       TEXT,
     issue_id          TEXT REFERENCES issues(id),
     comment_id        TEXT REFERENCES issue_comments(id),
+    attachment_id     TEXT REFERENCES issue_attachments(id),
     project_id        TEXT NOT NULL REFERENCES projects(id),
     
     direction_from    TEXT NOT NULL CHECK(direction_from IN ('backlog', 'jira', 'cis')),
     direction_to      TEXT NOT NULL CHECK(direction_to IN ('backlog', 'jira', 'cis')),
     action            TEXT NOT NULL CHECK(action IN (
-                          'create', 'update', 'skip', 'rollback',
+                          'create', 'update', 'skip', 'rollback', 'dry_run',
+                          'comment_added', 'comment_updated',
+                          'attachment_added', 'attachment_synced',
                           'translate_ai', 'translate_review', 'translate_reject',
                           'map_suggest', 'map_approve', 'map_reject',
                           'anomaly_detect', 'anomaly_clear',
@@ -283,6 +328,7 @@ CREATE TABLE sync_jobs (
     project_id        TEXT NOT NULL REFERENCES projects(id),
     issue_id          TEXT REFERENCES issues(id),
     comment_id        TEXT REFERENCES issue_comments(id),
+    attachment_id     TEXT REFERENCES issue_attachments(id),
     
     direction_from    TEXT NOT NULL CHECK(direction_from IN ('backlog', 'jira', 'cis')),
     direction_to      TEXT NOT NULL CHECK(direction_to IN ('backlog', 'jira', 'cis')),
@@ -347,6 +393,13 @@ CREATE TABLE mapping_rules (
                           'ai_learned',       -- AI học từ lịch sử
                           'auto_synced'       -- Tự động từ dữ liệu
                       )),
+
+    -- Approval
+    approval_status   TEXT NOT NULL DEFAULT 'pending'
+                      CHECK(approval_status IN ('pending', 'approved', 'rejected')),
+    approved_by       TEXT,
+    approved_at       TEXT,
+    rejected_reason   TEXT,
     
     -- Usage tracking
     usage_count       INTEGER NOT NULL DEFAULT 0,
@@ -358,9 +411,12 @@ CREATE TABLE mapping_rules (
 );
 
 CREATE INDEX idx_mapping_rules_project ON mapping_rules(project_id, mapping_type);
+CREATE INDEX idx_mapping_rules_approval ON mapping_rules(project_id, approval_status);
 CREATE INDEX idx_mapping_rules_from ON mapping_rules(direction_from, from_value);
 CREATE INDEX idx_mapping_rules_to ON mapping_rules(direction_to, to_value);
 ```
+
+Chỉ dùng mapping có `approval_status = 'approved'` cho sync thật. Mapping do AI propose giữ `pending` cho đến khi admin approve; mapping seed từ config hoặc admin nhập tay có thể được tạo sẵn với `approved`.
 
 ---
 
@@ -435,12 +491,13 @@ CREATE INDEX idx_webhook_events_status ON webhook_events(status, created_at);
 ```
 projects ──── issues ──── issue_revisions
                   ├── issue_comments
+                  ├── issue_attachments
                   ├── translation_queue
                   └── anomaly_log
 
 projects ──── mapping_rules
-projects ──── sync_jobs ←── issues, issue_comments
-projects ──── sync_journal ←── sync_jobs, issues, issue_comments
+projects ──── sync_jobs ←── issues, issue_comments, issue_attachments
+projects ──── sync_journal ←── sync_jobs, issues, issue_comments, issue_attachments
                
 projects ──── webhook_events
 ```

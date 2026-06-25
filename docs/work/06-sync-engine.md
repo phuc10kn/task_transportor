@@ -5,7 +5,7 @@
 1. **System -> CIS -> System**: Inbound job kéo/nhận dữ liệu vào CIS; outbound job đẩy dữ liệu đã duyệt từ CIS ra hệ thống đích.
 2. **Idempotent**: Chạy cùng job/dữ liệu nhiều lần không tạo duplicate.
 3. **Transactional**: Mỗi job là một transaction — nếu fail, rollback state.
-4. **Retry**: Tự động retry theo policy, sau đó đưa vào failed queue.
+4. **Retry**: Tự động retry theo policy, sau đó đưa job sang trạng thái `failed` để admin xử lý.
 5. **Audit**: Mọi inbound/outbound job đều ghi sync_journal.
 
 ---
@@ -47,7 +47,8 @@ Poll every N seconds:
   SELECT * FROM sync_jobs
   WHERE status = 'pending'
     AND project_id IN (SELECT id FROM projects WHERE sync_enabled = 1)
-  ORDER BY updated_at ASC
+    AND run_after <= datetime('now')
+  ORDER BY priority ASC, run_after ASC, created_at ASC
   LIMIT 50
 
 Với mỗi job:
@@ -116,34 +117,43 @@ Trước khi sync, kiểm tra:
 
 ## API Gateway — Retry & Error handling
 
+Retry scheduling nằm trên `sync_jobs`, còn `sync_journal` chỉ dùng để audit từng lần chạy. Khi một job lỗi có thể retry, worker cập nhật chính job đó về `pending`, tăng `retry_count` và đặt `run_after` cho lần chạy tiếp theo. Khi hết retry, job chuyển sang `failed` để Admin UI hiển thị và cho phép retry thủ công.
+
 ```
 Call API:
   ├── Success → status = 'success'
   ├── 429 Too Many Requests
-  │   └── Exponential backoff: 1s → 2s → 4s → 8s → max 60s
+  │   └── Retry theo Retry-After nếu có, nếu không dùng backoff 1m → 5m → 15m
   ├── 4xx (bad request)
   │   └── Không retry → status = 'failed', error = response body
   │   └── anomaly_log: severity = 'critical', cần người xử lý
   └── 5xx (server error)
-      └── Retry 3 lần với backoff
-      └── Sau 3 lần → failed queue
+      └── Retry tối đa 3 lần với backoff 1m → 5m → 15m
+      └── Sau 3 lần → status = 'failed'
 ```
 
-**Failed queue**:
+**Retry update**:
 ```sql
--- Sync journal với status = 'failed' và retry_count < 3
-SELECT * FROM sync_journal
-WHERE status = 'failed' AND retry_count < 3
-ORDER BY created_at ASC
+-- Retryable failure
+UPDATE sync_jobs
+SET status = 'pending',
+    retry_count = retry_count + 1,
+    run_after = datetime('now', '+5 minutes'),
+    error_message = :error_message,
+    updated_at = datetime('now')
+WHERE id = :job_id
+  AND retry_count < 3;
 
--- Retry job chạy mỗi 5 phút
-UPDATE issues SET status = 'approved' WHERE id IN (
-  SELECT issue_id FROM sync_journal
-  WHERE status = 'failed' AND retry_count < 3
-  GROUP BY issue_id
-  HAVING MAX(created_at) < datetime('now', '-5 minutes')
-)
+-- Exhausted failure
+UPDATE sync_jobs
+SET status = 'failed',
+    error_message = :error_message,
+    updated_at = datetime('now')
+WHERE id = :job_id
+  AND retry_count >= 3;
 ```
+
+Mỗi attempt vẫn ghi một dòng `sync_journal` với `sync_job_id`, `status`, `retry_count` hiện tại và `error_message` nếu có.
 
 ---
 

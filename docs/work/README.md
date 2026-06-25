@@ -51,6 +51,10 @@ Mô hình chuẩn của toàn bộ tài liệu là **System -> CIS -> System**:
 | [06-sync-engine.md](06-sync-engine.md) | Worker xử lý job inbound/outbound, conflict detection, API gateway, retry, sync comment và sync journal. |
 | [07-mapping-learning.md](07-mapping-learning.md) | Cơ chế học mapping giữa Backlog, CIS và Jira cho issue type, status và các field cần chuẩn hóa. |
 | [08-anomaly-detection.md](08-anomaly-detection.md) | Lớp bảo vệ phát hiện batch update, duplicate, field change bất thường, routing mismatch, low confidence, mapping gap và sync failure chain. |
+| [09-runtime-config.md](09-runtime-config.md) | Cấu hình runtime MVP: PM2, env vars, SQLite/storage path, credential policy, admin bootstrap và migration. |
+| [10-state-machine.md](10-state-machine.md) | State machine cho issue, translation, sync job, comment, attachment, mapping gap và anomaly block. |
+| [11-api-contract.md](11-api-contract.md) | API contract cho Admin UI và Codex operation: envelope, error, auth, pagination, endpoint groups và dry-run response. |
+| [12-webhook-verification.md](12-webhook-verification.md) | Webhook verification cho Backlog/Jira: raw body, token, response code, dedupe và security logging. |
 
 ## Thứ tự đọc để nắm nhanh
 
@@ -59,13 +63,13 @@ Mô hình chuẩn của toàn bộ tài liệu là **System -> CIS -> System**:
 3. Đọc [03-backlog-ingestion.md](03-backlog-ingestion.md) và [04-jira-ingestion.md](04-jira-ingestion.md) để hiểu luồng System -> CIS.
 4. Đọc [05-translation-pipeline.md](05-translation-pipeline.md), [07-mapping-learning.md](07-mapping-learning.md) và [08-anomaly-detection.md](08-anomaly-detection.md) để hiểu các lớp AI/review/safety.
 5. Đọc [06-sync-engine.md](06-sync-engine.md) để hiểu cách job inbound/outbound được xử lý idempotent, transactional và có retry.
+6. Đọc [09-runtime-config.md](09-runtime-config.md), [10-state-machine.md](10-state-machine.md), [12-webhook-verification.md](12-webhook-verification.md) và [11-api-contract.md](11-api-contract.md) trước khi implement backend/API.
 
 ## Trạng thái thiết kế
 
-Đây là bộ tài liệu thiết kế/working notes. Các file đang tập trung vào domain model và luồng xử lý cấp cao, chưa phải implementation spec cuối cùng. Khi bắt đầu code, nên chốt thêm:
+Đây là bộ tài liệu thiết kế/working notes. Các file `09` đến `12` đã bổ sung implementation spec cho runtime, state machine, webhook verification và API contract. Khi bắt đầu code, vẫn nên rà lại:
 
-- Công nghệ database và cách lưu JSON/JSONB.
-- Định dạng webhook payload nội bộ.
-- Queue/worker runtime.
-- Chính sách conflict resolution theo project.
-- UI/UX cho review queue, mapping approval và anomaly handling.
+- Chi tiết payload thực tế của Backlog/Jira sau khi có webhook sample thật.
+- Tên model OpenAI cụ thể và prompt/output schema production.
+- UI/UX chi tiết cho review queue, mapping approval và anomaly handling.
+- Backup/restore SQLite trên server nội bộ.

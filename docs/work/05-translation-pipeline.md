@@ -62,6 +62,7 @@ query mapping_rules WHERE project_id = ?
 ```json
 {
   "id": 789,
+  "project_id": "wecsy-main",
   "issue_id": "uuid-xxx",
   "comment_id": null,
   "target_type": "issue",
@@ -153,8 +154,9 @@ ai_confidence < 0.6:
 
 ```
 Comment chỉ 1-2 từ cảm thán: "了解しました", "修正しました"
-  → AI tự động translate, không cần review
-  → translation_queue.review_status = 'approved' (auto)
+  → AI tự động tạo draft ngắn
+  → Vẫn cần human review trước khi sync lên Jira trong MVP
+  → Có thể ưu tiên UI quick approve, nhưng không tự set review_status = 'approved'
 ```
 
 ### Comment chứa code snippet

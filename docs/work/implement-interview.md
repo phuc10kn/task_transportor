@@ -358,10 +358,10 @@ MVP cần idempotency theo thứ tự ưu tiên:
 ### Câu trả lời
 
 - Sync engine dùng mô hình kết hợp: webhook tạo event/job, scheduler/worker poll job pending trong SQLite để đảm bảo không mất job.
-- Retry policy cơ bản: retry 3 lần với delay tăng dần, ví dụ `1m -> 5m -> 15m`, sau đó đưa vào failed queue.
+- Retry policy cơ bản: retry 3 lần với delay tăng dần, ví dụ `1m -> 5m -> 15m`, sau đó đưa job sang trạng thái `failed`.
 - Với lỗi API `4xx`: không retry mặc định, trừ một số mã cụ thể như `429`.
 - Với `429`: retry theo backoff/rate limit.
-- Với lỗi `5xx` hoặc network timeout: retry tự động; sau 2 lần vẫn lỗi thì báo lỗi/đưa vào failed queue để admin xử lý.
+- Với lỗi `5xx` hoặc network timeout: retry tự động tối đa 3 lần theo backoff `1m -> 5m -> 15m`, sau đó đưa job sang `failed` để admin xử lý.
 - MVP không cần batch sync; sync theo từng issue/comment/job.
 - Attachment sync: copy file thật từ Backlog về CIS, sau đó upload/copy sang Jira.
 
@@ -414,7 +414,7 @@ MVP dùng policy theo field:
 - Translation low confidence: đưa lên đầu review queue, không block sau khi human review.
 - Status jump bất thường: cảnh báo trước, chỉ block nếu project config yêu cầu hoặc status jump quá nhạy cảm.
 - Batch operation: cảnh báo/admin confirm nếu số lượng lớn, nhưng không nhất thiết block từng issue.
-- Sync failure chain: cảnh báo và đưa job lỗi vào failed queue, không block toàn bộ project trừ khi lỗi vượt ngưỡng.
+- Sync failure chain: cảnh báo và giữ job lỗi ở trạng thái `failed`, không block toàn bộ project trừ khi lỗi vượt ngưỡng.
 - Routing mismatch: không ingest vào issue vì không có project khớp; lưu raw payload + anomaly.
 
 ## 10. API/UI/Admin
@@ -531,7 +531,7 @@ Chi phí:
 - Thiếu mapping: đưa admin chọn/sửa/approve trong mapping review.
 - Status canonical: CIS là nguồn chính, nhưng align theo Jira workflow.
 - Sync engine: webhook tạo event/job, worker poll pending job trong SQLite.
-- Retry: mặc định retry 3 lần với delay tăng dần; `4xx` không retry trừ mã cụ thể như `429`; `429` retry theo backoff; `5xx/network timeout` retry, sau 2 lần vẫn lỗi thì báo lỗi/failed queue.
+- Retry: mặc định retry 3 lần với delay tăng dần `1m -> 5m -> 15m`; `4xx` không retry trừ mã cụ thể như `429`; `429` retry theo `Retry-After` nếu có, nếu không dùng backoff; `5xx/network timeout` retry đủ 3 lần rồi chuyển job sang `failed`.
 - Batch sync: không cần trong MVP; sync từng issue/comment/job.
 - Conflict policy: default manual review, một số field như status/assignee Jira thắng.
 - Blocking anomaly: mapping gap, duplicate issue nghi ngờ, content thay đổi quá lớn.
@@ -641,6 +641,8 @@ Metadata nên lưu trong database:
 - `jira_attachment_id`
 - `created_at`
 
+Schema chính dùng bảng `issue_attachments` trong `02-central-issue-store.md`; `issue_revisions.attachments` chỉ là snapshot tham khảo nếu cần hiển thị lại content tại revision.
+
 ## 16. SQLite và migration
 
 ### Đề xuất
@@ -699,6 +701,8 @@ API Admin UI phải đi theo model **System -> CIS -> System**:
 4. Sync job và sync journal dùng để audit, retry và debug cả inbound lẫn outbound.
 
 ### Đề xuất nhóm endpoint MVP
+
+Ghi chú: danh sách dưới đây là nhóm endpoint được đề xuất trong quá trình phỏng vấn. Contract chính thức khi implement dùng prefix `/api/v1` theo `11-api-contract.md`.
 
 Auth:
 
@@ -792,5 +796,268 @@ Webhooks:
 - Lưu admin user trong SQLite.
 - Password hash bằng bcrypt/argon2, không lưu plain text.
 - JWT access token thời hạn ngắn-vừa, ví dụ 8-12 giờ.
-- JWT lưu ở httpOnly cookie nếu UI cùng domain với API.
+- JWT dùng Bearer token trong `Authorization` header theo quyết định API contract ở nhóm 19.
 - Có biến môi trường `JWT_SECRET`.
+
+## 19. Interview bổ sung trước khi tạo implementation spec
+
+Mục tiêu của nhóm câu hỏi này là lấy đủ context để tạo 4 file spec trước khi code sâu:
+
+- `docs/work/09-runtime-config.md`
+- `docs/work/10-state-machine.md`
+- `docs/work/11-api-contract.md`
+- `docs/work/12-webhook-verification.md`
+
+### 19.1. Runtime config
+
+File đích: `09-runtime-config.md`
+
+Cần chốt:
+
+1. Danh sách biến môi trường bắt buộc cho app:
+   - server port
+   - database path
+   - storage path
+   - JWT secret
+   - webhook verify flag
+   - OpenAI API key/model default
+
+2. Cách lưu credential cho Backlog/Jira:
+   - lưu trực tiếp encrypted trong SQLite
+   - lưu trong `.env` rồi project config chỉ giữ key tham chiếu
+   - lưu trong file config local không commit
+
+3. Project seed config cần format nào:
+   - JSON
+   - TOML
+   - JS/CommonJS config
+
+4. Khi app start lần đầu:
+   - có tự tạo admin user từ env không
+   - có tự chạy migration không
+   - có tự tạo storage directory không
+   - nếu thiếu config bắt buộc thì fail fast hay warning
+
+5. Cấu trúc storage chính thức:
+   - attachment root
+   - log root nếu có
+   - backup root nếu có
+
+### Câu trả lời đã chốt
+
+| Mục | Quyết định |
+| --- | --- |
+| Cách chạy service | Dùng PM2/process manager cho MVP trên server nội bộ. |
+| SQLite path mặc định | `storage/db/cis.sqlite`. |
+| Attachment storage root | `storage/attachments`. |
+| Lưu credential Backlog/Jira/OpenAI | Secret thật lưu trong `.env`. |
+| Admin user lần đầu | Tự tạo admin user từ env, đồng thời có CLI tạo admin riêng. |
+| Migration | Auto migrate khi app start, đồng thời có command migrate riêng. |
+| Thiếu config bắt buộc | Fail fast nếu thiếu config critical. |
+| Project seed config | JSON. |
+
+Ghi chú triển khai:
+
+- Các secret thật không lưu trong git.
+- Project config trong SQLite có thể tham chiếu tên biến env nếu cần nhiều project/token.
+- App nên tự tạo storage directory cần thiết khi start.
+
+### 19.2. State machine
+
+File đích: `10-state-machine.md`
+
+Cần chốt:
+
+1. Transition chính của `issues.status`:
+   - `ingested`
+   - `pending_translate`
+   - `pending_review`
+   - `approved`
+   - `syncing`
+   - `synced`
+   - `update_pending`
+   - `conflict`
+   - `archived`
+
+2. Transition của `translation_queue.review_status`:
+   - `pending`
+   - `ai_draft`
+   - `approved`
+   - `rejected`
+   - `edited`
+
+3. Transition của `sync_jobs.status`:
+   - `pending`
+   - `running`
+   - `success`
+   - `failed`
+   - `cancelled`
+
+4. Transition của comment/attachment:
+   - khi nào `pending`
+   - khi nào `synced`
+   - khi nào `skipped`
+   - khi nào `failed`
+
+5. Rule block/unblock:
+   - mapping gap block tới khi nào
+   - anomaly critical block tới khi nào
+   - translation rejected có quay lại AI draft không
+   - attachment failed có block issue sync không
+
+6. Action nào được phép force:
+   - force approve issue
+   - ignore anomaly
+   - retry job
+   - cancel job
+
+### Câu trả lời đã chốt
+
+| Mục | Quyết định |
+| --- | --- |
+| Issue status model | `issues.status` là trạng thái nghiệp vụ chính; translation/sync dùng bảng riêng. |
+| Backlog issue mới | Flow chính: `ingested` -> `pending_translate` -> `pending_review` -> `approved` -> `synced`. |
+| Translation reject | Reject giữ trạng thái `rejected`, admin nhập note, sau đó bấm `retranslate`; có cơ chế chuyển sang manual. |
+| Mapping gap | Block toàn bộ issue cho đến khi mapping được approve. |
+| Attachment failure | Không block issue sync; issue vẫn sync, attachment retry riêng, Jira description ghi attachment pending. |
+| Critical anomaly | Không đổi issue status; worker check `anomaly_log` còn open/blocking trước outbound sync. |
+| Retry failed job | Retry bằng cách set job `failed` về `pending`, audit bằng `sync_journal`. |
+| Cancel job | MVP chỉ cancel job `pending`, không cancel job `running`. |
+| Force approve | Cho phép force approve nhưng không bypass missing required mapping; ghi audit/journal. |
+
+Ghi chú reconcile với API contract:
+
+- API contract đã chốt không bắt buộc `reason` cho action ghi. Vì vậy `reason` cho force/ignore/reject là optional trong MVP, nhưng endpoint vẫn nên nhận nếu UI/Codex gửi lên để tăng audit.
+
+### 19.3. API contract
+
+File đích: `11-api-contract.md`
+
+Cần chốt:
+
+1. Response envelope chuẩn:
+   - `{ "data": ... }`
+   - `{ "data": ..., "meta": ... }`
+   - format lỗi `{ "error": { "code", "message", "details" } }`
+
+2. Pagination/filter/sort cho list API:
+   - issues
+   - translation queue
+   - mapping rules
+   - anomalies
+   - sync jobs
+   - sync journal
+
+3. Request/response chi tiết cho các action ghi:
+   - approve translation
+   - reject/retranslate
+   - approve/reject mapping
+   - dry-run Jira
+   - sync Jira thật
+   - retry job
+   - ignore/resolve anomaly
+   - force approve issue
+
+4. Auth behavior:
+   - cookie hay bearer token
+   - CSRF có cần không nếu dùng cookie
+   - session expire response code
+
+5. Audit behavior:
+   - action nào bắt buộc ghi `sync_journal`
+   - action nào ghi `executed_by`
+   - có cần `reason` khi force/ignore/reject không
+
+6. Codex operation:
+   - endpoint nào Codex có thể gọi chỉ đọc không cần confirm
+   - endpoint nào Codex phải hỏi user confirm trước khi gọi
+   - response nào cần đủ thông tin để Codex giải thích lý do lỗi
+
+### Câu trả lời đã chốt
+
+| Mục | Quyết định |
+| --- | --- |
+| Response envelope | Detail/action trả `{ "data": ... }`; list trả `{ "data": [...], "meta": ... }`. |
+| Error format | `{ "error": { "code", "message", "details", "correlation_id" } }`. |
+| API versioning | Dùng `/api/v1/...`; webhook giữ `/webhooks/backlog`, `/webhooks/jira`. |
+| Pagination | Dùng `page` + `page_size`. |
+| Filter/sort | Dùng query params phẳng, ví dụ `project_id`, `status`, `q`, `sort`. |
+| Auth API | Dùng Bearer token header. |
+| Reason cho action ghi | Không action nào bắt buộc `reason` trong MVP; có thể nhận optional reason. |
+| Idempotency action ghi | Backend tự dedupe theo issue/action, không bắt buộc client gửi `Idempotency-Key`. |
+| Codex operation safety | Read-only gọi thẳng nếu đã auth; write/sync/approve cần user confirm. |
+| Dry-run response | Trả payload + validation + missing mapping/attachment + warnings. |
+| Audit action ghi | Action ghi quan trọng ghi `sync_journal` hoặc audit tương đương. |
+| Endpoint granularity | Dùng endpoint action rõ như `/approve`, `/reject`, `/retry`. |
+| Endpoint groups MVP | Giữ đủ các nhóm endpoint MVP đã đề xuất: auth, dashboard, projects, issues, translation, mapping, anomaly, inbound pull, outbound sync, jobs/journal, attachments. |
+
+Ghi chú triển khai:
+
+- Vì auth dùng Bearer token, UI cần lưu token cẩn thận. MVP có thể dùng memory/local secure pattern tùy frontend; không dùng cookie/httpOnly trong quyết định hiện tại.
+- Backend vẫn nên tạo `correlation_id` cho mọi request để log, journal và API error cùng trace được.
+
+### 19.4. Webhook verification
+
+File đích: `12-webhook-verification.md`
+
+Cần chốt:
+
+1. Backlog webhook verification:
+   - dùng header nào
+   - dùng shared secret hay signature HMAC
+   - payload nào dùng để tính hash/signature
+
+2. Jira webhook verification:
+   - dùng secret URL/token
+   - dùng basic auth/header
+   - có signature native không
+
+3. Express raw body handling:
+   - route webhook cần giữ raw body như thế nào
+   - verify chạy trước JSON parse hay sau JSON parse
+
+4. Response code:
+   - verify fail trả `401` hay `403`
+   - duplicate trả `200` hay `202`
+   - unmatched project trả `200`/`202` nhưng không ingest
+   - internal error trả gì để hệ thống ngoài retry hợp lý
+
+5. Dedupe:
+   - ưu tiên event id/header id nào
+   - fallback `payload_hash` gồm những field nào
+   - duplicate có ghi journal không hay chỉ update `webhook_events`
+
+6. Security log:
+   - có lưu raw payload khi verify fail không
+   - có mask secret/header nhạy cảm không
+   - retention cho rejected webhook
+
+### Câu trả lời đã chốt
+
+| Mục | Quyết định |
+| --- | --- |
+| Backlog verification | Dùng header secret, ví dụ `X-Webhook-Token`. |
+| Jira verification | Dùng secret trong URL. |
+| Express raw body handling | Lưu cả raw string và parsed body bằng verify callback/body parser phù hợp. |
+| Verify fail payload | Vẫn lưu raw payload với status `rejected`. |
+| Response code | Theo recommend: verify fail `401/403`; duplicate `200`; unmatched project `202`; lỗi trước khi lưu raw `500`; lỗi sau khi đã lưu raw/enqueue nội bộ `202`. |
+| Dedupe chính | Ưu tiên event id/header id nếu có. |
+| Duplicate journal | Duplicate chỉ update `webhook_events`, không ghi `sync_journal`. |
+| Secret/header logging | Không log headers webhook trong MVP. |
+
+Ghi chú còn cần cẩn thận khi viết spec:
+
+- Vì Jira dùng secret trong URL, logger/proxy phải tránh log full URL hoặc phải mask query token.
+- Dedupe fallback khi không có event id/header id chưa được chốt sâu; khi viết `12-webhook-verification.md`, nên đề xuất fallback bằng payload hash/normalized dedupe key nhưng ghi rõ đây là fallback kỹ thuật.
+- Raw payload bị rejected có thể chứa dữ liệu không tin cậy; vẫn áp dụng retention và không hiển thị tràn lan trong UI.
+
+### Kết quả mong muốn
+
+Sau khi trả lời các câu hỏi trên, tạo 4 file spec theo thứ tự:
+
+1. `09-runtime-config.md`
+2. `10-state-machine.md`
+3. `12-webhook-verification.md`
+4. `11-api-contract.md`
+
+Thứ tự này giúp chốt nền runtime và trạng thái trước, sau đó mới viết webhook/API contract chi tiết.

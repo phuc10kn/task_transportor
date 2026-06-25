@@ -35,8 +35,11 @@ Translation queue nhận > 10 item cùng lúc từ cùng project
 **Phát hiện**:
 ```
 SELECT backlog_issue_key FROM issues
+JOIN issue_revisions r
+  ON r.issue_id = issues.id
+ AND r.revision = issues.current_revision
 WHERE project_id = ?
-  AND summary = ?  -- Cùng summary
+  AND r.summary = ?  -- Cùng summary hiện tại
   AND source = 'backlog'
   AND status NOT IN ('archived')
 ```
