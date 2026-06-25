@@ -1,0 +1,9 @@
+# Project-local Codex config example.
+# Copy this file to `.codex/config.toml` for local machine settings.
+#
+# Keep credentials and machine-specific paths out of git.
+# Put secrets in `.env`, OS credential storage, or a local ignored config.
+#
+# This project uses `AGENTS.md` for durable repo guidance.
+# Add MCP servers or local overrides here only when needed.
+
