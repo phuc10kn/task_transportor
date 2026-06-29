@@ -41,21 +41,21 @@ Không đi phase 01 nếu:
 
 ### Unit test check (Agent)
 
-- [ ] Test script tự động của phase 00 pass, ví dụ `npm run verify:phase00`.
-- [ ] Test migrate tạo được SQLite DB và bảng `schema_migrations`.
-- [ ] Test migrate chạy lần hai vẫn idempotent.
-- [ ] Test health endpoint trả success envelope.
-- [ ] Test endpoint không tồn tại trả error envelope có `correlation_id`.
-- [ ] Test production mode thiếu `JWT_SECRET` thì app fail fast rõ ràng.
-- [ ] Test storage bootstrap tự tạo đủ thư mục cần thiết.
+- [x] Test script tự động của phase 00 pass, ví dụ `npm run verify:phase00`.
+- [x] Test migrate tạo được SQLite DB và bảng `schema_migrations`.
+- [x] Test migrate chạy lần hai vẫn idempotent.
+- [x] Test health endpoint trả success envelope.
+- [x] Test endpoint không tồn tại trả error envelope có `correlation_id`.
+- [x] Test production mode thiếu `JWT_SECRET` thì app fail fast rõ ràng.
+- [x] Test storage bootstrap tự tạo đủ thư mục cần thiết.
 
 ### Manual check (Người review)
 
-- [ ] `npm install` chạy được.
-- [ ] `npm run migrate` chạy được trên máy local.
-- [ ] `npm run dev` hoặc `npm start` start server.
-- [ ] Gọi health endpoint bằng curl/Postman thấy success envelope.
-- [ ] Gọi endpoint không tồn tại bằng curl/Postman thấy error envelope có `correlation_id`.
+- [x] `npm install` chạy được.
+- [x] `npm run migrate` chạy được trên máy local.
+- [x] `npm run dev` hoặc `npm start` start server.
+- [x] Gọi health endpoint bằng curl/Postman thấy success envelope.
+- [x] Gọi endpoint không tồn tại bằng curl/Postman thấy error envelope có `correlation_id`.
 
 ## Ghi chú thiết kế
 

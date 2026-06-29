@@ -2,17 +2,20 @@
   "name": "task_transportor",
   "version": "1.0.0",
   "description": "A task transportation/management API",
-  "main": "src/index.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/infrastructure/database/migrate.js",
+    "verify:phase00": "node scripts/verify/phase00.js",
+    "test": "npm run verify:phase00"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"
