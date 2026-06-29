@@ -1,64 +1,103 @@
-# Codex Project Guide
+# Hướng Dẫn Codex Cho Dự Án
 
-## Scope
+## Phạm vi
 
-This file applies to the whole `task_transportor` repository.
+File này áp dụng cho toàn bộ repository `task_transportor`.
 
-The current product direction is the Central Sync Hub documented in `docs/work`. Treat those files as the source of truth for new implementation work.
+Hướng sản phẩm hiện tại là Central Sync Hub được mô tả trong `docs/work`. Xem các file đó là nguồn sự thật cho mọi việc triển khai mới.
 
-Ignore the old `backlog2jira` directory for normal Codex work. Do not read, search, modify, or use it as a design source unless the user explicitly asks for migration, comparison, or cleanup work involving `backlog2jira`.
+Bỏ qua thư mục cũ `backlog2jira` trong công việc Codex thông thường. Không đọc, tìm kiếm, sửa hoặc dùng thư mục này làm nguồn thiết kế, trừ khi user yêu cầu rõ việc migration, so sánh hoặc cleanup liên quan đến `backlog2jira`.
 
-## Product Model
+## Mô hình sản phẩm
 
-Use the model **System -> CIS -> System**:
+Dùng mô hình **System -> CIS -> System**:
 
-- Inbound: Backlog/Jira send webhooks or Admin UI triggers manual pull into CIS.
-- Processing: CIS stores raw events, normalizes payloads, translates, reviews, learns mapping, detects anomalies, and records audit data.
-- Outbound: CIS pushes approved data to the destination system. MVP prioritizes `Backlog -> CIS`, `Jira -> CIS`, and `CIS -> Jira`.
+- Đầu vào: Backlog/Jira gửi webhook hoặc Admin UI kích hoạt manual pull vào CIS.
+- Xử lý: CIS lưu raw event, normalize payload, dịch, review, học mapping, phát hiện anomaly và ghi audit.
+- Đầu ra: CIS đẩy dữ liệu đã được duyệt sang hệ thống đích. MVP ưu tiên `Backlog -> CIS`, `Jira -> CIS` và `CIS -> Jira`.
 
-Key docs:
+Tài liệu chính:
 
-- `docs/work/README.md` - overview and reading order.
-- `docs/work/implement-interview.md` - implementation decisions collected from the user.
-- `docs/work/01-architecture.md` - architecture principles.
-- `docs/work/02-central-issue-store.md` - CIS schema.
+- `docs/work/README.md` - tổng quan và thứ tự đọc.
+- `docs/work/plans/lite/README.md` - phạm vi và thứ tự đọc của bản Lite.
+- `docs/work/plans/lite/implement_context.md` - context chọn lọc để bắt đầu implement Lite.
+- `docs/work/plans/lite/implement_plans/README.md` - phase triển khai Lite, chốt chặn và checklist.
+- `docs/work/plans/architecture/README.md` - ngôn ngữ kiến trúc dùng chung cho Lite, Medium và Full.
+- `docs/work/implement-interview.md` - quyết định implement đã trao đổi với user.
+- `docs/work/01-architecture.md` - nguyên tắc kiến trúc.
+- `docs/work/02-central-issue-store.md` - schema CIS.
 - `docs/work/03-backlog-ingestion.md` - Backlog inbound.
-- `docs/work/04-jira-ingestion.md` - Jira inbound and CIS outbound to Jira.
-- `docs/work/06-sync-engine.md` - job processing, retry, and audit.
+- `docs/work/04-jira-ingestion.md` - Jira inbound và CIS outbound sang Jira.
+- `docs/work/06-sync-engine.md` - xử lý job, retry và audit.
 
-## Tech Stack
+## Luồng triển khai hiện tại
 
-- Runtime: Node.js, CommonJS.
+Triển khai dự án theo từng phase trong `docs/work/plans/lite/implement_plans`.
+
+Luồng mặc định:
+
+- Phiên bản: Lite.
+- Phase đầu tiên: `00-foundation.md`.
+- Không triển khai tính năng Medium/Full nếu user chưa yêu cầu rõ.
+- Lite không bắt buộc webhook. Manual pull và project pull là đường Backlog đầu vào chính; scheduled pull là optional sau khi manual/project pull ổn định.
+- Translation Lite dùng `codex_exec` làm provider chính. OpenAI API chỉ là optional/fallback.
+
+Trước khi code một phase, đọc:
+
+1. `docs/work/plans/lite/implement_context.md`.
+2. `docs/work/plans/architecture/README.md`.
+3. `docs/work/plans/architecture/02-module-structure.md`.
+4. `docs/work/plans/lite/implement_plans/README.md`.
+5. File phase đang làm, ví dụ `docs/work/plans/lite/implement_plans/00-foundation.md`.
+
+Khi tài liệu mâu thuẫn, ưu tiên plan Lite mới trong `docs/work/plans/lite`, sau đó đến architecture guide dùng chung, sau đó `docs/work/implement-interview.md`, cuối cùng là spec nền cũ hơn.
+
+## Công nghệ
+
+- Môi trường chạy: Node.js, CommonJS.
 - API server: Express.
-- MVP database decision: SQLite.
-- Planned SQLite library: prefer `better-sqlite3` unless the user later chooses a different option.
-- MVP admin auth: simple JWT with email + password.
-- Attachment storage: local disk under project-controlled storage paths.
+- Quyết định database MVP: SQLite.
+- SQLite library dự kiến: ưu tiên `better-sqlite3` trừ khi user chọn phương án khác.
+- Auth admin MVP: JWT đơn giản với email + password.
+- Lưu attachment: local disk trong storage path do project quản lý.
 
-## Commands
+## Lệnh
 
-- Install dependencies: `npm install`
+- Cài dependency: `npm install`
 - Start server: `npm start`
 - Dev server: `npm run dev`
+- Verify theo phase: `npm run verify:phaseXX` sau khi phase đó đã được triển khai.
 
-The current `npm test` script is a placeholder. If implementation adds tests, update `package.json` with a real test command.
+Script `npm test` hiện tại là placeholder. Nếu phần triển khai thêm test, cập nhật `package.json` để có lệnh test thật.
 
-## Coding Rules
+## Luật code
 
-- Keep edits aligned with `docs/work/implement-interview.md`.
-- Prefer small, focused modules over broad rewrites.
-- Keep secrets out of git. Use `.env` or local `.codex/config.toml` for machine-specific credentials.
-- Do not hard-code Backlog/Jira credentials, OpenAI API keys, Codex auth paths, JWT secrets, or internal server paths.
-- Use `direction_from` and `direction_to` for sync jobs, sync journal, and mapping direction. Do not replace them with a single `direction` field unless the docs are intentionally updated first.
-- Webhook handlers should verify, persist raw payload, enqueue a job, and return quickly. Heavy processing belongs in worker/job code.
-- Manual pull and webhook ingest should share normalizers where possible.
-- For outbound sync, support dry-run before real Jira writes.
+- Giữ thay đổi khớp với `docs/work/implement-interview.md`.
+- Khi triển khai Lite, ưu tiên khớp với `docs/work/plans/lite/implement_context.md` và file phase đang làm.
+- Mỗi lượt triển khai chỉ nên nằm trong phạm vi của phase hiện tại, trừ khi user yêu cầu mở rộng.
+- Ưu tiên module nhỏ, tập trung, tránh rewrite rộng.
+- Dùng cấu trúc modular monolith trong `docs/work/plans/architecture/02-module-structure.md`.
+- Không commit secret. Dùng `.env` hoặc `.codex/config.toml` local cho credential/path riêng máy.
+- Không hard-code credential Backlog/Jira, OpenAI API key, Codex auth path, JWT secret hoặc internal server path.
+- Dùng `direction_from` và `direction_to` cho sync job, sync journal và mapping direction. Không thay bằng một field `direction` nếu docs chưa được cập nhật có chủ ý.
+- Webhook handler phải verify, lưu raw payload, enqueue job và return nhanh. Xử lý nặng thuộc về worker/job code.
+- Manual pull và webhook ingest nên dùng chung normalizer khi có thể.
+- Sync đầu ra phải hỗ trợ dry-run trước khi ghi Jira thật.
 
-## Documentation Rules
+## Luật checklist theo phase
 
-- Keep documentation in Vietnamese with dấu unless the user asks otherwise.
-- When changing implementation behavior, update the relevant file in `docs/work`.
-- Maintain the distinction between:
-  - `webhook_events`: raw inbound event log.
-  - `sync_jobs`: internal job queue for inbound/outbound work.
-  - `sync_journal`: audit trail of job results and state changes.
+Mỗi phase Lite có section `Checklist hoàn thành phase`.
+
+- Chỉ Codex được tick item `Unit test check (Agent)` sau khi lệnh/test tự động liên quan đã pass thật.
+- Item `Manual check (Người review)` phải để nguyên chưa tick, trừ khi user xác nhận đã manual pass.
+- Nếu một item chưa thể tick, để nguyên chưa tick và nêu lý do trong phản hồi cuối.
+- Mỗi phase đã triển khai phải có lệnh verify tương ứng, ví dụ `npm run verify:phase00`.
+
+## Luật tài liệu
+
+- Giữ tài liệu bằng tiếng Việt có dấu trừ khi user yêu cầu khác.
+- Khi thay đổi hành vi triển khai, cập nhật file liên quan trong `docs/work`.
+- Giữ rõ khác biệt giữa:
+  - `webhook_events`: log raw event đầu vào.
+  - `sync_jobs`: hàng đợi job nội bộ cho đầu vào/đầu ra.
+  - `sync_journal`: audit trail cho kết quả job và thay đổi state.
