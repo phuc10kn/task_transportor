@@ -54,21 +54,24 @@ Poll every N seconds:
 Với mỗi job:
   1. Xác định hướng bằng direction_from/direction_to
      - backlog -> cis: pull/ingest Backlog issue/comment/attachment vào CIS
-     - jira -> cis: pull/ingest Jira issue/comment/attachment vào CIS
-     - cis -> jira: push issue/comment/attachment đã duyệt sang Jira
-     - cis -> backlog: phase sau MVP
+     - cis -> jira: push issue/comment đã duyệt sang Jira
+     - jira -> cis: chuẩn bị cho phase sau, chưa có handler inbound trong code Lite hiện tại
+     - cis -> backlog: phase sau MVP, chưa có handler trong code Lite hiện tại
   2. Nếu inbound:
      - Gọi API hệ thống nguồn nếu là manual pull
      - Normalize payload
      - Upsert vào CIS
   3. Nếu outbound:
-     - Gọi Conflict Detector
-     - Build payload hệ thống đích
-     - Dry-run nếu job yêu cầu
-     - Gọi API hệ thống đích nếu sync thật
+     - Với push_issue sang Jira, worker chạy lại readiness check giống dry-run
+     - Build payload từ canonical effective values hoặc payload override đã lưu trong job
+     - Gọi API hệ thống đích nếu pre-check pass
   4. Cập nhật state
   5. Ghi sync_journal
 ```
+
+Attachment download từ hệ thống nguồn về CIS storage không cần job queue riêng trong Lite. Với Backlog -> CIS, worker inbound tải file inline, cập nhật `issue_attachments.download_status`, `stored_path`, `sha256`, `size_bytes`; nếu lỗi thì ghi `download_status = 'failed'` và không fail toàn bộ issue ingest.
+
+`issue_attachments.sync_status` chỉ mô tả chiều CIS -> hệ thống đích. Sau Backlog -> CIS thành công, trạng thái đúng có thể là `download_status = 'downloaded'` và `sync_status = 'pending'`. Retry download dùng API trực tiếp `POST /api/v1/attachments/:attachmentId/retry-download`. Upload/sync attachment sang Jira và job `push_attachment` là phần phase sau; code Lite hiện tại chưa có default handler cho job này.
 
 ---
 
@@ -107,7 +110,7 @@ Trước khi sync, kiểm tra:
 
 **Khi conflict xảy ra**:
 ```
-1. issues.status = 'conflict'
+1. issues.sync_status = 'conflict'
 2. sync_journal: action = 'status_change', status = 'failed', error = 'Conflict detected'
 3. anomaly_log: type = 'unusual_field_change', severity = 'warning'
 4. Notification đến admin
@@ -162,20 +165,20 @@ Mỗi attempt vẫn ghi một dòng `sync_journal` với `sync_job_id`, `status`
 ```
 Với mỗi issue_comments có sync_status = 'pending':
 
-  1. Xác định hướng:
-     - source = 'backlog' AND content_translated ≠ NULL → sync lên Jira
-     - source = 'jira' AND content_translated ≠ NULL → sync lên Backlog
-     - source = 'backlog' AND content_translated = NULL → chưa dịch, skip
+  1. Code Lite hiện tại chỉ sync comment theo chiều CIS -> Jira:
+     - comment thuộc Backlog source
+     - issue đã có `jira_issue_key`
+     - `content_translated` đã có reviewed text
+     - nếu thiếu reviewed text thì job fail với `COMMENT_TRANSLATION_REQUIRED`
 
   2. Gọi API:
      - Jira: POST /rest/api/3/issue/WEC1-789/comment
-     - Backlog: POST /api/v2/issues/ONE_KYORITSU-123/comments
 
   3. Cập nhật:
      - issue_comments.sync_status = 'synced'
-     - issue_comments.jira_comment_id / backlog_comment_id
+     - issue_comments.jira_comment_id
 
-  4. sync_journal: direction_from = 'cis', direction_to = 'jira' | 'backlog', action = 'comment_added', status = 'success'
+  4. sync_journal: direction_from = 'cis', direction_to = 'jira', action = 'comment_added', status = 'success'
 ```
 
 ---
@@ -190,7 +193,7 @@ MVP không dùng batch API. Khi có nhiều job pending cùng lúc:
 3. Sort by priority:
    - Ưu tiên inbound trước outbound nếu cùng issue chưa có dữ liệu mới nhất
    - Ưu tiên create trước update (issue mới cần tạo trước)
-   - Ưu tiên issue có translation đã review lâu nhất
+   - Ưu tiên job theo `priority`, `run_after`, `created_at`; translation review không còn là tiêu chí ưu tiên riêng cho issue canonical sync
 4. Chạy từng job, mỗi issue/comment/attachment là một request riêng
 5. Nếu một job fail → các job khác vẫn tiếp tục
 ```

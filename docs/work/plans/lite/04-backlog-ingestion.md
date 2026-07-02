@@ -92,10 +92,34 @@ Worker xử lý inbound job theo flow:
 7. Cập nhật `issues.fields_json`.
 8. Tạo/cập nhật `issue_comments`.
 9. Tạo/cập nhật `issue_attachments` metadata.
-10. Tạo translation queue nếu cần.
-11. Tạo anomaly nếu có routing mismatch, mapping gap, translation low confidence hoặc content change lớn.
-12. Ghi `sync_journal`.
-13. Set job `success` hoặc retry/fail.
+10. Download attachment file thật từ Backlog về CIS storage inline trong cùng `manual_pull` handler.
+11. Cập nhật `issue_attachments.download_status`, `stored_path`, `sha256`, `size_bytes`.
+12. Nếu attachment download fail, ghi `download_status = failed` và `error_message`, nhưng không fail toàn bộ issue ingest.
+13. Không tạo translation queue trong job inbound; translation là option riêng sau khi dữ liệu đã vào CIS.
+14. Tạo anomaly nếu có routing mismatch, mapping gap hoặc content change lớn.
+15. Ghi `sync_journal`.
+16. Set job `success` hoặc retry/fail.
+
+## Attachment Backlog -> CIS
+
+Phase Lite hiện xử lý attachment thật ở chiều Backlog -> CIS:
+
+- Metadata và file đều được xử lý trong job `manual_pull`.
+- Không tạo `sync_jobs` riêng cho download attachment từ Backlog về CIS.
+- File lưu dưới `storage/attachments/<project_id>/<issue_id>/<attachment_id>/`.
+- `download_status` là trạng thái Backlog -> CIS:
+  - `downloaded`: file đã nằm trong CIS storage.
+  - `failed`: tải file lỗi, có `error_message`.
+  - `pending`: metadata đã có nhưng chưa tải hoặc chờ retry.
+  - `skipped`: cố ý không tải.
+- `sync_status` là trạng thái CIS -> Jira, không được set `synced` ở Phase 03.
+- Retry download dùng API `POST /api/v1/attachments/:attachmentId/retry-download`, chạy trực tiếp và không enqueue job.
+
+Backlog `externalFileLinks` là link ngoài, ví dụ Google Drive/Spreadsheet. Đây không phải attachment file từ Backlog API:
+
+- Không download về CIS storage.
+- Không ghi vào `issue_attachments` như file thật.
+- Nếu cần giữ để hiển thị hoặc đưa vào Jira description, lưu ở `fields_json.external_file_links.backlog`.
 
 ## Field mapping Backlog -> CIS
 
@@ -110,6 +134,8 @@ Worker xử lý inbound job theo flow:
 | `priority.name` | `fields_json.priority.backlog`, `issue_revisions.priority` |
 | `assignee.name` | `fields_json.assignee.backlog`, `issue_revisions.assignee` |
 | `created`/`updated` | `backlog_updated_at`, hash/update detection |
+| `attachments[]` | `issue_attachments`, file trong `storage/attachments`, `download_status` |
+| `externalFileLinks[]` | `fields_json.external_file_links.backlog` nếu cần giữ link ngoài |
 
 ## Webhook để Medium
 

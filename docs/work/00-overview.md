@@ -4,6 +4,8 @@ Thư mục `docs/work` mô tả thiết kế mới cho `task_transportor`: một
 
 CIS đóng vai trò single source of truth, giữ nội dung gốc, bản dịch, mapping, trạng thái sync, audit trail và các cảnh báo bất thường.
 
+Trạng thái code Lite hiện tại: inbound chính là Backlog manual/project pull vào CIS; Jira inbound/webhook chưa được mount route; outbound hiện hành là CIS -> Jira qua dry-run/sync trong Issue Editor. Các phần webhook, Jira -> CIS đầy đủ, CIS -> Backlog và attachment upload/sync sang Jira là scope Medium/phase sau.
+
 ## Mục tiêu
 
 - Thay thế cách đồng bộ thủ công/CLI bằng luồng webhook/manual pull + queue + sync engine.
@@ -21,7 +23,7 @@ System -> CIS -> System
 ```
 
 - Inbound: Backlog/Jira gửi webhook hoặc admin chủ động pull dữ liệu về CIS.
-- Processing: CIS lưu raw event/pull snapshot, chuẩn hóa dữ liệu, dịch, review, học mapping và phát hiện bất thường.
+- Processing: CIS lưu raw event/pull snapshot, chuẩn hóa dữ liệu, chạy translation/review nếu project bật option này, học mapping và phát hiện bất thường.
 - Outbound: CIS đẩy dữ liệu đã được duyệt sang hệ thống đích.
 
 ## Luồng tổng quan

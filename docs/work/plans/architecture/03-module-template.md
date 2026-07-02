@@ -74,7 +74,7 @@ Module làm đổi state nào?
 Ví dụ:
 
 ```text
-issues.status: pending_translate -> pending_review
+issues.sync_status: pending_translate -> pending_review
 translation_queue.review_status: pending -> ai_draft
 sync_journal: action = translate_ai
 ```

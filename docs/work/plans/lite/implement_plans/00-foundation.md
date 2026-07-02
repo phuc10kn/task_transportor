@@ -1,4 +1,4 @@
-﻿# Phase 00 - Foundation
+# Phase 00 - Foundation
 
 ## Mục tiêu
 
@@ -24,7 +24,7 @@ Dựng nền ứng dụng Lite chạy được trước khi có nghiệp vụ: E
 - Middleware correlation id.
 - Error/response envelope helper.
 - Health endpoint.
-- Test script tự động cho migrate, health và error envelope.
+- Test script tự động theo capability cho migrate, health và error envelope.
 
 ## Chốt chặn
 
@@ -41,7 +41,7 @@ Không đi phase 01 nếu:
 
 ### Unit test check (Agent)
 
-- [x] Test script tự động của phase 00 pass, ví dụ `npm run verify:phase00`.
+- [x] Test script tự động của phase 00 pass, ví dụ `npm run verify:phase00` (alias tới `npm run verify:foundation`).
 - [x] Test migrate tạo được SQLite DB và bảng `schema_migrations`.
 - [x] Test migrate chạy lần hai vẫn idempotent.
 - [x] Test health endpoint trả success envelope.

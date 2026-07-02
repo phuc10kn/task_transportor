@@ -1,0 +1,835 @@
+{
+  "note": "Raw real Jira Task issue response for Issue Editor field/meta reference. Contains project/user data; review before committing or sharing.",
+  "fetched_at": "2026-07-01T04:13:54.396Z",
+  "source": {
+    "jira_site_url": "https://18duongminhphuc.atlassian.net",
+    "jira_project_key": "DMP",
+    "issue_key": "DMP-1",
+    "endpoint": "/rest/api/3/issue/DMP-1?expand=names,schema,renderedFields"
+  },
+  "response": {
+    "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+    "id": "10033",
+    "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/10033",
+    "key": "DMP-1",
+    "renderedFields": {
+      "statuscategorychangedate": "Yesterday 2:39 PM",
+      "issuetype": null,
+      "components": null,
+      "timespent": null,
+      "timeoriginalestimate": null,
+      "project": null,
+      "description": "<p>Backlog issue: 18DMP-1</p>\n\n\n\n<p>Reviewed Vietnamese</p>\n\n<p>(No reviewed description)</p>\n\n\n\n<p>Original</p>\n\n<p>(No original description)</p>\n\n\n\n<p>Reviewed comments</p>\n\n<ul class=\"alternate\" type=\"square\">\n\t<li>Ban dich manual edit tu API.</li>\n</ul>\n\n\n<ul class=\"alternate\" type=\"square\">\n\t<li></li>\n</ul>\n\n\n<p>!<span class=\"error\">&#91;image&#93;</span><span class=\"error\">&#91;pasted-2026.06.30-10.32.01.png&#93;</span></p>\n\n<p>kiểm tra tệp đính kèm</p>\n\n\n\n<p>Attachments in CIS</p>\n\n<ul class=\"alternate\" type=\"square\">\n\t<li>pasted-2026.06.30-10.32.01.png: download=downloaded, jira_sync=pending</li>\n</ul>\n\n\n\n\n<p>CIS Sync Trace</p>\n\n<ul class=\"alternate\" type=\"square\">\n\t<li>CIS Issue ID: 29f26450-269a-4ea6-9f07-1f45c1b34e94</li>\n</ul>\n\n\n<ul class=\"alternate\" type=\"square\">\n\t<li>Backlog Issue Key: 18DMP-1</li>\n</ul>\n\n\n<ul class=\"alternate\" type=\"square\">\n\t<li>Source: backlog</li>\n</ul>\n",
+      "fixVersions": null,
+      "aggregatetimespent": null,
+      "statusCategory": null,
+      "resolution": null,
+      "timetracking": {},
+      "customfield_10015": null,
+      "security": null,
+      "attachment": [],
+      "aggregatetimeestimate": null,
+      "resolutiondate": "Yesterday 2:39 PM",
+      "workratio": null,
+      "summary": null,
+      "issuerestriction": null,
+      "watches": null,
+      "lastViewed": "Yesterday 4:47 PM",
+      "creator": null,
+      "subtasks": null,
+      "created": "Yesterday 2:39 PM",
+      "customfield_10021": null,
+      "reporter": null,
+      "aggregateprogress": null,
+      "priority": null,
+      "customfield_10001": null,
+      "labels": null,
+      "environment": "",
+      "customfield_10019": null,
+      "timeestimate": null,
+      "aggregatetimeoriginalestimate": null,
+      "versions": null,
+      "duedate": null,
+      "progress": null,
+      "issuelinks": null,
+      "votes": null,
+      "comment": {
+        "comments": [
+          {
+            "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/10033/comment/10000",
+            "id": "10000",
+            "author": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "body": "<p>Ban dich manual edit tu API.</p>",
+            "updateAuthor": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "created": "Yesterday 2:40 PM",
+            "updated": "Yesterday 2:40 PM",
+            "jsdPublic": true
+          },
+          {
+            "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/10033/comment/10001",
+            "id": "10001",
+            "author": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "body": "\n\n<p>!<span class=\"error\">&#91;image&#93;</span><span class=\"error\">&#91;pasted-2026.06.30-10.32.01.png&#93;</span></p>\n\n<p>kiểm tra tệp đính kèm</p>",
+            "updateAuthor": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "created": "Yesterday 2:40 PM",
+            "updated": "Yesterday 2:40 PM",
+            "jsdPublic": true
+          }
+        ],
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/10033/comment",
+        "maxResults": 2,
+        "total": 2,
+        "startAt": 0
+      },
+      "assignee": null,
+      "worklog": {
+        "startAt": 0,
+        "maxResults": 20,
+        "total": 0,
+        "worklogs": []
+      },
+      "updated": "Yesterday 2:54 PM",
+      "status": null
+    },
+    "names": {
+      "statuscategorychangedate": "Status Category Changed",
+      "issuetype": "Issue Type",
+      "components": "Components",
+      "timespent": "Time Spent",
+      "timeoriginalestimate": "Original estimate",
+      "project": "Project",
+      "description": "Description",
+      "fixVersions": "Fix versions",
+      "aggregatetimespent": "Σ Time Spent",
+      "statusCategory": "Status Category",
+      "resolution": "Resolution",
+      "timetracking": "Time tracking",
+      "customfield_10015": "Start date",
+      "security": "Security Level",
+      "attachment": "Attachment",
+      "aggregatetimeestimate": "Σ Remaining Estimate",
+      "resolutiondate": "Resolved",
+      "workratio": "Work Ratio",
+      "summary": "Summary",
+      "issuerestriction": "Restrict to",
+      "watches": "Watchers",
+      "lastViewed": "Last Viewed",
+      "creator": "Creator",
+      "subtasks": "Sub-tasks",
+      "created": "Created",
+      "customfield_10021": "Flagged",
+      "reporter": "Reporter",
+      "aggregateprogress": "Σ Progress",
+      "priority": "Priority",
+      "customfield_10001": "Team",
+      "labels": "Labels",
+      "environment": "Environment",
+      "customfield_10019": "Rank",
+      "timeestimate": "Remaining Estimate",
+      "aggregatetimeoriginalestimate": "Σ Original Estimate",
+      "versions": "Affects versions",
+      "duedate": "Due date",
+      "progress": "Progress",
+      "issuelinks": "Linked Issues",
+      "votes": "Votes",
+      "comment": "Comment",
+      "assignee": "Assignee",
+      "worklog": "Log Work",
+      "updated": "Updated",
+      "status": "Status"
+    },
+    "schema": {
+      "statuscategorychangedate": {
+        "type": "datetime",
+        "system": "statuscategorychangedate"
+      },
+      "issuetype": {
+        "type": "issuetype",
+        "system": "issuetype"
+      },
+      "components": {
+        "type": "array",
+        "items": "component",
+        "system": "components"
+      },
+      "timespent": {
+        "type": "number",
+        "system": "timespent"
+      },
+      "timeoriginalestimate": {
+        "type": "number",
+        "system": "timeoriginalestimate"
+      },
+      "project": {
+        "type": "project",
+        "system": "project"
+      },
+      "description": {
+        "type": "string",
+        "system": "description"
+      },
+      "fixVersions": {
+        "type": "array",
+        "items": "version",
+        "system": "fixVersions"
+      },
+      "aggregatetimespent": {
+        "type": "number",
+        "system": "aggregatetimespent"
+      },
+      "statusCategory": {
+        "type": "statusCategory",
+        "system": "statusCategory"
+      },
+      "resolution": {
+        "type": "resolution",
+        "system": "resolution"
+      },
+      "timetracking": {
+        "type": "timetracking",
+        "system": "timetracking"
+      },
+      "customfield_10015": {
+        "type": "date",
+        "custom": "com.atlassian.jira.plugin.system.customfieldtypes:datepicker",
+        "customId": 10015
+      },
+      "security": {
+        "type": "securitylevel",
+        "system": "security"
+      },
+      "attachment": {
+        "type": "array",
+        "items": "attachment",
+        "system": "attachment"
+      },
+      "aggregatetimeestimate": {
+        "type": "number",
+        "system": "aggregatetimeestimate"
+      },
+      "resolutiondate": {
+        "type": "datetime",
+        "system": "resolutiondate"
+      },
+      "workratio": {
+        "type": "number",
+        "system": "workratio"
+      },
+      "summary": {
+        "type": "string",
+        "system": "summary"
+      },
+      "issuerestriction": {
+        "type": "issuerestriction",
+        "system": "issuerestriction"
+      },
+      "watches": {
+        "type": "watches",
+        "system": "watches"
+      },
+      "lastViewed": {
+        "type": "datetime",
+        "system": "lastViewed"
+      },
+      "creator": {
+        "type": "user",
+        "system": "creator"
+      },
+      "subtasks": {
+        "type": "array",
+        "items": "issuelinks",
+        "system": "subtasks"
+      },
+      "created": {
+        "type": "datetime",
+        "system": "created"
+      },
+      "customfield_10021": {
+        "type": "array",
+        "items": "option",
+        "custom": "com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes",
+        "customId": 10021
+      },
+      "reporter": {
+        "type": "user",
+        "system": "reporter"
+      },
+      "aggregateprogress": {
+        "type": "progress",
+        "system": "aggregateprogress"
+      },
+      "priority": {
+        "type": "priority",
+        "system": "priority"
+      },
+      "customfield_10001": {
+        "type": "team",
+        "custom": "com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team",
+        "customId": 10001,
+        "configuration": {
+          "com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team": true
+        }
+      },
+      "labels": {
+        "type": "array",
+        "items": "string",
+        "system": "labels"
+      },
+      "environment": {
+        "type": "string",
+        "system": "environment"
+      },
+      "customfield_10019": {
+        "type": "any",
+        "custom": "com.pyxis.greenhopper.jira:gh-lexo-rank",
+        "customId": 10019
+      },
+      "timeestimate": {
+        "type": "number",
+        "system": "timeestimate"
+      },
+      "aggregatetimeoriginalestimate": {
+        "type": "number",
+        "system": "aggregatetimeoriginalestimate"
+      },
+      "versions": {
+        "type": "array",
+        "items": "version",
+        "system": "versions"
+      },
+      "duedate": {
+        "type": "date",
+        "system": "duedate"
+      },
+      "progress": {
+        "type": "progress",
+        "system": "progress"
+      },
+      "issuelinks": {
+        "type": "array",
+        "items": "issuelinks",
+        "system": "issuelinks"
+      },
+      "votes": {
+        "type": "votes",
+        "system": "votes"
+      },
+      "comment": {
+        "type": "comments-page",
+        "system": "comment"
+      },
+      "assignee": {
+        "type": "user",
+        "system": "assignee"
+      },
+      "worklog": {
+        "type": "array",
+        "items": "worklog",
+        "system": "worklog"
+      },
+      "updated": {
+        "type": "datetime",
+        "system": "updated"
+      },
+      "status": {
+        "type": "status",
+        "system": "status"
+      }
+    },
+    "fields": {
+      "statuscategorychangedate": "2026-06-30T14:39:51.704+0700",
+      "issuetype": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issuetype/10036",
+        "id": "10036",
+        "description": "",
+        "iconUrl": "https://18duongminhphuc.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+        "name": "Task",
+        "subtask": false,
+        "avatarId": 10318,
+        "entityId": "480f378c-5777-4728-8719-21d49d1b43a7",
+        "hierarchyLevel": 0
+      },
+      "components": [],
+      "timespent": null,
+      "timeoriginalestimate": null,
+      "project": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/project/10033",
+        "id": "10033",
+        "key": "DMP",
+        "name": "DMP",
+        "projectTypeKey": "software",
+        "simplified": true,
+        "avatarUrls": {
+          "48x48": "https://18duongminhphuc.atlassian.net/rest/api/3/universal_avatar/view/type/project/avatar/10413",
+          "24x24": "https://18duongminhphuc.atlassian.net/rest/api/3/universal_avatar/view/type/project/avatar/10413?size=small",
+          "16x16": "https://18duongminhphuc.atlassian.net/rest/api/3/universal_avatar/view/type/project/avatar/10413?size=xsmall",
+          "32x32": "https://18duongminhphuc.atlassian.net/rest/api/3/universal_avatar/view/type/project/avatar/10413?size=medium"
+        }
+      },
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Backlog issue: 18DMP-1"
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Reviewed Vietnamese"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "(No reviewed description)"
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Original"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "(No original description)"
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Reviewed comments"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "- Ban dich manual edit tu API."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "- "
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "![image][pasted-2026.06.30-10.32.01.png]"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "kiểm tra tệp đính kèm"
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Attachments in CIS"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "- pasted-2026.06.30-10.32.01.png: download=downloaded, jira_sync=pending"
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "CIS Sync Trace"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "- CIS Issue ID: 29f26450-269a-4ea6-9f07-1f45c1b34e94"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "- Backlog Issue Key: 18DMP-1"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "- Source: backlog"
+              }
+            ]
+          }
+        ]
+      },
+      "fixVersions": [],
+      "aggregatetimespent": null,
+      "statusCategory": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/statuscategory/3",
+        "id": 3,
+        "key": "done",
+        "colorName": "green",
+        "name": "Done"
+      },
+      "resolution": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/resolution/10000",
+        "id": "10000",
+        "description": "GreenHopper Managed Resolution",
+        "name": "Done"
+      },
+      "timetracking": {},
+      "customfield_10015": null,
+      "security": null,
+      "attachment": [],
+      "aggregatetimeestimate": null,
+      "resolutiondate": "2026-06-30T14:39:51.696+0700",
+      "workratio": -1,
+      "summary": "[18DMP-1] nhiệm vụ mới",
+      "issuerestriction": {
+        "issuerestrictions": {},
+        "shouldDisplay": true
+      },
+      "watches": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/DMP-1/watchers",
+        "watchCount": 1,
+        "isWatching": true
+      },
+      "lastViewed": "2026-06-30T16:47:40.645+0700",
+      "creator": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+        "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+        "emailAddress": "18duongminhphuc@gmail.com",
+        "avatarUrls": {
+          "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+          "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+          "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+          "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+        },
+        "displayName": "Phúc Dương Minh",
+        "active": true,
+        "timeZone": "Asia/Bangkok",
+        "accountType": "atlassian"
+      },
+      "subtasks": [],
+      "created": "2026-06-30T14:39:06.852+0700",
+      "customfield_10021": null,
+      "reporter": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+        "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+        "emailAddress": "18duongminhphuc@gmail.com",
+        "avatarUrls": {
+          "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+          "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+          "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+          "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+        },
+        "displayName": "Phúc Dương Minh",
+        "active": true,
+        "timeZone": "Asia/Bangkok",
+        "accountType": "atlassian"
+      },
+      "aggregateprogress": {
+        "progress": 0,
+        "total": 0
+      },
+      "priority": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/priority/3",
+        "iconUrl": "https://18duongminhphuc.atlassian.net/images/icons/priorities/medium_new.svg",
+        "name": "Medium",
+        "id": "3"
+      },
+      "customfield_10001": null,
+      "labels": [
+        "backlog-18dmp-1",
+        "cis-sync"
+      ],
+      "environment": null,
+      "customfield_10019": "0|i0000v:",
+      "timeestimate": null,
+      "aggregatetimeoriginalestimate": null,
+      "versions": [],
+      "duedate": null,
+      "progress": {
+        "progress": 0,
+        "total": 0
+      },
+      "issuelinks": [],
+      "votes": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/DMP-1/votes",
+        "votes": 0,
+        "hasVoted": false
+      },
+      "comment": {
+        "comments": [
+          {
+            "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/10033/comment/10000",
+            "id": "10000",
+            "author": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "body": {
+              "type": "doc",
+              "version": 1,
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Ban dich manual edit tu API."
+                    }
+                  ]
+                }
+              ]
+            },
+            "updateAuthor": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "created": "2026-06-30T14:40:29.031+0700",
+            "updated": "2026-06-30T14:40:29.031+0700",
+            "jsdPublic": true
+          },
+          {
+            "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/10033/comment/10001",
+            "id": "10001",
+            "author": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "body": {
+              "type": "doc",
+              "version": 1,
+              "content": [
+                {
+                  "type": "paragraph"
+                },
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "![image][pasted-2026.06.30-10.32.01.png]"
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "kiểm tra tệp đính kèm"
+                    }
+                  ]
+                }
+              ]
+            },
+            "updateAuthor": {
+              "self": "https://18duongminhphuc.atlassian.net/rest/api/3/user?accountId=712020%3A78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "accountId": "712020:78ed2319-555e-4fbd-bf8f-2dced33341f9",
+              "emailAddress": "18duongminhphuc@gmail.com",
+              "avatarUrls": {
+                "48x48": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "24x24": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "16x16": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png",
+                "32x32": "https://secure.gravatar.com/avatar/9af582b1795f80d1889dfa0b3bd7f35d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPM-2.png"
+              },
+              "displayName": "Phúc Dương Minh",
+              "active": true,
+              "timeZone": "Asia/Bangkok",
+              "accountType": "atlassian"
+            },
+            "created": "2026-06-30T14:40:33.595+0700",
+            "updated": "2026-06-30T14:40:33.595+0700",
+            "jsdPublic": true
+          }
+        ],
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/issue/10033/comment",
+        "maxResults": 2,
+        "total": 2,
+        "startAt": 0
+      },
+      "assignee": null,
+      "worklog": {
+        "startAt": 0,
+        "maxResults": 20,
+        "total": 0,
+        "worklogs": []
+      },
+      "updated": "2026-06-30T14:54:01.812+0700",
+      "status": {
+        "self": "https://18duongminhphuc.atlassian.net/rest/api/3/status/10036",
+        "description": "",
+        "iconUrl": "https://18duongminhphuc.atlassian.net/images/icons/statuses/generic.png",
+        "name": "Done",
+        "id": "10036",
+        "statusCategory": {
+          "self": "https://18duongminhphuc.atlassian.net/rest/api/3/statuscategory/3",
+          "id": 3,
+          "key": "done",
+          "colorName": "green",
+          "name": "Done"
+        }
+      }
+    }
+  }
+}

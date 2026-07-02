@@ -7,8 +7,8 @@ Luồng chính của Lite:
 ```text
 Backlog manual pull / scheduled pull
   -> CIS
-  -> codex_exec translation
-  -> Human review
+  -> optional codex_exec translation
+  -> optional Human review
   -> Dry-run
   -> CIS -> Jira
 ```
@@ -35,8 +35,8 @@ Lite làm:
 - Backlog manual pull theo issue/project vào CIS.
 - Scheduled pull optional để chủ động quét thay đổi định kỳ.
 - Lưu raw API response/pull snapshot, dedupe, job queue và sync journal.
-- Dịch Nhật -> Việt bằng `codex_exec` cho summary, description, comment.
-- Human review bắt buộc trước khi sync Jira.
+- Dịch Nhật -> Việt bằng `codex_exec` cho summary, description, comment khi bật translation option.
+- Human review bắt buộc cho comment cần dịch trước khi sync comment sang Jira. Issue canonical sync từ Issue Editor không bị chặn bằng gate riêng của translation queue/review, nhưng `issues.sync_status = 'pending_translate'` vẫn chưa syncable trong code Lite hiện tại.
 - Mapping required qua CIS canonical, approve trước khi dùng.
 - Dry-run Jira bắt buộc trước sync thật.
 - Sync issue/comment đã duyệt sang Jira.

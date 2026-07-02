@@ -36,6 +36,8 @@ Mapping nên chuẩn bị thêm:
 - Mapping mới chưa approved phải block sync thật.
 - Missing mapping tạo anomaly `mapping_gap`.
 - Force approve không được bypass missing required mapping.
+- Lite dry-run kiểm tra mapping field theo hai bước: giá trị Backlog đã được lưu trong CIS được chuẩn hóa sang canonical CIS (`backlog -> cis`), rồi canonical CIS được đổi sang giá trị Jira (`cis -> jira`). Dù issue đã được ingest vào CIS, các field `issue_type`, `status`, hoặc `priority` vẫn phải có rule `approved` ở cả hai bước; nếu thiếu, dry-run trả `can_sync = false` với code `MAPPING_REQUIRED`.
+- Assignee/user mapping chỉ được đưa vào payload khi có mapping đủ; nếu thiếu trong Phase 05 thì dry-run cảnh báo và bỏ assignee khỏi payload preview.
 
 Khi thiếu mapping:
 
@@ -82,4 +84,17 @@ Lite cần:
 - `ignore`
 - `resolve`
 
-Critical anomaly không đổi trực tiếp `issues.status`, nhưng outbound worker phải check anomaly còn open/investigating trước khi sync thật.
+Critical anomaly không đổi trực tiếp `issues.sync_status`, nhưng outbound worker phải check anomaly còn open/investigating trước khi sync thật.
+
+Phase 05 đã mở API tối thiểu:
+
+- `GET /api/v1/mapping-rules`
+- `POST /api/v1/mapping-rules`
+- `PATCH /api/v1/mapping-rules/:ruleId`
+- `DELETE /api/v1/mapping-rules/:ruleId`
+- `POST /api/v1/mapping-rules/:ruleId/approve`
+- `POST /api/v1/mapping-rules/:ruleId/reject`
+- `GET /api/v1/anomalies`
+- `POST /api/v1/anomalies`
+- `POST /api/v1/anomalies/:anomalyId/ignore`
+- `POST /api/v1/anomalies/:anomalyId/resolve`

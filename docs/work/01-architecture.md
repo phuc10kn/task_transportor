@@ -43,8 +43,8 @@ Hub trung gian thay thế mô hình "Codex gọi từng lệnh CLI" hiện tại
 2. **Mọi thứ qua CIS** — Backlog và Jira không nói chuyện trực tiếp. CIS là trung gian duy nhất.
 3. **Nội dung gốc bất biến** — Backlog content (tiếng Nhật) giữ nguyên trong CIS. Bản dịch là field riêng.
 4. **Sync không phá dữ liệu** — Mỗi lần sync là một transaction. Rollback được nếu fail.
-5. **AI propose, human decide** — AI dịch, suggest mapping, detect bất thường. Quyết định cuối cùng thuộc về người dùng.
-6. **System -> CIS -> System** — Mọi dữ liệu đi vào CIS trước bằng webhook hoặc manual pull, được xử lý/review trong CIS, rồi mới push ra hệ thống đích.
+5. **AI propose, human decide** — AI dịch khi project bật translation option, suggest mapping, detect bất thường. Quyết định cuối cùng thuộc về người dùng.
+6. **System -> CIS -> System** — Mọi dữ liệu đi vào CIS trước bằng webhook hoặc manual pull; translation/review là bước tùy chọn sau ingest, rồi dữ liệu đủ điều kiện mới push ra hệ thống đích.
 
 ## 4 luồng chính
 

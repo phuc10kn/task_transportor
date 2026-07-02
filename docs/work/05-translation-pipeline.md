@@ -1,176 +1,185 @@
-# Translation Pipeline — AI Translate + Review
+# Translation Pipeline - AI Translate + Review
+
+## Trạng thái triển khai hiện tại
+
+- Translation của issue được thao tác trực tiếp trong Issue Editor qua modal `Translations`.
+- Màn chính Issue Editor chỉ có nút `Translations`; không còn modal/view status riêng cho translation.
+- Mỗi issue translation phải có `target_field` rõ ràng: `summary` hoặc `description`. UI hiển thị là `Summary translation` và `Description translation`, không dùng nhãn kiểu `Issue translation #id`.
+- Source text của issue translation là Backlog source hiện tại trong `fields_json.<target_field>.backlog`. Không fallback sang CIS, revision, hoặc queue cũ.
+- `Translated text` lấy từ translation item mới nhất còn khớp Backlog source hiện tại. Nếu item stale hoặc source Backlog rỗng thì không fill bằng dữ liệu cũ.
+- Trong Issue Editor, nút `Translate` gọi provider ngay trong request hiện tại và lưu draft vào `translation_queue`; không cần chờ worker queue.
+- `Approve + save` lưu reviewed text và apply vào canonical `fields_json.<target_field>.cis`.
+- Reject không apply canonical và không chặn admin retranslate sau đó.
+- Queue issue-level thiếu `target_field` là legacy invalid data và không được tính vào trạng thái translation của issue.
 
 ## Vị trí trong luồng tổng thể
 
-```
-Backlog issue → ingest → translation_queue.insert(ai_draft) → review → approved → sync lên Jira
-                        ↑                                      ↓
-                   AI (đọc source + wiki)              rejected → AI sửa lại
+```text
+Backlog issue
+  -> ingest
+  -> optional translation request
+  -> translation_queue.pending
+  -> translate job
+  -> ai_draft
+  -> review
+  -> approved/edited
+  -> sync lên Jira
 ```
 
----
+## Mục tiêu Lite hiện tại
+
+- Dịch Nhật -> Việt bằng `codex_exec` khi project/issue bật translation option.
+- Chỉ tạo draft trong `translation_queue` khi có translation request.
+- Human review vẫn bắt buộc cho comment sync nếu comment cần dịch. Với issue canonical sync từ Issue Editor, translation queue/review không còn là gate trực tiếp kiểu `TRANSLATION_REVIEW_REQUIRED`; bản dịch đã approve/edit chỉ là một cách cập nhật `fields_json.summary.cis` hoặc `fields_json.description.cis`. Riêng `issues.sync_status = 'pending_translate'` vẫn bị chặn bởi sync-state gate hiện tại.
+- Context dịch được thu thập theo kiểu `rule_based`, chưa dùng LLM cho bước lấy context.
 
 ## Khi nào AI translate?
 
 | Tình huống | Auto-translate? | Ghi chú |
-|-----------|----------------|---------|
-| Issue mới từ Backlog (tiếng Nhật) | ✅ Có | Nếu project.auto_translate = true |
-| Comment mới từ Backlog (tiếng Nhật) | ✅ Có | |
-| Dev comment từ Jira cần về Backlog | ✅ Có (nếu confidence cao) | Việt → Nhật, có thể cần review |
-| Issue content thay đổi | ❌ Không | Giữ bản dịch cũ, chỉ notify |
-| Issue đã có bản dịch cũ | ❌ Không | Không tự động dịch lại |
+| --- | --- | --- |
+| Issue mới từ Backlog | Không trong inbound | Translation là option riêng sau khi dữ liệu đã vào CIS. |
+| Comment mới từ Backlog | Không trong inbound | Nếu comment cần sync Jira và cần dịch, vẫn cần human review trước khi sync comment. |
+| Dev comment từ Jira cần về Backlog | Chưa trong Lite | Dành cho Medium/Jira inbound đầy đủ. |
+| Issue content thay đổi | Không ghi đè bản dịch cũ | Tạo revision/queue mới theo chính sách update. |
+| Issue đã có bản dịch cũ | Không tự dịch lại | Admin dùng retranslate khi cần. |
 
----
+## Standard translation input
 
-## AI translation context
-
-Khi dịch, AI được cung cấp:
-
-**1. Config context** từ project:
-```
-- sourceRoots paths
-- wikiRoots paths  
-- instructionFiles content
-```
-
-**2. Wiki vocabulary** (từ project instruction):
-```
-予約       → reservation
-クーポン    → coupon
-施設/ホテル → facility/hotel
-管理画面   → CMS admin
-プッシュ通知 → push notification
-```
-
-**3. Source code context**: Nếu cần, AI đọc file source liên quan để hiểu business logic.
-
-**4. Previous translations**: Các bản dịch trước đó của cùng project để giữ consistency:
-```
-query translation_queue WHERE project_id = ? AND review_status = 'approved'
-ORDER BY created_at DESC LIMIT 20
-```
-
-**5. Mapping rules**:
-```
-query mapping_rules WHERE project_id = ?
-```
-
----
-
-## Output: Translation queue entry
+Worker `translate` không còn chỉ đưa `source_text` trần cho provider. Trước khi gọi provider, app build một contract nội bộ chuẩn hóa:
 
 ```json
 {
-  "id": 789,
-  "project_id": "wecsy-main",
-  "issue_id": "uuid-xxx",
+  "request_id": "trreq_xxx",
+  "queue_id": 123,
+  "project_id": "3",
+  "issue_id": "uuid",
   "comment_id": null,
+  "direction": {
+    "source_language": "ja",
+    "target_language": "vi"
+  },
   "target_type": "issue",
-  "target_lang": "vi",
-  "ai_draft": "Bản dịch tiếng Việt...",
-  "reviewed_text": null,
-  "review_status": "ai_draft",
-  "ai_model": "claude-4-sonnet",
-  "ai_confidence": 0.85,
-  "ai_prompt_version": "v2",
-  "created_at": "2026-06-23T10:00:00"
+  "content_type": "issue",
+  "source_text": "...",
+  "source_text_hash": "sha256...",
+  "requested_provider": "codex_exec",
+  "context_policy": "default_translation",
+  "context_bundle": {},
+  "instructions": [],
+  "output_schema": {
+    "translated_text": "string",
+    "confidence": "number",
+    "warnings": ["string"],
+    "preserved_blocks": ["string"]
+  }
 }
 ```
 
----
+## `collectTranslationContext()`
 
-## Review flow
+Trước khi build request chuẩn hóa, worker gọi `collectTranslationContext()` để gom context read-only từ CIS:
 
-```
-translation_queue.review_status = 'ai_draft'
-              │
-         User review (UI hoặc chat)
-              │
-       ┌──────┴──────┐
-       ▼              ▼
-   Approved        Rejected/Edited
-       │              │
-       │         User sửa text
-       │         review_status = 'edited'
-       │              │
-       ▼              ▼
-   reviewed_text = ai_draft    reviewed_text = user_edit
-   issues.status = 'approved'  issues.status = 'approved'
-       │                          │
-       └──────────┬───────────────┘
-                  ▼
-          Sync lên Jira
-          
-   Ghi sync_journal:
-     action = 'translate_review' | 'translate_reject'
-     Nếu edited: lưu cả old + new text để học
-```
+- issue keys
+- project profile
+- latest revision summary/description
+- neighbor comments
+- translation memory đã `approved` hoặc `edited`
+- glossary riêng theo project
+- text signals
+- preservation rules
 
----
+Output chính là `context_bundle`.
+
+## Project glossary
+
+Mỗi project có `translation_glossary_json` riêng trong project config.
+
+Mục đích:
+
+- giữ ổn định thuật ngữ domain tiếng Nhật
+- tránh LLM drift giữa các project
+- ưu tiên cách dịch đã chốt của business
+
+Provider phải xem glossary như ưu tiên cao hơn suy đoán ngôn ngữ chung của model khi term khớp.
+
+## Translation memory
+
+Translation memory hiện lấy từ `translation_queue` cùng project với các item:
+
+- `review_status = approved`
+- `review_status = edited`
+
+Memory này chỉ là hint giữ consistency, không phải nguồn để copy máy móc.
 
 ## Learning từ review history
 
-Khi user sửa bản dịch của AI, CIS ghi nhận:
+Khi admin approve/edit bản dịch, CIS giữ lại `source_text`, `ai_draft`, `reviewed_text`, `review_status` và metadata provider trong `translation_queue`.
 
-```json
-{
-  "original_ja": "クーポン再計算は予約確認画面で必須です。",
-  "ai_draft_vi": "Tính toán lại coupon là bắt buộc trên màn hình xác nhận đặt phòng.",
-  "user_edit_vi": "Việc tính toán lại coupon phải thực hiện tại màn hình xác nhận đặt phòng.",
-  "diff": ["Tính toán lại → Việc tính toán lại", "là bắt buộc trên → phải thực hiện tại"]
-}
+Lite hiện chỉ dùng các bản `approved` hoặc `edited` gần nhất làm translation memory. Medium/Full có thể học sâu hơn từ review history để đề xuất glossary, few-shot examples hoặc scoring.
+
+## Rule-based context policy
+
+Hiện tại app gán policy theo heuristics đơn giản:
+
+- `default_translation`
+- `high_context_comment`
+- `comment_mixed_language`
+
+Ví dụ:
+
+- comment mixed Japanese + Vietnamese -> bật `translate_japanese_only`
+- text có code block -> bật `preserve_code_blocks`
+- text có nhiều identifier/log -> bật `preserve_identifiers`
+
+## Journal / audit
+
+Khi tạo draft dịch, `sync_journal` nên ghi thêm:
+
+- `context_policy`
+- `neighbor_comments_count`
+- `translation_memory_count`
+- `glossary_count`
+- `signals`
+- `context_bundle_hash`
+
+Không log full context raw nếu không thật sự cần.
+
+## Review flow
+
+```text
+translation_queue.pending
+  -> ai_draft
+  -> approved | rejected | edited
 ```
 
-Các pattern này được dùng để:
-- Cải thiện AI prompt (few-shot examples)
-- Cập nhật vocabulary list (nếu user sửa thuật ngữ nhiều lần)
-- Điều chỉnh confidence scoring
-
----
-
-## Translation quality metrics
-
-| Metric | Cách đo | Mục tiêu |
-|--------|---------|----------|
-| AI draft rate | % issue có ai_draft ≠ NULL | > 90% |
-| Review rate | % issue được review | 100% (bắt buộc) |
-| Approval rate | % ai_draft được approve không sửa | > 80% |
-| Edit distance | Khoảng cách giữa ai_draft và reviewed_text | Giảm dần theo thời gian |
-| Review time | Thời gian từ ai_draft → review | < 24h |
-
----
+- `approved`: lấy `ai_draft` làm `reviewed_text`
+- `edited`: lấy text do người review sửa
+- `rejected`: có thể enqueue lại để retranslate
 
 ## Xử lý đặc biệt
 
-### Confidence thấp
+Confidence thấp:
 
-```
-ai_confidence < 0.6:
-  → Ưu tiên hiển thị trong review queue
-  → Warning trong UI: "AI không tự tin về bản dịch này"
-```
+- Nếu confidence thấp hơn ngưỡng, tạo anomaly `translation_low_conf`.
+- Anomaly này ưu tiên review nhưng không block sau khi human approve/edit.
 
-### Comment ngắn
+Comment ngắn:
 
-```
-Comment chỉ 1-2 từ cảm thán: "了解しました", "修正しました"
-  → AI tự động tạo draft ngắn
-  → Vẫn cần human review trước khi sync lên Jira trong MVP
-  → Có thể ưu tiên UI quick approve, nhưng không tự set review_status = 'approved'
-```
+- Comment ngắn vẫn tạo draft nếu có text cần dịch.
+- Không auto-approve trong Lite.
 
-### Comment chứa code snippet
+Code/log/technical text:
 
-```
-Comment có code block:
-  → AI giữ nguyên code, chỉ translate text xung quanh
-  → Code block đánh dấu rõ trong bản dịch
-```
+- Code block, URL, issue key, ID, command, path và technical key phải được giữ nguyên.
+- Nếu text gần như chỉ là log/config/stack trace, provider nên giữ nguyên và hạ confidence nếu cần.
 
-### Nhiều bản dịch pending
+Mixed-language:
 
-```
-Queue quá 20 item:
-  → Trigger scheduled job: batch review
-  → Hoặc cảnh báo admin
-```
+- Nếu text đã có tiếng Việt tự nhiên, giữ nguyên phần đó.
+- Nếu text lẫn Nhật + Việt/English, chỉ dịch phần tiếng Nhật cần dịch.
+
+## Ghi chú triển khai
+
+- `openai_api` vẫn là optional/fallback cho Lite.
+- Provider transport có thể khác nhau, nhưng app chỉ nên truyền cùng một standardized input.
+- Context collector hiện không gọi Backlog/Jira live, không có side effect, không ghi DB.

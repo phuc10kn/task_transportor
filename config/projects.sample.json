@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Sample Backlog to Jira",
+    "enabled": true,
+    "sync_enabled": false,
+    "backlog_space_url": "https://example.backlog.com",
+    "backlog_space_key": "EXAMPLE",
+    "backlog_project_key": "WEC",
+    "backlog_issue_key_prefix": "WEC",
+    "backlog_api_key_env": "BACKLOG_API_KEY",
+    "jira_site_url": "https://example.atlassian.net",
+    "jira_project_key": "SYNC",
+    "jira_email_env": "JIRA_EMAIL",
+    "jira_api_token_env": "JIRA_API_TOKEN",
+    "translation_provider": "codex_exec",
+    "source_language": "ja",
+    "target_language": "vi",
+    "cis_mapping_values_json": {
+      "issue_type": ["bug", "task", "feature", "question"],
+      "status": ["open", "in_progress", "review", "done"],
+      "priority": ["low", "normal", "high", "urgent"],
+      "user": ["admin@example.test"],
+      "component": []
+    },
+    "backlog_mapping_values_json": {
+      "issue_type": ["Bug", "Task", "Feature"],
+      "status": ["Open", "In Progress", "Closed"],
+      "priority": ["Low", "Normal", "High"],
+      "user": [],
+      "component": []
+    },
+    "jira_mapping_values_json": {
+      "issue_type": ["Bug", "Task", "Story"],
+      "status": ["To Do", "In Progress", "Done"],
+      "priority": ["Low", "Medium", "High"],
+      "user": [],
+      "component": []
+    },
+    "manual_pull_enabled": true,
+    "scheduled_pull_enabled": false,
+    "scheduled_pull_interval_minutes": 15,
+    "pull_updated_since_window_minutes": 30,
+    "scheduled_pull_filter_json": {
+      "statuses": [],
+      "issue_types": [],
+      "priorities": [],
+      "include_closed": true,
+      "include_attachments": "metadata_only",
+      "page_size": 100
+    }
+  }
+]

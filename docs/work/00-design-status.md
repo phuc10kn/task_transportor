@@ -23,6 +23,6 @@ Khi có mâu thuẫn giữa các tài liệu, ưu tiên theo thứ tự:
 
 Phiên bản được quản lý trong [plans/README.md](plans/README.md):
 
-- Lite: manual/scheduled pull, CIS, `codex_exec` translation, human review, dry-run và CIS -> Jira.
-- Medium: thêm webhook Backlog/Jira, Jira -> CIS, attachment file thật và UI vận hành đầy đủ hơn.
+- Lite: manual/scheduled pull, CIS, download attachment Backlog -> CIS cơ bản, translation/review là option sau ingest, dry-run và CIS -> Jira.
+- Medium: thêm webhook Backlog/Jira, Jira -> CIS, attachment upload/sync sang Jira và UI vận hành đầy đủ hơn.
 - Full: mở rộng hai chiều đầy đủ, CIS -> Backlog, learning/operation/reporting sâu hơn.

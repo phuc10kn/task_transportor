@@ -1,8 +1,8 @@
-﻿# Phase 04 - Translation review
+# Phase 04 - Translation review
 
 ## Mục tiêu
 
-Dịch Nhật -> Việt bằng `codex_exec`, đưa bản dịch vào queue và buộc human review trước khi sync Jira.
+Dịch Nhật -> Việt bằng `codex_exec` như một capability tùy chọn sau khi dữ liệu đã vào CIS. Với Issue Editor hiện tại, bản dịch issue đã human review được apply vào canonical `fields_json.<target_field>.cis`; issue canonical sync Jira không còn bị chặn trực tiếp bởi translation queue/review. Comment sync vẫn cần bản dịch reviewed nếu comment cần dịch.
 
 ## Làm trong phase này
 
@@ -20,16 +20,40 @@ Dịch Nhật -> Việt bằng `codex_exec`, đưa bản dịch vào queue và b
 
 ## Contract `codex_exec`
 
-`codex_exec` là external command adapter, chỉ được gọi từ worker. API request không gọi trực tiếp command này.
+`codex_exec` là external command adapter. Worker `translate` vẫn dùng adapter này cho queue flow chung; riêng Issue Editor có endpoint direct translate gọi provider ngay trong request hiện tại để tạo `ai_draft`, không enqueue `sync_jobs`.
 
-Input truyền vào command qua `stdin` dạng JSON:
+Input truyền vào command qua `stdin` dạng JSON chuẩn hóa:
 
 ```json
 {
+  "request_id": "trreq_xxx",
+  "queue_id": 123,
+  "project_id": "project_id",
+  "issue_id": "issue_id",
+  "comment_id": null,
+  "direction": {
+    "source_language": "ja",
+    "target_language": "vi"
+  },
   "source_language": "ja",
   "target_language": "vi",
-  "content_type": "issue_summary",
+  "content_type": "issue",
   "source_text": "...",
+  "source_text_hash": "sha256...",
+  "requested_provider": "codex_exec",
+  "context_policy": "default_translation",
+  "context_bundle": {
+    "issue_keys": {
+      "backlog_issue_key": "WEC-123",
+      "jira_issue_key": null
+    },
+    "issue_context": {},
+    "neighbor_comments": [],
+    "translation_memory": [],
+    "glossary": [],
+    "preservation_rules": {},
+    "signals": {}
+  },
   "context": {
     "project_id": "project_id",
     "issue_id": "issue_id",
@@ -60,6 +84,8 @@ Quy tắc lỗi:
 - Output không parse được JSON: retry/fail với code `CODEX_EXEC_PARSE_ERROR`.
 - Output thiếu `translated_text`: retry/fail với code `CODEX_EXEC_INVALID_OUTPUT`.
 - Không log full prompt/output; chỉ log hash, duration, exit code và error code.
+- `context_bundle.glossary` lấy từ config riêng của từng project.
+- `collectTranslationContext()` hiện chạy rule-based, chưa dùng LLM để lấy context.
 
 ## Deliverables
 
@@ -68,17 +94,18 @@ Quy tắc lỗi:
 - Fake `codex_exec` command/script để test tự động.
 - Handler `translate` đăng ký vào worker phase 02.
 - Prompt builder và output parser.
+- Rule-based context collector và standardized translation input builder.
 - API translation queue list/detail/approve/reject/retranslate/manual-edit.
 - Audit/journal cho translate và review.
 - Test script tự động cho success, timeout, parse error và manual edit.
 
 ## Chốt chặn
 
-Phase này đạt khi nội dung từ Backlog được dịch bằng `codex_exec`, admin có thể duyệt/sửa/từ chối, và chỉ bản dịch approved/edited mới được xem là đủ điều kiện đi tiếp.
+Phase này đạt khi translation option có thể dịch nội dung từ CIS bằng `codex_exec`, admin có thể duyệt/sửa/từ chối, và issue translation approved/edited được apply vào canonical CIS. Với comment, chỉ bản dịch approved/edited mới đủ điều kiện để sync comment sang Jira.
 
 Không đi phase 05 nếu:
 
-- API request trực tiếp gọi `codex_exec` và bị block lâu.
+- API direct translate trong Issue Editor không có loading/error rõ hoặc làm mất audit trong `translation_queue`.
 - Không có timeout cho `codex_exec`.
 - Lỗi `codex_exec` không retry/fail rõ.
 - Code block bị dịch hỏng trong test mẫu.
@@ -88,16 +115,19 @@ Không đi phase 05 nếu:
 
 ### Unit test check (Agent)
 
-- [ ] Test script tự động của phase 04 pass với fake `codex_exec`, ví dụ `npm run verify:phase04`.
-- [ ] Test translation job pending được worker xử lý thành `ai_draft`.
-- [ ] Test draft lưu `provider = codex_exec`.
-- [ ] Test draft có metadata command/profile/confidence nếu có.
-- [ ] Test admin approve draft chuyển review status sang `approved`.
-- [ ] Test admin manual-edit chuyển review status sang `edited`.
-- [ ] Test admin reject rồi retranslate tạo draft mới.
-- [ ] Test issue chỉ chuyển `approved` khi các translation bắt buộc đã `approved` hoặc `edited`.
-- [ ] Test `codex_exec` timeout tạo retry/fail đúng policy.
-- [ ] Test output JSON lỗi tạo retry/fail đúng policy.
+- [x] Test script tự động của phase 04 pass với fake `codex_exec`, ví dụ `npm run verify:phase04`.
+- [x] Test translation job pending được worker xử lý thành `ai_draft`.
+- [x] Test draft lưu `provider = codex_exec`.
+- [x] Test draft có metadata command/profile/confidence nếu có.
+- [x] Test admin approve draft chuyển review status sang `approved`.
+- [x] Test admin manual-edit chuyển review status sang `edited`.
+- [x] Test admin reject rồi retranslate tạo draft mới.
+- [x] Test issue chỉ chuyển `approved` khi các translation bắt buộc đã `approved` hoặc `edited`.
+- [x] Test `codex_exec` timeout tạo retry/fail đúng policy.
+- [x] Test output JSON lỗi tạo retry/fail đúng policy.
+- [x] Test standardized translation input vẫn giữ `source_text` top-level để tương thích provider hiện tại.
+- [x] Test `collectTranslationContext()` nạp glossary riêng của project vào `context_bundle.glossary`.
+- [x] Test journal `translation_ai_draft` ghi context summary như `context_policy`, `glossary_count`, `translation_memory_count` và `signals`.
 
 ### Manual check (Người review)
 
@@ -106,9 +136,18 @@ Không đi phase 05 nếu:
 - [ ] Manual-edit translation từ API và thấy trạng thái `edited`.
 - [ ] Reject rồi retranslate từ API và thấy draft mới.
 - [ ] Kiểm tra journal/audit cho translate và review action.
+- [ ] Kiểm tra một project có glossary riêng và draft dịch ưu tiên đúng thuật ngữ đã cấu hình.
 
 ## Ghi chú thiết kế
 
 - `openai_api` chỉ là optional/fallback, không phải đường mặc định của Lite.
 - Không dịch attachment text.
 - Comment ngắn vẫn cần review, có thể có quick approve nhưng không auto-approve.
+- Phase 03 không tạo `translation_queue` và không enqueue job `translate`; translation không tham gia quá trình `System -> CIS`.
+- Khi bật translation cho một project/issue, queue dịch và job `translate` phải chạy theo đường riêng `cis -> cis`.
+- API review đổi trạng thái queue, ghi journal và với issue translation sẽ apply reviewed text vào `fields_json.<target_field>.cis`.
+- `translate` job dùng `CODEX_EXEC_COMMAND`, timeout bằng `CODEX_EXEC_TIMEOUT_SECONDS`, và ghi lỗi provider vào `translation_queue.provider_error`.
+- Adapter Codex CLI thật nằm trong `src/modules/Translation/infrastructure/codexCliAdapter.js`; `.env` local có thể trỏ `CODEX_EXEC_COMMAND=node src/modules/Translation/infrastructure/codexCliAdapter.js`.
+- Adapter này vẫn gọi `codex exec --sandbox read-only` thật, nhưng chuẩn hóa output theo `codexTranslationOutput.schema.json` để worker luôn nhận JSON contract ổn định.
+- Job dịch, nếu được tạo bởi option riêng, có priority thấp hơn job pull để worker ưu tiên hoàn tất inbound pull trước.
+- Unit test đã pass bằng `scripts/verify/translation-review.js`; manual checklist vẫn cần người review xác nhận qua API/local worker.

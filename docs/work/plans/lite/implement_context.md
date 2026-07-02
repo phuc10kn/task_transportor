@@ -1,5 +1,22 @@
 # Lite - Implement Context
 
+## Current implementation override
+
+Phần dưới là context tổng hợp lịch sử. Khi có mâu thuẫn, code hiện tại và các ghi chú cập nhật trong `workflow/issueEditor.md`, `08-api-admin-ui.md`, `05-translation-review.md`, `07-sync-engine-jira.md` được ưu tiên.
+
+Các điểm đã thay đổi so với context cũ:
+
+- Issue list mở thẳng Issue Editor; Issue Detail chỉ còn vai trò phụ/legacy nếu còn dùng.
+- `fields_json.<field>.cis` là nhánh canonical/source of truth vận hành. Ingest Backlog materialize `cis` khi thiếu, không để CIS trống chỉ vì dữ liệu đến từ Backlog.
+- Translation trong Issue Editor nằm trong modal `Translations`; không còn modal status riêng.
+- Issue translation chỉ dùng target field `summary` và `description`, source lấy từ `fields_json.<target_field>.backlog`, không fallback sang CIS/revision/queue cũ.
+- `Approve + save` translation apply vào `fields_json.<target_field>.cis`.
+- Nếu apply translation làm canonical field thay đổi thật, rule manual edit hiện tại có thể đưa issue `approved`/`synced` sang `update_pending`.
+- Jira sync nằm trong modal `Jira sync`; mở modal chạy dry-run, cho sửa payload target, sync bằng payload đã chỉnh và lưu các draft field có giá trị vào `fields_json.<field>.jira`.
+- Issue Editor dry-run/sync Jira không dùng translation queue/review làm gate riêng. Gate còn lại là mapping, anomaly, Jira config, sync state và stale dry-run; theo code Lite hiện tại `pending_translate` vẫn bị chặn bởi sync state.
+- Attachment outbound chưa nối vào Issue Editor dry-run/sync issue; issue payload v1 không gồm labels/components/fix_versions/worklogs.
+- Project Config đang disable `Pull whole project` ở FE; UI vận hành ưu tiên `Pull one issue` và `Resync from Backlog`.
+
 File này là context tổng hợp để bắt đầu implement phiên bản Lite. Nội dung được chọn lọc từ:
 
 - `docs/work/implement-interview.md`
@@ -26,13 +43,13 @@ Trong Lite:
 ```text
 Backlog manual pull / scheduled pull
   -> CIS
-  -> codex_exec translation
-  -> Human review
+  -> optional codex_exec translation
+  -> optional Human review
   -> Dry-run
   -> CIS -> Jira
 ```
 
-Lite không cho Backlog gọi Jira trực tiếp. Mọi dữ liệu từ Backlog phải vào CIS trước, được normalize, review, mapping/anomaly pre-check, rồi mới outbound sang Jira.
+Lite không cho Backlog gọi Jira trực tiếp. Mọi dữ liệu từ Backlog phải vào CIS trước và được normalize đầy đủ. Translation là option sau ingest, không tham gia quá trình `System -> CIS`; khi bật, bản dịch/review được dùng cho outbound.
 
 ## 2. Lite khác MVP đầy đủ ở đâu?
 
@@ -209,10 +226,22 @@ Field tối thiểu:
 - `translation_model` hoặc `translation_command_profile`, tùy provider
 - `source_language = "ja"`
 - `target_language = "vi"`
-- `auto_translate`
-- `require_translation_review`
+- `translation_glossary_json` optional nhưng khuyến nghị có cho từng project
+- `auto_translate`, mặc định Lite là `false`
+- `require_translation_review`, mặc định Lite là `false`
 - `require_mapping_approval`
 - `mapping_scope = "global_with_project_override"`
+
+`translation_glossary_json` là glossary riêng theo project, không phải glossary global. Shape khuyến nghị:
+
+```json
+[
+  { "source": "予約", "target": "đặt chỗ" },
+  { "source": "管理画面", "target": "màn hình quản trị" }
+]
+```
+
+Mục tiêu là giữ ổn định thuật ngữ Nhật -> Việt theo domain từng project. `collectTranslationContext()` phải nạp glossary này vào `context_bundle.glossary` trước khi gọi provider dịch.
 
 Pull config:
 
@@ -235,6 +264,8 @@ Pull config:
   "page_size": 100
 }
 ```
+
+`include_attachments = "metadata_only"` trong filter là cấu hình cho bước scan/list candidate. Nó không có nghĩa là worker không được tải file; khi full issue được pull, Phase 03 có thể download attachment thật từ Backlog về CIS storage. Upload attachment sang Jira vẫn thuộc Phase 06/Medium.
 
 Khi `sync_enabled = false`, worker không chạy outbound sync thật cho project đó.
 
@@ -271,7 +302,7 @@ Schema rules:
 
 State bắt buộc:
 
-`issues.status`:
+`issues.sync_status`:
 
 - `ingested`
 - `pending_translate`
@@ -313,12 +344,16 @@ State bắt buộc:
 - `failed`
 - `skipped`
 
+Ý nghĩa: trạng thái tải file từ hệ thống nguồn về CIS storage. Với Backlog -> CIS ở Lite, Phase 03 hoàn tất attachment khi `download_status = downloaded`, có `stored_path` và `sha256`.
+
 `issue_attachments.sync_status`:
 
 - `pending`
 - `synced`
 - `skipped`
 - `failed`
+
+Ý nghĩa: trạng thái đẩy attachment từ CIS sang hệ thống đích như Jira. Sau Backlog -> CIS ingest, `sync_status` vẫn là `pending`; đây không phải lỗi Phase 03.
 
 ## 7. Backlog inbound trong Lite
 
@@ -383,10 +418,13 @@ Backlog worker ingest:
 6. Cập nhật `issues.fields_json`.
 7. Tạo/cập nhật `issue_comments`.
 8. Tạo/cập nhật `issue_attachments` metadata.
-9. Tạo translation queue nếu cần.
-10. Tạo anomaly nếu routing mismatch, mapping gap, translation low confidence hoặc content change lớn.
-11. Ghi `sync_journal`.
-12. Set job `success` hoặc retry/fail.
+9. Download attachment file thật từ Backlog về CIS storage inline trong cùng job `manual_pull`.
+10. Cập nhật `issue_attachments.download_status`, `stored_path`, `sha256`, `size_bytes`.
+11. Nếu attachment download fail, ghi `download_status = failed` và `error_message`, nhưng không fail toàn bộ issue ingest.
+12. Không tạo translation queue trong job inbound; translation là option riêng sau khi dữ liệu đã vào CIS.
+13. Tạo anomaly nếu routing mismatch, mapping gap hoặc content change lớn.
+14. Ghi `sync_journal`.
+15. Set job `success` hoặc retry/fail.
 
 Field mapping Backlog -> CIS:
 
@@ -401,6 +439,8 @@ Field mapping Backlog -> CIS:
 | `priority.name` | `fields_json.priority.backlog`, `issue_revisions.priority` |
 | `assignee.name` | `fields_json.assignee.backlog`, `issue_revisions.assignee` |
 | `created`/`updated` | `backlog_updated_at`, hash/update detection |
+| `attachments[]` | `issue_attachments`, file trong `storage/attachments`, `download_status` |
+| `externalFileLinks[]` | `fields_json.external_file_links.backlog` nếu cần giữ link ngoài |
 
 Webhook để Medium:
 
@@ -424,8 +464,13 @@ Provider:
 Yêu cầu tối thiểu:
 
 - Chạy từ worker job, không chặn API request.
+- Trước khi gọi provider, worker phải gọi `collectTranslationContext()` để gom context read-only từ CIS.
+- Request gửi cho provider phải là standardized translation input, trong đó `source_text` vẫn là trung tâm và `context_bundle` chỉ đóng vai trò hỗ trợ.
+- `context_bundle` tối thiểu gồm `issue_keys`, `project_profile`, `issue_context`, `neighbor_comments`, `translation_memory`, `glossary`, `preservation_rules` và `signals`.
 - Có timeout và retry theo chính sách job chung.
 - Prompt giữ nguyên code block, link, key kỹ thuật, issue key và format quan trọng.
+- Prompt phải yêu cầu giữ nguyên segment đã là tiếng Việt tự nhiên và chỉ dịch phần tiếng Nhật khi source text mixed-language.
+- Provider phải ưu tiên glossary riêng của project khi term khớp.
 - Output parse được thành draft dịch và metadata tối thiểu như provider, model/command, confidence nếu có.
 - Không log prompt/output chứa secret hoặc command nhạy cảm.
 - Nếu `codex_exec` lỗi, job retry hoặc chuyển sang manual-edit với lỗi rõ ràng.
@@ -446,13 +491,15 @@ Không dịch attachment text.
 Flow:
 
 ```text
-issues.status: ingested -> pending_translate -> pending_review -> approved
+issues.sync_status: ingested -> pending_translate -> pending_review -> approved
 translation_queue.review_status: pending -> ai_draft -> approved|edited|rejected
 ```
 
+Flow này chỉ áp dụng khi project/issue bật translation. Với `System -> CIS`, issue mới có thể dừng ở `ingested` và chờ mapping/dry-run/sync theo cấu hình project.
+
 Rules:
 
-- Human review bắt buộc trước khi sync Jira.
+- Với Issue Editor hiện tại, human review của issue translation không còn là gate trực tiếp cho issue canonical sync Jira. Bản dịch đã approve/edit được apply vào `fields_json.<target_field>.cis`; comment sync vẫn cần bản dịch reviewed nếu comment cần dịch. Nếu issue còn `sync_status = 'pending_translate'`, dry-run/sync Jira vẫn bị chặn bởi sync-state gate.
 - Admin có thể approve draft.
 - Admin có thể edit/manual-edit rồi approve.
 - Admin có thể reject và retranslate.
@@ -466,6 +513,7 @@ Audit:
 - AI translate.
 - approve/reject/retranslate/manual edit.
 - nếu admin sửa text, lưu đủ old/new metadata để Full học sau này.
+- Journal của `translation_ai_draft` cần ghi summary context thay vì full raw context: `context_policy`, `neighbor_comments_count`, `translation_memory_count`, `glossary_count`, `signals`, `context_bundle_hash`.
 
 ## 9. Mapping Lite
 
@@ -522,7 +570,7 @@ Action:
 - `ignore`
 - `resolve`
 
-Critical anomaly không đổi trực tiếp `issues.status`, nhưng outbound worker phải check anomaly còn open/investigating trước khi sync thật.
+Critical anomaly không đổi trực tiếp `issues.sync_status`, nhưng outbound worker phải check anomaly còn open/investigating trước khi sync thật.
 
 ## 11. Attachment Lite
 
@@ -531,11 +579,12 @@ Mức bắt buộc:
 - Lưu metadata vào `issue_attachments`.
 - Lưu association với issue/comment.
 - Lưu filename, source id, size/mime nếu có, download/sync status.
+- Download file thật từ Backlog về CIS storage khi credential/API cho phép.
 - Hiển thị trong issue detail.
-- Dry-run Jira báo attachment pending/download failed.
+- Issue Editor dry-run/sync v1 chưa check hoặc warning attachment; attachment outbound sẽ có flow riêng khi được implement.
 - Attachment failure không block issue sync, trừ khi sau này project config đánh dấu required.
 
-Nên làm nếu credential/API sẵn:
+Backlog -> CIS trong Phase 03:
 
 - Download file từ Backlog về:
 
@@ -544,14 +593,24 @@ storage/attachments/<project_id>/<issue_id>/<attachment_id>/
 ```
 
 - Tính `sha256`.
-- Cho admin download nội bộ.
+- Set `download_status = downloaded` nếu tải thành công.
+- Giữ `sync_status = pending` vì chưa upload sang Jira.
+- Retry download bằng `POST /api/v1/attachments/:attachmentId/retry-download`, chạy trực tiếp và không enqueue job.
+- Code Lite hiện tại chưa có endpoint download file trực tiếp từ Admin API.
 
-Có thể để Medium:
+Backlog `externalFileLinks` là link ngoài, không phải file attachment thật:
+
+- Không download về CIS storage.
+- Không ghi vào `issue_attachments`.
+- Nếu cần giữ để hiển thị/sync description, lưu ở `fields_json.external_file_links.backlog`.
+
+CIS -> Jira attachment outbound trong phase sau hoặc Medium:
 
 - Upload/copy attachment thật sang Jira.
 - Retry sync attachment sang Jira bằng `push_attachment`.
+- Khi upload Jira thành công, cập nhật `issue_attachments.jira_attachment_id` và `sync_status = synced`.
 
-Nếu Lite chưa upload attachment sang Jira, Jira description phải ghi attachment pending trong CIS.
+Issue Editor dry-run/sync v1 hiện không thêm attachment pending note vào Jira description; attachment outbound sẽ có flow/pre-check riêng khi được nối vào code.
 
 ## 12. Sync engine Lite
 
@@ -567,15 +626,17 @@ ORDER BY priority ASC, run_after ASC, created_at ASC
 Job types Lite:
 
 - `manual_pull`
-- `dry_run`
+- `translate` cho global translation queue/worker path; Issue Editor direct translate hiện gọi provider ngay trong request và không enqueue `sync_jobs`.
 - `push_issue`
 - `push_comment`
-- `push_attachment` có thể chỉ dùng cho metadata/download retry
-- `retry`
+- `noop_test` chỉ dùng cho verify/test.
 
-Reserved cho Medium:
+Reserved/phase sau, chưa có default handler trong code Lite hiện tại:
 
+- `push_attachment` dành cho chiều CIS -> Jira khi bật upload/sync attachment sang Jira.
 - `webhook_ingest`
+
+`dry_run` hiện không phải job type trong worker registry; Jira dry-run chạy qua endpoint `POST /api/v1/issues/:issueId/dry-run/jira` và ghi journal.
 
 Direction Lite:
 
@@ -613,12 +674,12 @@ Dry-run không gọi Jira API thật.
 
 Dry-run validate:
 
-- issue/revision/comments/translation reviewed.
+- issue/revision và canonical effective values hiện tại.
 - required mapping.
 - project sync enabled.
 - Jira credential/config.
 - critical anomaly còn open/investigating.
-- attachment warning.
+- dry-run freshness/canonical hash cho sync thật. Attachment outbound chưa nối vào issue dry-run/sync nên không có attachment warning trong Issue Editor flow hiện tại.
 
 Response có:
 
@@ -641,35 +702,28 @@ Pre-check trước Jira API:
 
 1. Issue không `archived`.
 2. Issue `approved` hoặc `update_pending` đã xử lý đủ.
-3. Translation required đã `approved` hoặc `edited`.
-4. Required mapping approved.
-5. Không còn critical blocking anomaly.
-6. Project `sync_enabled = 1`.
-7. Jira credential/config tồn tại.
+3. Required mapping approved.
+4. Không còn critical blocking anomaly.
+5. Project `sync_enabled = 1`.
+6. Jira credential/config tồn tại.
+7. Dry-run thành công gần nhất khớp `canonical_hash` hiện tại.
 8. Dry-run validation không còn lỗi block.
 
 Jira payload:
 
 - project key từ `jira_project_key`.
 - issue type từ mapping `backlog -> cis` và `cis -> jira`.
-- summary có trace Backlog key, ví dụ `[WEC-123] <summary tiếng Việt đã review>`.
-- description gồm Backlog key/url, bản dịch Việt đã review, original Nhật, attachment pending note nếu có, và trace block cố định.
+- summary lấy từ canonical effective value hoặc override trong Jira sync modal.
+- description lấy từ canonical effective value hoặc override trong Jira sync modal.
 - priority từ mapping.
-- labels như `cis-sync` và `backlog-wec-123` nếu Jira cho phép.
+- payload issue v1 không gửi labels/components/fix_versions/worklogs.
 
-Jira trace block bắt buộc:
-
-```text
-CIS Sync Trace
-- CIS Issue ID: <cis_issue_id>
-- Backlog Issue Key: <backlog_issue_key>
-- Source: backlog
-```
+Code hiện tại không tự thêm trace block vào payload. Search trace chỉ dùng để link issue Jira cũ nếu summary/description/label đã chứa Backlog key/CIS id.
 
 Jira idempotency:
 
 1. Nếu `issues.jira_issue_key` đã có, update Jira issue đó.
-2. Nếu chưa có `jira_issue_key`, search Jira theo Backlog issue key trong summary/description/label.
+2. Nếu chưa có `jira_issue_key`, search Jira theo Backlog issue key/CIS id/trace label nếu có.
 3. Nếu match đúng một issue, lưu `jira_issue_key` vào CIS rồi update.
 4. Nếu match nhiều issue, tạo anomaly/conflict và không create issue mới.
 5. Nếu không match, create Jira issue mới.
@@ -678,7 +732,7 @@ Jira idempotency:
 Sau Jira success:
 
 - update `issues.jira_issue_key`.
-- `issues.status = 'synced'`.
+- `issues.sync_status = 'synced'`.
 - update `last_synced_at`.
 - update `fields_json` phía Jira nếu có.
 - ghi journal `direction_from = 'cis'`, `direction_to = 'jira'`.
@@ -730,12 +784,20 @@ GET   /api/v1/projects
 POST  /api/v1/projects
 GET   /api/v1/projects/:projectId
 PATCH /api/v1/projects/:projectId
+DELETE /api/v1/projects/:projectId
 POST  /api/v1/projects/:projectId/sync/enable
 POST  /api/v1/projects/:projectId/sync/disable
+POST  /api/v1/projects/:projectId/cis/mapping-values/sync
 
 GET  /api/v1/issues
 GET  /api/v1/issues/:issueId
 GET  /api/v1/projects/:projectId/issues
+GET  /api/v1/issues/:issueId/editor
+PATCH /api/v1/issues/:issueId
+GET  /api/v1/issues/:issueId/history
+GET  /api/v1/issues/:issueId/worklogs
+POST /api/v1/issues/:issueId/translations/translate
+POST /api/v1/issues/:issueId/translations/:queueId/translate
 POST /api/v1/issues/:issueId/force-approve
 POST /api/v1/issues/:issueId/mark-duplicate
 
@@ -746,22 +808,31 @@ POST /api/v1/translation-queue/:queueId/reject
 POST /api/v1/translation-queue/:queueId/retranslate
 POST /api/v1/translation-queue/:queueId/manual-edit
 
+GET  /api/v1/mapping-settings
 GET  /api/v1/mapping-rules
+POST /api/v1/mapping-rules
+GET  /api/v1/mapping-rules/:ruleId
+PATCH /api/v1/mapping-rules/:ruleId
+DELETE /api/v1/mapping-rules/:ruleId
 POST /api/v1/mapping-rules/:ruleId/approve
 POST /api/v1/mapping-rules/:ruleId/reject
 
 GET  /api/v1/anomalies
+POST /api/v1/anomalies
 GET  /api/v1/anomalies/:anomalyId
 POST /api/v1/anomalies/:anomalyId/ignore
 POST /api/v1/anomalies/:anomalyId/resolve
 
 POST /api/v1/projects/:projectId/backlog/pull
 POST /api/v1/projects/:projectId/backlog/issues/:backlogIssueKey/pull
+POST /api/v1/projects/:projectId/backlog/mapping-values/pull
+POST /api/v1/projects/:projectId/jira/mapping-values/pull
 
 POST /api/v1/issues/:issueId/dry-run/jira
 POST /api/v1/issues/:issueId/sync/jira
 
 GET  /api/v1/sync-jobs
+POST /api/v1/sync-jobs
 GET  /api/v1/sync-jobs/:jobId
 POST /api/v1/sync-jobs/:jobId/retry
 POST /api/v1/sync-jobs/:jobId/cancel
@@ -769,7 +840,6 @@ GET  /api/v1/sync-journal
 GET  /api/v1/issues/:issueId/sync-journal
 
 GET  /api/v1/issues/:issueId/attachments
-GET  /api/v1/attachments/:attachmentId/download
 POST /api/v1/attachments/:attachmentId/retry-download
 ```
 
@@ -781,6 +851,7 @@ POST /webhooks/jira
 POST /api/v1/mapping-rules/bulk-approve
 POST /api/v1/projects/:projectId/jira/pull
 POST /api/v1/projects/:projectId/jira/issues/:jiraIssueKey/pull
+GET  /api/v1/attachments/:attachmentId/download
 POST /api/v1/attachments/:attachmentId/retry-sync
 ```
 
@@ -792,13 +863,9 @@ UI bắt buộc:
 - Dashboard health tối thiểu.
 - Project list/detail/config.
 - Issue list theo project/status/text search nếu được.
-- Issue detail hiển thị:
-  - Backlog original tiếng Nhật.
-  - AI draft/reviewed tiếng Việt.
-  - comments.
-  - attachment metadata/status.
-  - mapping/anomaly/sync state.
-- Translation review.
+- Issue Editor là màn chính của issue, hiển thị/sửa `CIS CANONICAL`, source Backlog/CIS/Jira, overview/history và các action.
+- Translation review của issue nằm trong modal `Translations` trong Issue Editor.
+- Jira sync nằm trong modal `Jira sync`, tự dry-run, cho sửa payload và sync.
 - Mapping approval thủ công.
 - Anomaly list/detail.
 - Sync jobs.
@@ -887,7 +954,7 @@ npm run verify:phase06
 npm run verify:phase07
 ```
 
-Nếu chưa có test runner chính thức, tạo script Node tối thiểu trong `scripts/verify/` và command phải exit code khác `0` khi fail.
+Nếu chưa có test runner chính thức, tạo script Node tối thiểu theo chức năng/capability trong `scripts/verify/` và command phải exit code khác `0` khi fail. Không cần chia file verify theo phase; command `verify:phaseXX` nên là alias ghép các verify capability liên quan.
 
 ## 18. Definition of Done Lite
 
@@ -897,16 +964,16 @@ Lite đạt yêu cầu khi:
 2. Tạo/import project config từ JSON và chỉnh được qua UI.
 3. Backlog manual pull tạo inbound job `backlog -> cis`.
 4. Pull dedupe hoạt động, duplicate không tạo revision/comment/outbound job trùng.
-5. Worker ingest issue/comment/attachment metadata vào CIS và tạo revision đúng.
-6. Issue mới đi đúng state `ingested -> pending_translate -> pending_review`.
-7. `codex_exec` tạo draft Nhật -> Việt cho summary, description, comment; nếu lỗi có trạng thái rõ để retry hoặc manual-edit.
+5. Worker ingest issue/comment/attachment metadata vào CIS, download attachment file thật nếu có credential/API, và tạo revision đúng.
+6. Issue mới từ `System -> CIS` đi đúng state `ingested` mà không tự tạo queue/job dịch.
+7. Nếu bật translation option, `codex_exec` tạo draft Nhật -> Việt cho summary, description, comment; nếu lỗi có trạng thái rõ để retry hoặc manual-edit.
 8. Admin approve/edit/reject/retranslate được translation.
 9. Missing mapping tạo anomaly và block sync thật.
 10. Dry-run Jira trả payload + validation + warning rõ ràng.
 11. Sync thật không gọi Jira nếu pre-check fail.
 12. Sync thật tạo/update Jira issue khi pre-check pass.
 13. Comment Backlog đã review sync được lên Jira hoặc fail/retry riêng.
-14. Attachment failure không block issue sync và được hiển thị pending.
+14. Attachment download failure không block issue ingest/sync, được hiển thị bằng `download_status = failed`, và có retry download; attachment chưa upload Jira giữ `sync_status = pending`.
 15. Mọi action quan trọng có journal/audit và correlation id.
 16. Job lỗi retry đúng policy, hết retry chuyển `failed`, admin retry được.
 17. Dashboard cho thấy pending review, missing mapping, failed jobs và open anomalies.
@@ -932,8 +999,8 @@ Không được điều chỉnh:
 - System -> CIS -> System.
 - SQLite.
 - Admin UI.
-- AI translate thật Nhật -> Việt bằng `codex_exec` là provider chính trong Lite.
-- Human review bắt buộc.
+- Khi bật translation option, AI translate thật Nhật -> Việt dùng `codex_exec` là provider chính trong Lite.
+- Human review vẫn bắt buộc cho comment cần dịch; issue canonical sync từ Issue Editor không bị chặn bằng gate riêng của translation queue/review, nhưng `issues.sync_status = 'pending_translate'` vẫn chưa syncable trong code Lite hiện tại.
 - Dry-run trước Jira sync.
 - Mapping approve trước sync.
 - `direction_from` và `direction_to`.

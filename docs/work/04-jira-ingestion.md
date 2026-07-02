@@ -1,40 +1,53 @@
-# Jira ↔ CIS — Inbound và outbound qua CIS
+# Jira ↔ CIS — Trạng thái Lite hiện tại
 
-## Jira là nơi làm việc chính
+## Trạng thái triển khai hiện tại cho Lite
 
-Dev thao tác hàng ngày trên Jira:
-- Update status (In Progress → Resolved)
+- Code Lite hiện tại chưa triển khai Jira webhook, Jira issue pull, hoặc Jira -> CIS normalizer. Không có route `POST /api/v1/projects/:projectId/jira/pull` và không có route `POST /api/v1/projects/:projectId/jira/issues/:jiraIssueKey/pull`.
+- Phần Jira đã có trong Lite gồm:
+  - `POST /api/v1/projects/:projectId/jira/mapping-values/pull` để kéo catalog mapping values từ Jira.
+  - `POST /api/v1/issues/:issueId/dry-run/jira` để validate/build payload Jira.
+  - `POST /api/v1/issues/:issueId/sync/jira` để enqueue `push_issue`.
+- Outbound `CIS -> Jira` trong Issue Editor không còn check translation queue/review bằng rule riêng trước khi sync. Translation vẫn là workflow review riêng, còn payload sync lấy từ canonical effective values. Lưu ý theo code Lite hiện tại: `issues.sync_status = 'pending_translate'` vẫn bị chặn bởi sync-state gate.
+- Canonical effective priority: `fields_json.<field>.cis -> fields_json.<field>.backlog -> fields_json.<field>.jira -> revision fallback`.
+- Main Issue Editor chỉ có nút `Jira sync`. Khi mở modal, UI chạy dry-run, duplicate các field sắp update lên Jira và cho admin chỉnh trước khi sync.
+- Khi admin chỉnh field trong Jira sync modal rồi bấm `Sync Jira`, sync job dùng đúng payload đã preview. Các draft field có giá trị được lưu vào `fields_json.<field>.jira`; field để trống không xóa nhánh `.jira` cũ trong DB.
+- Sync thật vẫn yêu cầu dry-run mới nhất khớp `canonical_hash`; nếu stale thì trả lỗi `DRY_RUN_STALE`.
+
+## Jira là nơi làm việc chính sau Lite
+
+Định hướng sau Lite là dev thao tác hàng ngày trên Jira:
+- Update business status (In Progress → Resolved)
 - Add comment (trả lời, hỏi lại)
 - Change assignee
 - Update Sprint, Story Points, Epic Link
 - Thêm attachment, link
 
-Tất cả đều cần đi về CIS trước. Nếu cần thông báo lại cho khách hàng thì CIS sẽ tạo outbound job riêng về Backlog ở phase sau.
+Các thay đổi này cần đi về CIS trước khi sync ngược về hệ khác. Phần Jira -> CIS này chưa có trong code Lite hiện tại; nếu cần thông báo lại cho khách hàng thì CIS sẽ tạo outbound job riêng về Backlog ở phase sau.
 
 ---
 
-## Trigger
+## Trigger dự kiến sau Lite
 
 ```
 Jira Webhook:
   - issue_created        (ít khi — issue tạo từ Jira)
-  - issue_updated        (status, assignee, field)
+  - issue_updated        (business status, assignee, field)
   - comment_created      (dev trả lời)
   - comment_updated
 ```
 
 ---
 
-## Manual pull: Jira → CIS
+## Manual pull: Jira → CIS dự kiến sau Lite
 
-Webhook là đường tự động, nhưng Admin UI vẫn cần manual pull để import ban đầu, recover khi webhook bị miss, hoặc kiểm tra lại một issue cụ thể.
+Webhook là đường tự động sau Lite, nhưng Admin UI có thể cần manual pull để import ban đầu, recover khi webhook bị miss, hoặc kiểm tra lại một issue cụ thể.
 
 ```
-POST /api/projects/:projectId/jira/pull
-POST /api/projects/:projectId/jira/issues/:jiraIssueKey/pull
+POST /api/v1/projects/:projectId/jira/pull
+POST /api/v1/projects/:projectId/jira/issues/:jiraIssueKey/pull
 ```
 
-Manual pull dùng cùng normalizer với webhook:
+Các endpoint trên chưa tồn tại trong code Lite hiện tại. Khi triển khai sau Lite, manual pull nên dùng cùng normalizer với webhook:
 
 1. Gọi Jira API lấy issue/comment/attachment.
 2. Normalize thành internal event payload.
@@ -43,7 +56,7 @@ Manual pull dùng cùng normalizer với webhook:
 
 ---
 
-## Flow: Jira update → CIS
+## Flow dự kiến: Jira update → CIS
 
 ```
 1. Webhook receive
@@ -55,15 +68,15 @@ Manual pull dùng cùng normalizer với webhook:
    ├── Tra issues WHERE project_id = ? AND jira_issue_key = 'WEC1-789'
    ├── Nếu không tìm thấy:
    │   └── Có thể issue được tạo trực tiếp trên Jira → cần ingest 2 chiều
-   │   └── INSERT với source = 'jira', status = 'ingested'
+   │   └── INSERT với source = 'jira', sync_status = 'ingested'
    └── Nếu tìm thấy → tiếp tục
 
 3. Phân loại thay đổi
 
-   [status change]
+   [business status change]
    ├── Dev chuyển "In Progress" → "Resolved"
    ├── UPDATE issues.fields_json → status.jira = 'Resolved'
-   ├── UPDATE issues.status = 'update_pending'
+   ├── UPDATE issues.sync_status = 'update_pending'
    └── Cần sync về Backlog? → optional, tuỳ config
 
    [field change: assignee, Sprint, Story Points]
@@ -91,36 +104,32 @@ Manual pull dùng cùng normalizer với webhook:
 
 ---
 
-## Flow: CIS → Jira (issue đã duyệt)
+## Flow: CIS → Jira (issue đủ điều kiện)
 
-Bước này xảy ra sau khi issue từ Backlog được translate + review.
+Bước này xảy ra sau khi issue từ Backlog đã vào CIS và mapping/anomaly/dry-run pass. Trong canonical Issue Editor flow, translation review không còn là gate trực tiếp; bản dịch đã approve chỉ là một cách cập nhật `fields_json.summary.cis` hoặc `fields_json.description.cis`. Sync vẫn phụ thuộc `issues.sync_status`: `pending_translate` chưa được xem là trạng thái syncable trong code Lite hiện tại.
 
 ```
-1. Trigger: issue trong CIS có status = 'approved'
+1. Trigger: issue trong CIS có sync_status thuộc nhóm syncable (`ingested`, `pending_review`, `approved`, `update_pending`, `synced`)
 
 2. Lấy dữ liệu:
    ├── project_id → jira_project_key
-   ├── fields_json → lấy các field có backlog value
-   └── translation_queue.reviewed_text → bản dịch đã duyệt
+   ├── fields_json → lấy canonical effective values
+   └── jira sync modal override → dùng payload đã chỉnh; các field có giá trị được lưu vào fields_json.<field>.jira
 
 3. Build Jira payload:
    ├── project_key: jira_project_key
-   ├── issue_type: từ mapping_rules (backlog_type → jira_type)
-   ├── summary: kết hợp backlog summary + backlog key prefix
-   ├── description: build từ template:
-   │   ├── Backlog issue key + URL (traceability)
-   │   ├── Bản dịch tiếng Việt (đã review)
-   │   └── Original Nhật (giữ nguyên)
-   ├── priority: từ mapping_rules
-   ├── labels: ['backlog-migrated', project_labels]
-   └── custom fields nếu cần (Story Points = 0, v.v.)
+   ├── issue_type: từ mapping_rules theo canonical value
+   ├── summary: canonical effective summary hoặc override trong modal
+   ├── description: canonical effective description hoặc override trong modal
+   ├── priority/status/assignee/due_date: canonical effective value qua mapping/Jira config
+   └── labels/components/fix_versions/worklogs: chưa nằm trong issue payload v1
 
 4. Gọi Jira API:
    ├── POST /rest/api/3/issue (tạo mới)
    └── PUT /rest/api/3/issue/WEC1-789 (update)
 
 5. Cập nhật CIS:
-   ├── UPDATE issues: jira_issue_key, status = 'synced', last_synced_at
+   ├── UPDATE issues: jira_issue_key, sync_status = 'synced', last_synced_at
    └── UPDATE issues.fields_json: status.jira = mapped_status
 
 6. Ghi sync_journal: direction_from = 'cis', direction_to = 'jira', action = 'create' | 'update', status = 'success'
@@ -128,7 +137,7 @@ Bước này xảy ra sau khi issue từ Backlog được translate + review.
 
 ---
 
-## Flow: CIS → Backlog (sync ngược)
+## Flow dự kiến: CIS → Backlog (sync ngược)
 
 Chỉ xảy ra khi:
 - Dev thay đổi status cần thông báo cho khách hàng (Resolved → thông báo fix)

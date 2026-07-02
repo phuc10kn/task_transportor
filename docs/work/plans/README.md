@@ -29,7 +29,7 @@ Mỗi phiên bản nằm trong một thư mục riêng:
 | --- | --- | --- | --- |
 | Luồng chính | Backlog pull -> CIS -> Jira | Backlog webhook/pull -> CIS, Jira webhook/pull -> CIS, CIS -> Jira | Backlog <-> CIS <-> Jira đầy đủ |
 | Inbound trigger | Manual pull, scheduled pull optional | Webhook + manual pull + scheduled recovery | Webhook + pull + replay/rollback |
-| Đối tượng | Issue, comment; attachment metadata/pending | Issue, comment, attachment file thật | Issue, comment, attachment, link, field nâng cao |
+| Đối tượng | Issue, comment; attachment metadata và file Backlog -> CIS cơ bản | Issue, comment, attachment upload/sync sang Jira | Issue, comment, attachment, link, field nâng cao |
 | Translation | Nhật -> Việt, AI draft + human review | Nhật -> Việt đầy đủ cho issue/comment, fallback manual | Nhật <-> Việt, học từ review, glossary nâng cao |
 | Mapping | Mapping seed/manual, approve trước sync | AI propose + admin approve + bulk approve | Mapping learning, stale/conflict health, project override sâu |
 | Anomaly | Tối thiểu: routing mismatch, mapping gap, sync failure | Đủ nhóm anomaly MVP | AI analysis sâu, rule tuning, notification ngoài UI |
@@ -58,15 +58,14 @@ Tập trung vào một đường đi chạy được:
 
 ```text
 Backlog manual pull / scheduled pull
-  -> CIS issue/comment
-  -> AI translation
-  -> Admin review
+  -> CIS issue/comment/attachment download cơ bản
+  -> optional AI translation/Admin review
   -> Mapping check
   -> Jira dry-run
   -> Jira sync
 ```
 
-Không mở rộng webhook/Jira inbound/attachment full trước khi đường này ổn.
+Không mở rộng webhook/Jira inbound/attachment upload đầy đủ trước khi đường này ổn.
 
 ### Giai đoạn 2: Medium
 
@@ -74,7 +73,7 @@ Mở rộng theo đúng MVP:
 
 1. Backlog webhook vào CIS, dùng lại Backlog normalizer của Lite.
 2. Jira webhook/manual pull vào CIS.
-3. Attachment file thật và upload/copy sang Jira.
+3. Attachment upload/copy sang Jira và vận hành retry đầy đủ.
 4. AI mapping propose.
 5. Anomaly detection đầy đủ.
 6. UI vận hành đầy đủ.

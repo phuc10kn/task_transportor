@@ -1,0 +1,72 @@
+const { AppError } = require("../../../http/errors/AppError");
+const { translateQueueItemNow } = require("../../Translation/application/translateQueueItemNow");
+const { createTranslationRepository } = require("../../Translation/infrastructure/TranslationRepository");
+const { createCisRepository } = require("../infrastructure/CisRepository");
+const {
+  ISSUE_TRANSLATION_FIELDS,
+  issueTranslationTargetMap,
+  normalizeTranslationSource,
+} = require("../support/issueTranslationTargets");
+
+function inferTargetField(item, sources) {
+  if (ISSUE_TRANSLATION_FIELDS.includes(item.target_field)) {
+    return item.target_field;
+  }
+
+  const sourceText = normalizeTranslationSource(item.source_text);
+  for (const field of ISSUE_TRANSLATION_FIELDS) {
+    if (sourceText && sourceText === sources[field]) {
+      return field;
+    }
+  }
+
+  if (sourceText.includes("\n") || sourceText.length > 120) {
+    return "description";
+  }
+
+  return null;
+}
+
+async function translateIssueTranslationNow({ config, issueId, queueId, executedBy, correlationId }) {
+  const repository = createTranslationRepository({ config });
+  const item = repository.findById(queueId);
+  if (!item || item.issue_id !== issueId || item.target_type !== "issue" || item.comment_id) {
+    throw new AppError({
+      code: "TRANSLATION_QUEUE_NOT_FOUND",
+      message: "Issue translation queue item was not found.",
+      status: 404,
+    });
+  }
+
+  const issue = createCisRepository({ config }).getIssueById(issueId);
+  const sources = issue ? issueTranslationTargetMap(issue) : {};
+  const targetField = inferTargetField(item, sources);
+  const sourceText = targetField ? sources[targetField] : null;
+  if (!sourceText) {
+    throw new AppError({
+      code: "ISSUE_TRANSLATION_SOURCE_REQUIRED",
+      message: "Issue translation source must exist in CIS before translating.",
+      status: 422,
+    });
+  }
+
+  repository.updateSourceText(queueId, sourceText);
+  repository.resetForRetranslate(queueId);
+
+  const translated = await translateQueueItemNow({
+    config,
+    queueId,
+    executedBy: executedBy || null,
+    correlationId: correlationId || null,
+    trigger: "manual",
+  });
+
+  return {
+    item: repository.findById(queueId),
+    translated,
+  };
+}
+
+module.exports = {
+  translateIssueTranslationNow,
+};

@@ -1,4 +1,4 @@
-﻿# Phase 01 - Auth và Projects
+# Phase 01 - Auth và Projects
 
 ## Mục tiêu
 
@@ -27,6 +27,7 @@ Các field pull/sync bắt buộc để phase 03 dùng được:
 - `scheduled_pull_interval_minutes`
 - `pull_updated_since_window_minutes`
 - `scheduled_pull_filter_json`
+- `translation_glossary_json` để lưu glossary dịch riêng theo project
 
 `scheduled_pull_filter_json` mặc định:
 
@@ -45,8 +46,19 @@ Các field pull/sync bắt buộc để phase 03 dùng được:
 
 - Mảng rỗng nghĩa là không filter thêm theo field đó.
 - `include_closed = true` để không miss issue đã đóng nhưng vẫn có update cần sync.
-- `include_attachments = "metadata_only"` vì Lite chưa bắt buộc upload attachment thật sang Jira.
+- `include_attachments = "metadata_only"` là cấu hình cho bước scan/list candidate; khi worker pull full issue, Phase 03 vẫn có thể download file Backlog -> CIS. Upload attachment sang Jira chưa bắt buộc trong Lite.
 - `page_size` giới hạn số issue mỗi request/page khi scheduled pull.
+
+`translation_glossary_json` mặc định là mảng rỗng. Khi có cấu hình, mỗi entry phải có `source` và `target`; `notes` là optional:
+
+```json
+[
+  { "source": "予約", "target": "đặt chỗ" },
+  { "source": "管理画面", "target": "màn hình quản trị", "notes": "Dùng cho admin UI" }
+]
+```
+
+Project CRUD chỉ lưu glossary này như config. Module `Translation` sẽ nạp nó vào `context_bundle.glossary` khi chạy job dịch.
 
 ## Deliverables
 
@@ -58,7 +70,7 @@ Các field pull/sync bắt buộc để phase 03 dùng được:
 - Project seed/import JSON mẫu.
 - API CRUD project và bật/tắt sync.
 - Config pull chủ động trong project CRUD/seed.
-- Test script tự động cho login, protected route và project CRUD tối thiểu.
+- Test script tự động theo capability cho login, protected route và project CRUD tối thiểu.
 
 ## Chốt chặn
 
@@ -76,25 +88,26 @@ Không đi phase 02 nếu:
 
 ### Unit test check (Agent)
 
-- [ ] Test script tự động của phase 01 pass, ví dụ `npm run verify:phase01`.
-- [ ] Test bootstrap/CLI tạo được admin.
-- [ ] Test `POST /api/v1/auth/login` trả JWT hợp lệ.
-- [ ] Test `GET /api/v1/auth/me` trả admin hiện tại khi có Bearer token.
-- [ ] Test API project khi thiếu token trả `401`.
-- [ ] Test tạo project với `translation_provider = codex_exec`.
-- [ ] Test tạo project với `manual_pull_enabled`, `scheduled_pull_enabled`, `scheduled_pull_interval_minutes`, `pull_updated_since_window_minutes`.
-- [ ] Test tạo project với `scheduled_pull_filter_json` mặc định và đọc lại đúng.
-- [ ] Test bật/tắt sync project bằng API.
-- [ ] Test DB chỉ lưu `backlog_api_key_env`, `jira_email_env`, `jira_api_token_env`, không lưu secret thật.
+- [x] Test script tự động của phase 01 pass, ví dụ `npm run verify:phase01` (alias tới `npm run verify:auth` và `npm run verify:projects`).
+- [x] Test bootstrap/CLI tạo được admin.
+- [x] Test `POST /api/v1/auth/login` trả JWT hợp lệ.
+- [x] Test `GET /api/v1/auth/me` trả admin hiện tại khi có Bearer token.
+- [x] Test API project khi thiếu token trả `401`.
+- [x] Test tạo project với `translation_provider = codex_exec`.
+- [x] Test tạo project với `manual_pull_enabled`, `scheduled_pull_enabled`, `scheduled_pull_interval_minutes`, `pull_updated_since_window_minutes`.
+- [x] Test tạo project với `scheduled_pull_filter_json` mặc định và đọc lại đúng.
+- [x] Test tạo project với `translation_glossary_json` và đọc lại đúng.
+- [x] Test bật/tắt sync project bằng API.
+- [x] Test DB chỉ lưu `backlog_api_key_env`, `jira_email_env`, `jira_api_token_env`, không lưu secret thật.
 
 ### Manual check (Người review)
 
-- [ ] Tạo admin bằng bootstrap/CLI trên máy local.
-- [ ] Login bằng API và nhận JWT.
-- [ ] Gọi `/auth/me` bằng Bearer token và thấy đúng admin.
-- [ ] Tạo project từ API với pull config đầy đủ.
-- [ ] Bật/tắt sync project từ API và đọc lại đúng trạng thái.
-- [ ] Kiểm tra nhanh DB/config để xác nhận không có secret thật bị lưu.
+- [x] Tạo admin bằng bootstrap/CLI trên máy local.
+- [x] Login bằng API và nhận JWT.
+- [x] Gọi `/auth/me` bằng Bearer token và thấy đúng admin.
+- [x] Tạo project từ API với pull config đầy đủ.
+- [x] Bật/tắt sync project từ API và đọc lại đúng trạng thái.
+- [x] Kiểm tra nhanh DB/config để xác nhận không có secret thật bị lưu.
 
 ## Ghi chú thiết kế
 

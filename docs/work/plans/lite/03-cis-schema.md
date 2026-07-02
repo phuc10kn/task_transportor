@@ -33,7 +33,7 @@ Lite nên tạo schema gần với MVP ngay từ đầu để Medium kế thừa
 
 ## State bắt buộc
 
-`issues.status`:
+`issues.sync_status`:
 
 - `ingested`
 - `pending_translate`
@@ -75,12 +75,16 @@ Lite nên tạo schema gần với MVP ngay từ đầu để Medium kế thừa
 - `failed`
 - `skipped`
 
+Ý nghĩa: trạng thái tải file từ hệ thống nguồn về CIS storage. Với Backlog -> CIS ở Lite, Phase 03 hoàn tất attachment khi `download_status = downloaded`, có `stored_path` và `sha256`.
+
 `issue_attachments.sync_status`:
 
 - `pending`
 - `synced`
 - `skipped`
 - `failed`
+
+Ý nghĩa: trạng thái đẩy attachment từ CIS sang hệ thống đích như Jira. Sau Backlog -> CIS ingest, `sync_status` vẫn là `pending`; đây không phải lỗi Phase 03.
 
 `webhook_events.status` nếu tạo sẵn cho Medium:
 
@@ -99,6 +103,12 @@ Backlog issue mới:
 ```text
 manual pull/scheduled pull
   -> ingested
+```
+
+Nếu project/issue bật translation option:
+
+```text
+ingested
   -> pending_translate
   -> pending_review
   -> approved
@@ -111,7 +121,7 @@ Backlog update:
 ```text
 synced/approved
   -> update_pending
-  -> pending_translate hoặc pending_review nếu cần dịch/review lại
+  -> pending_translate hoặc pending_review nếu bật translation/review
   -> approved
   -> syncing
   -> synced

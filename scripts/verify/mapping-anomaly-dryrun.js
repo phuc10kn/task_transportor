@@ -1,0 +1,542 @@
+const assert = require("assert");
+const crypto = require("crypto");
+
+const { createApp } = require("../../src/app");
+const { createConnection } = require("../../src/infrastructure/database/connection");
+const { migrate } = require("../../src/infrastructure/database/migrate");
+const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
+const AuthApi = require("../../src/modules/Auth/AuthApi");
+const CisApi = require("../../src/modules/Cis/CisApi");
+const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const TranslationApi = require("../../src/modules/Translation/TranslationApi");
+const { makeTempConfig } = require("./helpers/tempConfig");
+const { requestJson, withServer } = require("./helpers/http");
+
+function setupConfig(name) {
+  const config = makeTempConfig(name, {
+    ADMIN_EMAIL: `${name}@example.test`,
+    ADMIN_PASSWORD: "verify-password",
+  });
+  ensureStorage(config.storage);
+  migrate({ config });
+  AuthApi.bootstrapAdmin({
+    config,
+    email: `${name}@example.test`,
+    password: "verify-password",
+  });
+  return config;
+}
+
+function createProject(config, suffix, overrides = {}) {
+  return ProjectsApi.createProject({
+    config,
+    input: {
+      name: `Dry-run Verify ${suffix}`,
+      sync_enabled: true,
+      backlog_project_key: suffix,
+      backlog_issue_key_prefix: suffix,
+      backlog_api_key_env: "BACKLOG_API_KEY",
+      jira_site_url: "https://jira.example.test",
+      jira_project_key: suffix,
+      jira_email_env: "JIRA_EMAIL",
+      jira_api_token_env: "JIRA_API_TOKEN",
+      source_language: "ja",
+      target_language: "vi",
+      auto_translate: true,
+      require_translation_review: true,
+      require_mapping_approval: true,
+      cis_mapping_values_json: {
+        issue_type: ["bug", "task"],
+        status: ["open", "done"],
+        priority: ["high", "normal"],
+        user: ["assignee@example.test", "reporter@example.test"],
+      },
+      backlog_mapping_values_json: {
+        issue_type: ["Bug", "Task"],
+        status: ["Open", "Closed"],
+        priority: ["High", "Normal"],
+      },
+      jira_mapping_values_json: {
+        issue_type: ["Bug", "Task"],
+        status: ["To Do", "Done"],
+        priority: ["High", "Medium"],
+      },
+      ...overrides,
+    },
+  });
+}
+
+function createIssueWithRevision(config, project, overrides = {}) {
+  const key = overrides.backlog_issue_key || `${project.backlog_project_key}-${Math.floor(Math.random() * 100000)}`;
+  const summary = overrides.summary || "ログイン画面を確認してください";
+  const description = overrides.description || "送信後にエラーが表示されます。";
+  const issueType = overrides.issue_type || "Bug";
+  const status = overrides.status || "Open";
+  const priority = overrides.priority || "High";
+  const assignee = overrides.assignee === undefined ? null : overrides.assignee;
+
+  const issue = CisApi.createIssue({
+    config,
+    input: {
+      project_id: project.id,
+      backlog_issue_key: key,
+      source_system: "backlog",
+      status: overrides.issue_status || "pending_translate",
+      fields_json: {
+        summary: { backlog: summary },
+        description: { backlog: description },
+        issue_type: { backlog: issueType },
+        status: { backlog: status },
+        priority: { backlog: priority },
+        assignee: { backlog: assignee },
+      },
+    },
+  });
+
+  CisApi.addRevision({
+    config,
+    input: {
+      issue_id: issue.id,
+      source_system: "backlog",
+      summary,
+      description,
+      issue_type: issueType,
+      priority,
+      assignee,
+    },
+  });
+
+  const shouldCreateTranslations = overrides.create_translations !== false;
+  const summaryTranslation = shouldCreateTranslations
+    ? CisApi.createTranslationQueueItem({
+      config,
+      input: {
+        project_id: project.id,
+        issue_id: issue.id,
+        target_type: "issue",
+        target_field: "summary",
+        source_text: summary,
+      },
+    })
+    : null;
+  const descriptionTranslation = shouldCreateTranslations
+    ? CisApi.createTranslationQueueItem({
+      config,
+      input: {
+        project_id: project.id,
+        issue_id: issue.id,
+        target_type: "issue",
+        target_field: "description",
+        source_text: description,
+      },
+    })
+    : null;
+
+  return {
+    descriptionTranslation,
+    issue: CisApi.getIssueById({ config, issueId: issue.id }),
+    summaryTranslation,
+  };
+}
+
+function reviewTranslations(config, items) {
+  for (const item of items) {
+    TranslationApi.manualEditTranslation({
+      config,
+      queueId: item.id,
+      reviewedText: `VI: ${item.source_text}`,
+      reviewedBy: 1,
+      reviewNotes: "verify",
+    });
+  }
+}
+
+function insertAttachment(config, project, issue, input = {}) {
+  const db = createConnection({ config });
+  const id = input.id || crypto.randomUUID();
+  db
+    .prepare(
+      `INSERT INTO issue_attachments (
+        id,
+        project_id,
+        issue_id,
+        source_system,
+        backlog_attachment_id,
+        original_filename,
+        download_status,
+        sync_status,
+        error_message
+      )
+      VALUES (?, ?, ?, 'backlog', ?, ?, ?, ?, ?)`
+    )
+    .run(
+      id,
+      project.id,
+      issue.id,
+      input.backlog_attachment_id || String(Math.floor(Math.random() * 1000000)),
+      input.original_filename || "evidence.png",
+      input.download_status || "pending",
+      input.sync_status || "pending",
+      input.error_message || null
+    );
+  db.close();
+  return id;
+}
+
+function listAnomalies(config, issueId, type) {
+  const db = createConnection({ config });
+  const rows = db
+    .prepare("SELECT * FROM anomaly_log WHERE issue_id = ? AND anomaly_type = ? ORDER BY id ASC")
+    .all(issueId, type);
+  db.close();
+  return rows;
+}
+
+async function login(server, name) {
+  const login = await requestJson(server, {
+    method: "POST",
+    pathname: "/api/v1/auth/login",
+    body: {
+      email: `${name}@example.test`,
+      password: "verify-password",
+    },
+  });
+  assert.equal(login.status, 200);
+  return login.body.data.token;
+}
+
+async function createAndApproveMapping(server, token, projectId, mappingType, from, cis, jira) {
+  const backlogToCis = await requestJson(server, {
+    method: "POST",
+    pathname: "/api/v1/mapping-rules",
+    token,
+    body: {
+      project_id: projectId,
+      mapping_type: mappingType,
+      direction_from: "backlog",
+      direction_to: "cis",
+      from_value: from,
+      to_value: cis,
+      source_type: "manual",
+      approval_status: "pending",
+      confidence: 1,
+    },
+  });
+  assert.equal(backlogToCis.status, 201);
+
+  const approveBacklogToCis = await requestJson(server, {
+    method: "POST",
+    pathname: `/api/v1/mapping-rules/${backlogToCis.body.data.id}/approve`,
+    token,
+  });
+  assert.equal(approveBacklogToCis.status, 200);
+  assert.equal(approveBacklogToCis.body.data.approval_status, "approved");
+
+  const cisToJira = await requestJson(server, {
+    method: "POST",
+    pathname: "/api/v1/mapping-rules",
+    token,
+    body: {
+      project_id: projectId,
+      mapping_type: mappingType,
+      direction_from: "cis",
+      direction_to: "jira",
+      from_value: cis,
+      to_value: jira,
+      source_type: "manual",
+      approval_status: "pending",
+      confidence: 1,
+    },
+  });
+  assert.equal(cisToJira.status, 201);
+
+  const approveCisToJira = await requestJson(server, {
+    method: "POST",
+    pathname: `/api/v1/mapping-rules/${cisToJira.body.data.id}/approve`,
+    token,
+  });
+  assert.equal(approveCisToJira.status, 200);
+  assert.equal(approveCisToJira.body.data.approval_status, "approved");
+}
+
+async function verifyApprovedMappingSave(server, token, projectId) {
+  const created = await requestJson(server, {
+    method: "POST",
+    pathname: "/api/v1/mapping-rules",
+    token,
+    body: {
+      project_id: projectId,
+      mapping_type: "status",
+      direction_from: "backlog",
+      direction_to: "cis",
+      from_value: "Resolved",
+      to_value: "done",
+      source_type: "manual",
+      approval_status: "approved",
+      confidence: 1,
+    },
+  });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.data.approval_status, "approved");
+
+  const updated = await requestJson(server, {
+    method: "PATCH",
+    pathname: `/api/v1/mapping-rules/${created.body.data.id}`,
+    token,
+    body: {
+      to_value: "closed",
+      approval_status: "approved",
+    },
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.data.to_value, "closed");
+  assert.equal(updated.body.data.approval_status, "approved");
+}
+
+function assertHasError(dryRun, code) {
+  assert.ok(
+    dryRun.body.data.validation.errors.some((error) => error.code === code),
+    `Expected dry-run error ${code}`
+  );
+}
+
+function assertHasWarning(dryRun, code) {
+  assert.ok(
+    dryRun.body.data.warnings.some((warning) => warning.code === code),
+    `Expected dry-run warning ${code}`
+  );
+}
+
+async function verifyPhase05() {
+  const name = "mapping-anomaly-dryrun";
+  const config = setupConfig(name);
+  const project = createProject(config, "DRY");
+  const app = createApp({ config });
+
+  await withServer(app, async (server) => {
+    const token = await login(server, name);
+    await verifyApprovedMappingSave(server, token, project.id);
+
+    const optionalTranslationProject = createProject(config, "OPT", {
+      auto_translate: false,
+      require_translation_review: false,
+    });
+    const optionalTranslationIssue = createIssueWithRevision(config, optionalTranslationProject, {
+      backlog_issue_key: "OPT-1",
+      create_translations: false,
+      issue_status: "approved",
+    });
+    await createAndApproveMapping(server, token, optionalTranslationProject.id, "issue_type", "Bug", "bug", "Bug");
+    await createAndApproveMapping(server, token, optionalTranslationProject.id, "status", "Open", "open", "To Do");
+    await createAndApproveMapping(server, token, optionalTranslationProject.id, "priority", "High", "high", "High");
+    const optionalTranslationDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/issues/${optionalTranslationIssue.issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(optionalTranslationDryRun.status, 200);
+    assert.equal(optionalTranslationDryRun.body.data.can_sync, true);
+    assert.ok(
+      !optionalTranslationDryRun.body.data.validation.errors.some((error) => error.code === "TRANSLATION_REVIEW_REQUIRED"),
+      "Translation review must not block when project disables require_translation_review"
+    );
+
+    const unreviewed = createIssueWithRevision(config, project, {
+      backlog_issue_key: "DRY-1",
+      issue_status: "approved",
+    });
+    await createAndApproveMapping(server, token, project.id, "issue_type", "Bug", "bug", "Bug");
+    await createAndApproveMapping(server, token, project.id, "status", "Open", "open", "To Do");
+    await createAndApproveMapping(server, token, project.id, "priority", "High", "high", "High");
+
+    const unreviewedDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/issues/${unreviewed.issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(unreviewedDryRun.status, 200);
+    assert.equal(unreviewedDryRun.body.data.can_sync, true);
+    assert.ok(
+      !unreviewedDryRun.body.data.validation.errors.some((error) => error.code === "TRANSLATION_REVIEW_REQUIRED"),
+      "Translation queue must not block canonical Jira dry-run"
+    );
+
+    const missingMapping = createIssueWithRevision(config, project, {
+      backlog_issue_key: "DRY-2",
+      issue_type: "Task",
+      status: "Closed",
+      priority: "Normal",
+      assignee: "assignee@example.test",
+    });
+    reviewTranslations(config, [
+      missingMapping.summaryTranslation,
+      missingMapping.descriptionTranslation,
+    ]);
+
+    const missingMappingDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(missingMappingDryRun.status, 200);
+    assert.equal(missingMappingDryRun.body.data.can_sync, false);
+    assertHasError(missingMappingDryRun, "MAPPING_REQUIRED");
+    assert.ok(
+      missingMappingDryRun.body.data.validation.missing_required_mapping.length >= 3,
+      "Expected required mapping gaps"
+    );
+    assert.ok(
+      listAnomalies(config, missingMapping.issue.id, "mapping_gap").length >= 3,
+      "Expected mapping_gap anomalies"
+    );
+
+    await createAndApproveMapping(server, token, project.id, "issue_type", "Task", "task", "Task");
+    await createAndApproveMapping(server, token, project.id, "status", "Closed", "done", "Done");
+    await createAndApproveMapping(server, token, project.id, "priority", "Normal", "normal", "Medium");
+    await createAndApproveMapping(server, token, project.id, "user", "assignee@example.test", "assignee@example.test", "jira-assignee-1");
+
+    const passDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(passDryRun.status, 200);
+    assert.equal(passDryRun.body.data.can_sync, true);
+    assert.equal(passDryRun.body.data.payload.fields.project.key, project.jira_project_key);
+    assert.equal(passDryRun.body.data.payload.fields.issuetype.name, "Task");
+    assert.equal(passDryRun.body.data.payload.fields.summary, "VI: ログイン画面を確認してください");
+    assert.ok(!Object.prototype.hasOwnProperty.call(passDryRun.body.data.payload.fields, "labels"));
+    assert.equal(passDryRun.body.data.payload.fields.assignee.accountId, "jira-assignee-1");
+    assert.equal(passDryRun.body.data.field_sources.summary, "cis");
+    assert.ok(passDryRun.body.data.canonical_hash.startsWith("sha256:"));
+
+    const critical = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/anomalies",
+      token,
+      body: {
+        project_id: project.id,
+        issue_id: missingMapping.issue.id,
+        anomaly_type: "unusual_field_change",
+        severity: "critical",
+        details_json: { field: "description" },
+      },
+    });
+    assert.equal(critical.status, 201);
+
+    const blockedDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(blockedDryRun.body.data.can_sync, false);
+    assertHasError(blockedDryRun, "ANOMALY_BLOCKED");
+
+    const ignored = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/anomalies/${critical.body.data.id}/ignore`,
+      token,
+    });
+    assert.equal(ignored.status, 200);
+    assert.equal(ignored.body.data.status, "ignored");
+
+    const afterIgnoreDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(afterIgnoreDryRun.body.data.can_sync, true);
+
+    const secondCritical = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/anomalies",
+      token,
+      body: {
+        project_id: project.id,
+        issue_id: missingMapping.issue.id,
+        anomaly_type: "sync_failure_chain",
+        severity: "critical",
+        details_json: { failures: 3 },
+      },
+    });
+    assert.equal(secondCritical.status, 201);
+
+    const resolved = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/anomalies/${secondCritical.body.data.id}/resolve`,
+      token,
+    });
+    assert.equal(resolved.status, 200);
+    assert.equal(resolved.body.data.status, "resolved");
+
+    insertAttachment(config, project, missingMapping.issue, {
+      original_filename: "pending-upload.png",
+      download_status: "failed",
+      sync_status: "pending",
+      error_message: "download failed in verify",
+    });
+    const attachmentDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(attachmentDryRun.body.data.can_sync, true);
+    assert.ok(
+      !attachmentDryRun.body.data.warnings.some((warning) => warning.code.startsWith("ATTACHMENT_")),
+      "Issue dry-run must not warn about attachment sync until attachment outbound is wired"
+    );
+
+    const listMappings = await requestJson(server, {
+      pathname: `/api/v1/mapping-rules?project_id=${project.id}&approval_status=approved`,
+      token,
+    });
+    assert.equal(listMappings.status, 200);
+    assert.ok(listMappings.body.data.length >= 6);
+
+    const mappingSettings = await requestJson(server, {
+      pathname: `/api/v1/mapping-settings?project_id=${project.id}&source_system=backlog&target_system=jira`,
+      token,
+    });
+    assert.equal(mappingSettings.status, 200);
+    assert.ok(
+      mappingSettings.body.data.flows.systems_to_cis.some((row) =>
+        row.mapping_type === "issue_type" && row.from_value === "Task"
+      ),
+      "Expected pulled Backlog issue type value in Systems -> CIS settings"
+    );
+    assert.ok(
+      mappingSettings.body.data.flows.cis_to_system.some((row) =>
+        row.mapping_type === "status" && row.from_value === "done"
+      ),
+      "Expected canonical CIS status value in CIS -> System settings"
+    );
+    const taskSystemSetting = mappingSettings.body.data.flows.systems_to_cis.find((row) =>
+      row.mapping_type === "issue_type" && row.from_value === "Task"
+    );
+    assert.ok(taskSystemSetting.system_values.some((option) => option.value === "Bug"));
+    assert.ok(taskSystemSetting.system_values.some((option) => option.value === "Task"));
+    const doneTargetSetting = mappingSettings.body.data.flows.cis_to_system.find((row) =>
+      row.mapping_type === "status" && row.from_value === "done"
+    );
+    assert.ok(doneTargetSetting.system_values.some((option) => option.value === "Done"));
+    assert.ok(mappingSettings.body.data.flows.cis_to_system.some((row) =>
+      row.mapping_type === "user" && row.from_value === "assignee@example.test"
+    ));
+
+    const listAnomalyResponse = await requestJson(server, {
+      pathname: `/api/v1/anomalies?issue_id=${missingMapping.issue.id}`,
+      token,
+    });
+    assert.equal(listAnomalyResponse.status, 200);
+    assert.ok(listAnomalyResponse.body.data.length >= 5);
+  });
+}
+
+verifyPhase05()
+  .then(() => {
+    console.log("Mapping, anomaly and Jira dry-run verification passed.");
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });

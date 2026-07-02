@@ -1,4 +1,4 @@
-﻿# Phase 02 - CIS schema, worker nền, jobs và journal
+# Phase 02 - CIS schema, worker nền, jobs và journal
 
 ## Mục tiêu
 
@@ -60,7 +60,7 @@ Quy tắc recover:
 - Stale lock recovery.
 - Sync journal writer.
 - State constants dùng chung.
-- Test script tự động cho migration, job lifecycle, retry và journal.
+- Test script tự động theo capability cho CIS schema, job lifecycle, retry và journal.
 
 ## Chốt chặn
 
@@ -80,28 +80,28 @@ Không đi phase 03 nếu:
 
 ### Unit test check (Agent)
 
-- [ ] Test script tự động của phase 02 pass, ví dụ `npm run verify:phase02`.
-- [ ] Test migration tạo đủ bảng Lite.
-- [ ] Test insert project giả và issue giả.
-- [ ] Test insert issue revision không ghi đè revision cũ.
-- [ ] Test enqueue job `backlog -> cis`.
-- [ ] Test chuyển job `pending -> running -> success`.
-- [ ] Test worker lock và chạy noop/test handler thành công.
-- [ ] Test ghi journal cho mỗi transition.
-- [ ] Test query pending jobs theo `status`, `run_after`, `priority`.
-- [ ] Test retry job fail bằng `run_after` và `attempt_count`.
-- [ ] Test job `running` quá `WORKER_LOCK_TIMEOUT_SECONDS` được recover đúng.
-- [ ] Test job `running` còn mới không bị recover.
-- [ ] Test cancel được job `pending`, không cancel job `running`.
-- [ ] Test insert translation queue với `provider = codex_exec` và `model_or_command`.
+- [x] Test script tự động của phase 02 pass, ví dụ `npm run verify:phase02` (alias tới `npm run verify:cis` và `npm run verify:sync-jobs`).
+- [x] Test migration tạo đủ bảng Lite.
+- [x] Test insert project giả và issue giả.
+- [x] Test insert issue revision không ghi đè revision cũ.
+- [x] Test enqueue job `backlog -> cis`.
+- [x] Test chuyển job `pending -> running -> success`.
+- [x] Test worker lock và chạy noop/test handler thành công.
+- [x] Test ghi journal cho mỗi transition.
+- [x] Test query pending jobs theo `status`, `run_after`, `priority`.
+- [x] Test retry job fail bằng `run_after` và `attempt_count`.
+- [x] Test job `running` quá `WORKER_LOCK_TIMEOUT_SECONDS` được recover đúng.
+- [x] Test job `running` còn mới không bị recover.
+- [x] Test cancel được job `pending`, không cancel job `running`.
+- [x] Test insert translation queue với `provider = codex_exec` và `model_or_command`.
 
 ### Manual check (Người review)
 
-- [ ] Chạy migration và xác nhận DB có đủ bảng Lite.
-- [ ] Tạo job giả bằng API/CLI.
-- [ ] Chạy worker local và thấy job chuyển trạng thái.
-- [ ] Mở API/CLI xem `sync_journal` có transition tương ứng.
-- [ ] Tạo một job fail giả và xác nhận retry/backoff hiển thị đúng.
+- [x] Chạy migration và xác nhận DB có đủ bảng Lite.
+- [x] Tạo job giả bằng API/CLI.
+- [x] Chạy worker local và thấy job chuyển trạng thái.
+- [x] Mở API/CLI xem `sync_journal` có transition tương ứng.
+- [x] Tạo một job fail giả và xác nhận retry/backoff hiển thị đúng.
 
 ## Ghi chú thiết kế
 

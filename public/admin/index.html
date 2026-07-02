@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Central Sync Hub Admin</title>
+    <link rel="stylesheet" href="/admin/styles.css">
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <main class="login-panel" data-view="login">
+        <section class="login-visual" aria-hidden="true">
+          <div class="signal-grid">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </section>
+        <section class="login-form">
+          <p class="eyebrow">Central Sync Hub</p>
+          <h1>Admin Console</h1>
+          <form id="loginForm">
+            <label>
+              Email
+              <input id="email" name="email" type="email" autocomplete="username" required>
+            </label>
+            <label>
+              Password
+              <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit">Sign in</button>
+            <p id="loginMessage" class="form-message" role="status"></p>
+          </form>
+        </section>
+      </main>
+
+      <main class="console hidden" data-view="console">
+        <aside class="sidebar">
+          <div class="brand">
+            <span class="brand-mark">CS</span>
+            <span>Central Sync</span>
+          </div>
+          <nav id="nav"></nav>
+          <button id="logoutButton" class="ghost-button" type="button">Sign out</button>
+        </aside>
+        <section class="workspace">
+          <header class="topbar">
+            <div>
+              <p class="eyebrow" id="activeEyebrow">Lite</p>
+              <h1 id="activeTitle">Dashboard</h1>
+            </div>
+            <button id="refreshButton" type="button">Refresh</button>
+          </header>
+          <div id="toast" class="toast hidden" role="status"></div>
+          <div id="content" class="content"></div>
+        </section>
+      </main>
+    </div>
+    <script src="/admin/app.js"></script>
+  </body>
+</html>

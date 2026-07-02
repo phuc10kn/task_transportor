@@ -21,7 +21,7 @@ Nguyên tắc triển khai:
 2. [01-auth-projects.md](01-auth-projects.md) - admin auth và project config.
 3. [02-cis-jobs.md](02-cis-jobs.md) - CIS schema, worker nền, sync jobs, journal, state nền.
 4. [03-backlog-ingestion.md](03-backlog-ingestion.md) - Backlog manual/scheduled pull vào CIS.
-5. [04-translation-review.md](04-translation-review.md) - `codex_exec` translation và human review.
+5. [04-translation-review.md](04-translation-review.md) - optional `codex_exec` translation và human review.
 6. [05-mapping-anomaly-dryrun.md](05-mapping-anomaly-dryrun.md) - mapping, anomaly, dry-run Jira.
 7. [06-jira-outbound.md](06-jira-outbound.md) - sync thật CIS -> Jira và retry.
 8. [07-admin-ui-acceptance.md](07-admin-ui-acceptance.md) - Admin UI tối thiểu và nghiệm thu Lite.
@@ -34,8 +34,8 @@ Nguyên tắc triển khai:
 | 00 | Server, config, DB migrate, storage, error envelope | Không làm module nghiệp vụ |
 | 01 | Login, JWT, CRUD project config | Không ingest dữ liệu thật |
 | 02 | Schema CIS, worker nền, job queue, journal, retry/cancel cơ bản | Không pull Backlog |
-| 03 | Backlog pull -> CIS issue/revision/comment/attachment metadata | Không làm translation |
-| 04 | `codex_exec` tạo draft, admin review/approve/edit/reject | Không dry-run Jira |
+| 03 | Backlog pull -> CIS issue/revision/comment/attachment metadata và download file Backlog -> CIS | Không làm translation |
+| 04 | Nếu bật translation, `codex_exec` tạo draft và admin review/approve/edit/reject | Không nối translation review thành gate riêng của Jira dry-run; dry-run thuộc Phase 05 |
 | 05 | Missing mapping/anomaly block sync, dry-run có `can_sync` | Không gọi Jira API thật |
 | 06 | Jira create/update/link issue/comment, retry/journal đầy đủ | Không nghiệm thu cuối |
 | 07 | UI vận hành được end-to-end | Lite sẵn sàng demo/hand-off |

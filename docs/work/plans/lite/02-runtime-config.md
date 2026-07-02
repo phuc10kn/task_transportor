@@ -94,10 +94,29 @@ Field tối thiểu:
 - `translation_model` hoặc `translation_command_profile`, tùy provider.
 - `source_language = "ja"`
 - `target_language = "vi"`
-- `auto_translate`
-- `require_translation_review`
+- `translation_glossary_json` optional nhưng khuyến nghị có cho từng project để giữ ổn định thuật ngữ dịch Nhật -> Việt.
+- `auto_translate`, mặc định Lite là `false`
+- `require_translation_review`, mặc định Lite là `false`
 - `require_mapping_approval`
 - `mapping_scope = "global_with_project_override"`
+
+`translation_glossary_json` là glossary riêng theo project. Mục tiêu:
+
+- tránh LLM dịch lệch các thuật ngữ domain tiếng Nhật,
+- giữ consistency giữa issue/comment cùng project,
+- ưu tiên cách dịch đã được business chấp nhận.
+
+Shape gợi ý:
+
+```json
+[
+  { "source": "予約", "target": "đặt chỗ" },
+  { "source": "管理画面", "target": "màn hình quản trị" },
+  { "source": "施設", "target": "cơ sở" }
+]
+```
+
+Glossary này không thay thế review của con người, nhưng phải được `collectTranslationContext()` nạp vào `context_bundle.glossary` trước khi gọi provider dịch.
 
 Lite phải có action bật/tắt sync theo project. Khi `sync_enabled = false`, worker không chạy outbound sync thật cho project đó.
 
@@ -126,3 +145,5 @@ Vì Lite không bắt buộc dùng webhook, project cần cấu hình pull chủ
 ```
 
 Scheduled pull là optional trong Lite. Nếu chưa bật scheduler, admin vẫn phải pull theo issue hoặc theo project từ UI.
+
+`include_attachments = "metadata_only"` trong filter là cấu hình cho bước scan/list candidate. Nó không có nghĩa là worker không được tải file; khi full issue được pull, Phase 03 có thể download attachment thật từ Backlog về CIS storage. Upload attachment sang Jira vẫn thuộc Phase 06/Medium.

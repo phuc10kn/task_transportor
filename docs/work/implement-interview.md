@@ -702,7 +702,7 @@ API Admin UI phải đi theo model **System -> CIS -> System**:
 
 ### Đề xuất nhóm endpoint MVP
 
-Ghi chú: danh sách dưới đây là nhóm endpoint được đề xuất trong quá trình phỏng vấn. Contract chính thức khi implement dùng prefix `/api/v1` theo `11-api-contract.md`.
+Ghi chú: danh sách dưới đây là nhóm endpoint được đề xuất trong quá trình phỏng vấn. Contract chính thức khi implement dùng prefix `/api/v1` theo `11-api-contract.md`; với bản Lite hiện tại, code là sự thật vận hành. Một số endpoint trong danh sách lịch sử này chưa có trong code Lite, ví dụ Jira inbound/manual pull, mapping bulk approve và attachment download/sync.
 
 Auth:
 
@@ -868,7 +868,7 @@ File đích: `10-state-machine.md`
 
 Cần chốt:
 
-1. Transition chính của `issues.status`:
+1. Transition chính của `issues.sync_status`:
    - `ingested`
    - `pending_translate`
    - `pending_review`
@@ -915,7 +915,7 @@ Cần chốt:
 
 | Mục | Quyết định |
 | --- | --- |
-| Issue status model | `issues.status` là trạng thái nghiệp vụ chính; translation/sync dùng bảng riêng. |
+| Issue sync status model | `issues.sync_status` là trạng thái sync/vòng đời chính; business status nằm trong `fields_json.status.*`; translation/sync phụ dùng bảng riêng. |
 | Backlog issue mới | Flow chính: `ingested` -> `pending_translate` -> `pending_review` -> `approved` -> `synced`. |
 | Translation reject | Reject giữ trạng thái `rejected`, admin nhập note, sau đó bấm `retranslate`; có cơ chế chuyển sang manual. |
 | Mapping gap | Block toàn bộ issue cho đến khi mapping được approve. |

@@ -1,5 +1,7 @@
 # Webhook Verification — Xác thực, raw payload và dedupe
 
+> Trạng thái Lite hiện tại: code chưa mount `/webhooks/backlog` hoặc `/webhooks/jira`. File này là contract chuẩn bị cho Medium/phase sau khi bật webhook; Lite hiện dùng Backlog manual/project pull qua `/api/v1/projects/:projectId/backlog/...` làm inbound chính.
+
 ## Mục tiêu
 
 File này chốt cách nhận webhook Backlog/Jira trong MVP: verify, lưu raw payload, dedupe, response code và logging.

@@ -1,0 +1,37 @@
+{
+  "issues": [
+    {
+      "id": 1003,
+      "issueKey": "WEC-3",
+      "projectKey": "WEC",
+      "summary": "Attachment download fails",
+      "description": "The attachment endpoint returns an error.",
+      "issueType": { "id": 1, "name": "Bug" },
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 2, "name": "High" },
+      "created": "2026-06-29T03:00:00Z",
+      "updated": "2026-06-30T03:00:00Z"
+    }
+  ],
+  "commentsByIssue": {
+    "WEC-3": []
+  },
+  "attachmentsByIssue": {
+    "WEC-3": [
+      {
+        "id": 702,
+        "name": "broken-download.txt",
+        "mimeType": "text/plain",
+        "size": 12,
+        "created": "2026-06-30T03:06:00Z"
+      }
+    ]
+  },
+  "attachmentDownloads": {
+    "702": {
+      "fail": true,
+      "message": "Fixture download failure",
+      "statusCode": 500
+    }
+  }
+}

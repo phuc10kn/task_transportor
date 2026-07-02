@@ -5,7 +5,7 @@
 Lite là bản nhỏ nhất nhưng phải chạy được luồng thật bằng cách **chủ động kéo dữ liệu**:
 
 ```text
-Backlog manual pull / scheduled pull -> CIS -> Review -> Dry-run -> Jira
+Backlog manual pull / scheduled pull -> CIS -> optional review -> Dry-run -> Jira
 ```
 
 Lite dùng để chứng minh kiến trúc CIS, kiểm tra manual pull/scheduled pull, dịch Nhật -> Việt bằng `codex_exec`, review bản dịch, mapping bắt buộc và push issue/comment sang Jira.
@@ -18,7 +18,7 @@ Lite được phép cắt độ rộng, không được cắt nền móng.
 - Được cắt Jira inbound đầy đủ, nhưng vẫn phải lưu được `jira_issue_key` sau khi sync Jira.
 - Được cắt AI mapping nâng cao, nhưng thiếu mapping vẫn phải block sync thật.
 - Được cắt anomaly nâng cao, nhưng `routing_mismatch`, `mapping_gap`, `translation_low_conf` và sync failure phải có.
-- Được cắt upload attachment nâng cao, nhưng metadata/trạng thái attachment phải được lưu để Medium không phải đổi schema.
+- Được cắt upload attachment sang Jira, nhưng metadata/trạng thái attachment và download file Backlog -> CIS cơ bản phải được lưu để Medium không phải đổi schema.
 - Được cắt role phức tạp, nhưng admin login bằng JWT phải có.
 - Được cắt dashboard đẹp, nhưng dashboard health tối thiểu phải có.
 
@@ -28,9 +28,9 @@ Lite được phép cắt độ rộng, không được cắt nền móng.
 Backlog manual pull / scheduled pull
   -> pull snapshot
   -> sync_jobs(backlog -> cis)
-  -> normalize/upsert issue
-  -> translation_queue
-  -> admin review
+  -> normalize/upsert issue/comment/attachment
+  -> download attachment Backlog -> CIS nếu có
+  -> optional translation_queue/admin review
   -> mapping/anomaly pre-check
   -> dry-run Jira
   -> sync_jobs(cis -> jira)
@@ -44,7 +44,7 @@ Backlog manual pull / scheduled pull
 - Jira -> CIS webhook/manual pull đầy đủ.
 - Sync ngược CIS -> Backlog.
 - Việt -> Nhật cho dev reply về Backlog.
-- Upload attachment thật sang Jira nếu Lite chỉ chọn metadata/download mức cơ bản.
+- Upload attachment thật sang Jira nếu Lite chỉ chọn metadata/download Backlog -> CIS mức cơ bản.
 - AI mapping learning nâng cao.
 - Bulk mapping approval nếu UI chưa cần.
 - Batch operation approval đầy đủ.

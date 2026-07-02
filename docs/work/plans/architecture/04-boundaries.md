@@ -44,7 +44,7 @@ Không làm:
 - Controller import trực tiếp `application/*` hoặc `infrastructure/*` khi module đã có `<Domain>Api`.
 - Module import trực tiếp `modules/<OtherDomain>/infrastructure/*`.
 - Controller gọi Backlog/Jira/OpenAI trực tiếp rồi tự update database.
-- Adapter external tự quyết định `issues.status`.
+- Adapter external tự quyết định `issues.sync_status`.
 - Module bỏ qua `sync_jobs` cho việc nặng hoặc ghi external.
 - Mapping logic viết rải rác trong nhiều controller.
 - Action ghi quan trọng không có journal/audit.

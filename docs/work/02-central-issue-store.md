@@ -1,3 +1,19 @@
+# Cập nhật schema - Issue Editor
+
+Issue Editor dùng `fields_json.<field>.cis` làm nhánh canonical do admin/CIS vận hành. Các nhánh `fields_json.<field>.backlog` và `fields_json.<field>.jira` giữ vai trò source snapshot và không bị manual edit ghi đè.
+
+`issues.sync_status` là trạng thái vòng đời/sync của issue trong CIS. Business status của ticket nằm trong `fields_json.status.*`.
+
+Dry-run/sync Jira dùng canonical effective values theo thứ tự ưu tiên `cis -> backlog -> jira -> revision fallback`. Worklogs là collection riêng, không nằm trong canonical hash của issue payload v1.
+
+## Trạng thái triển khai hiện tại
+
+- Khi ingest/pull từ Backlog, CIS materialize các field chính vào `fields_json.<field>.cis` nếu nhánh `cis` đang thiếu. Vì vậy CIS là source of truth vận hành, không để trống chỉ vì dữ liệu đến từ Backlog.
+- Backlog/Jira source snapshot vẫn nằm ở `fields_json.<field>.backlog` và `fields_json.<field>.jira`; admin edit hoặc translation approve chỉ ghi vào nhánh `cis`.
+- `issue_revisions` lưu thêm snapshot `fields_json` tại thời điểm tạo revision, không chỉ lưu các cột legacy như `summary`/`description`.
+- Translation được lưu theo từng `translation_queue.target_field` (`summary`, `description`). Queue thiếu `target_field` đối với issue-level translation là dữ liệu legacy không hợp lệ và bị loại khỏi trạng thái translation của issue.
+- Approve translation trong Issue Editor ghi reviewed text vào `fields_json.<target_field>.cis`. Nó không ghi vào `fields_json.<target_field>.jira`; nhánh `jira` chỉ phản ánh payload đã chỉnh/sắp sync trong Jira sync modal hoặc dữ liệu Jira inbound.
+- Jira sync modal cho phép chỉnh payload preview sau dry-run. Khi sync, các draft field có giá trị được lưu vào `fields_json.<field>.jira`; field để trống không xóa nhánh `.jira` cũ trong DB.
 # Central Issue Store (CIS) — Schema
 
 ## Nguyên tắc thiết kế
@@ -34,7 +50,7 @@ CREATE TABLE projects (
     
     -- Sync config
     sync_enabled             INTEGER NOT NULL DEFAULT 1,
-    auto_translate           INTEGER NOT NULL DEFAULT 1, -- AI tự động dịch?
+    auto_translate           INTEGER NOT NULL DEFAULT 0, -- Option AI tự động dịch sau ingest
     sync_direction           TEXT NOT NULL DEFAULT 'backlog_to_jira',  -- backlog_to_jira | bidirectional | disabled
     
     config_path              TEXT,
@@ -58,12 +74,12 @@ CREATE TABLE issues (
     -- Nguồn gốc
     source            TEXT NOT NULL CHECK(source IN ('backlog', 'jira', 'manual')),
     
-    -- Vòng đời trong CIS
-    status            TEXT NOT NULL DEFAULT 'ingested'
-                      CHECK(status IN (
+    -- Trạng thái sync/vòng đời trong CIS, không phải business status của ticket
+    sync_status       TEXT NOT NULL DEFAULT 'ingested'
+                      CHECK(sync_status IN (
                           'ingested',           -- Vừa vào CIS, chưa xử lý
-                          'pending_translate',  -- Chờ AI dịch
-                          'pending_review',     -- Đã dịch, chờ duyệt
+                          'pending_translate',  -- Có current-source translation item còn pending; chưa syncable sang Jira trong code Lite hiện tại
+                          'pending_review',     -- Đã dịch, chờ duyệt nếu bật review
                           'approved',           -- Đã duyệt, chờ sync
                           'syncing',            -- Đang sync lên hệ thống kia
                           'synced',             -- Đã sync thành công
@@ -111,7 +127,7 @@ CREATE TABLE issues (
 );
 
 CREATE INDEX idx_issues_project ON issues(project_id);
-CREATE INDEX idx_issues_status ON issues(status);
+CREATE INDEX idx_issues_sync_status ON issues(sync_status);
 CREATE INDEX idx_issues_backlog_key ON issues(project_id, backlog_issue_key);
 CREATE INDEX idx_issues_jira_key ON issues(project_id, jira_issue_key);
 ```
@@ -190,6 +206,13 @@ CREATE INDEX idx_comments_issue ON issue_comments(issue_id);
 ## 4.1. `issue_attachments` — File đính kèm
 
 MVP cần copy file thật qua CIS: tải từ Backlog/Jira về storage nội bộ, lưu metadata/hash trong database, sau đó upload/copy sang Jira khi sync outbound.
+
+Phân biệt trạng thái:
+
+- `download_status`: trạng thái tải file từ hệ thống nguồn về CIS storage. Backlog -> CIS thành công thì set `downloaded`.
+- `sync_status`: trạng thái đẩy file từ CIS sang hệ thống đích. Sau Backlog -> CIS, trạng thái này vẫn là `pending` cho tới khi upload sang Jira thành công.
+- Retry download về CIS không cần tạo `sync_jobs` riêng. Retry/upload attachment sang Jira qua `push_attachment` là phần phase sau; code Lite hiện tại chưa có default handler cho job này.
+- Backlog `externalFileLinks` là link ngoài, không phải file attachment để download; nếu cần lưu, dùng metadata như `fields_json.external_file_links.backlog`.
 
 ```sql
 CREATE TABLE issue_attachments (
@@ -320,7 +343,7 @@ CREATE INDEX idx_journal_to ON sync_journal(direction_to, status);
 
 ## 6.1. `sync_jobs` — Hàng chờ inbound/outbound
 
-`sync_jobs` là queue nội bộ cho cả hai chiều **System -> CIS -> System**. Webhook hoặc manual pull tạo inbound job; approval/dry-run/manual sync tạo outbound job.
+`sync_jobs` là queue nội bộ cho cả hai chiều **System -> CIS -> System**. Trong code Lite hiện tại, manual pull tạo inbound job; Jira sync tạo outbound `push_issue`; worker có handler cho `manual_pull`, `translate`, `push_issue`, `push_comment` và `noop_test`. Dry-run Jira chạy qua endpoint riêng và ghi journal, không enqueue job. Các job type như `webhook_ingest`, `dry_run`, `push_attachment`, `retry` còn trong schema để giữ contract/migration cho phase sau nhưng chưa có default handler vận hành trong Lite.
 
 ```sql
 CREATE TABLE sync_jobs (
@@ -336,10 +359,12 @@ CREATE TABLE sync_jobs (
                           'webhook_ingest',
                           'manual_pull',
                           'dry_run',
+                          'translate',
                           'push_issue',
                           'push_comment',
                           'push_attachment',
-                          'retry'
+                          'retry',
+                          'noop_test'
                       )),
     status            TEXT NOT NULL DEFAULT 'pending'
                       CHECK(status IN ('pending', 'running', 'success', 'failed', 'cancelled')),

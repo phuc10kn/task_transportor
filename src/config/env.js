@@ -1,7 +1,7 @@
 const path = require("path");
 const dotenv = require("dotenv");
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const ROOT_DIR = path.resolve(__dirname, "../..");
 
@@ -77,6 +77,7 @@ function loadConfig(env = process.env) {
     },
     security: {
       jwtSecret: env.JWT_SECRET || "local-development-jwt-secret",
+      jwtExpiresInSeconds: numberFromEnv(env.JWT_EXPIRES_IN_SECONDS, 7 * 24 * 60 * 60),
     },
     http: {
       jsonLimit: env.HTTP_JSON_LIMIT || "1mb",
@@ -86,6 +87,23 @@ function loadConfig(env = process.env) {
       id: env.WORKER_ID || "local-worker",
       pollIntervalMs: numberFromEnv(env.WORKER_POLL_INTERVAL_MS, 5000),
       lockTimeoutSeconds: numberFromEnv(env.WORKER_LOCK_TIMEOUT_SECONDS, 300),
+    },
+    backlog: {
+      fakeFixturePath: env.BACKLOG_FAKE_FIXTURE_PATH || "",
+    },
+    jira: {
+      fakeMode: env.JIRA_FAKE_MODE || "",
+      fakeSeedPath: env.JIRA_FAKE_SEED_PATH ? resolveFromRoot(env.JIRA_FAKE_SEED_PATH) : "",
+      fakeStatePath: env.JIRA_FAKE_STATE_PATH ? resolveFromRoot(env.JIRA_FAKE_STATE_PATH) : "",
+      requestTimeoutSeconds: numberFromEnv(env.JIRA_REQUEST_TIMEOUT_SECONDS, 30),
+    },
+    translation: {
+      codexExecCommand: env.CODEX_EXEC_COMMAND || "",
+      codexExecTimeoutSeconds: numberFromEnv(env.CODEX_EXEC_TIMEOUT_SECONDS, 60),
+      codexExecWorkdir: env.CODEX_EXEC_WORKDIR
+        ? resolveFromRoot(env.CODEX_EXEC_WORKDIR)
+        : ROOT_DIR,
+      lowConfidenceThreshold: numberFromEnv(env.TRANSLATION_LOW_CONFIDENCE_THRESHOLD, 0.7),
     },
   };
 }

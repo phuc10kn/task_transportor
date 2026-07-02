@@ -22,7 +22,7 @@ Translation queue nhận > 10 item cùng lúc từ cùng project
 
 **Xử lý**:
 - Không auto-translate
-- `issues.status` giữ nguyên `'ingested'`
+- `issues.sync_status` giữ nguyên `'ingested'`
 - Anomaly log: severity = 'warning'
 - Notification: "Phát hiện 15 issue cùng lúc từ Backlog. Cần duyệt thủ công?"
 
