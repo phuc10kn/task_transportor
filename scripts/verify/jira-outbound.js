@@ -531,8 +531,8 @@ async function verifyMissingCredentialFailure() {
       backlog_api_key_env: "BACKLOG_API_KEY",
       jira_site_url: "https://jira.example.test",
       jira_project_key: "DMP",
-      jira_email_env: "JIRA_EMAIL_MISSING",
-      jira_api_token_env: "JIRA_API_TOKEN_MISSING",
+      jira_email: "",
+      jira_api_token: "",
       source_language: "ja",
       target_language: "vi",
       require_translation_review: true,
@@ -542,10 +542,17 @@ async function verifyMissingCredentialFailure() {
   seedRequiredMappings(config, project);
   const ready = createReadyIssue(config, project, { include_comment: false });
 
-  requestJiraSyncAfterDryRun(config, ready.issue.id);
-  const result = await SyncApi.runWorkerOnce({ config, workerId: "jira-outbound-credential-missing" });
-  assert.equal(result.job.status, "failed");
-  assert.match(result.job.last_error, /Jira/i);
+  const dryRun = JiraApi.runJiraDryRun({
+    config,
+    issueId: ready.issue.id,
+    executedBy: 1,
+  });
+  assert.equal(dryRun.can_sync, false);
+  assert.ok(dryRun.validation.errors.some((error) =>
+    error.code === "JIRA_CONFIG_REQUIRED" &&
+    error.details.missing.includes("jira_email") &&
+    error.details.missing.includes("jira_api_token")
+  ));
 }
 
 async function verifyRetryPolicies() {

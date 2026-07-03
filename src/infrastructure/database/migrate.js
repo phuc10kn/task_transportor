@@ -25,7 +25,7 @@ function getMigrationFiles() {
 
   return fs
     .readdirSync(MIGRATIONS_DIR)
-    .filter((fileName) => fileName.endsWith(".sql"))
+    .filter((fileName) => fileName.endsWith(".sql") || fileName.endsWith(".js"))
     .sort();
 }
 
@@ -33,10 +33,30 @@ function checksum(content) {
   return crypto.createHash("sha256").update(content).digest("hex");
 }
 
-function applyMigration(db, fileName) {
+function runMigrationFile(db, filePath, options) {
+  if (filePath.endsWith(".sql")) {
+    db.exec(fs.readFileSync(filePath, "utf8"));
+    return;
+  }
+
+  if (filePath.endsWith(".js")) {
+    delete require.cache[require.resolve(filePath)];
+    const migration = require(filePath);
+    const run = typeof migration === "function" ? migration : migration.up;
+    if (typeof run !== "function") {
+      throw new Error(`JavaScript migration must export a function or { up }: ${path.basename(filePath)}`);
+    }
+    run(options);
+    return;
+  }
+
+  throw new Error(`Unsupported migration type: ${path.basename(filePath)}`);
+}
+
+function applyMigration(db, fileName, options) {
   const filePath = path.join(MIGRATIONS_DIR, fileName);
-  const sql = fs.readFileSync(filePath, "utf8");
-  const hash = checksum(sql);
+  const content = fs.readFileSync(filePath, "utf8");
+  const hash = checksum(content);
   const existing = db
     .prepare("SELECT filename, checksum FROM schema_migrations WHERE filename = ?")
     .get(fileName);
@@ -50,7 +70,7 @@ function applyMigration(db, fileName) {
   }
 
   const run = db.transaction(() => {
-    db.exec(sql);
+    runMigrationFile(db, filePath, options);
     db
       .prepare("INSERT INTO schema_migrations (filename, checksum) VALUES (?, ?)")
       .run(fileName, hash);
@@ -62,6 +82,7 @@ function applyMigration(db, fileName) {
 
 function migrate(options = {}) {
   const config = options.config || loadConfig();
+  const env = options.env || process.env;
   const db = options.db || createConnection({ config });
   const shouldClose = !options.db;
 
@@ -70,7 +91,7 @@ function migrate(options = {}) {
 
     const applied = [];
     for (const fileName of getMigrationFiles()) {
-      if (applyMigration(db, fileName)) {
+      if (applyMigration(db, fileName, { db, config, env })) {
         applied.push(fileName);
       }
     }

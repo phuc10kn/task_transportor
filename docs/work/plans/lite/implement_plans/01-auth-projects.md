@@ -98,7 +98,7 @@ Không đi phase 02 nếu:
 - [x] Test tạo project với `scheduled_pull_filter_json` mặc định và đọc lại đúng.
 - [x] Test tạo project với `translation_glossary_json` và đọc lại đúng.
 - [x] Test bật/tắt sync project bằng API.
-- [x] Test DB chỉ lưu `backlog_api_key_env`, `jira_email_env`, `jira_api_token_env`, không lưu secret thật.
+- [x] Test DB lưu trực tiếp `backlog_api_key`, `jira_email`, `jira_api_token`; các field `*_env` chỉ còn alias tương thích đầu vào cũ.
 
 ### Manual check (Người review)
 

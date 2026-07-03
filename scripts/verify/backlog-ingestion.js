@@ -184,7 +184,7 @@ async function main() {
   migrate({ config: missingCredentialConfig });
   const missingProject = createBacklogProject(missingCredentialConfig, {
     name: "Missing Credential Project",
-    backlog_api_key_env: "BACKLOG_API_KEY_DOES_NOT_EXIST",
+    backlog_api_key: "",
   });
   const missingJob = SyncApi.enqueueJob({
     config: missingCredentialConfig,
@@ -206,7 +206,7 @@ async function main() {
   });
   assert.equal(missingResult.job.id, missingJob.id);
   assert.equal(missingResult.job.status, "failed");
-  assert.equal(missingResult.job.last_error, "Backlog API key env is not configured or missing.");
+  assert.equal(missingResult.job.last_error, "Backlog API key is not configured.");
   const failedJournalCount = countRows(
     missingCredentialConfig,
     "SELECT COUNT(*) AS total FROM sync_journal WHERE sync_job_id = ? AND status = 'failed'",

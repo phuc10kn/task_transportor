@@ -370,11 +370,11 @@
       backlog_space_url: form.backlog_space_url.value || undefined,
       backlog_project_key: form.backlog_project_key.value || undefined,
       backlog_issue_key_prefix: form.backlog_issue_key_prefix.value || undefined,
-      backlog_api_key_env: form.backlog_api_key_env.value || undefined,
+      backlog_api_key: form.backlog_api_key.value || undefined,
       jira_site_url: form.jira_site_url.value || undefined,
       jira_project_key: form.jira_project_key.value || undefined,
-      jira_email_env: form.jira_email_env.value || undefined,
-      jira_api_token_env: form.jira_api_token_env.value || undefined,
+      jira_email: form.jira_email.value || undefined,
+      jira_api_token: form.jira_api_token.value || undefined,
       translation_ai_provider: translationAiProvider,
       translation_ai_transport: translationAiTransport,
       translation_ai_model: translationAiModel || undefined,
@@ -450,7 +450,7 @@
             <label>Backlog space URL<input name="backlog_space_url" value="${escapeHtml(p.backlog_space_url || "")}"></label>
             <label>Backlog project key<input name="backlog_project_key" value="${escapeHtml(p.backlog_project_key || "")}"></label>
             <label>Backlog issue prefix<input name="backlog_issue_key_prefix" value="${escapeHtml(p.backlog_issue_key_prefix || "")}"></label>
-            <label>Backlog API env<input name="backlog_api_key_env" value="${escapeHtml(p.backlog_api_key_env || "")}"></label>
+            <label>Backlog API key<input name="backlog_api_key" value="${escapeHtml(p.backlog_api_key || "")}"></label>
           </div>
         </section>
         <section class="form-block">
@@ -458,8 +458,8 @@
           <div class="grid cols-2">
             <label>Jira site URL<input name="jira_site_url" value="${escapeHtml(p.jira_site_url || "")}"></label>
             <label>Jira project key<input name="jira_project_key" value="${escapeHtml(p.jira_project_key || "")}"></label>
-            <label>Jira email env<input name="jira_email_env" value="${escapeHtml(p.jira_email_env || "")}"></label>
-            <label>Jira token env<input name="jira_api_token_env" value="${escapeHtml(p.jira_api_token_env || "")}"></label>
+            <label>Jira email<input name="jira_email" value="${escapeHtml(p.jira_email || "")}"></label>
+            <label>Jira API token<input name="jira_api_token" value="${escapeHtml(p.jira_api_token || "")}"></label>
           </div>
         </section>
         <section class="form-block">

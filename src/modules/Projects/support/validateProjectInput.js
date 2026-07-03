@@ -20,11 +20,14 @@ const ALLOWED_FIELDS = [
   "backlog_space_key",
   "backlog_project_key",
   "backlog_issue_key_prefix",
+  "backlog_api_key",
   "backlog_api_key_env",
   "backlog_webhook_secret_env",
   "jira_site_url",
   "jira_project_key",
+  "jira_email",
   "jira_email_env",
+  "jira_api_token",
   "jira_api_token_env",
   "jira_webhook_secret_env",
   "translation_ai_provider",
@@ -51,19 +54,13 @@ const ALLOWED_FIELDS = [
 ];
 
 const FORBIDDEN_SECRET_FIELDS = [
-  "backlog_api_key",
-  "jira_email",
-  "jira_api_token",
   "jira_password",
   "jwt_secret",
   "webhook_secret",
 ];
 
 const ENV_FIELDS = [
-  "backlog_api_key_env",
   "backlog_webhook_secret_env",
-  "jira_email_env",
-  "jira_api_token_env",
   "jira_webhook_secret_env",
 ];
 
@@ -245,6 +242,28 @@ function pickAllowed(input) {
   }, {});
 }
 
+function applyCredentialAliases(input) {
+  const aliased = { ...input };
+  const aliases = [
+    ["backlog_api_key_env", "backlog_api_key"],
+    ["jira_email_env", "jira_email"],
+    ["jira_api_token_env", "jira_api_token"],
+  ];
+
+  for (const [legacyField, canonicalField] of aliases) {
+    if (
+      Object.prototype.hasOwnProperty.call(aliased, legacyField) &&
+      !Object.prototype.hasOwnProperty.call(aliased, canonicalField)
+    ) {
+      aliased[canonicalField] = aliased[legacyField];
+    }
+
+    delete aliased[legacyField];
+  }
+
+  return aliased;
+}
+
 function normalizeProjectInput(input, { partial = false } = {}) {
   if (!isPlainObject(input)) {
     throw new AppError({
@@ -254,10 +273,12 @@ function normalizeProjectInput(input, { partial = false } = {}) {
     });
   }
 
-  assertNoSecretFields(input);
-  assertEnvNames(input);
+  const credentialAliasedInput = applyCredentialAliases(input);
 
-  const allowed = pickAllowed(input);
+  assertNoSecretFields(credentialAliasedInput);
+  assertEnvNames(credentialAliasedInput);
+
+  const allowed = pickAllowed(credentialAliasedInput);
   if (
     Object.prototype.hasOwnProperty.call(allowed, "translation_provider") &&
     !Object.prototype.hasOwnProperty.call(allowed, "translation_ai_provider")

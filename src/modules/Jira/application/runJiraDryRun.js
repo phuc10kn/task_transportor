@@ -161,7 +161,7 @@ function resolveMapping({ config, projectId, issueId, mappingType, sourceValue, 
 
 function checkJiraConfig(project) {
   const missing = [];
-  for (const field of ["jira_site_url", "jira_project_key", "jira_email_env", "jira_api_token_env"]) {
+  for (const field of ["jira_site_url", "jira_project_key", "jira_email", "jira_api_token"]) {
     if (!project[field]) {
       missing.push(field);
     }

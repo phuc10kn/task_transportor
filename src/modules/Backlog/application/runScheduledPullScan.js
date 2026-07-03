@@ -64,8 +64,7 @@ async function runScheduledPullScan({ config }) {
       project.sync_enabled &&
       project.scheduled_pull_enabled &&
       project.backlog_project_key &&
-      project.backlog_api_key_env &&
-      (config.backlog.fakeFixturePath || process.env[project.backlog_api_key_env]) &&
+      (project.backlog_api_key || config.backlog.fakeFixturePath) &&
       isDue(project, states[project.id])
     );
 

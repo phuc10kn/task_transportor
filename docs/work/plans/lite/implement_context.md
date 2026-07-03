@@ -156,7 +156,7 @@ Integration env:
 - `WORKER_POLL_INTERVAL_MS`
 - `WORKER_LOCK_TIMEOUT_SECONDS`
 - DeepSeek dùng OpenAI-compatible HTTP API; hiện chưa expose provider `openai_api` riêng trong Lite.
-- Backlog/Jira credentials bằng env riêng, project config chỉ lưu tên biến env.
+- Backlog/Jira credentials của project lưu trực tiếp trong SQLite project config: `backlog_api_key`, `jira_email`, `jira_api_token`. Các field cũ `backlog_api_key_env`, `jira_email_env`, `jira_api_token_env` chỉ còn là alias tương thích đầu vào cũ và không còn được runtime dùng để đọc `process.env`.
 - `WEBHOOK_VERIFY` reserved cho Medium hoặc webhook optional.
 
 Ghi chÃº cáº­p nháº­t AI translation:
@@ -191,11 +191,11 @@ Field tối thiểu:
 - `backlog_project_key`
 - `backlog_issue_key_prefix`
 - `backlog_webhook_secret` optional/reserved cho Medium
-- `backlog_api_key_env`
+- `backlog_api_key`
 - `jira_site_url`
 - `jira_project_key`
-- `jira_email_env`
-- `jira_api_token_env`
+- `jira_email`
+- `jira_api_token`
 - `jira_webhook_secret` optional/reserved cho Medium
 - `translation_ai_provider`, mặc định Lite là `deepseek`
 - `translation_ai_transport`, mặc định `openai_compatible`; có thể chọn `anthropic_compatible` cho DeepSeek Anthropic API.
@@ -361,7 +361,7 @@ Scheduled pull optional:
 Scheduled pull flow:
 
 1. Tìm project có `enabled = 1`, `sync_enabled = 1`, `scheduled_pull_enabled = 1`.
-2. Kiểm tra `backlog_project_key`, `backlog_api_key_env` và interval đã đến.
+2. Kiểm tra `backlog_project_key`, `backlog_api_key` và interval đã đến.
 3. Tính `updated_since = last_successful_pull_at - pull_updated_since_window_minutes`.
 4. Gọi Backlog API lấy issue list theo project, `updated_since`, sort `updated asc`, page size mặc định 100.
 5. Apply filter nâng cao từ `scheduled_pull_filter_json` nếu có.

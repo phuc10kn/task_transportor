@@ -351,8 +351,8 @@ class JiraClient {
     this.config = config;
     this.project = project;
     this.siteUrl = normalizeSiteUrl(project.jira_site_url);
-    this.email = project.jira_email_env ? process.env[project.jira_email_env] : "";
-    this.apiToken = project.jira_api_token_env ? process.env[project.jira_api_token_env] : "";
+    this.email = project.jira_email || "";
+    this.apiToken = project.jira_api_token || "";
 
     if (!this.siteUrl) {
       throw jiraError("JIRA_CONFIG_REQUIRED", "Jira site URL is required.", 422, {
@@ -360,15 +360,15 @@ class JiraClient {
       });
     }
 
-    if (!project.jira_email_env || !this.email) {
-      throw jiraError("JIRA_CREDENTIAL_REQUIRED", "Jira email env is not configured or missing.", 422, {
-        field: "jira_email_env",
+    if (!this.email) {
+      throw jiraError("JIRA_CREDENTIAL_REQUIRED", "Jira email is not configured.", 422, {
+        field: "jira_email",
       });
     }
 
-    if (!project.jira_api_token_env || !this.apiToken) {
-      throw jiraError("JIRA_CREDENTIAL_REQUIRED", "Jira API token env is not configured or missing.", 422, {
-        field: "jira_api_token_env",
+    if (!this.apiToken) {
+      throw jiraError("JIRA_CREDENTIAL_REQUIRED", "Jira API token is not configured.", 422, {
+        field: "jira_api_token",
       });
     }
   }

@@ -78,12 +78,12 @@ function requestBuffer(url) {
 class BacklogClient {
   constructor({ project }) {
     this.project = project;
-    this.apiKey = process.env[project.backlog_api_key_env];
+    this.apiKey = project.backlog_api_key || "";
 
-    if (!project.backlog_api_key_env || !this.apiKey) {
+    if (!this.apiKey) {
       throw new AppError({
         code: "BACKLOG_CREDENTIAL_REQUIRED",
-        message: "Backlog API key env is not configured or missing.",
+        message: "Backlog API key is not configured.",
         status: 422,
       });
     }

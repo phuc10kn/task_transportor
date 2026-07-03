@@ -6,21 +6,83 @@ const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const { requestJson, withServer } = require("./helpers/http");
-const { makeTempConfig } = require("./helpers/tempConfig");
+const { makeTempConfig, makeTempEnv } = require("./helpers/tempConfig");
+const { loadConfig } = require("../../src/config/env");
 
-function assertProjectSecretsAreNotStored(config, projectId) {
+function assertProjectCredentialsAreStored(config, projectId) {
   const db = createConnection({ config });
   const project = db.prepare("SELECT * FROM projects WHERE id = ?").get(projectId);
   db.close();
 
-  assert.equal(project.backlog_api_key_env, "BACKLOG_API_KEY");
-  assert.equal(project.jira_email_env, "JIRA_EMAIL");
-  assert.equal(project.jira_api_token_env, "JIRA_API_TOKEN");
-  assert.equal(Object.prototype.hasOwnProperty.call(project, "backlog_api_key"), false);
-  assert.equal(Object.prototype.hasOwnProperty.call(project, "jira_api_token"), false);
+  assert.equal(project.backlog_api_key, "backlog-secret-key");
+  assert.equal(project.jira_email, "sync-admin@example.test");
+  assert.equal(project.jira_api_token, "jira-secret-token");
+  assert.equal(project.backlog_api_key_env, null);
+  assert.equal(project.jira_email_env, null);
+  assert.equal(project.jira_api_token_env, null);
+}
+
+function verifyLegacyEnvCredentialMigration() {
+  const env = makeTempEnv("projects-credential-migration", {
+    LEGACY_BACKLOG_API_KEY: "legacy-backlog-api-key-value",
+    LEGACY_JIRA_EMAIL: "legacy-jira-user@example.test",
+    LEGACY_JIRA_API_TOKEN: "legacy-jira-api-token-value",
+  });
+  const config = loadConfig(env);
+
+  ensureStorage(config.storage);
+  migrate({ config, env });
+
+  const db = createConnection({ config });
+  try {
+    db
+      .prepare(
+        `INSERT INTO projects (
+          name,
+          backlog_api_key_env,
+          jira_email_env,
+          jira_api_token_env,
+          scheduled_pull_filter_json
+        )
+        VALUES (?, ?, ?, ?, ?)`
+      )
+      .run(
+        "Legacy Env Credential Project",
+        "LEGACY_BACKLOG_API_KEY",
+        "LEGACY_JIRA_EMAIL",
+        "LEGACY_JIRA_API_TOKEN",
+        JSON.stringify({})
+      );
+
+    db
+      .prepare("DELETE FROM schema_migrations WHERE filename = '015_project_credentials_from_env.js'")
+      .run();
+  } finally {
+    db.close();
+  }
+
+  migrate({ config, env });
+
+  const verifyDb = createConnection({ config });
+  try {
+    const project = verifyDb
+      .prepare("SELECT * FROM projects WHERE name = ?")
+      .get("Legacy Env Credential Project");
+
+    assert.equal(project.backlog_api_key, "legacy-backlog-api-key-value");
+    assert.equal(project.jira_email, "legacy-jira-user@example.test");
+    assert.equal(project.jira_api_token, "legacy-jira-api-token-value");
+    assert.equal(project.backlog_api_key_env, "LEGACY_BACKLOG_API_KEY");
+    assert.equal(project.jira_email_env, "LEGACY_JIRA_EMAIL");
+    assert.equal(project.jira_api_token_env, "LEGACY_JIRA_API_TOKEN");
+  } finally {
+    verifyDb.close();
+  }
 }
 
 async function main() {
+  verifyLegacyEnvCredentialMigration();
+
   const config = makeTempConfig("projects", {
     ADMIN_EMAIL: "admin@example.test",
     ADMIN_PASSWORD: "correct-horse-battery",
@@ -73,11 +135,11 @@ async function main() {
         backlog_space_key: "EXAMPLE",
         backlog_project_key: "WEC",
         backlog_issue_key_prefix: "WEC",
-        backlog_api_key_env: "BACKLOG_API_KEY",
+        backlog_api_key: "backlog-secret-key",
         jira_site_url: "https://example.atlassian.net",
         jira_project_key: "SYNC",
-        jira_email_env: "JIRA_EMAIL",
-        jira_api_token_env: "JIRA_API_TOKEN",
+        jira_email: "sync-admin@example.test",
+        jira_api_token: "jira-secret-token",
         translation_ai_provider: "codex_exec",
         translation_glossary_json: [
           { source: "予約", target: "đặt chỗ" },
@@ -125,7 +187,7 @@ async function main() {
     assert.equal(invalidTransport.body.error.code, "VALIDATION_ERROR");
 
     const projectId = created.body.data.id;
-    assertProjectSecretsAreNotStored(config, projectId);
+    assertProjectCredentialsAreStored(config, projectId);
 
     const enabled = await requestJson(server, {
       method: "POST",
@@ -151,29 +213,40 @@ async function main() {
     assert.equal(fetched.body.data.id, projectId);
     assert.equal(fetched.body.data.sync_enabled, false);
 
-    const rejectedSecret = await requestJson(server, {
+    const allowedCredentials = await requestJson(server, {
       method: "POST",
       pathname: "/api/v1/projects",
       token,
       body: {
-        name: "Bad Secret Project",
+        name: "DB Credential Project",
         backlog_api_key: "real-secret-value",
+        jira_email: "db-user@example.test",
+        jira_api_token: "real-jira-token",
       },
     });
-    assert.equal(rejectedSecret.status, 422);
-    assert.equal(rejectedSecret.body.error.code, "SECRET_FIELD_NOT_ALLOWED");
+    assert.equal(allowedCredentials.status, 201);
+    assert.equal(allowedCredentials.body.data.backlog_api_key, "real-secret-value");
+    assert.equal(allowedCredentials.body.data.jira_email, "db-user@example.test");
+    assert.equal(allowedCredentials.body.data.jira_api_token, "real-jira-token");
 
-    const rejectedEnvName = await requestJson(server, {
+    const aliasCredentials = await requestJson(server, {
       method: "POST",
       pathname: "/api/v1/projects",
       token,
       body: {
-        name: "Bad Env Project",
+        name: "Legacy Alias Credential Project",
+        backlog_api_key_env: "legacy-backlog-secret",
+        jira_email_env: "legacy-user@example.test",
         jira_api_token_env: "secret-token-shape",
       },
     });
-    assert.equal(rejectedEnvName.status, 422);
-    assert.equal(rejectedEnvName.body.error.code, "INVALID_ENV_NAME");
+    assert.equal(aliasCredentials.status, 201);
+    assert.equal(aliasCredentials.body.data.backlog_api_key, "legacy-backlog-secret");
+    assert.equal(aliasCredentials.body.data.jira_email, "legacy-user@example.test");
+    assert.equal(aliasCredentials.body.data.jira_api_token, "secret-token-shape");
+    assert.equal(aliasCredentials.body.data.backlog_api_key_env, null);
+    assert.equal(aliasCredentials.body.data.jira_email_env, null);
+    assert.equal(aliasCredentials.body.data.jira_api_token_env, null);
   });
 
   console.log("Projects verification passed.");

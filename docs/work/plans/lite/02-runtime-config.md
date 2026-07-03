@@ -59,8 +59,8 @@ Integration:
 
 ## Credential policy
 
-- Secret thật lưu trong `.env`.
-- Project config trong SQLite chỉ giữ tên biến env, ví dụ `BACKLOG_WEC_API_KEY`, `JIRA_WEC_API_TOKEN`.
+- Core/app secret như `JWT_SECRET` vẫn lưu trong `.env`; credential Backlog/Jira theo project lưu trong DB project config.
+- Project config trong SQLite lưu trực tiếp credential theo project: `backlog_api_key`, `jira_email`, `jira_api_token`. Các field cũ `*_env` chỉ còn là alias tương thích khi import/payload cũ gửi lên.
 - Không commit `.env`, `storage/`, SQLite database thật, attachment thật, backup thật hoặc token.
 - Thiếu config core thì app fail fast.
 - Thiếu credential chỉ dùng cho project/job cụ thể thì job fail có kiểm soát, ghi lỗi vào job/journal và hiển thị trong UI.
@@ -84,11 +84,11 @@ Field tối thiểu:
 - `backlog_project_key`
 - `backlog_issue_key_prefix`
 - `backlog_webhook_secret` optional/reserved cho Medium.
-- `backlog_api_key_env`
+- `backlog_api_key`
 - `jira_site_url`
 - `jira_project_key`
-- `jira_email_env`
-- `jira_api_token_env`
+- `jira_email`
+- `jira_api_token`
 - `jira_webhook_secret` optional/reserved cho Medium.
 - `translation_ai_provider`, mặc định Lite là `deepseek`.
 - `translation_ai_transport`, mặc định Lite là `openai_compatible`.

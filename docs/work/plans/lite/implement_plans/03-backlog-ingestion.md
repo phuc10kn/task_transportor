@@ -35,7 +35,7 @@ Project đủ điều kiện scheduled pull khi:
 - `sync_enabled = true`
 - `scheduled_pull_enabled = true`
 - `backlog_project_key` có cấu hình
-- `backlog_api_key_env` tồn tại trong env
+- `backlog_api_key` được lưu trong DB project config
 - đã đến `scheduled_pull_interval_minutes`
 
 Window:
