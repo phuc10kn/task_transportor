@@ -39,12 +39,21 @@ function cisMappingConfig(project) {
 }
 
 function uniqueTexts(values) {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
   return Array.from(new Set((values || [])
     .map((value) => String(value === null || value === undefined ? "" : value).trim())
     .filter(Boolean)));
 }
 
-function cisValueOptions(catalogItem, configuredValues) {
+function labelMap(config, mappingType) {
+  const labels = config && config[`${mappingType}_labels`];
+  return labels && typeof labels === "object" && !Array.isArray(labels) ? labels : {};
+}
+
+function cisValueOptions(catalogItem, configuredValues, configuredLabels = {}) {
   const catalogValues = (catalogItem.cis_values || []).map((item) => item.value);
   const configuredTexts = uniqueTexts(configuredValues || []);
   const values = configuredTexts.length > 0 ? configuredTexts : catalogValues;
@@ -52,12 +61,12 @@ function cisValueOptions(catalogItem, configuredValues) {
     const catalogOption = (catalogItem.cis_values || []).find((item) => item.value === value);
     return {
       value,
-      label: catalogOption ? catalogOption.label : value,
+      label: configuredLabels[value] || (catalogOption ? catalogOption.label : value),
     };
   });
 }
 
-function mappingTypeOptions({ catalogItem, configuredValues, discoveredValues, rules, directionFrom, directionTo }) {
+function mappingTypeOptions({ catalogItem, configuredValues, configuredLabels = {}, discoveredValues, rules, directionFrom, directionTo }) {
   const values = [];
   const add = (value) => {
     const text = value === null || value === undefined ? "" : String(value).trim();
@@ -90,7 +99,10 @@ function mappingTypeOptions({ catalogItem, configuredValues, discoveredValues, r
     }
   }
 
-  return values.map((value) => ({ value, label: value }));
+  return values.map((value) => ({
+    value,
+    label: configuredLabels[value] || value,
+  }));
 }
 
 function createRuleLookup(rules) {
@@ -160,6 +172,7 @@ function buildSystemsToCis({ catalog, cisConfiguredValues, configuredValues, dis
         system_values: mappingTypeOptions({
           catalogItem,
           configuredValues: configuredValues[item.mapping_type] || [],
+          configuredLabels: labelMap(configuredValues, item.mapping_type),
           discoveredValues,
           rules,
           directionFrom: sourceSystem,
@@ -167,7 +180,11 @@ function buildSystemsToCis({ catalog, cisConfiguredValues, configuredValues, dis
         }),
         issue_count: item.issue_count,
         example_issue_ids: item.example_issue_ids,
-        cis_values: cisValueOptions(catalogItem, cisConfiguredValues[item.mapping_type]),
+        cis_values: cisValueOptions(
+          catalogItem,
+          cisConfiguredValues[item.mapping_type],
+          labelMap(cisConfiguredValues, item.mapping_type)
+        ),
         allows_custom_cis_value: catalogItem.allows_custom_cis_value !== false,
         existing_rule: existingRule || null,
       };
@@ -192,7 +209,11 @@ function buildCisToSystem({ catalog, cisConfiguredValues, configuredValues, rule
       continue;
     }
 
-    const cisOptions = cisValueOptions(catalogItem, cisConfiguredValues[catalogItem.key]);
+    const cisOptions = cisValueOptions(
+      catalogItem,
+      cisConfiguredValues[catalogItem.key],
+      labelMap(cisConfiguredValues, catalogItem.key)
+    );
     const cisValues = optionValues(cisOptions);
 
     for (const cisValue of cisValues) {
@@ -217,6 +238,7 @@ function buildCisToSystem({ catalog, cisConfiguredValues, configuredValues, rule
         system_values: mappingTypeOptions({
           catalogItem,
           configuredValues: configuredValues[catalogItem.key] || [],
+          configuredLabels: labelMap(configuredValues, catalogItem.key),
           discoveredValues: [],
           rules,
           directionFrom: "cis",

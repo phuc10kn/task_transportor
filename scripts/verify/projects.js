@@ -8,6 +8,9 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig, makeTempEnv } = require("./helpers/tempConfig");
 const { loadConfig } = require("../../src/config/env");
+const {
+  syncProjectCredentialsFromEnv,
+} = require("../../src/infrastructure/database/syncProjectCredentialsFromEnv");
 
 function assertProjectCredentialsAreStored(config, projectId) {
   const db = createConnection({ config });
@@ -54,14 +57,13 @@ function verifyLegacyEnvCredentialMigration() {
         JSON.stringify({})
       );
 
-    db
-      .prepare("DELETE FROM schema_migrations WHERE filename = '015_project_credentials_from_env.js'")
-      .run();
+    const result = syncProjectCredentialsFromEnv({ db, env });
+    assert.equal(result.scanned_projects, 1);
+    assert.equal(result.updated_projects, 1);
+    assert.equal(result.updated_fields, 3);
   } finally {
     db.close();
   }
-
-  migrate({ config, env });
 
   const verifyDb = createConnection({ config });
   try {

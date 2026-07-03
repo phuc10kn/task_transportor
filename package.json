@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "migrate": "node src/infrastructure/database/migrate.js",
+    "migrate:credentials-from-env": "node scripts/migrate-project-credentials-from-env.js",
     "fe:start": "node scripts/serve-admin-ui.js",
     "admin:ui": "node scripts/serve-admin-ui.js",
     "admin:create": "node scripts/admin-create.js",

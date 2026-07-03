@@ -1,6 +1,7 @@
 const assert = require("assert");
 const crypto = require("crypto");
 const fs = require("fs");
+const http = require("http");
 const path = require("path");
 
 const { createApp } = require("../../src/app");
@@ -14,6 +15,7 @@ const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
+const { createJiraClient } = require("../../src/modules/Jira/infrastructure/JiraClient");
 const { markdownToAdf } = require("../../src/modules/Jira/support/jiraAdf");
 const { makeTempConfig } = require("./helpers/tempConfig");
 const { requestJson, withServer } = require("./helpers/http");
@@ -87,6 +89,108 @@ function verifyMarkdownToAdf() {
   assert.equal(adf.content[8].content[1].content[0].content[0].marks[0].type, "em");
   assert.equal(adf.content[10].type, "blockquote");
   assert.equal(adf.content[12].type, "rule");
+}
+
+function withMockJiraServer(callback) {
+  const server = http.createServer((req, res) => {
+    const send = (body) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(body));
+    };
+    const pathname = new URL(req.url, "http://127.0.0.1").pathname;
+
+    if (pathname === "/rest/api/3/project/DMP/statuses") {
+      send([{ name: "Task", statuses: [{ name: "To Do" }] }]);
+      return;
+    }
+    if (pathname === "/rest/api/3/priority") {
+      send([{ name: "Medium" }]);
+      return;
+    }
+    if (pathname === "/rest/api/3/project/DMP/components") {
+      send([]);
+      return;
+    }
+    if (pathname === "/rest/api/3/user/assignable/search") {
+      send([
+        { emailAddress: "email-user@example.test", accountId: "email-account-id", displayName: "Email User", accountType: "atlassian" },
+        { accountId: "old-user-account-id", displayName: "Old User", active: false, accountType: "atlassian" },
+        { accountId: "slack-account-id", displayName: "Slack", accountType: "app" },
+      ]);
+      return;
+    }
+    if (pathname === "/rest/api/3/user/assignable/multiProjectSearch") {
+      send([
+        { accountId: "multi-project-account-id", displayName: "Hidden Multi User", accountType: "atlassian" },
+        { accountId: "teams-account-id", displayName: "Microsoft Teams for Jira Cloud", accountType: "app" },
+      ]);
+      return;
+    }
+    if (pathname === "/rest/api/3/project/DMP/role") {
+      send({
+        Developers: `http://${req.headers.host}/rest/api/3/project/DMP/role/10002`,
+      });
+      return;
+    }
+    if (pathname === "/rest/api/3/project/DMP/role/10002") {
+      send({
+        actors: [
+          { actorUser: { accountId: "role-account-id", displayName: "Role User", accountType: "atlassian" } },
+          { actorUser: { accountId: "triage-account-id", displayName: "Jira Triage Agent", accountType: "app" } },
+          { actorUser: { accountId: "atlas-account-id", displayName: "Atlas for Jira Cloud", accountType: "app" } },
+        ],
+      });
+      return;
+    }
+
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end(JSON.stringify({ errorMessages: [`Unhandled path ${pathname}`] }));
+  });
+
+  return new Promise((resolve, reject) => {
+    server.listen(0, "127.0.0.1", async () => {
+      try {
+        await callback(server);
+        server.close((error) => error ? reject(error) : resolve());
+      } catch (error) {
+        server.close(() => reject(error));
+      }
+    });
+  });
+}
+
+async function verifyJiraMappingUserPullKeepsHiddenUsers() {
+  await withMockJiraServer(async (server) => {
+    const { port } = server.address();
+    const client = createJiraClient({
+      config: {
+        jira: {
+          fakeMode: "",
+          requestTimeoutSeconds: 5,
+        },
+      },
+      project: {
+        jira_site_url: `http://127.0.0.1:${port}`,
+        jira_project_key: "DMP",
+        jira_email: "admin@example.test",
+        jira_api_token: "token",
+      },
+    });
+    const values = await client.pullMappingValues();
+
+    assert.ok(values.user.includes("email-user@example.test"));
+    assert.ok(values.user.includes("multi-project-account-id"));
+    assert.ok(values.user.includes("role-account-id"));
+    assert.ok(!values.user.includes("old-user-account-id"));
+    assert.ok(!values.user.includes("slack-account-id"));
+    assert.ok(!values.user.includes("teams-account-id"));
+    assert.ok(!values.user.includes("triage-account-id"));
+    assert.ok(!values.user.includes("atlas-account-id"));
+    assert.equal(values.user_labels["email-user@example.test"], "Email User");
+    assert.equal(values.user_labels["multi-project-account-id"], "Hidden Multi User");
+    assert.equal(values.user_labels["role-account-id"], "Role User");
+    assert.deepEqual(values.cis_user_emails, ["email-user@example.test"]);
+  });
 }
 
 function createProject(config, suffix) {
@@ -712,6 +816,7 @@ async function verifyRetryAndCancelApi() {
 
 async function main() {
   verifyMarkdownToAdf();
+  await verifyJiraMappingUserPullKeepsHiddenUsers();
   await verifyEndpointAndCreateFlow();
   await verifyUpdateWithoutDuplicate();
   await verifyLinkExistingTrace();

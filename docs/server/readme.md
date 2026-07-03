@@ -169,6 +169,7 @@ mv "$NEW_DIR" "$APP_DIR"
 
 cd "$APP_DIR"
 npm run migrate
+npm run migrate:credentials-from-env
 sudo systemctl restart task-transportor-api task-transportor-admin-ui
 ```
 

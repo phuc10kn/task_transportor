@@ -11,6 +11,7 @@ Lite dùng đúng runtime đã chốt cho MVP:
 - Migration SQL file tự quản.
 - Auto migrate khi app start.
 - Command riêng `npm run migrate`.
+- Command migrate một lần để sync credential project từ tên biến env cũ sang DB mới: `npm run migrate:credentials-from-env`.
 - Command hoặc script tạo admin `npm run admin:create`.
 - App tự tạo các thư mục runtime cần thiết khi start.
 
@@ -61,6 +62,7 @@ Integration:
 
 - Core/app secret như `JWT_SECRET` vẫn lưu trong `.env`; credential Backlog/Jira theo project lưu trong DB project config.
 - Project config trong SQLite lưu trực tiếp credential theo project: `backlog_api_key`, `jira_email`, `jira_api_token`. Các field cũ `*_env` chỉ còn là alias tương thích khi import/payload cũ gửi lên.
+- Khi nâng cấp từ DB cũ đã lưu `backlog_api_key_env`, `jira_email_env`, `jira_api_token_env`, chạy `npm run migrate:credentials-from-env` trên server sau `npm run migrate` để copy giá trị thật từ `.env` vào cột DB mới. Command này không ghi đè credential đã có trong DB.
 - Không commit `.env`, `storage/`, SQLite database thật, attachment thật, backup thật hoặc token.
 - Thiếu config core thì app fail fast.
 - Thiếu credential chỉ dùng cho project/job cụ thể thì job fail có kiểm soát, ghi lỗi vào job/journal và hiển thị trong UI.

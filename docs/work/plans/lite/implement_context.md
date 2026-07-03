@@ -117,6 +117,7 @@ Runtime Lite:
 - Migration SQL file tự quản.
 - Auto migrate khi app start.
 - Có command `npm run migrate`.
+- Có command riêng `npm run migrate:credentials-from-env` để sync credential project từ tên biến env cũ sang DB khi nâng cấp.
 - Có command/script `npm run admin:create`.
 - App tự tạo storage directories khi start.
 
@@ -157,6 +158,7 @@ Integration env:
 - `WORKER_LOCK_TIMEOUT_SECONDS`
 - DeepSeek dùng OpenAI-compatible HTTP API; hiện chưa expose provider `openai_api` riêng trong Lite.
 - Backlog/Jira credentials của project lưu trực tiếp trong SQLite project config: `backlog_api_key`, `jira_email`, `jira_api_token`. Các field cũ `backlog_api_key_env`, `jira_email_env`, `jira_api_token_env` chỉ còn là alias tương thích đầu vào cũ và không còn được runtime dùng để đọc `process.env`.
+- Khi server còn dữ liệu project cũ chỉ có `*_env`, chạy `npm run migrate:credentials-from-env` sau schema migrate để copy giá trị thật từ `.env` vào DB. Command này không ghi đè credential đã có.
 - `WEBHOOK_VERIFY` reserved cho Medium hoặc webhook optional.
 
 Ghi chÃº cáº­p nháº­t AI translation:

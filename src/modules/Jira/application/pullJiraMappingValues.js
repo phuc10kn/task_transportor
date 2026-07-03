@@ -1,4 +1,6 @@
 const { createJiraClient } = require("../infrastructure/JiraClient");
+const { sanitizeJiraMappingValues } = require("./sanitizeJiraMappingValues");
+const { isRealJiraUserMappingEntry } = require("../support/realJiraUser");
 
 function projectsApi() {
   return require("../../Projects/ProjectsApi");
@@ -10,10 +12,6 @@ function uniqueValues(values) {
     .filter(Boolean)));
 }
 
-function emailValues(values) {
-  return uniqueValues(values).filter((value) => value.includes("@"));
-}
-
 function replaceMappingValues(existing, pulled) {
   const updated = { ...(existing || {}) };
 
@@ -22,8 +20,10 @@ function replaceMappingValues(existing, pulled) {
       continue;
     }
 
-    if (mappingType === "user" && emailValues(values).length > 0) {
-      updated[mappingType] = emailValues(values);
+    if (mappingType.endsWith("_labels")) {
+      updated[mappingType] = values && typeof values === "object" && !Array.isArray(values)
+        ? { ...values }
+        : {};
       continue;
     }
 
@@ -37,7 +37,10 @@ async function pullJiraMappingValues({ config, projectId }) {
   const project = projectsApi().getProject({ config, projectId });
   const client = createJiraClient({ config, project });
   const pulled = await client.pullMappingValues();
-  const jiraMappingValues = replaceMappingValues(project.jira_mapping_values_json, pulled);
+  const jiraMappingValues = sanitizeJiraMappingValues({
+    mappingValues: replaceMappingValues(project.jira_mapping_values_json, pulled),
+    isRealJiraUserMappingEntry,
+  });
   const updatedProject = projectsApi().updateProject({
     config,
     projectId,
@@ -48,7 +51,7 @@ async function pullJiraMappingValues({ config, projectId }) {
 
   return {
     project: updatedProject,
-    pulled,
+    pulled: jiraMappingValues,
     jira_mapping_values_json: updatedProject.jira_mapping_values_json,
   };
 }

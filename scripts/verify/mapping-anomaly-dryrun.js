@@ -60,6 +60,10 @@ function createProject(config, suffix, overrides = {}) {
         issue_type: ["Bug", "Task"],
         status: ["To Do", "Done"],
         priority: ["High", "Medium"],
+        user: ["jira-account-1"],
+        user_labels: {
+          "jira-account-1": "Jira Display User",
+        },
       },
       ...overrides,
     },
@@ -341,6 +345,42 @@ async function verifyPhase05() {
       "Translation review must not block when project disables require_translation_review"
     );
 
+    const jiraSourceProject = createProject(config, "JSRC", {
+      cis_mapping_values_json: {
+        user: ["old-cis-user@example.test"],
+      },
+      jira_mapping_values_json: {
+        user: [
+          "jira-account-1",
+          "jira-user@example.test",
+          "Slack",
+          "Atlas for Jira Cloud",
+          "Automation for Jira",
+          "Người dùng cũ",
+        ],
+        user_labels: {
+          "jira-account-1": "Jira Account One",
+          "jira-user@example.test": "Jira Email User",
+          Slack: "Slack",
+          "Atlas for Jira Cloud": "Atlas for Jira Cloud",
+          "Automation for Jira": "Automation for Jira",
+          "Người dùng cũ": "Người dùng cũ",
+        },
+      },
+    });
+    const syncedFromJira = await ProjectsApi.syncCisMappingValuesFromTarget({
+      config,
+      projectId: jiraSourceProject.id,
+      targetSystem: "jira",
+    });
+    assert.deepEqual(syncedFromJira.cis_mapping_values_json.user, ["jira-account-1", "jira-user@example.test"]);
+    assert.equal(syncedFromJira.cis_mapping_values_json.user_labels["jira-account-1"], "Jira Account One");
+    assert.ok(!syncedFromJira.cis_mapping_values_json.user.includes("Slack"));
+    assert.ok(!syncedFromJira.cis_mapping_values_json.user.includes("Atlas for Jira Cloud"));
+    assert.ok(!syncedFromJira.cis_mapping_values_json.user.includes("Automation for Jira"));
+    assert.ok(!syncedFromJira.cis_mapping_values_json.user.includes("Người dùng cũ"));
+    assert.ok(syncedFromJira.warnings.some((warning) => warning.mapping_type === "user"));
+
     const unreviewed = createIssueWithRevision(config, project, {
       backlog_issue_key: "DRY-1",
       issue_status: "approved",
@@ -521,6 +561,12 @@ async function verifyPhase05() {
     assert.ok(doneTargetSetting.system_values.some((option) => option.value === "Done"));
     assert.ok(mappingSettings.body.data.flows.cis_to_system.some((row) =>
       row.mapping_type === "user" && row.from_value === "assignee@example.test"
+    ));
+    const userTargetSetting = mappingSettings.body.data.flows.cis_to_system.find((row) =>
+      row.mapping_type === "user" && row.from_value === "assignee@example.test"
+    );
+    assert.ok(userTargetSetting.system_values.some((option) =>
+      option.value === "jira-account-1" && option.label === "Jira Display User"
     ));
 
     const listAnomalyResponse = await requestJson(server, {

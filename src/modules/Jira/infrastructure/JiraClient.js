@@ -3,6 +3,7 @@ const path = require("path");
 
 const { AppError } = require("../../../http/errors/AppError");
 const { markdownToAdf } = require("../support/jiraAdf");
+const { isRealJiraUserProfile, labelForJiraUser } = require("../support/realJiraUser");
 
 function messageFromBody(body, fallback) {
   if (!body || typeof body !== "object") {
@@ -114,6 +115,59 @@ function issueFieldsForJira(fields = {}) {
     ...rest,
     description: markdownToAdf(description_text !== undefined ? description_text : description),
   };
+}
+
+function jiraUserValue(user) {
+  if (!user || typeof user !== "object") {
+    return null;
+  }
+
+  return user.emailAddress || user.accountId || user.name || null;
+}
+
+function jiraUserEmail(user) {
+  return user && user.emailAddress || null;
+}
+
+function roleActorUser(actor) {
+  if (!actor || typeof actor !== "object") {
+    return null;
+  }
+
+  return actor.actorUser
+    ? {
+        ...actor.actorUser,
+        displayName: actor.actorUser.displayName || actor.displayName,
+      }
+    : null;
+}
+
+function collectUserValues(users) {
+  const values = [];
+  const emails = [];
+  const labels = {};
+  const add = (target, value) => {
+    const text = String(value || "").trim();
+    if (text && !target.includes(text)) {
+      target.push(text);
+    }
+  };
+
+  for (const user of users || []) {
+    if (!isRealJiraUserProfile(user)) {
+      continue;
+    }
+
+    const value = jiraUserValue(user);
+    add(values, value);
+    add(emails, jiraUserEmail(user));
+    const label = labelForJiraUser(user);
+    if (value && label) {
+      labels[value] = label;
+    }
+  }
+
+  return { values, emails, labels };
 }
 
 function loadFakeState(config) {
@@ -605,7 +659,32 @@ class JiraClient {
         project: projectKey,
         maxResults: 100,
       },
-    });
+    }).catch(() => ({ body: [] }));
+    const multiProjectUsersResponse = await this.request("GET", "/rest/api/3/user/assignable/multiProjectSearch", {
+      query: {
+        projectKeys: projectKey,
+        maxResults: 100,
+      },
+    }).catch(() => ({ body: [] }));
+    const projectRolesResponse = await this.request(
+      "GET",
+      `/rest/api/3/project/${encodeURIComponent(projectKey)}/role`
+    ).catch(() => ({ body: {} }));
+    const roleUrls = Object.values(projectRolesResponse.body || {})
+      .filter((value) => typeof value === "string");
+    const roleResponses = await Promise.all(roleUrls.map((url) =>
+      this.request("GET", url).catch(() => ({ body: { actors: [] } }))
+    ));
+    const roleUsers = roleResponses.flatMap((response) =>
+      (response.body && response.body.actors || [])
+        .map(roleActorUser)
+        .filter(Boolean)
+    );
+    const userValues = collectUserValues([
+      ...(assignableUsersResponse.body || []),
+      ...(multiProjectUsersResponse.body || []),
+      ...roleUsers,
+    ]);
 
     const statusNames = [];
     for (const issueType of projectStatuses) {
@@ -620,8 +699,9 @@ class JiraClient {
       issue_type: projectStatuses.map((item) => item.name).filter(Boolean),
       status: statusNames,
       priority: (prioritiesResponse.body || []).map((item) => item.name).filter(Boolean),
-      user: (assignableUsersResponse.body || []).map((item) => item.emailAddress || item.accountId).filter(Boolean),
-      cis_user_emails: (assignableUsersResponse.body || []).map((item) => item.emailAddress).filter(Boolean),
+      user: userValues.values,
+      user_labels: userValues.labels,
+      cis_user_emails: userValues.emails,
       component: (componentsResponse.body || []).map((item) => item.name).filter(Boolean),
     };
   }

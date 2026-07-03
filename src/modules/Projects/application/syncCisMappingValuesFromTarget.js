@@ -10,13 +10,13 @@ const SYSTEM_FIELDS = {
 };
 
 function uniqueValues(values) {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
   return Array.from(new Set((values || [])
     .map((value) => String(value === null || value === undefined ? "" : value).trim())
     .filter(Boolean)));
-}
-
-function emailValues(values) {
-  return uniqueValues(values).filter((value) => value.includes("@"));
 }
 
 function normalizeMappingValues(pulled) {
@@ -27,9 +27,10 @@ function normalizeMappingValues(pulled) {
       continue;
     }
 
-    if (mappingType === "user") {
-      const emails = emailValues(pulled.cis_user_emails || values);
-      normalized[mappingType] = emails.length > 0 ? emails : uniqueValues(values);
+    if (mappingType.endsWith("_labels")) {
+      if (values && typeof values === "object" && !Array.isArray(values)) {
+        normalized[mappingType] = values;
+      }
       continue;
     }
 
@@ -44,11 +45,14 @@ function sameValues(left, right) {
 }
 
 function hasMappingValues(mappingValues) {
-  return Object.values(mappingValues || {}).some((values) => uniqueValues(values).length > 0);
+  return Object.entries(mappingValues || {})
+    .filter(([mappingType]) => !mappingType.endsWith("_labels"))
+    .some(([, values]) => uniqueValues(values).length > 0);
 }
 
 function replacementWarnings(existingCisValues, nextCisValues) {
   return Object.entries(nextCisValues)
+    .filter(([mappingType]) => !mappingType.endsWith("_labels"))
     .filter(([mappingType, values]) => {
       const current = uniqueValues(existingCisValues && existingCisValues[mappingType]);
       return current.length > 0 && !sameValues(current, values);
@@ -113,7 +117,14 @@ async function syncCisMappingValuesFromTarget({ config, projectId, targetSystem 
   const configuredValues = project[systemField] || {};
   const shouldUseConfiguredValues = hasMappingValues(configuredValues);
   const pulled = shouldUseConfiguredValues
-    ? configuredValues
+    ? (
+      normalizedTarget === "jira"
+        ? JiraApi.sanitizeJiraMappingValues({
+          mappingValues: configuredValues,
+          isRealJiraUserMappingEntry: JiraApi.isRealJiraUserMappingEntry,
+        })
+        : configuredValues
+    )
     : await pullTargetMappingValues({
       config,
       project,

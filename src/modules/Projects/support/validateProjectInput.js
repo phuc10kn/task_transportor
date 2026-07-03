@@ -184,6 +184,27 @@ function normalizeMappingValues(value, fieldName) {
   }
 
   return Object.entries(value).reduce((normalized, [mappingType, values]) => {
+    if (mappingType.endsWith("_labels")) {
+      if (!isPlainObject(values)) {
+        throw new AppError({
+          code: "VALIDATION_ERROR",
+          message: `${fieldName}.${mappingType} must be an object.`,
+          status: 422,
+          details: { field: fieldName, mapping_type: mappingType },
+        });
+      }
+
+      normalized[mappingType] = Object.entries(values).reduce((labels, [key, label]) => {
+        const normalizedKey = String(key || "").trim();
+        const normalizedLabel = String(label === null || label === undefined ? "" : label).trim();
+        if (normalizedKey && normalizedLabel) {
+          labels[normalizedKey] = normalizedLabel;
+        }
+        return labels;
+      }, {});
+      return normalized;
+    }
+
     if (!Array.isArray(values)) {
       throw new AppError({
         code: "VALIDATION_ERROR",
