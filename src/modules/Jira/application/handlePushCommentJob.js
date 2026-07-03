@@ -1,4 +1,5 @@
 const { AppError } = require("../../../http/errors/AppError");
+const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
 const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
@@ -53,7 +54,11 @@ async function handlePushCommentJob(job, { config }) {
       project: bundle.project,
     });
     const created = await client.addComment(bundle.issue.jira_issue_key, comment.content_translated);
-    const synced = repository.markCommentSynced(comment.id, created.id || created.commentId || null);
+    const synced = CisApi.markCommentJiraSynced({
+      config,
+      commentId: comment.id,
+      jiraCommentId: created.id || created.commentId || null,
+    });
 
     SyncApi.writeJournal({
       config,
@@ -83,7 +88,10 @@ async function handlePushCommentJob(job, { config }) {
       jira_issue_key: bundle.issue.jira_issue_key,
     };
   } catch (error) {
-    repository.markCommentFailed(comment.id);
+    CisApi.markCommentJiraSyncFailed({
+      config,
+      commentId: comment.id,
+    });
     SyncApi.writeJournal({
       config,
       input: {

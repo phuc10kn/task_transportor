@@ -70,8 +70,8 @@ Reference:
 1. `../workflow/issueEditor.md`
 2. File phase trong folder này.
 3. `../implement_context.md`
-4. `../../architecture/README.md`
-5. `../../architecture/02-module-structure.md`
+4. `../../../../architecture/README.md`
+5. `../../../../architecture/02-module-structure.md`
 6. `../implement_plans/README.md`
 
 Nếu mâu thuẫn, ưu tiên quyết định trong folder này, sau đó đến proposal workflow, plan Lite mới, architecture guide, rồi spec nền cũ.

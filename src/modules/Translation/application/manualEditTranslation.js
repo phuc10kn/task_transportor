@@ -1,7 +1,8 @@
 const { AppError } = require("../../../http/errors/AppError");
+const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
-const { applyIssueTranslationToCanonical } = require("./applyIssueTranslationToCanonical");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
+const { syncIssueTranslationState } = require("./syncIssueTranslationState");
 
 function manualEditTranslation({ config, queueId, reviewedText, reviewedBy, reviewNotes, correlationId }) {
   if (!reviewedText || typeof reviewedText !== "string") {
@@ -27,7 +28,13 @@ function manualEditTranslation({ config, queueId, reviewedText, reviewedBy, revi
     });
   }
 
-  const canonicalApply = applyIssueTranslationToCanonical({
+  syncIssueTranslationState({
+    config,
+    repository,
+    issueId: item.issue_id,
+    correlationId,
+  });
+  const canonicalApply = CisApi.applyReviewedIssueTranslation({
     config,
     item,
     text: item.reviewed_text,
@@ -35,6 +42,13 @@ function manualEditTranslation({ config, queueId, reviewedText, reviewedBy, revi
     correlationId,
     reason: "Apply reviewed issue translation.",
   });
+  const commentApply = item.comment_id
+    ? CisApi.applyReviewedCommentTranslation({
+      config,
+      commentId: item.comment_id,
+      text: item.reviewed_text,
+    })
+    : null;
 
   SyncApi.writeJournal({
     config,
@@ -49,7 +63,11 @@ function manualEditTranslation({ config, queueId, reviewedText, reviewedBy, revi
       status: "success",
       trigger: "manual",
       message: "Translation manually edited.",
-      details_json: { translation_queue_id: item.id, canonical_apply: canonicalApply },
+      details_json: {
+        translation_queue_id: item.id,
+        canonical_apply: canonicalApply,
+        comment_apply: commentApply,
+      },
       executed_by: reviewedBy,
       correlation_id: correlationId,
     },

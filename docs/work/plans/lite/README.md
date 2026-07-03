@@ -17,7 +17,7 @@ Backlog manual pull / scheduled pull
 
 1. [01-overview.md](01-overview.md) - mục tiêu, nguyên tắc cắt scope và ranh giới Lite.
 2. [implement_context.md](implement_context.md) - context tổng hợp đủ để bắt đầu implement Lite.
-3. [../architecture/README.md](../architecture/README.md) - ngôn ngữ kiến trúc chung dùng cho mọi phiên bản.
+3. [../../../architecture/README.md](../../../architecture/README.md) - ngôn ngữ kiến trúc chung dùng cho mọi phiên bản.
 4. [implement_plans/README.md](implement_plans/README.md) - phase triển khai, chốt chặn và test được sau từng phase.
 5. [02-runtime-config.md](02-runtime-config.md) - runtime, env, storage, credential và bootstrap.
 6. [03-cis-schema.md](03-cis-schema.md) - schema subset và state cần có trong Lite.

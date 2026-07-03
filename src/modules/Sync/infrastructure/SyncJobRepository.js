@@ -474,6 +474,55 @@ function createSyncJobRepository({ config }) {
       );
     },
 
+    cancelTranslateJobsForQueueIds(queueIds, { executedBy = null, trigger = "system", correlationId = null } = {}) {
+      if (!Array.isArray(queueIds) || queueIds.length === 0) {
+        return [];
+      }
+
+      return withDb((db) =>
+        runInTransaction(db, () => {
+          const placeholders = queueIds.map(() => "?").join(", ");
+          const jobs = db
+            .prepare(
+              `SELECT *
+               FROM sync_jobs
+               WHERE job_type = 'translate'
+                 AND status IN ('pending', 'running')
+                 AND json_extract(payload_json, '$.translation_queue_id') IN (${placeholders})`
+            )
+            .all(...queueIds);
+
+          for (const existing of jobs) {
+            db
+              .prepare(
+                `UPDATE sync_jobs
+                 SET status = 'cancelled',
+                     locked_at = NULL,
+                     locked_by = NULL,
+                     updated_at = datetime('now')
+                 WHERE id = ?`
+              )
+              .run(existing.id);
+
+            const job = db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(existing.id);
+            insertJournal(db, jobJournalInput(job, {
+              action: "job_cancelled",
+              status: "cancelled",
+              trigger,
+              message: "Translate job cancelled by queue cleanup.",
+              executed_by: executedBy,
+              correlation_id: correlationId,
+              attempt_count: existing.attempt_count,
+            }));
+          }
+
+          return jobs.map((job) =>
+            rowToJob(db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(job.id))
+          );
+        })
+      );
+    },
+
     retryFailed(jobId, { executedBy = null } = {}) {
       return withDb((db) =>
         runInTransaction(db, () => {

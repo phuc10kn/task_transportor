@@ -676,17 +676,144 @@ function createCisRepository({ config }) {
       );
     },
 
-    updateIssueStatus(issueId, status) {
+    updateIssueStatus(issueId, status, options = {}) {
       return withDb((db) => {
+        const excludedStatuses = Array.isArray(options.exclude_statuses)
+          ? options.exclude_statuses.filter(Boolean)
+          : [];
+        const where = excludedStatuses.length > 0
+          ? `WHERE id = ? AND sync_status NOT IN (${excludedStatuses.map(() => "?").join(", ")})`
+          : "WHERE id = ?";
+
         db
           .prepare(
             `UPDATE issues
              SET sync_status = ?, updated_at = datetime('now')
-             WHERE id = ?`
+             ${where}`
           )
-          .run(status, issueId);
+          .run(status, issueId, ...excludedStatuses);
 
         return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+      });
+    },
+
+    saveJiraDraftFields(issueId, input) {
+      return withDb((db) =>
+        runInTransaction(db, () => {
+          const existing = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+          if (!existing) {
+            return null;
+          }
+
+          const fieldsJson = mergeSourceFields(existing.fields_json, {
+            summary: input.summary ? { jira: input.summary } : undefined,
+            description: input.description ? { jira: input.description } : undefined,
+            issue_type: input.issue_type ? { jira: input.issue_type } : undefined,
+            priority: input.priority ? { jira: input.priority } : undefined,
+            status: input.status ? { jira: input.status } : undefined,
+            assignee: input.assignee ? { jira: input.assignee } : undefined,
+            due_date: input.due_date ? { jira: input.due_date } : undefined,
+          }, "jira");
+
+          db
+            .prepare(
+              `UPDATE issues
+               SET fields_json = ?,
+                   updated_at = datetime('now')
+               WHERE id = ?`
+            )
+            .run(JSON.stringify(fieldsJson), issueId);
+
+          return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+        })
+      );
+    },
+
+    saveJiraSyncResult(issueId, input) {
+      return withDb((db) =>
+        runInTransaction(db, () => {
+          const existing = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+          if (!existing) {
+            return null;
+          }
+
+          const fieldsJson = mergeSourceFields(existing.fields_json, {
+            summary: input.summary ? { jira: input.summary } : undefined,
+            description: input.description ? { jira: input.description } : undefined,
+            issue_type: input.issue_type ? { jira: input.issue_type } : undefined,
+            priority: input.priority ? { jira: input.priority } : undefined,
+            status: input.status ? { jira: input.status } : undefined,
+            assignee: input.assignee ? { jira: input.assignee } : undefined,
+            due_date: input.due_date ? { jira: input.due_date } : undefined,
+            reporter: input.reporter ? { jira: input.reporter } : undefined,
+          }, "jira");
+
+          db
+            .prepare(
+              `UPDATE issues
+               SET jira_issue_key = ?,
+                   sync_status = ?,
+                   last_synced_at = datetime('now'),
+                   jira_updated_at = datetime('now'),
+                   fields_json = ?,
+                   updated_at = datetime('now')
+               WHERE id = ?`
+            )
+            .run(
+              input.jira_issue_key,
+              input.issue_status || "synced",
+              JSON.stringify(fieldsJson),
+              issueId
+            );
+
+          return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+        })
+      );
+    },
+
+    updateCommentTranslation(commentId, translatedText) {
+      return withDb((db) => {
+        db
+          .prepare(
+            `UPDATE issue_comments
+             SET content_translated = ?,
+                 updated_at = datetime('now')
+             WHERE id = ?`
+          )
+          .run(translatedText, commentId);
+
+        return rowToComment(db.prepare("SELECT * FROM issue_comments WHERE id = ?").get(commentId));
+      });
+    },
+
+    markCommentJiraSynced(commentId, jiraCommentId) {
+      return withDb((db) => {
+        db
+          .prepare(
+            `UPDATE issue_comments
+             SET jira_comment_id = ?,
+                 sync_status = 'synced',
+                 updated_at = datetime('now')
+             WHERE id = ?`
+          )
+          .run(jiraCommentId, commentId);
+
+        return rowToComment(db.prepare("SELECT * FROM issue_comments WHERE id = ?").get(commentId));
+      });
+    },
+
+    markCommentJiraSyncFailed(commentId) {
+      return withDb((db) => {
+        db
+          .prepare(
+            `UPDATE issue_comments
+             SET sync_status = 'failed',
+                 updated_at = datetime('now')
+             WHERE id = ?`
+          )
+          .run(commentId);
+
+        return rowToComment(db.prepare("SELECT * FROM issue_comments WHERE id = ?").get(commentId));
       });
     },
 
@@ -757,33 +884,6 @@ function createCisRepository({ config }) {
               input.sync_status,
               nextRevision,
               issue.id
-            );
-
-          db
-            .prepare(
-              `INSERT INTO sync_journal (
-                project_id,
-                issue_id,
-                direction_from,
-                direction_to,
-                job_type,
-                action,
-                status,
-                trigger,
-                message,
-                details_json,
-                executed_by,
-                correlation_id
-              )
-              VALUES (?, ?, 'cis', 'cis', 'manual_edit', 'issue_manual_edit_saved', 'success', 'manual', ?, ?, ?, ?)`
-            )
-            .run(
-              issue.project_id,
-              issue.id,
-              input.journal_message || "Canonical issue manual edit saved.",
-              JSON.stringify(input.journal_details || {}),
-              input.executed_by || null,
-              input.correlation_id || null
             );
 
           return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issue.id));

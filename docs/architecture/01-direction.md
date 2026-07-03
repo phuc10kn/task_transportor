@@ -1,16 +1,17 @@
-# Architecture Direction
+﻿# Architecture Direction
 
 ## Modular monolith
 
-Dự án đi theo hướng **modular monolith**:
+Dự án đi theo hướng **custom modular monolith**. Source of truth cho lý thuyết, module structure, boundary, data tier, evolution và luật implement nằm trong folder [../architechture/custom_modular_monolith/](../architechture/custom_modular_monolith/).
 
-```text
-One repository
-One deployable service at first
-One primary database at first
-Clear internal modules
-Explicit module boundaries
-```
+Các file bắt đầu:
+
+- [../architechture/custom_modular_monolith/overview.md](../architechture/custom_modular_monolith/overview.md)
+- [../architechture/custom_modular_monolith/theory.md](../architechture/custom_modular_monolith/theory.md)
+- [../architechture/custom_modular_monolith/module_structure.md](../architechture/custom_modular_monolith/module_structure.md)
+- [../architechture/custom_modular_monolith/implement_rules.md](../architechture/custom_modular_monolith/implement_rules.md)
+
+File này chỉ giữ hướng kiến trúc chung. Không cập nhật lý thuyết hoặc luật modular monolith tại đây.
 
 Không tách microservice trong giai đoạn đầu. Lite và Medium ưu tiên vận hành đơn giản: API, worker, scheduler và adapter cùng nằm trong một app Node.js.
 

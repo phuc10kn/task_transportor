@@ -1,4 +1,5 @@
 const { addRevision } = require("./application/addRevision");
+const { applyReviewedCommentTranslation } = require("./application/applyReviewedCommentTranslation");
 const { applyReviewedIssueTranslation } = require("./application/applyReviewedIssueTranslation");
 const { buildCanonicalSyncSnapshot } = require("./application/buildCanonicalSyncSnapshot");
 const { createIssue } = require("./application/createIssue");
@@ -14,26 +15,23 @@ const { listIssueHistory } = require("./application/listIssueHistory");
 const { listIssueWorklogs } = require("./application/listIssueWorklogs");
 const { listIssueChildren } = require("./application/listIssueChildren");
 const { listIssues } = require("./application/listIssues");
+const { markCommentJiraSynced } = require("./application/markCommentJiraSynced");
+const { markCommentJiraSyncFailed } = require("./application/markCommentJiraSyncFailed");
 const { markDuplicateIssue } = require("./application/markDuplicateIssue");
+const { markIssueConflict } = require("./application/markIssueConflict");
+const { markIssueSyncStatus } = require("./application/markIssueSyncStatus");
 const {
   markAttachmentDownloaded,
   markAttachmentDownloadFailed,
 } = require("./application/markAttachmentDownloaded");
+const { saveJiraDraftFields } = require("./application/saveJiraDraftFields");
+const { saveJiraSyncResult } = require("./application/saveJiraSyncResult");
 const { updateCanonicalIssue } = require("./application/updateCanonicalIssue");
 const { upsertBacklogIssue } = require("./application/upsertBacklogIssue");
 
-async function requestIssueTranslations(input) {
-  const TranslationApi = require("../Translation/TranslationApi");
-  return TranslationApi.requestIssueTranslations(input);
-}
-
-async function translateIssueTranslationNow(input) {
-  const TranslationApi = require("../Translation/TranslationApi");
-  return TranslationApi.translateIssueTranslationNow(input);
-}
-
 module.exports = {
   addRevision,
+  applyReviewedCommentTranslation,
   applyReviewedIssueTranslation,
   buildCanonicalSyncSnapshot,
   createIssue,
@@ -49,11 +47,15 @@ module.exports = {
   listIssueWorklogs,
   listIssueChildren,
   listIssues,
+  markCommentJiraSynced,
+  markCommentJiraSyncFailed,
   markDuplicateIssue,
-  requestIssueTranslations,
-  translateIssueTranslationNow,
+  markIssueConflict,
+  markIssueSyncStatus,
   markAttachmentDownloaded,
   markAttachmentDownloadFailed,
+  saveJiraDraftFields,
+  saveJiraSyncResult,
   updateCanonicalIssue,
   upsertBacklogIssue,
 };

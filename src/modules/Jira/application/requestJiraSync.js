@@ -1,4 +1,5 @@
 const { AppError } = require("../../../http/errors/AppError");
+const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
 const { evaluateDryRunFreshness, evaluateJiraSyncReadiness } = require("./runJiraDryRun");
@@ -144,7 +145,11 @@ function requestJiraSync({ config, issueId, executedBy, correlationId, jiraField
     : null;
 
   if (hasJiraFieldOverrides) {
-    repository.saveJiraDraftFields(readiness.issue.id, normalizedJiraFields);
+    CisApi.saveJiraDraftFields({
+      config,
+      issueId: readiness.issue.id,
+      input: normalizedJiraFields,
+    });
     SyncApi.writeJournal({
       config,
       input: {

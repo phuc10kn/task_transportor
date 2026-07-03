@@ -19,6 +19,7 @@
     "verify:sync-jobs": "node scripts/verify/sync-jobs.js",
     "verify:backlog-ingestion": "node scripts/verify/backlog-ingestion.js",
     "verify:translation-review": "node scripts/verify/translation-review.js",
+    "verify:translation-issue-routes": "node scripts/verify/translation-issue-routes.js",
     "verify:mapping-anomaly-dryrun": "node scripts/verify/mapping-anomaly-dryrun.js",
     "verify:jira-outbound": "node scripts/verify/jira-outbound.js",
     "verify:admin-ui-acceptance": "node scripts/verify/admin-ui-acceptance.js",

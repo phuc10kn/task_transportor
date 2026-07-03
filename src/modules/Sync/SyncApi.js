@@ -1,4 +1,5 @@
 const { cancelJob } = require("./application/cancelJob");
+const { cancelTranslateJobsForQueueIds } = require("./application/cancelTranslateJobsForQueueIds");
 const { createWorker } = require("./application/createWorker");
 const { enqueueJob } = require("./application/enqueueJob");
 const { getJob } = require("./application/getJob");
@@ -18,6 +19,7 @@ const {
 
 module.exports = {
   cancelJob,
+  cancelTranslateJobsForQueueIds,
   createWorker,
   enqueueJob,
   getHandler,

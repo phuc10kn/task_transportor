@@ -1,4 +1,4 @@
-# Kế hoạch phát triển
+﻿# Kế hoạch phát triển
 
 Thư mục này chia kế hoạch triển khai Central Sync Hub/CIS thành 3 phiên bản kế thừa nhau:
 
@@ -8,7 +8,7 @@ Lite -> Medium -> Full
 
 Mỗi phiên bản nằm trong một thư mục riêng:
 
-- [architecture](architecture/README.md) - ngôn ngữ kiến trúc chung, phương hướng modular monolith và template phát triển.
+- [architecture](../../architecture/README.md) - ngôn ngữ kiến trúc chung; source of truth cho custom modular monolith nằm tại [../../architechture/custom_modular_monolith/overview.md](../../architechture/custom_modular_monolith/overview.md).
 - [lite](lite/README.md) - bản nhỏ nhất, dùng manual/scheduled pull để chạy Backlog -> CIS -> Review -> Jira.
 - [medium](medium/README.md) - bản MVP vận hành hằng ngày, thêm webhook Backlog/Jira và Jira -> CIS trên nền Lite.
 - [full](full/README.md) - bản mở rộng hai chiều đầy đủ, có CIS -> Backlog, learning/operation/reporting sâu hơn.

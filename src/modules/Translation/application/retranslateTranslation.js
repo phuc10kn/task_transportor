@@ -1,6 +1,7 @@
 const { AppError } = require("../../../http/errors/AppError");
 const SyncApi = require("../../Sync/SyncApi");
 const { refreshTranslationAiConfigForQueueItem } = require("./refreshTranslationAiConfigForQueueItem");
+const { syncIssueTranslationState } = require("./syncIssueTranslationState");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
 
 function retranslateTranslation({ config, queueId, executedBy, correlationId }) {
@@ -16,6 +17,12 @@ function retranslateTranslation({ config, queueId, executedBy, correlationId }) 
   }
 
   item = refreshTranslationAiConfigForQueueItem({ config, repository, item });
+  syncIssueTranslationState({
+    config,
+    repository,
+    issueId: item.issue_id,
+    correlationId,
+  });
 
   const job = SyncApi.enqueueJob({
     config,

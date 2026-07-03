@@ -1421,7 +1421,7 @@
       button.textContent = "Translating...";
       syncIssueEditorActionState();
       try {
-        const result = await api(`/api/v1/issues/${issueId}/translations/translate`, { method: "POST" });
+        const result = await api(`/api/v1/translations/issues/${issueId}/translate`, { method: "POST" });
         state.issueEditorTranslationPopup = "translate";
         setToast(`Translation drafts created: ${(result.translated_items || []).length}`);
         state.issueEditorTranslating = "";
@@ -1486,10 +1486,10 @@
       syncIssueEditorActionState();
       try {
         if (button.dataset.editorSourceStale === "1") {
-          const result = await api(`/api/v1/issues/${issueId}/translations/translate`, { method: "POST" });
+          const result = await api(`/api/v1/translations/issues/${issueId}/translate`, { method: "POST" });
           setToast(`Translation drafts created: ${(result.translated_items || []).length}`);
         } else {
-          await api(`/api/v1/issues/${issueId}/translations/${button.dataset.editorRetranslate}/translate`, { method: "POST" });
+          await api(`/api/v1/translations/issues/${issueId}/items/${button.dataset.editorRetranslate}/translate`, { method: "POST" });
           setToast("Translation draft created.");
         }
         state.issueEditorTranslating = "";

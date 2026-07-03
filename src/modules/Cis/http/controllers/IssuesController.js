@@ -1,4 +1,5 @@
 const CisApi = require("../../CisApi");
+const TranslationApi = require("../../../Translation/TranslationApi");
 const { success } = require("../../../../http/response/envelope");
 
 function filtersFromRequest(req) {
@@ -58,9 +59,11 @@ function updateCanonical(req, res, next) {
   }
 }
 
+// TODO compatibility wrapper: Translation owns this use case.
+// Route kept for backward-compatible URL only.
 async function translate(req, res, next) {
   try {
-    success(res, await CisApi.requestIssueTranslations({
+    success(res, await TranslationApi.requestIssueTranslations({
       config: req.app.locals.config,
       issueId: req.params.issueId,
       executedBy: req.user && req.user.id,
@@ -71,9 +74,11 @@ async function translate(req, res, next) {
   }
 }
 
+// TODO compatibility wrapper: Translation owns this use case.
+// Route kept for backward-compatible URL only.
 async function translateQueueItem(req, res, next) {
   try {
-    success(res, await CisApi.translateIssueTranslationNow({
+    success(res, await TranslationApi.translateIssueTranslationNow({
       config: req.app.locals.config,
       issueId: req.params.issueId,
       queueId: Number(req.params.queueId),

@@ -1,6 +1,7 @@
 const { AppError } = require("../../../http/errors/AppError");
 const SyncApi = require("../../Sync/SyncApi");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
+const { syncIssueTranslationState } = require("./syncIssueTranslationState");
 
 function rejectTranslation({ config, queueId, reviewedBy, reviewNotes, correlationId }) {
   const repository = createTranslationRepository({ config });
@@ -16,6 +17,13 @@ function rejectTranslation({ config, queueId, reviewedBy, reviewNotes, correlati
       status: 404,
     });
   }
+
+  syncIssueTranslationState({
+    config,
+    repository,
+    issueId: item.issue_id,
+    correlationId,
+  });
 
   SyncApi.writeJournal({
     config,

@@ -1,5 +1,6 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { ISSUE_STATUSES } = require("../../../shared/stateConstants");
+const SyncApi = require("../../Sync/SyncApi");
 const { createCisRepository } = require("../infrastructure/CisRepository");
 const {
   EDITABLE_CANONICAL_FIELDS,
@@ -208,22 +209,36 @@ function updateCanonicalIssue({ config, issueId, payload, executedBy, correlatio
     fields_json: fieldsJson,
     sync_status: nextSyncStatus(issue.sync_status, changedFields),
     revision_snapshot: createsRevision ? revisionSnapshotFromCanonical(afterCanonical, revision, fieldsJson) : null,
-    journal_message: "Canonical issue manual edit saved.",
-    journal_details: {
-      changed_fields: changedFields,
-      before,
-      after,
-      assignee_meta: payload && payload.assignee_meta ? {
-        before: pickAssigneeMeta(issue.fields_json).cis,
-        after: { jira_account_id: payload.assignee_meta.jira_account_id || null },
-      } : undefined,
-      reason: payload && payload.reason || null,
-      actor: executedBy || null,
-      canonical_hash_before: beforeHash,
-      canonical_hash_after: afterHash,
+  });
+
+  SyncApi.writeJournal({
+    config,
+    input: {
+      project_id: issue.project_id,
+      issue_id: issue.id,
+      direction_from: "cis",
+      direction_to: "cis",
+      job_type: "manual_edit",
+      action: "issue_manual_edit_saved",
+      status: "success",
+      trigger: "manual",
+      message: "Canonical issue manual edit saved.",
+      details_json: {
+        changed_fields: changedFields,
+        before,
+        after,
+        assignee_meta: payload && payload.assignee_meta ? {
+          before: pickAssigneeMeta(issue.fields_json).cis,
+          after: { jira_account_id: payload.assignee_meta.jira_account_id || null },
+        } : undefined,
+        reason: payload && payload.reason || null,
+        actor: executedBy || null,
+        canonical_hash_before: beforeHash,
+        canonical_hash_after: afterHash,
+      },
+      executed_by: executedBy || null,
+      correlation_id: correlationId || null,
     },
-    executed_by: executedBy || null,
-    correlation_id: correlationId || null,
   });
 
   return {

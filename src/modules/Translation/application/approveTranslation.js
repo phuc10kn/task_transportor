@@ -1,7 +1,8 @@
 const { AppError } = require("../../../http/errors/AppError");
+const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
-const { applyIssueTranslationToCanonical } = require("./applyIssueTranslationToCanonical");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
+const { syncIssueTranslationState } = require("./syncIssueTranslationState");
 
 function approveTranslation({ config, queueId, reviewedBy, reviewNotes, correlationId }) {
   const repository = createTranslationRepository({ config });
@@ -18,7 +19,13 @@ function approveTranslation({ config, queueId, reviewedBy, reviewNotes, correlat
     });
   }
 
-  const canonicalApply = applyIssueTranslationToCanonical({
+  syncIssueTranslationState({
+    config,
+    repository,
+    issueId: item.issue_id,
+    correlationId,
+  });
+  const canonicalApply = CisApi.applyReviewedIssueTranslation({
     config,
     item,
     text: item.reviewed_text,
@@ -26,6 +33,13 @@ function approveTranslation({ config, queueId, reviewedBy, reviewNotes, correlat
     correlationId,
     reason: "Apply approved issue translation.",
   });
+  const commentApply = item.comment_id
+    ? CisApi.applyReviewedCommentTranslation({
+      config,
+      commentId: item.comment_id,
+      text: item.reviewed_text,
+    })
+    : null;
 
   SyncApi.writeJournal({
     config,
@@ -40,7 +54,11 @@ function approveTranslation({ config, queueId, reviewedBy, reviewNotes, correlat
       status: "success",
       trigger: "manual",
       message: "Translation draft approved.",
-      details_json: { translation_queue_id: item.id, canonical_apply: canonicalApply },
+      details_json: {
+        translation_queue_id: item.id,
+        canonical_apply: canonicalApply,
+        comment_apply: commentApply,
+      },
       executed_by: reviewedBy,
       correlation_id: correlationId,
     },

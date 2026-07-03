@@ -1,5 +1,4 @@
 const { createConnection } = require("../../../infrastructure/database/connection");
-const { runInTransaction } = require("../../../infrastructure/database/transaction");
 const { parseJson } = require("../../../shared/json");
 
 function rowToProject(row) {
@@ -55,70 +54,6 @@ function rowToJob(row) {
     ...row,
     payload_json: parseJson(row.payload_json, {}),
   };
-}
-
-function mergeIssueFields(existingFields, input) {
-  const fields = {
-    ...(existingFields || {}),
-  };
-
-  if (input.summary) {
-    fields.summary = {
-      ...(fields.summary || {}),
-      jira: input.summary,
-    };
-  }
-
-  if (input.description) {
-    fields.description = {
-      ...(fields.description || {}),
-      jira: input.description,
-    };
-  }
-
-  if (input.issue_type) {
-    fields.issue_type = {
-      ...(fields.issue_type || {}),
-      jira: input.issue_type,
-    };
-  }
-
-  if (input.priority) {
-    fields.priority = {
-      ...(fields.priority || {}),
-      jira: input.priority,
-    };
-  }
-
-  if (input.status) {
-    fields.status = {
-      ...(fields.status || {}),
-      jira: input.status,
-    };
-  }
-
-  if (input.assignee) {
-    fields.assignee = {
-      ...(fields.assignee || {}),
-      jira: input.assignee,
-    };
-  }
-
-  if (input.due_date) {
-    fields.due_date = {
-      ...(fields.due_date || {}),
-      jira: input.due_date,
-    };
-  }
-
-  if (input.reporter) {
-    fields.reporter = {
-      ...(fields.reporter || {}),
-      jira: input.reporter,
-    };
-  }
-
-  return fields;
 }
 
 function createJiraSyncRepository({ config }) {
@@ -191,91 +126,6 @@ function createJiraSyncRepository({ config }) {
       );
     },
 
-    markIssueStatus(issueId, status) {
-      return withDb((db) => {
-        db
-          .prepare(
-            `UPDATE issues
-             SET sync_status = ?,
-                 updated_at = datetime('now')
-             WHERE id = ?`
-          )
-          .run(status, issueId);
-
-        return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
-      });
-    },
-
-    markIssueConflict(issueId) {
-      return this.markIssueStatus(issueId, "conflict");
-    },
-
-    saveJiraDraftFields(issueId, input) {
-      return withDb((db) =>
-        runInTransaction(db, () => {
-          const existing = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
-          if (!existing) {
-            return null;
-          }
-
-          const fieldsJson = mergeIssueFields(existing.fields_json, input || {});
-
-          db
-            .prepare(
-              `UPDATE issues
-               SET fields_json = ?,
-                   updated_at = datetime('now')
-               WHERE id = ?`
-            )
-            .run(JSON.stringify(fieldsJson), issueId);
-
-          return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
-        })
-      );
-    },
-
-    saveIssueSyncResult(issueId, input) {
-      return withDb((db) =>
-        runInTransaction(db, () => {
-          const existing = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
-          if (!existing) {
-            return null;
-          }
-
-          const fieldsJson = mergeIssueFields(existing.fields_json, {
-            summary: input.summary,
-            description: input.description,
-            issue_type: input.issue_type,
-            priority: input.priority,
-            status: input.status,
-            assignee: input.assignee,
-            due_date: input.due_date,
-            reporter: input.reporter,
-          });
-
-          db
-            .prepare(
-              `UPDATE issues
-               SET jira_issue_key = ?,
-                   sync_status = ?,
-                   last_synced_at = datetime('now'),
-                   jira_updated_at = datetime('now'),
-                   fields_json = ?,
-                   updated_at = datetime('now')
-               WHERE id = ?`
-            )
-            .run(
-              input.jira_issue_key,
-              input.issue_status || "synced",
-              JSON.stringify(fieldsJson),
-              issueId
-            );
-
-          return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
-        })
-      );
-    },
-
     listSyncableComments(issueId) {
       return withDb((db) =>
         db
@@ -293,36 +143,6 @@ function createJiraSyncRepository({ config }) {
       );
     },
 
-    markCommentSynced(commentId, jiraCommentId) {
-      return withDb((db) => {
-        db
-          .prepare(
-            `UPDATE issue_comments
-             SET jira_comment_id = ?,
-                 sync_status = 'synced',
-                 updated_at = datetime('now')
-             WHERE id = ?`
-          )
-          .run(jiraCommentId, commentId);
-
-        return db.prepare("SELECT * FROM issue_comments WHERE id = ?").get(commentId);
-      });
-    },
-
-    markCommentFailed(commentId) {
-      return withDb((db) => {
-        db
-          .prepare(
-            `UPDATE issue_comments
-             SET sync_status = 'failed',
-                 updated_at = datetime('now')
-             WHERE id = ?`
-          )
-          .run(commentId);
-
-        return db.prepare("SELECT * FROM issue_comments WHERE id = ?").get(commentId);
-      });
-    },
   };
 }
 

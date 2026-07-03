@@ -1,4 +1,4 @@
-# Lite - Implement Context
+﻿# Lite - Implement Context
 
 ## Current implementation override
 
@@ -21,12 +21,12 @@ File này là context tổng hợp để bắt đầu implement phiên bản Lit
 
 - `docs/work/implement-interview.md`
 - `docs/work/plans/lite/*`
-- `docs/work/plans/architecture/*`
+- `docs/architecture/*`
 
 Mục tiêu của file này là đủ để một lượt implement Lite có thể bắt đầu mà không phải đọc lại toàn bộ interview dài. Khi có mâu thuẫn, ưu tiên theo thứ tự:
 
 1. Quyết định mới trong `docs/work/plans/lite/*`.
-2. Architecture guide trong `docs/work/plans/architecture/*`.
+2. Architecture guide trong `docs/architecture/*`.
 3. Quyết định gốc trong `docs/work/implement-interview.md`.
 4. Spec nền trong `docs/work/01-*.md` đến `12-*.md`.
 
@@ -79,51 +79,17 @@ Tuy vậy Lite vẫn phải giữ schema/state/module đủ để Medium thêm w
 
 ## 3. Architecture cần theo
 
-Hướng kiến trúc: **modular monolith**.
+Hướng kiến trúc: **custom modular monolith**. Source of truth cho lý thuyết, cấu trúc module, boundary, data tier và luật implement nằm trong folder [../../../architechture/custom_modular_monolith/](../../../architechture/custom_modular_monolith/).
 
-```text
-One repository
-One Node.js service first
-One SQLite database first
-Clear module boundaries
-```
+Khi cần hiểu hoặc sửa phần modular monolith, đọc các file canonical:
 
-Module structure chuẩn:
+- [../../../architechture/custom_modular_monolith/overview.md](../../../architechture/custom_modular_monolith/overview.md)
+- [../../../architechture/custom_modular_monolith/module_structure.md](../../../architechture/custom_modular_monolith/module_structure.md)
+- [../../../architechture/custom_modular_monolith/boundary_model.md](../../../architechture/custom_modular_monolith/boundary_model.md)
+- [../../../architechture/custom_modular_monolith/data_ownership.md](../../../architechture/custom_modular_monolith/data_ownership.md)
+- [../../../architechture/custom_modular_monolith/implement_rules.md](../../../architechture/custom_modular_monolith/implement_rules.md)
 
-```text
-src/
-  app.js
-  server.js
-  config/
-  db/
-  infrastructure/
-  services/
-  shared/
-  modules/
-    <Domain>/
-      <Domain>Api.js
-      application/
-      data/
-      domain/
-      infrastructure/
-      support/
-      http/
-        controllers/
-        requests/
-        resources/
-```
-
-Rules quan trọng:
-
-- Controller chỉ gọi `<Domain>Api`.
-- `<Domain>Api` là public module boundary.
-- Business action nằm trong `application/`, đặt tên theo động từ.
-- Module khác không import trực tiếp `application/*` hoặc `infrastructure/*` khi module đã có API boundary.
-- `src/infrastructure/` chứa shared technical infrastructure.
-- `modules/<Domain>/infrastructure/` chứa adapter/repository riêng module.
-- `support/` chỉ chứa helper thuần, không I/O.
-- `src/shared/` chỉ chứa pure utility, không business logic.
-- `src/services/` chỉ dùng cho cross-cutting service thật sự, không làm nơi chứa orchestration nghiệp vụ.
+File `implement_context.md` chỉ giữ context Lite. Không cập nhật lý thuyết, module structure hoặc luật boundary modular monolith tại đây.
 
 Domain module dự kiến cho Lite:
 

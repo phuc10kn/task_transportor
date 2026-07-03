@@ -1,5 +1,7 @@
 # Evolution
 
+Custom modular monolith phải giúp Lite, Medium và Full kế thừa cùng một kiến trúc thay vì rewrite.
+
 ## Lite
 
 Lite là bản pull-first:
@@ -8,7 +10,7 @@ Lite là bản pull-first:
 Backlog manual/scheduled pull -> CIS -> Review -> Jira
 ```
 
-Lite dùng architecture chung nhưng chỉ bật capability tối thiểu:
+Lite bật tối thiểu:
 
 - Manual pull.
 - Scheduled pull optional.
@@ -17,6 +19,8 @@ Lite dùng architecture chung nhưng chỉ bật capability tối thiểu:
 - Dry-run Jira.
 - Jira push.
 - Job/journal/audit.
+
+Lite được cắt scope nhưng không được cắt nền móng: schema, state, module boundary, normalizer, job/journal phải đủ để Medium kế thừa.
 
 ## Medium
 
@@ -29,7 +33,7 @@ Medium thêm event-driven inbound:
 - Full anomaly MVP.
 - AI mapping proposal.
 
-Medium phải kế thừa:
+Medium phải reuse:
 
 - Same CIS schema/core.
 - Same normalizer pattern.
@@ -75,4 +79,11 @@ SQLite vẫn phù hợp Lite/Medium nội bộ. Cân nhắc PostgreSQL khi:
 - Cần backup/replication online.
 - Cần query/report phức tạp hơn.
 
-Đổi DB không được đổi product model `System -> CIS -> System`.
+Đổi DB không được đổi product model:
+
+```text
+System -> CIS -> System
+```
+
+Đổi DB cũng không được xóa ownership module: shared database engine không đồng nghĩa shared write ownership.
+

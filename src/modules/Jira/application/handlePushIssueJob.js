@@ -1,4 +1,5 @@
 const AnomalyApi = require("../../Anomaly/AnomalyApi");
+const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
 const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
@@ -120,7 +121,11 @@ async function handlePushIssueJob(job, { config }) {
   }
 
   const previousStatus = readiness.issue.status;
-  repository.markIssueStatus(readiness.issue.id, "syncing");
+  CisApi.markIssueSyncStatus({
+    config,
+    issueId: readiness.issue.id,
+    status: "syncing",
+  });
 
   try {
     const payload = job.payload_json && job.payload_json.jira_payload_override
@@ -144,7 +149,10 @@ async function handlePushIssueJob(job, { config }) {
       await client.transitionIssue(jiraIssueKey, payload.transition_preview.status);
     }
 
-    const saved = repository.saveIssueSyncResult(readiness.issue.id, {
+    const saved = CisApi.saveJiraSyncResult({
+      config,
+      issueId: readiness.issue.id,
+      input: {
       jira_issue_key: jiraIssueKey,
       issue_status: "synced",
       summary: payload.fields.summary,
@@ -157,6 +165,7 @@ async function handlePushIssueJob(job, { config }) {
       due_date: payload.fields.duedate,
       reporter: payload.fields.reporter
         && (payload.fields.reporter.emailAddress || payload.fields.reporter.accountId || payload.fields.reporter.name),
+      },
     });
 
     const syncableComments = repository.listSyncableComments(readiness.issue.id);
@@ -211,10 +220,17 @@ async function handlePushIssueJob(job, { config }) {
       comment_jobs: commentJobs.length,
     };
   } catch (error) {
-    repository.markIssueStatus(readiness.issue.id, previousStatus);
+    CisApi.markIssueSyncStatus({
+      config,
+      issueId: readiness.issue.id,
+      status: previousStatus,
+    });
 
     if (error.code === "JIRA_TRACE_CONFLICT") {
-      repository.markIssueConflict(readiness.issue.id);
+      CisApi.markIssueConflict({
+        config,
+        issueId: readiness.issue.id,
+      });
       AnomalyApi.createAnomaly({
         config,
         input: {

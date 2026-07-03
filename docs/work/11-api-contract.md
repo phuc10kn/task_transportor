@@ -244,6 +244,8 @@ POST /api/v1/issues/:issueId/mark-duplicate
 ### Translation review
 
 ```text
+POST /api/v1/translations/issues/:issueId/translate
+POST /api/v1/translations/issues/:issueId/items/:queueId/translate
 GET  /api/v1/translation-queue
 GET  /api/v1/translation-queue/:queueId
 POST /api/v1/translation-queue/:queueId/approve
@@ -251,6 +253,10 @@ POST /api/v1/translation-queue/:queueId/reject
 POST /api/v1/translation-queue/:queueId/retranslate
 POST /api/v1/translation-queue/:queueId/manual-edit
 ```
+
+`POST /translations/issues/:issueId/translate` tạo hoặc dịch ngay các target issue hiện tại (`summary`, `description`) bằng Backlog source hiện tại. Endpoint này thuộc module Translation, gọi provider trong request hiện tại, không enqueue `sync_jobs`, nhưng vẫn lưu draft/review vào `translation_queue`.
+
+`POST /translations/issues/:issueId/items/:queueId/translate` dịch lại một queue item cụ thể thuộc issue đó.
 
 ### Mapping approval
 
@@ -318,8 +324,8 @@ Code Lite hiện tại chưa có endpoint Jira inbound/manual pull như `POST /a
 ```text
 GET  /api/v1/issues/:issueId/editor
 PATCH /api/v1/issues/:issueId
-POST /api/v1/issues/:issueId/translations/translate
-POST /api/v1/issues/:issueId/translations/:queueId/translate
+POST /api/v1/issues/:issueId/translations/translate          (compat alias -> Translation)
+POST /api/v1/issues/:issueId/translations/:queueId/translate   (compat alias -> Translation)
 GET  /api/v1/issues/:issueId/history
 GET  /api/v1/issues/:issueId/worklogs
 POST /api/v1/issues/:issueId/dry-run/jira
@@ -328,9 +334,7 @@ POST /api/v1/issues/:issueId/sync/jira
 
 `GET /issues/:issueId/editor` trả issue core, canonical effective values, source values theo `cis/backlog/jira`, `field_meta`, `assignee_meta`, worklog summary và sync summary.
 
-`POST /issues/:issueId/translations/translate` tạo hoặc dịch ngay các target issue hiện tại (`summary`, `description`) bằng Backlog source hiện tại. Endpoint này gọi provider trong request hiện tại, không enqueue `sync_jobs`, nhưng vẫn lưu draft/review vào `translation_queue`.
-
-`POST /issues/:issueId/translations/:queueId/translate` dịch lại một queue item cụ thể thuộc issue đó. Nếu item/source cũ stale, endpoint cập nhật `source_text` bằng Backlog source hiện tại trước khi dịch lại.
+Hai route `POST /issues/:issueId/translations/*` giữ lại để tương thích URL cũ; implementation gọi `TranslationApi`. Route canonical nằm ở module Translation (`POST /translations/issues/:issueId/translate` và `POST /translations/issues/:issueId/items/:queueId/translate`).
 
 `PATCH /issues/:issueId` chỉ cho sửa canonical fields:
 

@@ -8,6 +8,7 @@ const { manualEditTranslation } = require("./application/manualEditTranslation")
 const { rejectTranslation } = require("./application/rejectTranslation");
 const { requestIssueTranslations } = require("./application/requestIssueTranslations");
 const { retranslateTranslation } = require("./application/retranslateTranslation");
+const { syncIssueTranslationState } = require("./application/syncIssueTranslationState");
 const { translateIssueTranslationNow } = require("./application/translateIssueTranslationNow");
 
 module.exports = {
@@ -21,5 +22,6 @@ module.exports = {
   rejectTranslation,
   requestIssueTranslations,
   retranslateTranslation,
+  syncIssueTranslationState,
   translateIssueTranslationNow,
 };

@@ -1,5 +1,7 @@
 const { translateQueueItemNow } = require("./translateQueueItemNow");
 const CisApi = require("../../Cis/CisApi");
+const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
+const { syncIssueTranslationState } = require("./syncIssueTranslationState");
 
 function normalizeSource(value) {
   return String(value === null || value === undefined ? "" : value).trim();
@@ -95,6 +97,7 @@ function shouldTranslate(item) {
 }
 
 async function requestIssueTranslations({ config, issueId, executedBy, correlationId }) {
+  const repository = createTranslationRepository({ config });
   const bundle = CisApi.getIssueTranslationTargets({ config, issueId });
   const issue = bundle.issue;
   const targets = bundle.targets;
@@ -140,6 +143,15 @@ async function requestIssueTranslations({ config, issueId, executedBy, correlati
     });
   }
 
+  if (created.length > 0) {
+    syncIssueTranslationState({
+      config,
+      repository,
+      issueId: issue.id,
+      correlationId,
+    });
+  }
+
   const translated = [];
   for (const item of decoratedItems
     .filter((item) => normalizeSource(item.current_source_text))
@@ -153,6 +165,13 @@ async function requestIssueTranslations({ config, issueId, executedBy, correlati
       trigger: "manual",
     }));
   }
+
+  syncIssueTranslationState({
+    config,
+    repository,
+    issueId: issue.id,
+    correlationId,
+  });
 
   const refreshed = CisApi.getIssueTranslationTargets({ config, issueId: issue.id });
   return {

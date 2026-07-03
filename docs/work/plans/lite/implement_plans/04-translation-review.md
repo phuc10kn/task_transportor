@@ -106,7 +106,7 @@ Quy tắc lỗi:
 
 ## Deliverables
 
-- Module `Translation` với API boundary.
+- Module `Translation` theo [module_structure.md](../../../../architechture/custom_modular_monolith/module_structure.md) và [implement_rules.md](../../../../architechture/custom_modular_monolith/implement_rules.md).
 - Provider adapter `codex_exec`.
 - Fake `codex_exec` command/script để test tự động.
 - Handler `translate` đăng ký vào worker phase 02.

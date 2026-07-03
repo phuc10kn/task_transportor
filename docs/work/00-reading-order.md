@@ -13,7 +13,7 @@ File này gợi ý thứ tự đọc theo mục tiêu. Không cần đọc tất
 
 1. [plans/lite/README.md](plans/lite/README.md)
 2. [plans/lite/implement_context.md](plans/lite/implement_context.md)
-3. [plans/architecture/README.md](plans/architecture/README.md)
+3. [../architecture/README.md](../architecture/README.md)
 4. [plans/lite/implement_plans/README.md](plans/lite/implement_plans/README.md)
 
 ## Hiểu luồng inbound/outbound

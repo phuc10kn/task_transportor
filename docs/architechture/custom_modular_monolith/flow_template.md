@@ -1,6 +1,6 @@
-# Flow Template
+# Flow template
 
-Khi thiết kế một luồng mới, viết theo template này để đảm bảo vẫn đi qua CIS.
+Khi thiết kế một luồng mới, viết theo template này để đảm bảo vẫn đi qua CIS và giữ boundary đúng.
 
 ## 1. Tên luồng
 
@@ -47,6 +47,8 @@ Input đến từ đâu?
 
 Normalizer nào chịu trách nhiệm?
 
+Webhook, manual pull và scheduled pull cùng source phải dùng chung normalizer.
+
 Ví dụ:
 
 ```text
@@ -54,41 +56,42 @@ Backlog issue payload -> internal issue fields
 Jira comment webhook -> internal comment fields
 ```
 
-Webhook, manual pull và scheduled pull cùng source phải dùng chung normalizer.
+## 6. Owner write
 
-## 6. CIS write
+Ghi vào bảng nào và owner module là ai?
 
-Ghi vào bảng nào?
+| Data | Owner |
+| --- | --- |
+| `issues`, `issue_revisions`, `issue_comments`, `issue_attachments` | `Cis` |
+| `translation_queue` lifecycle | `Translation` |
+| `mapping_rules` | `Mapping` |
+| `anomaly_log` | `Anomaly` |
+| `sync_jobs`, `sync_journal` | `Sync` |
+| `projects` | `Projects` |
 
-- `issues`
-- `issue_revisions`
-- `issue_comments`
-- `issue_attachments`
-- `translation_queue`
-- `mapping_rules`
-- `anomaly_log`
-- `sync_jobs`
-- `sync_journal`
+Nếu flow nằm ở module khác nhưng cần ghi state owner, phải gọi owner API.
 
 ## 7. Pre-check
 
 Trước outbound thật cần check gì?
 
-- Project enabled.
-- Translation reviewed.
+- Project enabled/sync enabled.
 - Required mapping approved.
-- No blocking anomaly.
+- No critical blocking anomaly.
 - Credential exists.
 - Dry-run validation passes.
+- Dry-run hash còn fresh.
+- Sync state cho phép.
 
 ## 8. Side effect
 
 Có gọi external API không?
 
-- Nếu có, module adapter nào gọi?
+- Adapter module nào gọi?
 - Retry policy là gì?
 - Lỗi nào fail ngay?
 - Lỗi nào retry?
+- State update sau external call qua owner nào?
 
 ## 9. Audit
 
@@ -100,6 +103,7 @@ Ghi journal/audit gì?
 - `direction_to`.
 - old/new value nếu có.
 - `executed_by` nếu manual.
+- reason nếu có.
 - correlation id.
 
 ## 10. Extension
@@ -113,3 +117,4 @@ Lite: manual pull
 Medium: webhook uses same normalizer
 Full: replay raw event
 ```
+

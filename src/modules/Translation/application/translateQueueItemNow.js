@@ -3,7 +3,9 @@ const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { buildStandardTranslationInput } = require("./buildStandardTranslationInput");
 const { collectTranslationContext } = require("./collectTranslationContext");
+const { maybeCreateLowConfidenceAnomaly } = require("./maybeCreateLowConfidenceAnomaly");
 const { refreshTranslationAiConfigForQueueItem } = require("./refreshTranslationAiConfigForQueueItem");
+const { syncIssueTranslationState } = require("./syncIssueTranslationState");
 const { translationAdapterFor } = require("./translationAdapterFor");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
 const { hashText } = require("../support/hashText");
@@ -85,6 +87,17 @@ async function translateQueueItemNow({
       model_or_command: result.model_or_command || item.model_or_command,
       provider_request_id: result.provider_request_id,
       confidence: result.confidence,
+    });
+    maybeCreateLowConfidenceAnomaly({
+      config,
+      item: updated,
+      confidence: result.confidence,
+    });
+    syncIssueTranslationState({
+      config,
+      repository,
+      issueId: item.issue_id,
+      correlationId,
     });
 
     SyncApi.writeJournal({
