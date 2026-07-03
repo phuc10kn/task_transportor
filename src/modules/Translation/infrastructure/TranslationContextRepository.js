@@ -1,5 +1,37 @@
 const { createConnection } = require("../../../infrastructure/database/connection");
-const { rowToProject } = require("../../Projects/infrastructure/ProjectRepository");
+
+function parseJson(value, fallback) {
+  if (!value) {
+    return fallback;
+  }
+
+  return JSON.parse(value);
+}
+
+function rowToProjectProfile(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    translation_ai_provider: row.translation_ai_provider || row.translation_provider || null,
+    translation_ai_transport: row.translation_ai_transport || null,
+    translation_ai_model: row.translation_ai_model || row.translation_model || null,
+    enabled: Boolean(row.enabled),
+    sync_enabled: Boolean(row.sync_enabled),
+    auto_translate: Boolean(row.auto_translate),
+    require_translation_review: Boolean(row.require_translation_review),
+    require_mapping_approval: Boolean(row.require_mapping_approval),
+    manual_pull_enabled: Boolean(row.manual_pull_enabled),
+    scheduled_pull_enabled: Boolean(row.scheduled_pull_enabled),
+    scheduled_pull_filter_json: parseJson(row.scheduled_pull_filter_json, {}),
+    cis_mapping_values_json: parseJson(row.cis_mapping_values_json, {}),
+    backlog_mapping_values_json: parseJson(row.backlog_mapping_values_json, {}),
+    jira_mapping_values_json: parseJson(row.jira_mapping_values_json, {}),
+    translation_glossary_json: parseJson(row.translation_glossary_json, []),
+  };
+}
 
 function createTranslationContextRepository({ config }) {
   function withDb(callback) {
@@ -23,7 +55,7 @@ function createTranslationContextRepository({ config }) {
           return null;
         }
 
-        const project = rowToProject(db.prepare("SELECT * FROM projects WHERE id = ?").get(issue.project_id));
+        const project = rowToProjectProfile(db.prepare("SELECT * FROM projects WHERE id = ?").get(issue.project_id));
         const revision = db
           .prepare(
             `SELECT *

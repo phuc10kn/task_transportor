@@ -1,5 +1,8 @@
-const ProjectsApi = require("../../Projects/ProjectsApi");
 const { createBacklogClient } = require("../infrastructure/BacklogClient");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function uniqueValues(values) {
   return Array.from(new Set((values || [])
@@ -25,11 +28,11 @@ function mergeMappingValues(existing, pulled) {
 }
 
 async function pullBacklogMappingValues({ config, projectId }) {
-  const project = ProjectsApi.getProject({ config, projectId });
+  const project = projectsApi().getProject({ config, projectId });
   const client = createBacklogClient({ config, project });
   const pulled = await client.pullMappingValues();
   const backlogMappingValues = mergeMappingValues(project.backlog_mapping_values_json, pulled);
-  const updatedProject = ProjectsApi.updateProject({
+  const updatedProject = projectsApi().updateProject({
     config,
     projectId,
     input: {

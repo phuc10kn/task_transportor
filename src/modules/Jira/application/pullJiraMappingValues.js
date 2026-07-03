@@ -1,5 +1,8 @@
-const ProjectsApi = require("../../Projects/ProjectsApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function uniqueValues(values) {
   return Array.from(new Set((values || [])
@@ -31,11 +34,11 @@ function replaceMappingValues(existing, pulled) {
 }
 
 async function pullJiraMappingValues({ config, projectId }) {
-  const project = ProjectsApi.getProject({ config, projectId });
+  const project = projectsApi().getProject({ config, projectId });
   const client = createJiraClient({ config, project });
   const pulled = await client.pullMappingValues();
   const jiraMappingValues = replaceMappingValues(project.jira_mapping_values_json, pulled);
-  const updatedProject = ProjectsApi.updateProject({
+  const updatedProject = projectsApi().updateProject({
     config,
     projectId,
     input: {

@@ -1,10 +1,13 @@
 const CisApi = require("../../Cis/CisApi");
-const ProjectsApi = require("../../Projects/ProjectsApi");
 const { createAttachmentStorage } = require("../infrastructure/AttachmentStorage");
 const { createBacklogClient } = require("../infrastructure/BacklogClient");
 
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
+
 async function downloadAttachmentToCis({ config, attachment, project, backlogIssueKey }) {
-  const resolvedProject = project || ProjectsApi.getProject({
+  const resolvedProject = project || projectsApi().getProject({
     config,
     projectId: attachment.project_id,
   });

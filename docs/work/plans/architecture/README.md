@@ -8,10 +8,11 @@ Tài liệu này không thay thế spec chi tiết của từng phiên bản. N�
 
 1. [01-direction.md](01-direction.md) - phương hướng kiến trúc chung.
 2. [02-module-structure.md](02-module-structure.md) - chuẩn chia folder/module.
-3. [03-module-template.md](03-module-template.md) - template phát triển một module hoặc capability mới.
-4. [04-boundaries.md](04-boundaries.md) - luật boundary và dependency.
-5. [05-flow-template.md](05-flow-template.md) - template mô tả luồng System -> CIS -> System.
-6. [06-evolution.md](06-evolution.md) - cách Lite, Medium, Full kế thừa cùng kiến trúc.
+3. [module-boundary-rules.md](module-boundary-rules.md) - luật bắt buộc chống import chéo module internals.
+4. [03-module-template.md](03-module-template.md) - template phát triển một module hoặc capability mới.
+5. [04-boundaries.md](04-boundaries.md) - luật boundary và dependency.
+6. [05-flow-template.md](05-flow-template.md) - template mô tả luồng System -> CIS -> System.
+7. [06-evolution.md](06-evolution.md) - cách Lite, Medium, Full kế thừa cùng kiến trúc.
 
 ## Tóm tắt
 

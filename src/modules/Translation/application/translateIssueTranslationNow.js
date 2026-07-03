@@ -1,19 +1,20 @@
 const { AppError } = require("../../../http/errors/AppError");
-const { translateQueueItemNow } = require("../../Translation/application/translateQueueItemNow");
-const { createTranslationRepository } = require("../../Translation/infrastructure/TranslationRepository");
-const { createCisRepository } = require("../infrastructure/CisRepository");
-const {
-  ISSUE_TRANSLATION_FIELDS,
-  issueTranslationTargetMap,
-  normalizeTranslationSource,
-} = require("../support/issueTranslationTargets");
+const { translateQueueItemNow } = require("./translateQueueItemNow");
+const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
+const CisApi = require("../../Cis/CisApi");
+
+const ISSUE_TRANSLATION_FIELDS = ["summary", "description"];
+
+function normalizeSource(value) {
+  return String(value === null || value === undefined ? "" : value).trim();
+}
 
 function inferTargetField(item, sources) {
   if (ISSUE_TRANSLATION_FIELDS.includes(item.target_field)) {
     return item.target_field;
   }
 
-  const sourceText = normalizeTranslationSource(item.source_text);
+  const sourceText = normalizeSource(item.source_text);
   for (const field of ISSUE_TRANSLATION_FIELDS) {
     if (sourceText && sourceText === sources[field]) {
       return field;
@@ -38,8 +39,8 @@ async function translateIssueTranslationNow({ config, issueId, queueId, executed
     });
   }
 
-  const issue = createCisRepository({ config }).getIssueById(issueId);
-  const sources = issue ? issueTranslationTargetMap(issue) : {};
+  const bundle = CisApi.getIssueTranslationTargets({ config, issueId });
+  const sources = bundle.target_map || {};
   const targetField = inferTargetField(item, sources);
   const sourceText = targetField ? sources[targetField] : null;
   if (!sourceText) {

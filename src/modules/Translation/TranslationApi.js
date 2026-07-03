@@ -6,7 +6,9 @@ const { handleTranslateJob } = require("./application/handleTranslateJob");
 const { listTranslationQueue } = require("./application/listTranslationQueue");
 const { manualEditTranslation } = require("./application/manualEditTranslation");
 const { rejectTranslation } = require("./application/rejectTranslation");
+const { requestIssueTranslations } = require("./application/requestIssueTranslations");
 const { retranslateTranslation } = require("./application/retranslateTranslation");
+const { translateIssueTranslationNow } = require("./application/translateIssueTranslationNow");
 
 module.exports = {
   approveTranslation,
@@ -17,5 +19,7 @@ module.exports = {
   listTranslationQueue,
   manualEditTranslation,
   rejectTranslation,
+  requestIssueTranslations,
   retranslateTranslation,
+  translateIssueTranslationNow,
 };

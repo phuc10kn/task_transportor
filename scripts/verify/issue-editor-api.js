@@ -49,6 +49,7 @@ function createProject(config) {
       jira_project_key: "IED",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_TOKEN",
+      translation_provider: "codex_exec",
       jira_mapping_values_json: {
         issue_type: ["Task", "Bug"],
         priority: ["High", "Medium"],

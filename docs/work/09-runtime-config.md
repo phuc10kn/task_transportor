@@ -59,10 +59,17 @@ npm run admin:create
 
 | Biến | Mặc định | Bắt buộc | Ghi chú |
 | --- | --- | --- | --- |
-| `OPENAI_API_KEY` | Không có | Khi dùng `openai_api` | Secret thật lưu trong `.env`. |
-| `OPENAI_TRANSLATION_MODEL` | Không chốt cứng | Không | Model mặc định nếu project không override. |
+| `DEEPSEEK_API_KEY` | Không có | Khi dùng `translation_ai_provider = "deepseek"` | Secret thật lưu trong `.env`. |
+| `DEEPSEEK_OPENAI_BASE_URL` | `https://api.deepseek.com` | Không | OpenAI-compatible base URL của DeepSeek. |
+| `DEEPSEEK_ANTHROPIC_BASE_URL` | `https://api.deepseek.com/anthropic` | Không | Anthropic-compatible base URL của DeepSeek. |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | Không | Alias tương thích cũ cho OpenAI-compatible base URL. |
+| `DEEPSEEK_REQUEST_TIMEOUT_SECONDS` | `60` | Không | Timeout HTTP khi gọi DeepSeek. |
+| `CODEX_EXEC_COMMAND` | Không có | Khi dùng `translation_ai_provider = "codex_exec"` | Backward-compatible/fallback cho command cũ. |
+| `CODEX_EXEC_TIMEOUT_SECONDS` | `60` | Không | Timeout command `codex_exec`. |
 
-Nếu project bật `translation_provider = "openai_api"` nhưng thiếu `OPENAI_API_KEY`, translation job phải fail có kiểm soát, ghi lỗi vào job/journal và hiển thị trên Admin UI.
+Config AI cho translation được scope theo task: `translation_ai_provider = "deepseek"`, `translation_ai_transport = "openai_compatible"` hoặc `"anthropic_compatible"`, và `translation_ai_model = "deepseek-v4-flash"` mặc định. Default gọi DeepSeek ở non-thinking mode với `thinking = disabled`; không gửi `reasoning_effort` khi thinking tắt. Nếu project bật `translation_ai_provider = "deepseek"` nhưng thiếu `DEEPSEEK_API_KEY`, translation job phải fail có kiểm soát, ghi lỗi vào job/journal và hiển thị trên Admin UI.
+
+Ghi chÃº hiá»‡n táº¡i: config AI cho translation Ä‘Æ°á»£c scope theo task, khÃ´ng dÃ¹ng `ai_provider` global. Field canonical lÃ  `translation_ai_provider`, `translation_ai_transport`, `translation_ai_model`. Default lÃ  `deepseek`, `openai_compatible`, `deepseek-v4-flash`, non-thinking vá»›i `thinking = disabled`. DeepSeek há»— trá»£ OpenAI-compatible base URL `https://api.deepseek.com` vÃ  Anthropic-compatible base URL `https://api.deepseek.com/anthropic`. `DEEPSEEK_BASE_URL` chá»‰ cÃ²n lÃ  alias tÆ°Æ¡ng thÃ­ch cÅ© cho OpenAI-compatible; `DEEPSEEK_OPENAI_BASE_URL` vÃ  `DEEPSEEK_ANTHROPIC_BASE_URL` lÃ  biáº¿n rá» râ rÃ ng hÆ¡n. UI váº«n hiá»ƒn thá»‹ `deepseek-chat` nhÆ°ng pháº£i kÃ¨m warning deprecated soon.
 
 ### Backlog/Jira credentials
 
@@ -139,8 +146,9 @@ Ví dụ:
       "jira_project_key": "WEC1",
       "jira_email_env": "JIRA_WEC_EMAIL",
       "jira_api_token_env": "JIRA_WEC_API_TOKEN",
-      "translation_provider": "openai_api",
-      "translation_model": "default",
+      "translation_ai_provider": "deepseek",
+      "translation_ai_transport": "openai_compatible",
+      "translation_ai_model": "deepseek-v4-flash",
       "source_language": "ja",
       "target_language": "vi"
     }

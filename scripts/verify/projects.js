@@ -50,6 +50,19 @@ async function main() {
     });
     const token = login.body.data.token;
 
+    const defaultTranslationProject = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/projects",
+      token,
+      body: {
+        name: "Default Translation Provider",
+      },
+    });
+    assert.equal(defaultTranslationProject.status, 201);
+    assert.equal(defaultTranslationProject.body.data.translation_ai_provider, "deepseek");
+    assert.equal(defaultTranslationProject.body.data.translation_ai_transport, "openai_compatible");
+    assert.equal(defaultTranslationProject.body.data.translation_ai_model, "deepseek-v4-flash");
+
     const created = await requestJson(server, {
       method: "POST",
       pathname: "/api/v1/projects",
@@ -65,7 +78,7 @@ async function main() {
         jira_project_key: "SYNC",
         jira_email_env: "JIRA_EMAIL",
         jira_api_token_env: "JIRA_API_TOKEN",
-        translation_provider: "codex_exec",
+        translation_ai_provider: "codex_exec",
         translation_glossary_json: [
           { source: "予約", target: "đặt chỗ" },
           { source: "管理画面", target: "màn hình quản trị" },
@@ -77,7 +90,9 @@ async function main() {
       },
     });
     assert.equal(created.status, 201);
-    assert.equal(created.body.data.translation_provider, "codex_exec");
+    assert.equal(created.body.data.translation_ai_provider, "codex_exec");
+    assert.equal(created.body.data.translation_ai_transport, "process_exec");
+    assert.equal(created.body.data.translation_ai_model, null);
     assert.deepEqual(created.body.data.translation_glossary_json, [
       { source: "予約", target: "đặt chỗ" },
       { source: "管理画面", target: "màn hình quản trị" },
@@ -94,6 +109,20 @@ async function main() {
       include_attachments: "metadata_only",
       page_size: 100,
     });
+
+    const invalidTransport = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/projects",
+      token,
+      body: {
+        name: "Invalid Translation AI Transport",
+        translation_ai_provider: "deepseek",
+        translation_ai_transport: "process_exec",
+        translation_ai_model: "deepseek-v4-flash",
+      },
+    });
+    assert.equal(invalidTransport.status, 422);
+    assert.equal(invalidTransport.body.error.code, "VALIDATION_ERROR");
 
     const projectId = created.body.data.id;
     assertProjectSecretsAreNotStored(config, projectId);

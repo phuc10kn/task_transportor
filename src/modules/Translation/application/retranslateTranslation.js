@@ -1,10 +1,11 @@
 const { AppError } = require("../../../http/errors/AppError");
 const SyncApi = require("../../Sync/SyncApi");
+const { refreshTranslationAiConfigForQueueItem } = require("./refreshTranslationAiConfigForQueueItem");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
 
 function retranslateTranslation({ config, queueId, executedBy, correlationId }) {
   const repository = createTranslationRepository({ config });
-  const item = repository.resetForRetranslate(queueId);
+  let item = repository.resetForRetranslate(queueId);
 
   if (!item) {
     throw new AppError({
@@ -13,6 +14,8 @@ function retranslateTranslation({ config, queueId, executedBy, correlationId }) 
       status: 404,
     });
   }
+
+  item = refreshTranslationAiConfigForQueueItem({ config, repository, item });
 
   const job = SyncApi.enqueueJob({
     config,

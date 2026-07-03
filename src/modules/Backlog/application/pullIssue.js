@@ -1,6 +1,9 @@
 const { AppError } = require("../../../http/errors/AppError");
-const ProjectsApi = require("../../Projects/ProjectsApi");
 const SyncApi = require("../../Sync/SyncApi");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function assertPullEnabled(project) {
   if (!project || !project.enabled || !project.manual_pull_enabled) {
@@ -13,7 +16,7 @@ function assertPullEnabled(project) {
 }
 
 function pullIssue({ config, projectId, backlogIssueKey, executedBy, correlationId, trigger = "manual" }) {
-  const project = ProjectsApi.getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
   assertPullEnabled(project);
 
   return SyncApi.enqueueJob({
@@ -35,6 +38,24 @@ function pullIssue({ config, projectId, backlogIssueKey, executedBy, correlation
   });
 }
 
+async function pullIssueNow({ config, projectId, backlogIssueKey, executedBy, correlationId }) {
+  const job = pullIssue({
+    config,
+    projectId,
+    backlogIssueKey,
+    executedBy,
+    correlationId,
+  });
+  const result = await SyncApi.runJobNow({
+    config,
+    jobId: job.id,
+    workerId: "admin-manual-pull",
+  });
+
+  return result.job || job;
+}
+
 module.exports = {
   pullIssue,
+  pullIssueNow,
 };

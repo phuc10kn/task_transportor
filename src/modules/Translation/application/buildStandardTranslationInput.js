@@ -1,3 +1,4 @@
+const { DEFAULT_TRANSLATION_AI_PROVIDER } = require("../../../shared/translationModels");
 const { hashText } = require("../support/hashText");
 
 function contentTypeFor(item) {
@@ -47,7 +48,11 @@ function buildStandardTranslationInput({ item, issue, context_policy, context_bu
     content_type: contentTypeFor(item),
     source_text: item.source_text,
     source_text_hash: sourceHash,
-    requested_provider: item.provider || "codex_exec",
+    requested_ai_provider: item.provider || DEFAULT_TRANSLATION_AI_PROVIDER,
+    requested_ai_transport: item.ai_transport || null,
+    requested_ai_model: item.model_or_command || null,
+    requested_provider: item.provider || DEFAULT_TRANSLATION_AI_PROVIDER,
+    requested_model: item.model_or_command || null,
     context_policy: context_policy || "default_translation",
     context_bundle: context_bundle || {},
     instructions: buildInstructions(context_bundle),
@@ -58,7 +63,7 @@ function buildStandardTranslationInput({ item, issue, context_policy, context_bu
       preserved_blocks: ["string"],
     },
 
-    // Backward-compatible fields for existing providers/adapters.
+    // Backward-compatible fields for existing adapter payloads.
     source_language: item.source_language || "ja",
     target_language: item.target_language || "vi",
     context: {

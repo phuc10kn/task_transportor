@@ -1,13 +1,8 @@
-const { AppError } = require("../../../http/errors/AppError");
-const { translateQueueItemNow } = require("../../Translation/application/translateQueueItemNow");
-const { createCisRepository } = require("../infrastructure/CisRepository");
-const {
-  issueTranslationTargets,
-  normalizeTranslationSource,
-} = require("../support/issueTranslationTargets");
+const { translateQueueItemNow } = require("./translateQueueItemNow");
+const CisApi = require("../../Cis/CisApi");
 
 function normalizeSource(value) {
-  return normalizeTranslationSource(value);
+  return String(value === null || value === undefined ? "" : value).trim();
 }
 
 function issueTranslationItems(items) {
@@ -100,18 +95,10 @@ function shouldTranslate(item) {
 }
 
 async function requestIssueTranslations({ config, issueId, executedBy, correlationId }) {
-  const repository = createCisRepository({ config });
-  const issue = repository.getIssueById(issueId);
-  if (!issue) {
-    throw new AppError({
-      code: "ISSUE_NOT_FOUND",
-      message: "Issue not found.",
-      status: 404,
-    });
-  }
-
-  const targets = issueTranslationTargets(issue);
-  const existingItems = repository.listTranslationQueue(issue.id);
+  const bundle = CisApi.getIssueTranslationTargets({ config, issueId });
+  const issue = bundle.issue;
+  const targets = bundle.targets;
+  const existingItems = bundle.translations;
   const items = issueTranslationItems(existingItems);
   const decoratedItems = decorateTranslations(items, targets);
   const created = [];
@@ -132,12 +119,15 @@ async function requestIssueTranslations({ config, issueId, executedBy, correlati
       continue;
     }
 
-    const item = repository.createTranslationQueueItem({
-      project_id: issue.project_id,
-      issue_id: issue.id,
-      target_type: "issue",
-      target_field: target.field,
-      source_text: String(target.value),
+    const item = CisApi.createTranslationQueueItem({
+      config,
+      input: {
+        project_id: issue.project_id,
+        issue_id: issue.id,
+        target_type: "issue",
+        target_field: target.field,
+        source_text: String(target.value),
+      },
     });
     created.push({ ...item, target_field: target.field, field: target.field });
     items.push(item);
@@ -164,12 +154,13 @@ async function requestIssueTranslations({ config, issueId, executedBy, correlati
     }));
   }
 
+  const refreshed = CisApi.getIssueTranslationTargets({ config, issueId: issue.id });
   return {
     issue_id: issue.id,
     created_items: created,
     queued_jobs: [],
     translated_items: translated,
-    translations: decorateTranslations(repository.listTranslationQueue(issue.id), targets),
+    translations: decorateTranslations(refreshed.translations, targets),
   };
 }
 

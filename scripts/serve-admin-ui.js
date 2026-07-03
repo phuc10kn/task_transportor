@@ -4,6 +4,7 @@ const express = require("express");
 const { ROOT_DIR } = require("../src/config/env");
 
 const port = Number(process.env.FE_PORT || process.env.ADMIN_UI_PORT || 8000);
+const apiPort = Number(process.env.API_PORT || process.env.PORT || 3000);
 const adminPublicPath = path.join(ROOT_DIR, "public", "admin");
 const app = express();
 
@@ -17,5 +18,5 @@ app.get("/admin", (req, res) => {
 
 app.listen(port, () => {
   console.log(`Admin UI running on http://localhost:${port}/admin/`);
-  console.log("API expected on http://localhost:3000");
+  console.log(`API expected on http://localhost:${apiPort}`);
 });

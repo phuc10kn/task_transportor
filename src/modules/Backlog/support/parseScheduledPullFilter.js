@@ -1,4 +1,4 @@
-const { DEFAULT_PULL_FILTER } = require("../../Projects/support/defaultProjectConfig");
+const { DEFAULT_PULL_FILTER } = require("../../../shared/pullDefaults");
 
 function parseScheduledPullFilter(project) {
   return {

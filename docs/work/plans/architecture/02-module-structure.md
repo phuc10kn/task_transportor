@@ -151,7 +151,7 @@ Ví dụ:
 
 - SQLite repository.
 - Backlog/Jira HTTP client.
-- OpenAI provider adapter.
+- Module-specific adapter không tự gọi external system nếu đã có client chung trong `src/infrastructure`.
 - disk storage adapter.
 - migration/persistence helper riêng module.
 
@@ -169,7 +169,13 @@ src/modules/Cis/infrastructure/
   CommentRepository.js
 
 src/modules/Translation/infrastructure/
-  OpenAiTranslationProvider.js
+  TranslationAdapter.js
+  ProcessTranslationAdapter.js
+
+src/infrastructure/ai/
+  OpenAiCompatibleChatClient.js
+  AnthropicCompatibleMessagesClient.js
+  CodexExecClient.js
 ```
 
 ### `support/`
@@ -262,7 +268,7 @@ Các domain module dự kiến:
 - `Projects`: project config, seed import, enable/disable sync.
 - `Cis`: issues, revisions, comments, attachments metadata, state helpers.
 - `Backlog`: manual/scheduled pull, Backlog API client, Backlog normalizer; Medium thêm webhook adapter.
-- `Translation`: AI draft, review, manual fallback.
+- `Translation`: AI draft, review và manual-edit action.
 - `Mapping`: canonical mapping, approval, required mapping pre-check.
 - `Anomaly`: anomaly log, blocking check, resolve/ignore.
 - `Sync`: sync jobs, worker loop, retry, dry-run, sync journal.

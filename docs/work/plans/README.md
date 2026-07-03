@@ -30,7 +30,7 @@ Mỗi phiên bản nằm trong một thư mục riêng:
 | Luồng chính | Backlog pull -> CIS -> Jira | Backlog webhook/pull -> CIS, Jira webhook/pull -> CIS, CIS -> Jira | Backlog <-> CIS <-> Jira đầy đủ |
 | Inbound trigger | Manual pull, scheduled pull optional | Webhook + manual pull + scheduled recovery | Webhook + pull + replay/rollback |
 | Đối tượng | Issue, comment; attachment metadata và file Backlog -> CIS cơ bản | Issue, comment, attachment upload/sync sang Jira | Issue, comment, attachment, link, field nâng cao |
-| Translation | Nhật -> Việt, AI draft + human review | Nhật -> Việt đầy đủ cho issue/comment, fallback manual | Nhật <-> Việt, học từ review, glossary nâng cao |
+| Translation | Nhật -> Việt, AI draft + human review/manual-edit | Nhật -> Việt đầy đủ cho issue/comment, provider fallback có kiểm soát | Nhật <-> Việt, học từ review, glossary nâng cao |
 | Mapping | Mapping seed/manual, approve trước sync | AI propose + admin approve + bulk approve | Mapping learning, stale/conflict health, project override sâu |
 | Anomaly | Tối thiểu: routing mismatch, mapping gap, sync failure | Đủ nhóm anomaly MVP | AI analysis sâu, rule tuning, notification ngoài UI |
 | UI | Admin tối thiểu để chạy luồng | Admin UI đầy đủ theo MVP | UI vận hành, role, notification, report |

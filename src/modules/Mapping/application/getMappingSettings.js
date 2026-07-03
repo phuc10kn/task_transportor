@@ -1,6 +1,9 @@
 const { createMappingRepository } = require("../infrastructure/MappingRepository");
 const { getMappingCatalog, getSystems } = require("../support/mappingCatalog");
-const ProjectsApi = require("../../Projects/ProjectsApi");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function ruleKey(rule) {
   return [
@@ -241,7 +244,7 @@ function getMappingSettings({ config, filters = {} }) {
   const targetSystem = filters.target_system || "jira";
   const catalog = getMappingCatalog();
   const repository = createMappingRepository({ config });
-  const project = projectId ? ProjectsApi.getProject({ config, projectId }) : null;
+  const project = projectId ? projectsApi().getProject({ config, projectId }) : null;
   const cisConfiguredValues = cisMappingConfig(project);
   const sourceConfiguredValues = systemMappingConfig(project, sourceSystem);
   const targetConfiguredValues = systemMappingConfig(project, targetSystem);

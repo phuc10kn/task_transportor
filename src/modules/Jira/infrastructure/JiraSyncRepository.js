@@ -1,6 +1,6 @@
 const { createConnection } = require("../../../infrastructure/database/connection");
 const { runInTransaction } = require("../../../infrastructure/database/transaction");
-const { parseJson } = require("../../Sync/support/json");
+const { parseJson } = require("../../../shared/json");
 
 function rowToProject(row) {
   if (!row) {

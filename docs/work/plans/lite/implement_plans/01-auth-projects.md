@@ -93,7 +93,7 @@ Không đi phase 02 nếu:
 - [x] Test `POST /api/v1/auth/login` trả JWT hợp lệ.
 - [x] Test `GET /api/v1/auth/me` trả admin hiện tại khi có Bearer token.
 - [x] Test API project khi thiếu token trả `401`.
-- [x] Test tạo project với `translation_provider = codex_exec`.
+- [x] Test tạo project mặc định với `translation_ai_provider = deepseek`, `translation_ai_transport = openai_compatible`, `translation_ai_model = deepseek-v4-flash`, và vẫn tạo được project explicit `codex_exec`.
 - [x] Test tạo project với `manual_pull_enabled`, `scheduled_pull_enabled`, `scheduled_pull_interval_minutes`, `pull_updated_since_window_minutes`.
 - [x] Test tạo project với `scheduled_pull_filter_json` mặc định và đọc lại đúng.
 - [x] Test tạo project với `translation_glossary_json` và đọc lại đúng.
@@ -112,5 +112,5 @@ Không đi phase 02 nếu:
 ## Ghi chú thiết kế
 
 - Lite chỉ cần admin, chưa cần role phức tạp.
-- `translation_provider` mặc định là `codex_exec`.
+- `translation_ai_provider` mặc định là `deepseek`, `translation_ai_transport` mặc định là `openai_compatible`, `translation_ai_model` mặc định là `deepseek-v4-flash`.
 - Webhook secret chỉ là field optional/reserved cho Medium.

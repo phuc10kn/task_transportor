@@ -4,10 +4,8 @@ const MappingApi = require("../../Mapping/MappingApi");
 const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
 const { buildJiraPayload } = require("../support/jiraDryRunPayload");
 const SyncApi = require("../../Sync/SyncApi");
+const CisApi = require("../../Cis/CisApi");
 const { ISSUE_STATUSES } = require("../../../shared/stateConstants");
-const { EDITABLE_CANONICAL_FIELDS } = require("../../Cis/support/canonicalIssueFields");
-const { hashCanonicalIssue } = require("../../Cis/support/hashCanonicalIssue");
-const { resolveCanonicalField } = require("../../Cis/support/resolveCanonicalField");
 
 const REQUIRED_MAPPING_FIELDS = [
   "issue_type",
@@ -17,26 +15,6 @@ const REQUIRED_MAPPING_FIELDS = [
 
 function validationError(code, message, details = {}) {
   return { code, message, details };
-}
-
-function latestRevisionFallback(revision, field) {
-  return revision ? revision[field] : undefined;
-}
-
-function buildCanonicalSnapshot(issue, revision) {
-  const canonical = {};
-  const fieldSources = {};
-
-  for (const field of EDITABLE_CANONICAL_FIELDS) {
-    canonical[field] = resolveCanonicalField(
-      issue.fields_json,
-      field,
-      latestRevisionFallback(revision, field)
-    );
-    fieldSources[field] = canonical[field].source;
-  }
-
-  return { canonical, fieldSources };
 }
 
 function assigneeMeta(fieldsJson) {
@@ -234,16 +212,13 @@ function evaluateJiraSyncReadiness({ config, issueId }) {
   }
 
   const { attachments, issue, project, revision } = bundle;
-  const snapshot = buildCanonicalSnapshot(issue, revision);
+  const snapshot = CisApi.buildCanonicalSyncSnapshot({ issue, revision });
   const assignee = assigneeMeta(issue.fields_json);
   const errors = [];
   const warnings = [];
   const missingRequiredMapping = [];
   const mapped = {};
-  const canonicalHash = hashCanonicalIssue({
-    canonical: snapshot.canonical,
-    issue,
-  });
+  const canonicalHash = snapshot.canonical_hash;
 
   if (!revision) {
     errors.push(validationError("ISSUE_REVISION_REQUIRED", "Issue has no current revision."));
@@ -349,7 +324,7 @@ function evaluateJiraSyncReadiness({ config, issueId }) {
     mode: "dry_run",
     can_sync: canSync,
     canonical_hash: canonicalHash,
-    field_sources: snapshot.fieldSources,
+    field_sources: snapshot.field_sources,
     excluded_collections: ["worklogs"],
     payload,
     validation: {

@@ -101,7 +101,16 @@ function collectTranslationContext({ config, item }) {
       project_profile: {
         id: String(project && project.id ? project.id : item.project_id),
         name: project && project.name ? project.name : null,
-        translation_provider: project && project.translation_provider ? project.translation_provider : item.provider,
+        translation_ai_provider: project && project.translation_ai_provider
+          ? project.translation_ai_provider
+          : item.provider,
+        translation_ai_transport: item.ai_transport ||
+          (project && project.translation_ai_transport) ||
+          null,
+        translation_ai_model: item.model_or_command ||
+          (project && project.translation_ai_model) ||
+          (project && project.translation_model) ||
+          null,
         source_language: item.source_language || (project && project.source_language) || "ja",
         target_language: item.target_language || (project && project.target_language) || "vi",
       },

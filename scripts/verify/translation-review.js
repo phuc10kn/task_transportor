@@ -44,7 +44,7 @@ function createProject(config, suffix = "TRAN") {
       jira_project_key: suffix,
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_API_TOKEN",
-      translation_provider: "codex_exec",
+      translation_ai_provider: "codex_exec",
       source_language: "ja",
       target_language: "vi",
       translation_glossary_json: [
@@ -90,7 +90,7 @@ function createIssueWithTranslations(config, count = 1, overrides = {}) {
         source_language: "ja",
         target_language: "vi",
         source_text: `${sourceText}\n#${index + 1}`,
-        provider: "codex_exec",
+        ...(Object.prototype.hasOwnProperty.call(overrides, "provider") ? { provider: overrides.provider } : { provider: "codex_exec" }),
       },
     }));
   }
@@ -303,11 +303,212 @@ async function verifyLowConfidenceAnomaly() {
   assert.ok(anomaly);
 }
 
+async function verifyDeepSeekProvider() {
+  const config = setupConfig("translation-deepseek", "success", {
+    DEEPSEEK_API_KEY: "test-deepseek-key",
+  });
+  const project = ProjectsApi.createProject({
+    config,
+    input: {
+      name: "Translation Verify DeepSeek",
+      sync_enabled: true,
+      backlog_project_key: "DS",
+      backlog_issue_key_prefix: "DS",
+      jira_project_key: "DS",
+      translation_ai_provider: "deepseek",
+      translation_ai_transport: "openai_compatible",
+      translation_ai_model: "deepseek-v4-flash",
+      auto_translate: true,
+    },
+  });
+  const { items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
+  enqueueTranslate(config, items[0]);
+
+  const originalFetch = global.fetch;
+  let capturedBody = null;
+  global.fetch = async (url, options) => {
+    assert.equal(url, "https://api.deepseek.com/chat/completions");
+    assert.equal(options.headers.authorization, "Bearer test-deepseek-key");
+    capturedBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          id: "deepseek-test-request",
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  translated_text: "[vi] ban dich deepseek",
+                  confidence: 0.91,
+                  warnings: [],
+                  preserved_blocks: true,
+                }),
+              },
+            },
+          ],
+        };
+      },
+    };
+  };
+
+  try {
+    const result = await SyncApi.runWorkerOnce({ config, workerId: "translation-deepseek" });
+    assert.equal(result.job.status, "success");
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.equal(capturedBody.model, "deepseek-v4-flash");
+  assert.equal(capturedBody.thinking.type, "disabled");
+  assert.equal(Object.prototype.hasOwnProperty.call(capturedBody, "reasoning_effort"), false);
+  const item = getTranslation(config, items[0].id);
+  assert.equal(item.provider, "deepseek");
+  assert.equal(item.ai_transport, "openai_compatible");
+  assert.equal(item.model_or_command, "deepseek-v4-flash");
+  assert.equal(item.provider_request_id, "deepseek-test-request");
+  assert.equal(item.ai_draft, "[vi] ban dich deepseek");
+}
+
+async function verifyDeepSeekAnthropicTransport() {
+  const config = setupConfig("translation-deepseek-anthropic", "success", {
+    DEEPSEEK_API_KEY: "test-deepseek-key",
+  });
+  const project = ProjectsApi.createProject({
+    config,
+    input: {
+      name: "Translation Verify DeepSeek Anthropic",
+      sync_enabled: true,
+      backlog_project_key: "DSA",
+      backlog_issue_key_prefix: "DSA",
+      jira_project_key: "DSA",
+      translation_ai_provider: "deepseek",
+      translation_ai_transport: "anthropic_compatible",
+      translation_ai_model: "deepseek-v4-pro",
+      auto_translate: true,
+    },
+  });
+  const { items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
+  enqueueTranslate(config, items[0]);
+
+  const originalFetch = global.fetch;
+  let capturedBody = null;
+  global.fetch = async (url, options) => {
+    assert.equal(url, "https://api.deepseek.com/anthropic/v1/messages");
+    assert.equal(options.headers["x-api-key"], "test-deepseek-key");
+    capturedBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          id: "deepseek-anthropic-test-request",
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                translated_text: "[vi] ban dich anthropic",
+                confidence: 0.9,
+                warnings: [],
+                preserved_blocks: [],
+              }),
+            },
+          ],
+        };
+      },
+    };
+  };
+
+  try {
+    const result = await SyncApi.runWorkerOnce({ config, workerId: "translation-deepseek-anthropic" });
+    assert.equal(result.job.status, "success");
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.equal(capturedBody.model, "deepseek-v4-pro");
+  assert.equal(capturedBody.thinking.type, "disabled");
+  const item = getTranslation(config, items[0].id);
+  assert.equal(item.provider, "deepseek");
+  assert.equal(item.ai_transport, "anthropic_compatible");
+  assert.equal(item.model_or_command, "deepseek-v4-pro");
+  assert.equal(item.provider_request_id, "deepseek-anthropic-test-request");
+  assert.equal(item.ai_draft, "[vi] ban dich anthropic");
+}
+
+async function verifyStaleQueueUsesCurrentProjectAiConfig() {
+  const config = setupConfig("translation-stale-ai-config", "success", {
+    DEEPSEEK_API_KEY: "test-deepseek-key",
+  });
+  const project = createProject(config, "STALE");
+  const { items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
+
+  assert.equal(items[0].provider, "codex_exec");
+  ProjectsApi.updateProject({
+    config,
+    projectId: project.id,
+    input: {
+      translation_ai_provider: "deepseek",
+      translation_ai_transport: "openai_compatible",
+      translation_ai_model: "deepseek-v4-flash",
+    },
+  });
+  enqueueTranslate(config, items[0]);
+
+  const originalFetch = global.fetch;
+  let fetchCalled = false;
+  global.fetch = async (url, options) => {
+    fetchCalled = true;
+    assert.equal(url, "https://api.deepseek.com/chat/completions");
+    assert.equal(options.headers.authorization, "Bearer test-deepseek-key");
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          id: "deepseek-refreshed-config-request",
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  translated_text: "[vi] refreshed config",
+                  confidence: 0.93,
+                  warnings: [],
+                  preserved_blocks: true,
+                }),
+              },
+            },
+          ],
+        };
+      },
+    };
+  };
+
+  try {
+    const result = await SyncApi.runWorkerOnce({ config, workerId: "translation-stale-ai-config" });
+    assert.equal(result.job.status, "success");
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.equal(fetchCalled, true);
+  const item = getTranslation(config, items[0].id);
+  assert.equal(item.provider, "deepseek");
+  assert.equal(item.ai_transport, "openai_compatible");
+  assert.equal(item.model_or_command, "deepseek-v4-flash");
+  assert.equal(item.provider_request_id, "deepseek-refreshed-config-request");
+  assert.equal(item.ai_draft, "[vi] refreshed config");
+}
+
 async function main() {
   await verifySuccessAndReviewApi();
   await verifyProviderFailure("timeout", "CODEX_EXEC_TIMEOUT");
   await verifyProviderFailure("invalid-json", "CODEX_EXEC_PARSE_ERROR");
   await verifyLowConfidenceAnomaly();
+  await verifyDeepSeekProvider();
+  await verifyDeepSeekAnthropicTransport();
+  await verifyStaleQueueUsesCurrentProjectAiConfig();
 
   console.log("Translation review verification passed.");
 }

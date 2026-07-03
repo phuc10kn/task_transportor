@@ -1,16 +1,18 @@
-const DEFAULT_PULL_FILTER = {
-  statuses: [],
-  issue_types: [],
-  priorities: [],
-  include_closed: true,
-  include_attachments: "metadata_only",
-  page_size: 100,
-};
+const {
+  DEFAULT_TRANSLATION_AI_PROVIDER,
+  DEFAULT_TRANSLATION_AI_MODEL,
+  DEFAULT_TRANSLATION_AI_TRANSPORT,
+} = require("../../../shared/translationModels");
+const { DEFAULT_PULL_FILTER } = require("../../../shared/pullDefaults");
 
 const PROJECT_DEFAULTS = {
   enabled: true,
   sync_enabled: false,
-  translation_provider: "codex_exec",
+  translation_ai_provider: DEFAULT_TRANSLATION_AI_PROVIDER,
+  translation_ai_transport: DEFAULT_TRANSLATION_AI_TRANSPORT,
+  translation_ai_model: DEFAULT_TRANSLATION_AI_MODEL,
+  translation_provider: DEFAULT_TRANSLATION_AI_PROVIDER,
+  translation_model: DEFAULT_TRANSLATION_AI_MODEL,
   source_language: "ja",
   target_language: "vi",
   translation_glossary_json: [],

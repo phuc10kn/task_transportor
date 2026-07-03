@@ -1,10 +1,13 @@
 const { AppError } = require("../../../http/errors/AppError");
 const CisApi = require("../../Cis/CisApi");
-const ProjectsApi = require("../../Projects/ProjectsApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createBacklogClient } = require("../infrastructure/BacklogClient");
 const { downloadAttachmentToCis } = require("./downloadAttachmentToCis");
 const { normalizeBacklogIssue } = require("../support/normalizeBacklogIssue");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function retryableFromError(error) {
   if (error.statusCode === 429 || error.statusCode >= 500) {
@@ -28,7 +31,7 @@ async function handleManualPullJob(job, { config }) {
     });
   }
 
-  const project = ProjectsApi.getProject({ config, projectId: job.project_id });
+  const project = projectsApi().getProject({ config, projectId: job.project_id });
   const client = createBacklogClient({ config, project });
 
   try {

@@ -1,6 +1,9 @@
 const { createConnection } = require("../../../infrastructure/database/connection");
-const ProjectsApi = require("../../Projects/ProjectsApi");
 const { pullProject } = require("./pullProject");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function isDue(project, state) {
   if (!state || !state.last_successful_pull_at) {
@@ -55,7 +58,7 @@ function upsertPullState(config, projectId) {
 
 async function runScheduledPullScan({ config }) {
   const states = listPullState(config);
-  const projects = ProjectsApi.listProjects({ config })
+  const projects = projectsApi().listProjects({ config })
     .filter((project) =>
       project.enabled &&
       project.sync_enabled &&

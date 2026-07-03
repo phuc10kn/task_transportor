@@ -1,6 +1,6 @@
 const { AppError } = require("../../../http/errors/AppError");
-const { createBacklogClient } = require("../../Backlog/infrastructure/BacklogClient");
-const { createJiraClient } = require("../../Jira/infrastructure/JiraClient");
+const BacklogApi = require("../../Backlog/BacklogApi");
+const JiraApi = require("../../Jira/JiraApi");
 const { createProjectRepository } = require("../infrastructure/ProjectRepository");
 const { updateProject } = require("./updateProject");
 
@@ -64,11 +64,13 @@ function replacementWarnings(existingCisValues, nextCisValues) {
 
 async function pullTargetMappingValues({ config, project, targetSystem }) {
   if (targetSystem === "backlog") {
-    return createBacklogClient({ config, project }).pullMappingValues();
+    const result = await BacklogApi.pullBacklogMappingValues({ config, projectId: project.id });
+    return result.pulled;
   }
 
   if (targetSystem === "jira") {
-    return createJiraClient({ config, project }).pullMappingValues();
+    const result = await JiraApi.pullJiraMappingValues({ config, projectId: project.id });
+    return result.pulled;
   }
 
   throw new AppError({

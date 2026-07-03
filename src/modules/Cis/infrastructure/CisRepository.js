@@ -3,6 +3,13 @@ const crypto = require("crypto");
 const { createConnection } = require("../../../infrastructure/database/connection");
 const { runInTransaction } = require("../../../infrastructure/database/transaction");
 const { ISSUE_STATUSES } = require("../../../shared/stateConstants");
+const {
+  DEFAULT_TRANSLATION_AI_PROVIDER,
+  DEFAULT_TRANSLATION_AI_MODEL,
+  DEFAULT_TRANSLATION_AI_TRANSPORT,
+  TRANSLATION_AI_PROVIDERS,
+  TRANSLATION_AI_TRANSPORTS,
+} = require("../../../shared/translationModels");
 const { materializeCisFields, mergeSourceFields } = require("../support/materializeCisFields");
 
 function parseJson(value, fallback) {
@@ -41,7 +48,17 @@ function rowToRevision(row) {
 }
 
 function rowToTranslation(row) {
-  return row || null;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    ai_transport: row.ai_transport ||
+      (row.provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
+        ? TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC
+        : DEFAULT_TRANSLATION_AI_TRANSPORT),
+  };
 }
 
 function rowToComment(row) {
@@ -299,6 +316,33 @@ function createCisRepository({ config }) {
 
     createTranslationQueueItem(input) {
       return withDb((db) => {
+        const project = db
+          .prepare(
+            `SELECT
+               translation_ai_provider,
+               translation_ai_transport,
+               translation_ai_model,
+               translation_provider,
+               translation_model,
+               translation_command_profile
+             FROM projects
+             WHERE id = ?`
+          )
+          .get(input.project_id) || {};
+        const provider = input.provider ||
+          project.translation_ai_provider ||
+          project.translation_provider ||
+          DEFAULT_TRANSLATION_AI_PROVIDER;
+        const aiTransport = input.ai_transport ||
+          project.translation_ai_transport ||
+          (provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
+            ? TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC
+            : DEFAULT_TRANSLATION_AI_TRANSPORT);
+        const modelOrCommand = input.model_or_command ||
+          project.translation_ai_model ||
+          project.translation_model ||
+          project.translation_command_profile ||
+          (provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK ? DEFAULT_TRANSLATION_AI_MODEL : null);
         const result = db
           .prepare(
             `INSERT INTO translation_queue (
@@ -311,9 +355,10 @@ function createCisRepository({ config }) {
               target_language,
               source_text,
               provider,
-              model_or_command
+              model_or_command,
+              ai_transport
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             input.project_id,
@@ -324,8 +369,9 @@ function createCisRepository({ config }) {
             input.source_language || "ja",
             input.target_language || "vi",
             input.source_text,
-            input.provider || "codex_exec",
-            input.model_or_command || null
+            provider,
+            modelOrCommand,
+            aiTransport
           );
 
         return rowToTranslation(

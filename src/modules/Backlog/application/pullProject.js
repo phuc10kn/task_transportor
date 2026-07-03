@@ -1,8 +1,11 @@
 const { AppError } = require("../../../http/errors/AppError");
-const ProjectsApi = require("../../Projects/ProjectsApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createBacklogClient } = require("../infrastructure/BacklogClient");
 const { parseScheduledPullFilter } = require("../support/parseScheduledPullFilter");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function assertProjectPullConfig(project) {
   if (!project || !project.enabled || !project.manual_pull_enabled) {
@@ -23,7 +26,7 @@ function assertProjectPullConfig(project) {
 }
 
 async function pullProject({ config, projectId, executedBy, correlationId, trigger = "manual" }) {
-  const project = ProjectsApi.getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
   assertProjectPullConfig(project);
 
   const client = createBacklogClient({ config, project });

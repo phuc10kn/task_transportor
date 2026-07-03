@@ -1,4 +1,15 @@
 const { AppError } = require("../../../http/errors/AppError");
+const {
+  DEFAULT_TRANSLATION_AI_TRANSPORT,
+  DEFAULT_TRANSLATION_AI_MODEL,
+  TRANSLATION_AI_PROVIDERS,
+  TRANSLATION_AI_TRANSPORTS,
+  isTranslationAiModelAllowed,
+  isTranslationAiTransportAllowed,
+  normalizeTranslationAiModel,
+  normalizeTranslationAiProvider,
+  normalizeTranslationAiTransport,
+} = require("../../../shared/translationModels");
 const { DEFAULT_PULL_FILTER, PROJECT_DEFAULTS } = require("./defaultProjectConfig");
 
 const ALLOWED_FIELDS = [
@@ -16,6 +27,9 @@ const ALLOWED_FIELDS = [
   "jira_email_env",
   "jira_api_token_env",
   "jira_webhook_secret_env",
+  "translation_ai_provider",
+  "translation_ai_transport",
+  "translation_ai_model",
   "translation_provider",
   "translation_model",
   "translation_command_profile",
@@ -244,7 +258,21 @@ function normalizeProjectInput(input, { partial = false } = {}) {
   assertEnvNames(input);
 
   const allowed = pickAllowed(input);
+  if (
+    Object.prototype.hasOwnProperty.call(allowed, "translation_provider") &&
+    !Object.prototype.hasOwnProperty.call(allowed, "translation_ai_provider")
+  ) {
+    allowed.translation_ai_provider = allowed.translation_provider;
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(allowed, "translation_model") &&
+    !Object.prototype.hasOwnProperty.call(allowed, "translation_ai_model")
+  ) {
+    allowed.translation_ai_model = allowed.translation_model;
+  }
   const merged = partial ? allowed : { ...PROJECT_DEFAULTS, ...allowed };
+  const hasExplicitAiProvider = Object.prototype.hasOwnProperty.call(allowed, "translation_ai_provider");
+  const hasExplicitAiModel = Object.prototype.hasOwnProperty.call(allowed, "translation_ai_model");
 
   if (!partial && !merged.name) {
     throw new AppError({
@@ -301,8 +329,107 @@ function normalizeProjectInput(input, { partial = false } = {}) {
     }
   }
 
-  if (Object.prototype.hasOwnProperty.call(merged, "translation_provider")) {
-    normalized.translation_provider = normalized.translation_provider || PROJECT_DEFAULTS.translation_provider;
+  if (Object.prototype.hasOwnProperty.call(merged, "translation_ai_provider")) {
+    normalized.translation_ai_provider = normalizeTranslationAiProvider(normalized.translation_ai_provider);
+    if (!Object.values(TRANSLATION_AI_PROVIDERS).includes(normalized.translation_ai_provider)) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "translation_ai_provider is not supported.",
+        status: 422,
+        details: { translation_ai_provider: normalized.translation_ai_provider },
+      });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(merged, "translation_ai_transport")) {
+    normalized.translation_ai_transport = normalizeTranslationAiTransport(normalized.translation_ai_transport);
+    if (!Object.values(TRANSLATION_AI_TRANSPORTS).includes(normalized.translation_ai_transport)) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: "translation_ai_transport is not supported.",
+        status: 422,
+        details: { translation_ai_transport: normalized.translation_ai_transport },
+      });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(merged, "translation_ai_model")) {
+    normalized.translation_ai_model = normalized.translation_ai_model
+      ? normalizeTranslationAiModel(normalized.translation_ai_provider, normalized.translation_ai_model)
+      : null;
+  }
+
+  if (
+    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    !normalized.translation_ai_model
+  ) {
+    normalized.translation_ai_model = DEFAULT_TRANSLATION_AI_MODEL;
+  }
+
+  if (
+    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    !normalized.translation_ai_transport
+  ) {
+    normalized.translation_ai_transport = DEFAULT_TRANSLATION_AI_TRANSPORT;
+  }
+
+  if (
+    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
+  ) {
+    normalized.translation_ai_transport = TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC;
+  }
+
+  if (
+    normalized.translation_ai_provider &&
+    normalized.translation_ai_transport &&
+    !isTranslationAiTransportAllowed(normalized.translation_ai_provider, normalized.translation_ai_transport)
+  ) {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "translation_ai_transport is not allowed for translation_ai_provider.",
+      status: 422,
+      details: {
+        translation_ai_provider: normalized.translation_ai_provider,
+        translation_ai_transport: normalized.translation_ai_transport,
+      },
+    });
+  }
+
+  if (
+    normalized.translation_ai_provider &&
+    normalized.translation_ai_provider !== TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    (!partial || hasExplicitAiProvider || hasExplicitAiModel)
+  ) {
+    normalized.translation_ai_model = null;
+  }
+
+  if (
+    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    normalized.translation_ai_model &&
+    !isTranslationAiModelAllowed(
+      normalized.translation_ai_provider,
+      normalized.translation_ai_transport || DEFAULT_TRANSLATION_AI_TRANSPORT,
+      normalized.translation_ai_model
+    )
+  ) {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "translation_ai_model is not allowed for translation_ai_provider and translation_ai_transport.",
+      status: 422,
+      details: {
+        translation_ai_provider: normalized.translation_ai_provider,
+        translation_ai_transport: normalized.translation_ai_transport,
+        translation_ai_model: normalized.translation_ai_model,
+      },
+    });
+  }
+
+  if (Object.prototype.hasOwnProperty.call(normalized, "translation_ai_provider")) {
+    normalized.translation_provider = normalized.translation_ai_provider;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(normalized, "translation_ai_model")) {
+    normalized.translation_model = normalized.translation_ai_model;
   }
 
   return normalized;

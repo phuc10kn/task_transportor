@@ -1,4 +1,5 @@
 const { hashPayload } = require("./hashPayload");
+const { DEFAULT_TRANSLATION_AI_PROVIDER } = require("../../../shared/translationModels");
 
 function nameOf(value) {
   if (!value) {
@@ -82,8 +83,11 @@ function normalizeBacklogIssue({ project, issue, comments = [], attachments = []
     payload_hash: hashPayload(contentForHash),
     source_language: project.source_language || "ja",
     target_language: project.target_language || "vi",
-    translation_provider: project.translation_provider || "codex_exec",
-    translation_model: project.translation_model,
+    translation_ai_provider: project.translation_ai_provider || project.translation_provider || DEFAULT_TRANSLATION_AI_PROVIDER,
+    translation_ai_transport: project.translation_ai_transport,
+    translation_ai_model: project.translation_ai_model || project.translation_model,
+    translation_provider: project.translation_ai_provider || project.translation_provider || DEFAULT_TRANSLATION_AI_PROVIDER,
+    translation_model: project.translation_ai_model || project.translation_model,
     translation_command_profile: project.translation_command_profile,
   };
 }

@@ -90,8 +90,9 @@ Field tối thiểu:
 - `jira_email_env`
 - `jira_api_token_env`
 - `jira_webhook_secret` optional/reserved cho Medium.
-- `translation_provider`, mặc định Lite là `codex_exec`.
-- `translation_model` hoặc `translation_command_profile`, tùy provider.
+- `translation_ai_provider`, mặc định Lite là `deepseek`.
+- `translation_ai_transport`, mặc định Lite là `openai_compatible`.
+- `translation_ai_model` hoặc `translation_command_profile`, tùy provider.
 - `source_language = "ja"`
 - `target_language = "vi"`
 - `translation_glossary_json` optional nhưng khuyến nghị có cho từng project để giữ ổn định thuật ngữ dịch Nhật -> Việt.

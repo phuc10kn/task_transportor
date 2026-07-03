@@ -4,9 +4,24 @@ const {
   ISSUE_STATUSES,
   TRANSLATION_REVIEW_STATUSES,
 } = require("../../../shared/stateConstants");
+const {
+  DEFAULT_TRANSLATION_AI_TRANSPORT,
+  TRANSLATION_AI_PROVIDERS,
+  TRANSLATION_AI_TRANSPORTS,
+} = require("../../../shared/translationModels");
 
 function rowToTranslation(row) {
-  return row || null;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    ai_transport: row.ai_transport ||
+      (row.provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
+        ? TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC
+        : DEFAULT_TRANSLATION_AI_TRANSPORT),
+  };
 }
 
 function normalize(value) {
@@ -263,6 +278,29 @@ function createTranslationRepository({ config }) {
              WHERE id = ?`
           )
           .run(sourceText, queueId);
+
+        return rowToTranslation(db.prepare("SELECT * FROM translation_queue WHERE id = ?").get(queueId));
+      });
+    },
+
+    updateAiConfig(queueId, input) {
+      return withDb((db) => {
+        db
+          .prepare(
+            `UPDATE translation_queue
+             SET provider = ?,
+                 ai_transport = ?,
+                 model_or_command = ?,
+                 provider_error = NULL,
+                 updated_at = datetime('now')
+             WHERE id = ?`
+          )
+          .run(
+            input.provider,
+            input.ai_transport || null,
+            input.model_or_command || null,
+            queueId
+          );
 
         return rowToTranslation(db.prepare("SELECT * FROM translation_queue WHERE id = ?").get(queueId));
       });

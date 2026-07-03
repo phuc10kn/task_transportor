@@ -27,7 +27,7 @@ function parseRequest(rawInput) {
 
 function buildPrompt(request) {
   return [
-    "You are the translation provider for task_transportor.",
+    "You are the translation draft generator for task_transportor.",
     "Translate source_text from the source language to the target language.",
     "Return only JSON that matches the provided output schema.",
     "Do not include Markdown fences, prose, logs, or explanations.",

@@ -180,16 +180,25 @@ Admin bootstrap:
 
 Integration env:
 
-- `CODEX_EXEC_COMMAND` cho translation provider chính.
+- `DEEPSEEK_API_KEY` cho translation provider mặc định mới `deepseek`.
+- `DEEPSEEK_BASE_URL`, mặc định `https://api.deepseek.com`.
+- `DEEPSEEK_REQUEST_TIMEOUT_SECONDS`, mặc định `60`.
+- `CODEX_EXEC_COMMAND` cho translation provider cũ/fallback `codex_exec`.
 - `CODEX_EXEC_TIMEOUT_SECONDS`
 - `CODEX_EXEC_WORKDIR` nếu cần cố định thư mục chạy.
 - `WORKER_ID`
 - `WORKER_POLL_INTERVAL_MS`
 - `WORKER_LOCK_TIMEOUT_SECONDS`
-- `OPENAI_API_KEY` optional nếu bật provider fallback `openai_api`.
-- `OPENAI_TRANSLATION_MODEL` optional nếu bật provider fallback `openai_api`.
+- DeepSeek dùng OpenAI-compatible HTTP API; hiện chưa expose provider `openai_api` riêng trong Lite.
 - Backlog/Jira credentials bằng env riêng, project config chỉ lưu tên biến env.
 - `WEBHOOK_VERIFY` reserved cho Medium hoặc webhook optional.
+
+Ghi chÃº cáº­p nháº­t AI translation:
+
+- `DEEPSEEK_OPENAI_BASE_URL` máº·c Ä‘á»‹nh `https://api.deepseek.com`; `DEEPSEEK_BASE_URL` chá»‰ cÃ²n lÃ  alias tÆ°Æ¡ng thÃ­ch cÅ©.
+- `DEEPSEEK_ANTHROPIC_BASE_URL` máº·c Ä‘á»‹nh `https://api.deepseek.com/anthropic`.
+- Project config canonical lÃ  `translation_ai_provider`, `translation_ai_transport`, `translation_ai_model`.
+- Default Lite: `translation_ai_provider = "deepseek"`, `translation_ai_transport = "openai_compatible"`, `translation_ai_model = "deepseek-v4-flash"`, `thinking = disabled`.
 
 Secret policy:
 
@@ -222,8 +231,9 @@ Field tối thiểu:
 - `jira_email_env`
 - `jira_api_token_env`
 - `jira_webhook_secret` optional/reserved cho Medium
-- `translation_provider`, mặc định Lite là `codex_exec`
-- `translation_model` hoặc `translation_command_profile`, tùy provider
+- `translation_ai_provider`, mặc định Lite là `deepseek`
+- `translation_ai_transport`, mặc định `openai_compatible`; có thể chọn `anthropic_compatible` cho DeepSeek Anthropic API.
+- `translation_ai_model`, mặc định `deepseek-v4-flash`; với `codex_exec` có thể dùng `translation_command_profile`
 - `source_language = "ja"`
 - `target_language = "vi"`
 - `translation_glossary_json` optional nhưng khuyến nghị có cho từng project
@@ -242,6 +252,8 @@ Field tối thiểu:
 ```
 
 Mục tiêu là giữ ổn định thuật ngữ Nhật -> Việt theo domain từng project. `collectTranslationContext()` phải nạp glossary này vào `context_bundle.glossary` trước khi gọi provider dịch.
+
+Ghi chÃº tÆ°Æ¡ng thÃ­ch: `translation_provider` vÃ  `translation_model` váº«n Ä‘Æ°á»£c backend Ä‘á»c/ghi mirror trong giai Ä‘oáº¡n migration, nhÆ°ng code/UI má»›i pháº£i dÃ¹ng `translation_ai_*`.
 
 Pull config:
 
@@ -455,9 +467,19 @@ Medium phải reuse Backlog normalizer/job/journal của Lite.
 
 Provider:
 
-- Default Lite: `codex_exec`.
-- Fallback: `manual`.
-- `openai_api` chỉ là provider optional/fallback, không phải đường mặc định của Lite.
+- Default Lite: `deepseek`.
+- `codex_exec` vẫn được giữ để tương thích provider cũ/fallback local command.
+- Không còn provider `manual`. Manual translation chỉ là action `manual-edit` của reviewer sau khi queue item tồn tại.
+
+Model DeepSeek UI hiện hỗ trợ:
+
+- `deepseek-v4-flash`
+- `deepseek-v4-pro`
+- `deepseek-chat` (deprecated soon)
+
+Canonical default hiá»‡n táº¡i lÃ  `deepseek-v4-flash` á»Ÿ non-thinking mode vá»›i `thinking = disabled`.
+
+Default dịch mới là `deepseek-v4-flash` ở non-thinking mode với `thinking = disabled`.
 
 `codex_exec` là adapter nội bộ để gọi Codex CLI/exec từ worker dịch. Worker truyền prompt dịch, nhận kết quả dạng text/JSON, rồi lưu draft vào `translation_queue`.
 
@@ -902,7 +924,7 @@ Không log:
 - Authorization header.
 - Backlog/Jira API token.
 - `CODEX_EXEC_COMMAND` nếu command có chứa tham số nhạy cảm.
-- OpenAI API key nếu bật provider fallback `openai_api`.
+- DeepSeek API key nếu bật provider `deepseek`.
 - JWT secret.
 - webhook token sau này.
 
@@ -930,7 +952,7 @@ Backup:
 9. `sync_jobs` + `sync_journal`.
 10. Backlog client + manual issue pull API + project pull API.
 11. Backlog normalizer + CIS upsert.
-12. Translation queue + `codex_exec` provider + manual fallback; OpenAI API chỉ optional/fallback.
+12. Translation queue + `deepseek` provider mặc định, `codex_exec` provider tương thích cũ, và manual-edit review action.
 13. Translation review APIs/UI.
 14. Mapping rules + required mapping pre-check.
 15. Anomaly subset.

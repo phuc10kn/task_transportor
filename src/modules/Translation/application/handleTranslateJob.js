@@ -3,18 +3,10 @@ const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { buildStandardTranslationInput } = require("./buildStandardTranslationInput");
 const { collectTranslationContext } = require("./collectTranslationContext");
-const { createCodexExecTranslationProvider } = require("../infrastructure/CodexExecTranslationProvider");
-const { createManualTranslationProvider } = require("../infrastructure/ManualTranslationProvider");
+const { refreshTranslationAiConfigForQueueItem } = require("./refreshTranslationAiConfigForQueueItem");
+const { translationAdapterFor } = require("./translationAdapterFor");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
 const { hashText } = require("../support/hashText");
-
-function providerFor({ config, provider }) {
-  if (provider === "manual") {
-    return createManualTranslationProvider({ config });
-  }
-
-  return createCodexExecTranslationProvider({ config });
-}
 
 async function handleTranslateJob(job, { config }) {
   const queueId = job.payload_json && job.payload_json.translation_queue_id;
@@ -27,7 +19,7 @@ async function handleTranslateJob(job, { config }) {
   }
 
   const repository = createTranslationRepository({ config });
-  const item = repository.findById(queueId);
+  let item = repository.findById(queueId);
   if (!item) {
     throw new AppError({
       code: "TRANSLATION_QUEUE_NOT_FOUND",
@@ -44,6 +36,8 @@ async function handleTranslateJob(job, { config }) {
     };
   }
 
+  item = refreshTranslationAiConfigForQueueItem({ config, repository, item });
+
   const issue = CisApi.getIssueById({ config, issueId: item.issue_id });
   const context = collectTranslationContext({ config, item });
   const request = buildStandardTranslationInput({
@@ -54,7 +48,13 @@ async function handleTranslateJob(job, { config }) {
   });
 
   try {
-    const result = await providerFor({ config, provider: item.provider }).translate(request);
+    const adapter = translationAdapterFor({
+      config,
+      aiProvider: item.provider,
+      aiTransport: item.ai_transport,
+      modelOrCommand: item.model_or_command,
+    });
+    const result = await adapter.generateDraft(request);
     const updated = repository.markAiDraft(item.id, {
       ai_draft: result.translated_text,
       provider: result.provider || item.provider,

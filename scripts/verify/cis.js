@@ -45,7 +45,7 @@ function createProject(config) {
       jira_project_key: "SYNC",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_API_TOKEN",
-      translation_provider: "codex_exec",
+      translation_ai_provider: "codex_exec",
     },
   });
 }
@@ -111,6 +111,36 @@ async function main() {
   });
   assert.equal(translation.provider, "codex_exec");
   assert.equal(translation.model_or_command, "codex exec");
+
+  const deepSeekProject = ProjectsApi.createProject({
+    config,
+    input: {
+      name: "CIS DeepSeek Project",
+    },
+  });
+  const deepSeekIssue = CisApi.createIssue({
+    config,
+    input: {
+      project_id: deepSeekProject.id,
+      source_system: "backlog",
+      fields_json: {
+        summary: { backlog: "DeepSeek default" },
+      },
+    },
+  });
+  const deepSeekTranslation = CisApi.createTranslationQueueItem({
+    config,
+    input: {
+      project_id: deepSeekProject.id,
+      issue_id: deepSeekIssue.id,
+      target_type: "issue",
+      target_field: "summary",
+      source_text: "DeepSeek default",
+    },
+  });
+  assert.equal(deepSeekTranslation.provider, "deepseek");
+  assert.equal(deepSeekTranslation.model_or_command, "deepseek-v4-flash");
+  assert.equal(deepSeekTranslation.ai_transport, "openai_compatible");
 
   const db = createConnection({ config });
   const mappingColumns = db.prepare("PRAGMA table_info(mapping_rules)").all().map((column) => column.name);

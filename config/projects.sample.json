@@ -12,7 +12,9 @@
     "jira_project_key": "SYNC",
     "jira_email_env": "JIRA_EMAIL",
     "jira_api_token_env": "JIRA_API_TOKEN",
-    "translation_provider": "codex_exec",
+    "translation_ai_provider": "deepseek",
+    "translation_ai_transport": "openai_compatible",
+    "translation_ai_model": "deepseek-v4-flash",
     "source_language": "ja",
     "target_language": "vi",
     "cis_mapping_values_json": {

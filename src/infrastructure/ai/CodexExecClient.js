@@ -1,9 +1,5 @@
 const childProcess = require("child_process");
 
-const { AppError } = require("../../../http/errors/AppError");
-const { hashText } = require("../support/hashText");
-const { parseCodexExecOutput } = require("../support/parseCodexExecOutput");
-
 function tail(value, maxLength = 1200) {
   const text = String(value || "").trim();
   if (text.length <= maxLength) {
@@ -28,22 +24,30 @@ function killProcessTree(child) {
   child.kill("SIGKILL");
 }
 
-function createCodexExecTranslationProvider({ config }) {
-  async function translate(request) {
-    const command = config.translation.codexExecCommand;
+function createProcessClientError({ code, message, status, retryable, details, cause }) {
+  const error = new Error(message);
+  error.code = code;
+  error.status = status;
+  error.retryable = retryable;
+  error.details = details || {};
+  if (cause) {
+    error.cause = cause;
+  }
+  return error;
+}
+
+function createCodexExecClient({ command, timeoutSeconds = 60, workdir }) {
+  async function runJson(input) {
     if (!command) {
-      const error = new AppError({
+      throw createProcessClientError({
         code: "CODEX_EXEC_COMMAND_MISSING",
-        message: "CODEX_EXEC_COMMAND is required for codex_exec translation.",
+        message: "CODEX_EXEC_COMMAND is required.",
         status: 500,
+        retryable: false,
       });
-      error.retryable = false;
-      throw error;
     }
 
-    const startedAt = Date.now();
-    const stdin = JSON.stringify(request);
-    const requestHash = hashText(stdin);
+    const stdin = JSON.stringify(input);
 
     return new Promise((resolve, reject) => {
       let settled = false;
@@ -51,7 +55,7 @@ function createCodexExecTranslationProvider({ config }) {
       let stderr = "";
 
       const child = childProcess.spawn(command, {
-        cwd: config.translation.codexExecWorkdir,
+        cwd: workdir,
         shell: true,
         stdio: ["pipe", "pipe", "pipe"],
       });
@@ -63,18 +67,14 @@ function createCodexExecTranslationProvider({ config }) {
 
         settled = true;
         killProcessTree(child);
-        const error = new AppError({
+        reject(createProcessClientError({
           code: "CODEX_EXEC_TIMEOUT",
           message: "codex_exec timed out.",
           status: 504,
-          details: {
-            timeout_seconds: config.translation.codexExecTimeoutSeconds,
-            request_hash: requestHash,
-          },
-        });
-        error.retryable = true;
-        reject(error);
-      }, config.translation.codexExecTimeoutSeconds * 1000);
+          retryable: true,
+          details: { timeout_seconds: timeoutSeconds },
+        }));
+      }, timeoutSeconds * 1000);
 
       child.stdout.on("data", (chunk) => {
         stdout += chunk.toString("utf8");
@@ -91,17 +91,13 @@ function createCodexExecTranslationProvider({ config }) {
 
         settled = true;
         clearTimeout(timeout);
-        const error = new AppError({
+        reject(createProcessClientError({
           code: "CODEX_EXEC_SPAWN_ERROR",
           message: "codex_exec could not be started.",
           status: 502,
-          details: {
-            request_hash: requestHash,
-          },
-        });
-        error.retryable = true;
-        error.cause = spawnError;
-        reject(error);
+          retryable: true,
+          cause: spawnError,
+        }));
       });
 
       child.on("close", (exitCode) => {
@@ -113,39 +109,20 @@ function createCodexExecTranslationProvider({ config }) {
         clearTimeout(timeout);
 
         if (exitCode !== 0) {
-          const error = new AppError({
+          reject(createProcessClientError({
             code: "CODEX_EXEC_EXIT_ERROR",
             message: "codex_exec exited with a non-zero status.",
             status: 502,
+            retryable: true,
             details: {
               exit_code: exitCode,
-              request_hash: requestHash,
-              stderr_hash: hashText(stderr),
               stderr_tail: tail(stderr || stdout),
             },
-          });
-          error.retryable = true;
-          reject(error);
+          }));
           return;
         }
 
-        try {
-          const parsed = parseCodexExecOutput(stdout);
-          resolve({
-            ...parsed,
-            provider: "codex_exec",
-            model_or_command: command,
-            provider_request_id: requestHash,
-            duration_ms: Date.now() - startedAt,
-          });
-        } catch (error) {
-          error.details = {
-            ...(error.details || {}),
-            request_hash: requestHash,
-            stdout_hash: hashText(stdout),
-          };
-          reject(error);
-        }
+        resolve({ stdout, stderr });
       });
 
       child.stdin.write(stdin);
@@ -154,10 +131,10 @@ function createCodexExecTranslationProvider({ config }) {
   }
 
   return {
-    translate,
+    runJson,
   };
 }
 
 module.exports = {
-  createCodexExecTranslationProvider,
+  createCodexExecClient,
 };

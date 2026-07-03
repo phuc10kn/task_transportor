@@ -16,6 +16,9 @@ const PROJECT_COLUMNS = [
   "jira_email_env",
   "jira_api_token_env",
   "jira_webhook_secret_env",
+  "translation_ai_provider",
+  "translation_ai_transport",
+  "translation_ai_model",
   "translation_provider",
   "translation_model",
   "translation_command_profile",
@@ -79,8 +82,19 @@ function rowToProject(row) {
     return null;
   }
 
+  const translationAiProvider = row.translation_ai_provider || row.translation_provider || PROJECT_DEFAULTS.translation_ai_provider;
+  const translationAiTransport = row.translation_ai_transport || PROJECT_DEFAULTS.translation_ai_transport;
+  const translationAiModel = translationAiProvider === "deepseek"
+    ? (row.translation_ai_model || row.translation_model || PROJECT_DEFAULTS.translation_ai_model)
+    : null;
+
   return {
     ...row,
+    translation_ai_provider: translationAiProvider,
+    translation_ai_transport: translationAiTransport,
+    translation_ai_model: translationAiModel,
+    translation_provider: row.translation_provider || translationAiProvider,
+    translation_model: row.translation_model || translationAiModel,
     enabled: Boolean(row.enabled),
     sync_enabled: Boolean(row.sync_enabled),
     auto_translate: Boolean(row.auto_translate),

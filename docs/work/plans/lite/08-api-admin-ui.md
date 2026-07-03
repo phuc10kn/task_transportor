@@ -137,7 +137,8 @@ Project config API phải nhận và trả về các field translation chính:
 
 ```json
 {
-  "translation_provider": "codex_exec",
+  "translation_ai_provider": "codex_exec",
+  "translation_ai_transport": "process_exec",
   "source_language": "ja",
   "target_language": "vi",
   "translation_glossary_json": [

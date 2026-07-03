@@ -15,13 +15,15 @@
 
 ## Provider
 
+Ghi chú cập nhật: translation AI mặc định hiện tại là `translation_ai_provider = deepseek`, `translation_ai_transport = openai_compatible`, `translation_ai_model = deepseek-v4-flash`, `thinking = disabled`. `codex_exec` chỉ còn là command tương thích cũ/local process. Không còn provider `manual`; thao tác thủ công là `manual-edit` trong review flow, không phải provider dịch.
+
 Translation là option sau khi dữ liệu đã vào CIS. Nếu bật AI translation, đường chính là chạy qua `codex_exec` thay vì gọi Platform API trực tiếp để tiết kiệm chi phí.
 
 Provider mặc định:
 
-- `codex_exec` là provider chính cho Lite.
-- `manual` là fallback nếu AI lỗi hoặc môi trường chưa cấu hình được `codex_exec`.
-- `openai_api` chỉ là provider optional/fallback, không phải đường mặc định của Lite.
+- `deepseek` là provider mặc định cho Lite.
+- `codex_exec` là provider tương thích cũ/local command.
+- Không còn provider `manual`; admin dùng `manual-edit` để nhập reviewed text thủ công.
 
 ## `codex_exec`
 
@@ -76,7 +78,7 @@ Triển khai Lite hiện tại:
 - Worker build standardized translation input, trong đó `source_text` vẫn là dữ liệu chính và `context_bundle` chỉ là context hỗ trợ.
 - `context_bundle` hiện gồm issue keys, project profile, issue context, neighbor comments, translation memory, glossary riêng theo project, preservation rules và text signals.
 - Worker `translate` gọi command từ `CODEX_EXEC_COMMAND` qua stdin JSON chuẩn hóa, có timeout bằng `CODEX_EXEC_TIMEOUT_SECONDS`, rồi lưu `ai_draft`, `provider`, `model_or_command`, `provider_request_id`, `confidence`.
-- Với Codex CLI thật, dùng adapter module `src/modules/Translation/infrastructure/codexCliAdapter.js` và cấu hình `CODEX_EXEC_COMMAND=node src/modules/Translation/infrastructure/codexCliAdapter.js`.
+- Với Codex CLI thật, dùng adapter infrastructure `src/infrastructure/ai/codexCliAdapter.js` và cấu hình `CODEX_EXEC_COMMAND=node src/infrastructure/ai/codexCliAdapter.js`.
 - Adapter Codex CLI đọc thêm `CODEX_CLI_COMMAND`, `CODEX_CLI_MODEL`, `CODEX_CLI_PROFILE`, `CODEX_CLI_SANDBOX` và `CODEX_CLI_CD`. Muốn chọn model cho `codex exec` thì cấu hình `CODEX_CLI_MODEL`, không cần nhét model vào `CODEX_EXEC_COMMAND`.
 - Adapter gọi `codex exec --sandbox read-only --output-schema ... --output-last-message ...` để chuẩn hóa output về JSON contract.
 - Nếu `codex_exec` timeout, exit lỗi, output JSON lỗi hoặc thiếu `translated_text`, job retry/fail theo policy chung và ghi `translation_queue.provider_error`.

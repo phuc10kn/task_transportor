@@ -2,13 +2,13 @@
 
 ## Mục tiêu
 
-Dịch Nhật -> Việt bằng `codex_exec` như một capability tùy chọn sau khi dữ liệu đã vào CIS. Với Issue Editor hiện tại, bản dịch issue đã human review được apply vào canonical `fields_json.<target_field>.cis`; issue canonical sync Jira không còn bị chặn trực tiếp bởi translation queue/review. Comment sync vẫn cần bản dịch reviewed nếu comment cần dịch.
+Dịch Nhật -> Việt bằng provider mặc định `deepseek` như một capability tùy chọn sau khi dữ liệu đã vào CIS. Với Issue Editor hiện tại, bản dịch issue đã human review được apply vào canonical `fields_json.<target_field>.cis`; issue canonical sync Jira không còn bị chặn trực tiếp bởi translation queue/review. Comment sync vẫn cần bản dịch reviewed nếu comment cần dịch.
 
 ## Làm trong phase này
 
 - Tạo module `Translation`.
-- Tạo provider `codex_exec`.
-- Tạo manual fallback.
+- Tạo provider `deepseek` OpenAI-compatible và giữ provider `codex_exec` để tương thích/fallback.
+- Tạo manual-edit review action; không tạo provider `manual`.
 - Tạo worker xử lý translation queue.
 - Thiết kế prompt giữ nguyên code block, link, issue key, key kỹ thuật.
 - Parse output thành draft và metadata.
@@ -17,6 +17,23 @@ Dịch Nhật -> Việt bằng `codex_exec` như một capability tùy chọn sa
 - Cập nhật state issue theo queue review.
 - Ghi journal/audit cho translate và review action.
 - Tạo anomaly `translation_low_conf` nếu confidence thấp hoặc provider báo không chắc.
+
+## Contract provider
+
+Provider mặc định mới:
+
+- `translation_ai_provider = "deepseek"`
+- `translation_ai_transport = "openai_compatible"` hoáº·c `"anthropic_compatible"`
+- `translation_ai_model = "deepseek-v4-flash"`
+- Model API tương ứng: `deepseek-v4-flash`
+- Mode mặc định: non-thinking, `thinking = disabled`
+- Secret: `DEEPSEEK_API_KEY`
+- Ghi chÃº cáº­p nháº­t: mode canonical hiá»‡n táº¡i lÃ  `thinking = disabled`, khÃ´ng gá»­i `reasoning_effort` khi thinking táº¯t. DeepSeek cÃ³ OpenAI-compatible base URL `https://api.deepseek.com` vÃ  Anthropic-compatible base URL `https://api.deepseek.com/anthropic`.
+- Base URL mặc định: `https://api.deepseek.com`
+
+UI Project Config hiện list các model DeepSeek: `deepseek-v4-flash`, `deepseek-v4-pro`, `deepseek-chat`. `deepseek-chat` phải hiển thị warning deprecated soon.
+
+UI Project Config canonical hiá»‡n list cÃ¡c model DeepSeek: `deepseek-v4-flash`, `deepseek-v4-pro`, `deepseek-chat`. `deepseek-chat` pháº£i hiá»ƒn thá»‹ warning deprecated soon.
 
 ## Contract `codex_exec`
 
@@ -140,14 +157,14 @@ Không đi phase 05 nếu:
 
 ## Ghi chú thiết kế
 
-- `openai_api` chỉ là optional/fallback, không phải đường mặc định của Lite.
+- DeepSeek đang được gọi qua OpenAI-compatible Chat Completions API; Lite hiện chưa expose provider `openai_api` riêng.
 - Không dịch attachment text.
 - Comment ngắn vẫn cần review, có thể có quick approve nhưng không auto-approve.
 - Phase 03 không tạo `translation_queue` và không enqueue job `translate`; translation không tham gia quá trình `System -> CIS`.
 - Khi bật translation cho một project/issue, queue dịch và job `translate` phải chạy theo đường riêng `cis -> cis`.
 - API review đổi trạng thái queue, ghi journal và với issue translation sẽ apply reviewed text vào `fields_json.<target_field>.cis`.
 - `translate` job dùng `CODEX_EXEC_COMMAND`, timeout bằng `CODEX_EXEC_TIMEOUT_SECONDS`, và ghi lỗi provider vào `translation_queue.provider_error`.
-- Adapter Codex CLI thật nằm trong `src/modules/Translation/infrastructure/codexCliAdapter.js`; `.env` local có thể trỏ `CODEX_EXEC_COMMAND=node src/modules/Translation/infrastructure/codexCliAdapter.js`.
+- Adapter Codex CLI thật nằm trong `src/infrastructure/ai/codexCliAdapter.js`; `.env` local có thể trỏ `CODEX_EXEC_COMMAND=node src/infrastructure/ai/codexCliAdapter.js`.
 - Adapter này vẫn gọi `codex exec --sandbox read-only` thật, nhưng chuẩn hóa output theo `codexTranslationOutput.schema.json` để worker luôn nhận JSON contract ổn định.
 - Job dịch, nếu được tạo bởi option riêng, có priority thấp hơn job pull để worker ưu tiên hoàn tất inbound pull trước.
 - Unit test đã pass bằng `scripts/verify/translation-review.js`; manual checklist vẫn cần người review xác nhận qua API/local worker.

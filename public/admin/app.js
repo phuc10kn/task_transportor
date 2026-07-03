@@ -21,11 +21,11 @@
     issueEditorJiraSyncing: false,
     issueEditorBacklogResyncing: false,
   };
-  const apiBaseUrl = window.CIS_ADMIN_API_BASE_URL || (
-    window.location.port === "8000"
-      ? `${window.location.protocol}//${window.location.hostname}:3000`
-      : ""
-  );
+  const inferredApiBaseUrls = {
+    "8000": `${window.location.protocol}//${window.location.hostname}:3000`,
+    "8001": `${window.location.protocol}//${window.location.hostname}:3001`,
+  };
+  const apiBaseUrl = window.CIS_ADMIN_API_BASE_URL || inferredApiBaseUrls[window.location.port] || "";
 
   const navItems = [
     ["dashboard", "Dashboard"],
@@ -37,6 +37,39 @@
     ["jobs", "Sync Jobs"],
     ["journal", "Journal"],
   ];
+  const DEFAULT_TRANSLATION_AI_PROVIDER = "deepseek";
+  const DEFAULT_TRANSLATION_AI_TRANSPORT = "openai_compatible";
+  const DEFAULT_TRANSLATION_AI_MODEL = "deepseek-v4-flash";
+  const TRANSLATION_AI_PROVIDER_OPTIONS = [
+    { value: "deepseek", label: "DeepSeek" },
+    { value: "codex_exec", label: "codex_exec" },
+  ];
+  const TRANSLATION_AI_TRANSPORT_OPTIONS = {
+    deepseek: [
+      { value: "openai_compatible", label: "OpenAI-compatible" },
+      { value: "anthropic_compatible", label: "Anthropic-compatible" },
+    ],
+    codex_exec: [
+      { value: "process_exec", label: "Process exec" },
+    ],
+  };
+  const TRANSLATION_AI_MODEL_OPTIONS = {
+    deepseek: {
+      openai_compatible: [
+        { value: "deepseek-v4-flash", label: "deepseek-v4-flash" },
+        { value: "deepseek-v4-pro", label: "deepseek-v4-pro" },
+        { value: "deepseek-chat", label: "deepseek-chat - deprecated soon" },
+      ],
+      anthropic_compatible: [
+        { value: "deepseek-v4-flash", label: "deepseek-v4-flash" },
+        { value: "deepseek-v4-pro", label: "deepseek-v4-pro" },
+        { value: "deepseek-chat", label: "deepseek-chat - deprecated soon" },
+      ],
+    },
+    codex_exec: {
+      process_exec: [],
+    },
+  };
 
   const $ = (selector) => document.querySelector(selector);
   const content = $("#content");
@@ -114,6 +147,63 @@
       <label>${escapeHtml(label)}
         <select name="${escapeHtml(name)}">${selectOptions(options, selectedValue)}</select>
       </label>`;
+  }
+
+  function strictSelectField(label, name, options, selectedValue, disabled) {
+    return `
+      <label>${escapeHtml(label)}
+        <select name="${escapeHtml(name)}" ${disabled ? "disabled" : ""}>${strictSelectOptions(options, selectedValue)}</select>
+      </label>`;
+  }
+
+  function firstOptionValue(options, fallback = "") {
+    return options && options.length > 0 ? options[0].value : fallback;
+  }
+
+  function translationAiTransportOptions(provider) {
+    return TRANSLATION_AI_TRANSPORT_OPTIONS[provider] || [];
+  }
+
+  function translationAiModelOptions(provider, transport) {
+    return (TRANSLATION_AI_MODEL_OPTIONS[provider] && TRANSLATION_AI_MODEL_OPTIONS[provider][transport]) || [];
+  }
+
+  function normalizeOptionValue(options, value, fallback) {
+    const selected = value === null || value === undefined ? "" : String(value);
+    if (selected && options.some((option) => String(option.value) === selected)) {
+      return selected;
+    }
+
+    return firstOptionValue(options, fallback);
+  }
+
+  function projectTranslationAiSelection(project) {
+    const p = project || {};
+    const provider = normalizeOptionValue(
+      TRANSLATION_AI_PROVIDER_OPTIONS,
+      p.translation_ai_provider || p.translation_provider,
+      DEFAULT_TRANSLATION_AI_PROVIDER
+    );
+    const transportOptions = translationAiTransportOptions(provider);
+    const transport = normalizeOptionValue(
+      transportOptions,
+      p.translation_ai_transport,
+      provider === DEFAULT_TRANSLATION_AI_PROVIDER ? DEFAULT_TRANSLATION_AI_TRANSPORT : firstOptionValue(transportOptions)
+    );
+    const modelOptions = translationAiModelOptions(provider, transport);
+    const model = normalizeOptionValue(
+      modelOptions,
+      p.translation_ai_model || p.translation_model,
+      provider === DEFAULT_TRANSLATION_AI_PROVIDER ? DEFAULT_TRANSLATION_AI_MODEL : ""
+    );
+
+    return {
+      model,
+      modelOptions,
+      provider,
+      transport,
+      transportOptions,
+    };
   }
 
   function setToast(message, isError, variant) {
@@ -268,6 +358,11 @@
   }
 
   function projectPayloadFromForm(form) {
+    const translationAiProvider = form.translation_ai_provider.value || DEFAULT_TRANSLATION_AI_PROVIDER;
+    const translationAiTransport = form.translation_ai_transport.value ||
+      firstOptionValue(translationAiTransportOptions(translationAiProvider));
+    const modelField = form.elements.namedItem("translation_ai_model");
+    const translationAiModel = modelField && !modelField.disabled ? modelField.value : "";
     const payload = {
       name: form.name.value,
       enabled: form.enabled.checked,
@@ -280,7 +375,9 @@
       jira_project_key: form.jira_project_key.value || undefined,
       jira_email_env: form.jira_email_env.value || undefined,
       jira_api_token_env: form.jira_api_token_env.value || undefined,
-      translation_provider: form.translation_provider.value || "codex_exec",
+      translation_ai_provider: translationAiProvider,
+      translation_ai_transport: translationAiTransport,
+      translation_ai_model: translationAiModel || undefined,
       source_language: form.source_language.value || "ja",
       target_language: form.target_language.value || "vi",
       auto_translate: form.auto_translate.checked,
@@ -307,13 +404,10 @@
 
   function projectForm(project) {
     const p = project || {};
+    const translationAi = projectTranslationAiSelection(p);
     const mappingSystems = [
       { value: "jira", label: "Jira" },
       { value: "backlog", label: "Backlog" },
-    ];
-    const translationProviders = [
-      { value: "codex_exec", label: "codex_exec" },
-      { value: "manual", label: "manual" },
     ];
     const languages = [
       { value: "ja", label: "ja - Japanese" },
@@ -327,7 +421,6 @@
           <div class="form-block-header"><h3>Overall</h3></div>
           <div class="editor-field-grid">
             <label>Name<input name="name" required value="${escapeHtml(p.name || "")}"></label>
-            ${selectField("Translation provider", "translation_provider", translationProviders, p.translation_provider || "codex_exec")}
             ${selectField("Source language", "source_language", languages, p.source_language || "ja")}
             ${selectField("Target language", "target_language", languages, p.target_language || "vi")}
           </div>
@@ -339,6 +432,16 @@
             <label class="check-option"><input type="checkbox" name="require_mapping_approval" ${p.require_mapping_approval !== false ? "checked" : ""}><span>Mapping approval</span></label>
             <label class="check-option"><input type="checkbox" name="manual_pull_enabled" ${p.manual_pull_enabled !== false ? "checked" : ""}><span>Manual pull</span></label>
             <label class="check-option"><input type="checkbox" name="scheduled_pull_enabled" ${p.scheduled_pull_enabled ? "checked" : ""}><span>Scheduled pull</span></label>
+          </div>
+        </section>
+        <section class="form-block">
+          <div class="form-block-header"><h3>Translation AI</h3></div>
+          <div class="editor-field-grid">
+            ${strictSelectField("Translation AI provider", "translation_ai_provider", TRANSLATION_AI_PROVIDER_OPTIONS, translationAi.provider)}
+            ${strictSelectField("Translation AI transport", "translation_ai_transport", translationAi.transportOptions, translationAi.transport)}
+            ${translationAi.modelOptions.length > 0
+              ? strictSelectField("Translation AI model", "translation_ai_model", translationAi.modelOptions, translationAi.model)
+              : strictSelectField("Translation AI model", "translation_ai_model", [{ value: "", label: "No model for this provider" }], "", true)}
           </div>
         </section>
         <section class="form-block">
@@ -397,7 +500,45 @@
           <label>Issue key<input id="pullIssueKey" value="${escapeHtml(project.backlog_issue_key_prefix || "")}-1"></label>
           <button id="pullIssueButton" type="button">Pull one issue</button>
         </div>
-      </section>`;
+        </section>`;
+  }
+
+  function replaceSelectOptions(select, options, selectedValue) {
+    select.innerHTML = strictSelectOptions(options, selectedValue);
+  }
+
+  function syncTranslationAiFields(form) {
+    const providerField = form.elements.namedItem("translation_ai_provider");
+    const transportField = form.elements.namedItem("translation_ai_transport");
+    const modelField = form.elements.namedItem("translation_ai_model");
+    if (!providerField || !transportField || !modelField) {
+      return;
+    }
+
+    const provider = normalizeOptionValue(
+      TRANSLATION_AI_PROVIDER_OPTIONS,
+      providerField.value,
+      DEFAULT_TRANSLATION_AI_PROVIDER
+    );
+    const transportOptions = translationAiTransportOptions(provider);
+    const transport = normalizeOptionValue(
+      transportOptions,
+      transportField.value,
+      firstOptionValue(transportOptions)
+    );
+    replaceSelectOptions(transportField, transportOptions, transport);
+    transportField.disabled = transportOptions.length === 0;
+
+    const modelOptions = translationAiModelOptions(provider, transport);
+    if (modelOptions.length === 0) {
+      replaceSelectOptions(modelField, [{ value: "", label: "No model for this provider" }], "");
+      modelField.disabled = true;
+      return;
+    }
+
+    const model = normalizeOptionValue(modelOptions, modelField.value, firstOptionValue(modelOptions));
+    replaceSelectOptions(modelField, modelOptions, model);
+    modelField.disabled = false;
   }
 
   async function renderProjects() {
@@ -479,6 +620,15 @@
 
   function bindProjectForm(project) {
     const form = $("#projectForm");
+    syncTranslationAiFields(form);
+    const providerField = form.elements.namedItem("translation_ai_provider");
+    const transportField = form.elements.namedItem("translation_ai_transport");
+    if (providerField) {
+      providerField.addEventListener("change", () => syncTranslationAiFields(form));
+    }
+    if (transportField) {
+      transportField.addEventListener("change", () => syncTranslationAiFields(form));
+    }
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       try {

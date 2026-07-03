@@ -1,20 +1,12 @@
 const { AppError } = require("../../../http/errors/AppError");
-const { createCisRepository } = require("../../Cis/infrastructure/CisRepository");
+const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { buildStandardTranslationInput } = require("./buildStandardTranslationInput");
 const { collectTranslationContext } = require("./collectTranslationContext");
-const { createCodexExecTranslationProvider } = require("../infrastructure/CodexExecTranslationProvider");
-const { createManualTranslationProvider } = require("../infrastructure/ManualTranslationProvider");
+const { refreshTranslationAiConfigForQueueItem } = require("./refreshTranslationAiConfigForQueueItem");
+const { translationAdapterFor } = require("./translationAdapterFor");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
 const { hashText } = require("../support/hashText");
-
-function providerFor({ config, provider }) {
-  if (provider === "manual") {
-    return createManualTranslationProvider({ config });
-  }
-
-  return createCodexExecTranslationProvider({ config });
-}
 
 async function translateWithImmediateRetry({ config, item, request, maxAttempts }) {
   let lastError = null;
@@ -23,7 +15,12 @@ async function translateWithImmediateRetry({ config, item, request, maxAttempts 
     try {
       return {
         attempt,
-        result: await providerFor({ config, provider: item.provider }).translate(request),
+        result: await translationAdapterFor({
+          config,
+          aiProvider: item.provider,
+          aiTransport: item.ai_transport,
+          modelOrCommand: item.model_or_command,
+        }).generateDraft(request),
       };
     } catch (error) {
       lastError = error;
@@ -47,7 +44,7 @@ async function translateQueueItemNow({
   maxImmediateAttempts = 2,
 }) {
   const repository = createTranslationRepository({ config });
-  const item = repository.findById(queueId);
+  let item = repository.findById(queueId);
   if (!item) {
     throw new AppError({
       code: "TRANSLATION_QUEUE_NOT_FOUND",
@@ -64,7 +61,9 @@ async function translateQueueItemNow({
     };
   }
 
-  const issue = createCisRepository({ config }).getIssueById(item.issue_id);
+  item = refreshTranslationAiConfigForQueueItem({ config, repository, item });
+
+  const issue = CisApi.getIssueById({ config, issueId: item.issue_id });
   const context = collectTranslationContext({ config, item });
   const request = buildStandardTranslationInput({
     item,
@@ -139,6 +138,6 @@ async function translateQueueItemNow({
 }
 
 module.exports = {
-  providerFor,
+  translationAdapterFor,
   translateQueueItemNow,
 };

@@ -1,5 +1,4 @@
 const { AppError } = require("../../../http/errors/AppError");
-const { createProjectRepository } = require("../../Projects/infrastructure/ProjectRepository");
 const { createCisRepository } = require("../infrastructure/CisRepository");
 const {
   EDITABLE_CANONICAL_FIELDS,
@@ -12,6 +11,10 @@ const {
   issueTranslationTargetMap,
   normalizeTranslationSource,
 } = require("../support/issueTranslationTargets");
+
+function projectsApi() {
+  return require("../../Projects/ProjectsApi");
+}
 
 function latestRevision(revisions) {
   return revisions[revisions.length - 1] || null;
@@ -178,7 +181,7 @@ function getIssueEditor({ config, issueId }) {
     });
   }
 
-  const project = createProjectRepository({ config }).findById(issue.project_id);
+  const project = projectsApi().getProject({ config, projectId: issue.project_id });
   const revisions = repository.listRevisions(issue.id);
   const revision = latestRevision(revisions);
   const canonical = buildCanonicalSnapshot(issue, revision);
