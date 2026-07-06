@@ -18,8 +18,8 @@ Chặn sync sai trước khi gọi Jira API thật. Phase này tạo mapping req
 
 ## Deliverables
 
-- Module `Mapping` theo [module_structure.md](../../../../architechture/custom_modular_monolith/module_structure.md) và [implement_rules.md](../../../../architechture/custom_modular_monolith/implement_rules.md).
-- Module `Anomaly` theo [module_structure.md](../../../../architechture/custom_modular_monolith/module_structure.md) và [implement_rules.md](../../../../architechture/custom_modular_monolith/implement_rules.md).
+- Module `Mapping` theo [module_structure.md](../../../../architecture/custom_modular_monolith_theory/module_structure.md) và [implement_rules.md](../../../../architecture/custom_modular_monolith_theory/implement_rules.md).
+- Module `Anomaly` theo [module_structure.md](../../../../architecture/custom_modular_monolith_theory/module_structure.md) và [implement_rules.md](../../../../architecture/custom_modular_monolith_theory/implement_rules.md).
 - Jira dry-run payload builder.
 - Mapping required checker.
 - Anomaly blocker checker.

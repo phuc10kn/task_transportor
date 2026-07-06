@@ -106,7 +106,7 @@ Quy tắc lỗi:
 
 ## Deliverables
 
-- Module `Translation` theo [module_structure.md](../../../../architechture/custom_modular_monolith/module_structure.md) và [implement_rules.md](../../../../architechture/custom_modular_monolith/implement_rules.md).
+- Module `Translation` theo [module_structure.md](../../../../architecture/custom_modular_monolith_theory/module_structure.md) và [implement_rules.md](../../../../architecture/custom_modular_monolith_theory/implement_rules.md).
 - Provider adapter `codex_exec`.
 - Fake `codex_exec` command/script để test tự động.
 - Handler `translate` đăng ký vào worker phase 02.

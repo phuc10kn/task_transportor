@@ -1,16 +1,15 @@
-﻿# Moved: Module Boundary Rules
+# Module Boundary Rules
 
-Luật modular monolith boundary của `task_transportor` đã được nhập về source of truth:
+File này là pointer compatibility. Luật canonical hiện nằm tại:
 
-- [../architechture/custom_modular_monolith/overview.md](../architechture/custom_modular_monolith/overview.md)
-- [../architechture/custom_modular_monolith/boundary_model.md](../architechture/custom_modular_monolith/boundary_model.md)
-- [../architechture/custom_modular_monolith/data_ownership.md](../architechture/custom_modular_monolith/data_ownership.md)
-- [../architechture/custom_modular_monolith/implement_rules.md](../architechture/custom_modular_monolith/implement_rules.md)
+- [04-boundaries.md](04-boundaries.md)
+- [custom_modular_monolith_theory/implement_rules.md](custom_modular_monolith_theory/implement_rules.md)
 
-File này chỉ còn là pointer compatibility để các link cũ không gãy. Không cập nhật luật modular monolith ở đây nữa.
-
-Khi task có sửa hoặc thêm code trong `src/modules`, đọc và tuân thủ:
+Nếu đang sửa code trong `src/modules`, đọc tối thiểu:
 
 ```text
-docs/architechture/custom_modular_monolith/implement_rules.md
+docs/architecture/04-boundaries.md
+docs/architecture/custom_modular_monolith_theory/implement_rules.md
 ```
+
+Không cập nhật luật boundary mới ở file này.

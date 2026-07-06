@@ -1,21 +1,14 @@
-﻿# Architecture Direction
+# Architecture Direction
 
-## Modular monolith
+## Pattern được chọn
 
-Dự án đi theo hướng **custom modular monolith**. Source of truth cho lý thuyết, module structure, boundary, data tier, evolution và luật implement nằm trong folder [../architechture/custom_modular_monolith/](../architechture/custom_modular_monolith/).
+`task_transportor` áp dụng pattern **custom modular monolith**.
 
-Các file bắt đầu:
+Pattern chung được giải thích ở [custom_modular_monolith_theory/overview.md](custom_modular_monolith_theory/overview.md). File này chốt cách repo hiện tại dùng pattern đó cho sản phẩm Central Sync Hub.
 
-- [../architechture/custom_modular_monolith/overview.md](../architechture/custom_modular_monolith/overview.md)
-- [../architechture/custom_modular_monolith/theory.md](../architechture/custom_modular_monolith/theory.md)
-- [../architechture/custom_modular_monolith/module_structure.md](../architechture/custom_modular_monolith/module_structure.md)
-- [../architechture/custom_modular_monolith/implement_rules.md](../architechture/custom_modular_monolith/implement_rules.md)
+Không tách microservice trong giai đoạn đầu. Lite và Medium ưu tiên một app Node.js duy nhất, gồm API, worker, scheduler và các adapter tích hợp.
 
-File này chỉ giữ hướng kiến trúc chung. Không cập nhật lý thuyết hoặc luật modular monolith tại đây.
-
-Không tách microservice trong giai đoạn đầu. Lite và Medium ưu tiên vận hành đơn giản: API, worker, scheduler và adapter cùng nằm trong một app Node.js.
-
-## Product model
+## Product model của repo
 
 Mọi phiên bản đều giữ model:
 
@@ -23,35 +16,39 @@ Mọi phiên bản đều giữ model:
 System -> CIS -> System
 ```
 
-Trong đó:
+Trong repo hiện tại:
 
-- System có thể là Backlog, Jira hoặc hệ thống khác sau này.
-- CIS là trung tâm lưu issue, revision, comment, attachment metadata, mapping, translation, anomaly, job và journal.
-- Không để Backlog gọi Jira trực tiếp.
-- Không để route/controller gọi external API rồi bỏ qua CIS/job/journal.
+- `System` có thể là Backlog, Jira hoặc hệ thống khác sau này.
+- `CIS` là lõi nghiệp vụ và canonical store của sản phẩm.
+- Không cho phép sync trực tiếp `System -> System` bỏ qua CIS.
+- Không cho phép route/controller gọi external API rồi ghi state tắt, bỏ qua job, journal hoặc audit.
 
-## Vai trò của architecture guide
+## Ý nghĩa thực tế với `task_transportor`
 
-Architecture guide dùng để:
+- Inbound luôn vào CIS trước, sau đó mới tới translation, mapping, anomaly và outbound.
+- Outbound thật sang Jira phải đi sau dry-run và pre-check.
+- External adapter không sở hữu business state của CIS.
+- AI chỉ draft hoặc propose; quyết định vận hành cuối cùng vẫn nằm ở human hoặc policy đã duyệt.
 
-- Đặt ngôn ngữ chung khi thiết kế module mới.
-- Giữ hướng phát triển thống nhất giữa Lite, Medium và Full.
-- Là template trước khi viết spec chi tiết.
-- Tránh biến mỗi tính năng thành một kiểu code riêng.
+## Runtime mặc định
 
-Architecture guide không dùng để:
+- Node.js CommonJS.
+- Express API.
+- SQLite cho MVP.
+- Một service duy nhất ở Lite và phần lớn Medium.
+- Worker nội bộ xử lý việc nặng thay cho request handler khi phù hợp.
 
-- Chốt toàn bộ endpoint chi tiết.
-- Chốt toàn bộ schema column.
-- Thay thế spec của từng version.
-- Ép mọi module phải có cùng độ phức tạp.
+## Cách dùng bộ tài liệu này
+
+- Dùng `docs/architecture/*` khi cần biết repo hiện tại đang tổ chức module, boundary và flow ra sao.
+- Dùng `docs/architecture/custom_modular_monolith_theory/*` khi cần lý giải pattern tổng quát, template hoặc checklist generic.
 
 ## Nguyên tắc phát triển
 
-1. Bắt đầu đơn giản, nhưng không phá đường mở rộng.
+1. Bắt đầu đơn giản nhưng không phá đường mở rộng.
 2. Mọi data external vào CIS trước.
-3. Mọi outbound thật đi sau dry-run/pre-check nếu có rủi ro ghi sang hệ ngoài.
-4. Worker/job xử lý việc nặng; request handler trả nhanh khi có thể.
+3. Mọi outbound thật đi sau dry-run hoặc pre-check khi có rủi ro ghi sang hệ ngoài.
+4. Worker hoặc job xử lý việc nặng; request handler trả nhanh khi có thể.
 5. Integration adapter không sở hữu business state.
-6. Mapping đi qua CIS canonical, không map system-to-system trực tiếp.
-7. Tài liệu version nói "làm gì"; architecture nói "làm theo kiểu nào".
+6. Mapping đi qua canonical CIS, không map system-to-system trực tiếp.
+7. Tài liệu version nói "làm gì"; architecture nói "repo này làm theo kiểu nào".

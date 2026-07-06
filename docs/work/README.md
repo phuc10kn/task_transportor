@@ -18,6 +18,7 @@ System -> CIS -> System
 ## Kế hoạch theo phiên bản
 
 - [plans/README.md](plans/README.md) - tổng quan Lite, Medium, Full.
+- [../business/README.md](../business/README.md) - góc nhìn nghiệp vụ và business workflows.
 - [../architecture/README.md](../architecture/README.md) - ngôn ngữ kiến trúc chung.
 - [plans/lite/README.md](plans/lite/README.md) - scope Lite.
 - [plans/medium/README.md](plans/medium/README.md) - scope Medium.

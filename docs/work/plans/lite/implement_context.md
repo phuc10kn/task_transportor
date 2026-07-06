@@ -79,17 +79,18 @@ Tuy vậy Lite vẫn phải giữ schema/state/module đủ để Medium thêm w
 
 ## 3. Architecture cần theo
 
-Hướng kiến trúc: **custom modular monolith**. Source of truth cho lý thuyết, cấu trúc module, boundary, data tier và luật implement nằm trong folder [../../../architechture/custom_modular_monolith/](../../../architechture/custom_modular_monolith/).
+Hướng kiến trúc: **custom modular monolith**. Cách repo hiện tại áp dụng kiến trúc được chốt ở `docs/architecture/*`; knowledge base generic về pattern nằm trong folder [../../../architecture/custom_modular_monolith_theory/](../../../architecture/custom_modular_monolith_theory/).
 
-Khi cần hiểu hoặc sửa phần modular monolith, đọc các file canonical:
+Khi cần hiểu hoặc sửa phần modular monolith, đọc các file canonical theo thứ tự:
 
-- [../../../architechture/custom_modular_monolith/overview.md](../../../architechture/custom_modular_monolith/overview.md)
-- [../../../architechture/custom_modular_monolith/module_structure.md](../../../architechture/custom_modular_monolith/module_structure.md)
-- [../../../architechture/custom_modular_monolith/boundary_model.md](../../../architechture/custom_modular_monolith/boundary_model.md)
-- [../../../architechture/custom_modular_monolith/data_ownership.md](../../../architechture/custom_modular_monolith/data_ownership.md)
-- [../../../architechture/custom_modular_monolith/implement_rules.md](../../../architechture/custom_modular_monolith/implement_rules.md)
+- [../../../architecture/README.md](../../../architecture/README.md)
+- [../../../architecture/02-module-structure.md](../../../architecture/02-module-structure.md)
+- [../../../architecture/04-boundaries.md](../../../architecture/04-boundaries.md)
+- [../../../architecture/05-flow-template.md](../../../architecture/05-flow-template.md)
+- [../../../architecture/custom_modular_monolith_theory/overview.md](../../../architecture/custom_modular_monolith_theory/overview.md)
+- [../../../architecture/custom_modular_monolith_theory/implement_rules.md](../../../architecture/custom_modular_monolith_theory/implement_rules.md)
 
-File `implement_context.md` chỉ giữ context Lite. Không cập nhật lý thuyết, module structure hoặc luật boundary modular monolith tại đây.
+File `implement_context.md` chỉ giữ context Lite. Không cập nhật theory generic của pattern tại đây.
 
 Domain module dự kiến cho Lite:
 

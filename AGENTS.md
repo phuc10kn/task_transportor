@@ -22,10 +22,12 @@ Tài liệu chính:
 - `docs/work/plans/lite/README.md` - phạm vi và thứ tự đọc của bản Lite.
 - `docs/work/plans/lite/implement_context.md` - context chọn lọc để bắt đầu implement Lite.
 - `docs/work/plans/lite/implement_plans/README.md` - phase triển khai Lite, chốt chặn và checklist.
-- `docs/architecture/README.md` - ngôn ngữ kiến trúc dùng chung cho Lite, Medium và Full.
-- `docs/architechture/custom_modular_monolith/overview.md` - source of truth cho thiết kế `custom_modular_monolith`.
-- `docs/architechture/custom_modular_monolith/implement_rules.md` - luật bắt buộc khi sửa/thêm code module.
-- `docs/architechture/custom_modular_monolith/module_structure.md` - cấu trúc module canonical.
+- `docs/architecture/README.md` - source of truth cho cách `task_transportor` áp dụng kiến trúc.
+- `docs/architecture/01-direction.md` - hướng kiến trúc và product model của repo hiện tại.
+- `docs/architecture/02-module-structure.md` - cấu trúc module canonical của repo hiện tại.
+- `docs/architecture/04-boundaries.md` - boundary, ownership, read allowlist và AI/Translation boundary của repo hiện tại.
+- `docs/architecture/custom_modular_monolith_theory/overview.md` - knowledge base nền về pattern `custom_modular_monolith_theory`, dùng lại được cho nhiều repo.
+- `docs/architecture/custom_modular_monolith_theory/implement_rules.md` - checklist generic khi sửa/thêm code module.
 - `docs/architecture/module-boundary-rules.md` - pointer compatibility về luật modular monolith mới.
 - `docs/work/fix_module_boundary/overview.md` - báo cáo boundary và các quyết định sửa gần nhất.
 - `docs/work/implement-interview.md` - quyết định implement đã trao đổi với user.
@@ -52,15 +54,17 @@ Trước khi code một phase, đọc:
 
 1. `docs/work/plans/lite/implement_context.md`.
 2. `docs/architecture/README.md`.
-3. `docs/architechture/custom_modular_monolith/module_structure.md`.
-4. `docs/architechture/custom_modular_monolith/overview.md`.
-5. `docs/architechture/custom_modular_monolith/implement_rules.md`.
-6. `docs/work/plans/lite/implement_plans/README.md`.
-7. File phase đang làm, ví dụ `docs/work/plans/lite/implement_plans/00-foundation.md`.
+3. `docs/architecture/01-direction.md`.
+4. `docs/architecture/02-module-structure.md`.
+5. `docs/architecture/04-boundaries.md`.
+6. `docs/architecture/custom_modular_monolith_theory/overview.md`.
+7. `docs/architecture/custom_modular_monolith_theory/implement_rules.md`.
+8. `docs/work/plans/lite/implement_plans/README.md`.
+9. File phase đang làm, ví dụ `docs/work/plans/lite/implement_plans/00-foundation.md`.
 
-Nếu task có sửa hoặc thêm code trong `src/modules`, Codex bắt buộc phải đọc lại `docs/architechture/custom_modular_monolith/implement_rules.md` trong lượt làm việc đó trước khi code.
+Nếu task có sửa hoặc thêm code trong `src/modules`, Codex bắt buộc phải đọc lại `docs/architecture/custom_modular_monolith_theory/implement_rules.md` và `docs/architecture/04-boundaries.md` trong lượt làm việc đó trước khi code.
 
-Khi tài liệu mâu thuẫn, ưu tiên plan Lite mới trong `docs/work/plans/lite` cho scope/hành vi Lite; ưu tiên `docs/architechture/custom_modular_monolith` cho thiết kế modular monolith; sau đó đến architecture guide dùng chung, sau đó `docs/work/implement-interview.md`, cuối cùng là spec nền cũ hơn.
+Khi tài liệu mâu thuẫn, ưu tiên plan Lite mới trong `docs/work/plans/lite` cho scope/hành vi Lite; ưu tiên `docs/architecture/*` cho cách repo hiện tại áp dụng kiến trúc; ưu tiên `docs/architecture/custom_modular_monolith_theory` cho pattern modular monolith dùng chung; sau đó đến `docs/work/implement-interview.md`, cuối cùng là spec nền cũ hơn.
 
 ## Công nghệ
 
@@ -83,9 +87,9 @@ Nếu phần triển khai thêm test, cập nhật `package.json` để có lệ
 
 ## Luật modular monolith boundary
 
-`docs/architechture/custom_modular_monolith` là source of truth cho thiết kế `custom_modular_monolith`.
+`docs/architecture/custom_modular_monolith_theory` là knowledge base nền cho pattern `custom_modular_monolith_theory`. Cách repo hiện tại áp dụng pattern này được chốt ở `docs/architecture/*`.
 
-Khi đụng code module, Codex bắt buộc đọc và tuân thủ `docs/architechture/custom_modular_monolith/implement_rules.md`. File cũ `docs/architecture/module-boundary-rules.md` chỉ là pointer compatibility và không còn là nơi cập nhật luật.
+Khi đụng code module, Codex bắt buộc đọc và tuân thủ `docs/architecture/custom_modular_monolith_theory/implement_rules.md` cùng `docs/architecture/04-boundaries.md`. File cũ `docs/architecture/module-boundary-rules.md` chỉ là pointer compatibility và không còn là nơi cập nhật luật.
 
 ## Luật AI và Translation
 
@@ -139,7 +143,7 @@ Hai lệnh `rg` đầu không được có kết quả.
 - Khi triển khai Lite, ưu tiên khớp với `docs/work/plans/lite/implement_context.md` và file phase đang làm.
 - Mỗi lượt triển khai chỉ nên nằm trong phạm vi của phase hiện tại, trừ khi user yêu cầu mở rộng.
 - Ưu tiên module nhỏ, tập trung, tránh rewrite rộng.
-- Dùng cấu trúc module và luật `custom_modular_monolith` trong `docs/architechture/custom_modular_monolith`.
+- Dùng cấu trúc module và boundary hiện tại của repo trong `docs/architecture/*`, dựa trên knowledge base `custom_modular_monolith_theory` trong `docs/architecture/custom_modular_monolith_theory`.
 - Không commit secret. Dùng `.env` hoặc `.codex/config.toml` local cho credential/path riêng máy.
 - Không hard-code credential Backlog/Jira, API key AI, Codex auth path, JWT secret hoặc internal server path.
 - Dùng `direction_from` và `direction_to` cho sync job, sync journal và mapping direction. Không thay bằng một field `direction` nếu docs chưa được cập nhật có chủ ý.

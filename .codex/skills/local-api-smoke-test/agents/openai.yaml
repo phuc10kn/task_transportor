@@ -1,4 +1,0 @@
-interface:
-  display_name: "Local API Smoke Test"
-  short_description: "Test API local bằng HTTP thật"
-  default_prompt: "Dùng $local-api-smoke-test để kiểm tra endpoint API local của task_transportor bằng HTTP request thật."

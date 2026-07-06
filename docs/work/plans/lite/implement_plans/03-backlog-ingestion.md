@@ -81,7 +81,7 @@ Scheduled pull không tạo translation/sync Jira trực tiếp. Nó chỉ enque
 
 ## Deliverables
 
-- Module `Backlog` theo [module_structure.md](../../../../architechture/custom_modular_monolith/module_structure.md) và [implement_rules.md](../../../../architechture/custom_modular_monolith/implement_rules.md).
+- Module `Backlog` theo [module_structure.md](../../../../architecture/custom_modular_monolith_theory/module_structure.md) và [implement_rules.md](../../../../architecture/custom_modular_monolith_theory/implement_rules.md).
 - Backlog API client đọc credential qua env name.
 - Endpoint pull issue trong phạm vi project.
 - Endpoint pull project bắt buộc.

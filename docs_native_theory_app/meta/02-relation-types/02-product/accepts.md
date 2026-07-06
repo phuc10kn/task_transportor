@@ -1,0 +1,39 @@
+# accepts
+
+| Field | Value |
+|-------|-------|
+| **name** | `accepts` |
+| **canonical direction** | Source --accepts--> Target |
+| **inverse** | _(none — symmetric or derive later)_ |
+
+## meaning
+
+Source liên hệ với Target theo semantic `accepts`.
+
+## allowed semantic
+
+Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
+
+## examples
+
+```text
+AcceptanceCriterion --accepts--> FunctionalRequirement
+```
+
+## non-examples
+
+```text
+Target --accepts--> Source   (sai direction nếu inverse được định nghĩa)
+Free-text relation không qua Relation Type canonical
+```
+
+## anti-patterns
+
+Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+
+## valid usage (from entity types)
+
+```text
+AcceptanceCriterion --accepts--> FunctionalRequirement
+AcceptanceCriterion --accepts--> Feature
+```
