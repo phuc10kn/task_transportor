@@ -30,13 +30,13 @@ owner, data_exchanged, criticality, dependency_level, known_limitations
 
 active → deprecated | replaced
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-ExternalSystem → Application (integrates_with_context)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| integrates_with_context | `integrates_with_context` | Application | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

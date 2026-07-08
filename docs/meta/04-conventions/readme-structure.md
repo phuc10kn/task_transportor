@@ -37,17 +37,18 @@ Ví dụ `Process`:
 
 ## Relations
 
-Relation canonical nên nằm trong frontmatter `relations`. Body `## Relations` dùng để giải thích link cho người đọc.
+Relation canonical phải nằm trong YAML frontmatter field `relations`, dùng slot name từ `relations_template` của entity type.
 
-Khi Relation Type chưa chốt:
+Body `## Relations` chỉ giải thích link cho người đọc, không thay thế canonical relation.
 
-```markdown
-## Relations
+Nếu entity type chưa có slot phù hợp, relation bị reject. Không ghi relation nghi ngờ vào entity README.
 
-- `MOD-001` - mô tả relation chưa canonical.
+Ví dụ:
 
-## Open Relation Question (nếu relation chưa canonical)
-> NOTE-CANDIDATE: relation type X -> Y chưa có trong Meta.
+```yaml
+relations:
+  governed_by:
+    - BRULE-001
 ```
 
 ## Không bắt buộc

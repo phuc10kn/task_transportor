@@ -51,13 +51,13 @@ Additional validation:
 
 - Policy rộng hơn một rule đơn lẻ và có thể sinh nhiều BusinessRule.
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Policy → BusinessRule (generates)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| generates | `generates` | BusinessRule | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

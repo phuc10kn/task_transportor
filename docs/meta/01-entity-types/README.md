@@ -112,7 +112,7 @@ name, layer, concern, folder, ID pattern
 meaning, instance criteria
 required fields, optional fields
 lifecycle
-allowed relations (candidate)
+relations_template
 validation
 ```
 
@@ -138,4 +138,12 @@ Nếu một type không khai báo `structure extends`, instance của type đó 
 
 ## Relation Types
 
-Allowed relations trong từng file là **candidate** cho tới khi chốt tại `docs/meta/02-relation-types/`.
+`relations_template` trong từng file định nghĩa slot relation mà instance của entity type đó được phép điền.
+
+Một slot chỉ hợp lệ khi:
+
+1. relation type tồn tại trong `docs/meta/02-relation-types/`;
+2. valid triple tương ứng tồn tại trong `docs/meta/03-rules/`;
+3. target entity type khớp slot.
+
+Entity instance không được ghi relation ngoài slot.

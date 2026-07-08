@@ -53,15 +53,15 @@ Additional validation:
 - Không viết problem như feature request hoặc solution thiếu.
 - Nếu chưa có evidence, ghi `NOTE-EVIDENCE`.
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Problem → Goal (motivates)
-Problem → Stakeholder (affects)
-Problem → BusinessRequirement (leads_to)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| motivates | `motivates` | Goal | false | 0..n |
+| affects | `affects` | Stakeholder | false | 0..n |
+| leads_to | `leads_to` | BusinessRequirement | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

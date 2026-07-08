@@ -9,9 +9,10 @@ Kiểm tra một Business Problem có dẫn tới Product Requirement hay không
 ```text
 1. Tìm Problem ID.
 2. Xác định target Product entity type.
-3. Tra docs/meta/03-rules/cross-layer/valid-triples.md.
+3. Tra relation slot trong entity type của source.
+4. Tra docs/meta/03-rules/cross-layer/valid-triples.md.
 4. Search Problem ID bằng rg.
-5. Kiểm tra relation block và Related Entities.
+5. Kiểm tra frontmatter `relations`.
 6. Validate từng hop.
 ```
 
@@ -21,16 +22,16 @@ Kiểm tra một Business Problem có dẫn tới Product Requirement hay không
 Path exists
 ```
 
-Trường hợp chưa có path nhưng triple hợp lệ:
+Trường hợp chưa có path nhưng slot optional và triple hợp lệ:
 
 ```text
-No path yet, but valid triple exists.
+No path yet, but slot is optional.
 ```
 
 Trường hợp relation chưa hợp lệ:
 
 ```text
-No valid triple. Create NOTE-OPEN or propose meta rule.
+No relation slot or no valid triple. Reject relation from entity instance.
 ```
 
-Không tự thêm relation nếu chưa có valid triple.
+Không tự thêm relation nếu chưa có relation slot và valid triple.

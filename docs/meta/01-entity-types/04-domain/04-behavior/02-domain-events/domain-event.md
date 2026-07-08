@@ -30,14 +30,14 @@ source_aggregate, payload_meaning, consumers, consequences, ordering_expectation
 
 defined → active → deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-DomainEvent → Aggregate (raised_by)
-DomainEvent → Lifecycle (marks_transition)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| raised_by | `raised_by` | Aggregate | false | 0..n |
+| marks_transition | `marks_transition` | Lifecycle | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

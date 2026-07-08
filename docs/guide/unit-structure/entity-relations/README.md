@@ -12,10 +12,10 @@ Schema liên quan:
 
 ```yaml
 relations:
-  - type: governed_by
-    target: BRULE-001
-  - type: informs
-    target: UC-001
+  governed_by:
+    - BRULE-001
+  informs:
+    - UC-001
 ```
 
 ## YAML Review Shape
@@ -27,20 +27,24 @@ relation_review:
   source:
     id: PROC-001
     entity_type: Process
-  edges:
-    - relation: governed_by
+  slots:
+    - slot: governed_by
+      relation: governed_by
       target:
         id: BRULE-001
         entity_type: BusinessRule
       valid_triple: Process --governed_by--> BusinessRule
+      slot_defined: true
       status: valid
-    - relation: custom_relation
+    - slot: unknown_slot
+      relation: custom_relation
       target:
         id: QG-001
         entity_type: QualityGate
       valid_triple: null
-      status: open
-      note: NOTE-CANDIDATE relation chưa có trong meta.
+      slot_defined: false
+      status: rejected
+      reason: Relation không có slot trong relations_template của entity type.
 ```
 
 ## Markdown Body
@@ -50,15 +54,12 @@ relation_review:
 
 - `BRULE-001` - rule chi phối process này.
 - `UC-001` - use case được process này inform.
-
-## Open Relation Question
-
-> NOTE-CANDIDATE: cần relation giữa `Process` và `QualityGate`.
 ```
 
 ## Rule
 
+- Relation canonical phải dùng slot đã có trong `relations_template` của entity type.
 - Relation canonical phải có relation type trong `02-relation-types/`.
 - Relation canonical phải có valid triple trong `03-rules/`.
 - Không mirror inverse nếu inverse chưa được định nghĩa.
-- Relation chưa đủ chuẩn chỉ ghi ở `Open Relation Question`.
+- Relation không có slot hoặc thiếu meta rule bị reject; không ghi vào entity instance.

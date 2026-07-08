@@ -25,4 +25,4 @@ Combination hợp lệ: `Source --relation--> Target`
 
 - Relation Type phải tồn tại trong `02-relation-types/`
 - Direction phải đúng canonical
-- Instance cụ thể ghi trong entity README hoặc frontmatter `relations:`
+- Entity instance chỉ ghi relation trong YAML frontmatter `relations:` theo slot đã có trong entity type `relations_template`

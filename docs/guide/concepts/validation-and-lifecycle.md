@@ -8,7 +8,7 @@ Validation của docs có 5 nhóm chính:
 | --- | --- |
 | Structural | File có nằm đúng Layer -> Concern -> Entity Type -> Entity Instance không? |
 | Semantic | Nội dung có đúng meaning của entity type/concern không? |
-| Relation | Relation type, direction và valid triple có hợp lệ không? |
+| Relation | Relation slot, relation type, direction và valid triple có hợp lệ không? |
 | Reference | Entity ID, Theory ID, Decision ID có tồn tại không? |
 | Convention | ID, folder, file, metadata, status có đúng format không? |
 

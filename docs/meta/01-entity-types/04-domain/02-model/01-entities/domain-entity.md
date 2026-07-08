@@ -30,14 +30,14 @@ properties, allowed_behavior, invariants, lifecycle, related_entities, theory_ba
 
 modeled → active → deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-DomainEntity → Aggregate (member_of)
-DomainEntity → Invariant (constrained_by)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| member_of | `member_of` | Aggregate | false | 0..n |
+| constrained_by | `constrained_by` | Invariant | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

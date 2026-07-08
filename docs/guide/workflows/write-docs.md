@@ -37,7 +37,7 @@ Trước khi tạo hoặc sửa knowledge unit, chọn schema canonical:
 | Entity instance | `docs/meta/00-schemas/entity-instance.md` | [entity](../unit-structure/entity/README.md) |
 | Entity type definition | `docs/meta/00-schemas/entity-type-definition.md` | [entity-type](../unit-structure/entity-type/README.md) |
 | Entity structure extension | `docs/meta/00-schemas/structure-extends.md` | [entity-type](../unit-structure/entity-type/README.md) |
-| Entity relation block | `docs/meta/00-schemas/entity-instance.md` và `docs/meta/03-rules/` | [entity-relations](../unit-structure/entity-relations/README.md) |
+| Entity relation block | `docs/meta/00-schemas/entity-instance.md`, entity type `relations_template` và `docs/meta/03-rules/` | [entity-relations](../unit-structure/entity-relations/README.md) |
 | Relation type definition | `docs/meta/00-schemas/relation-type-definition.md` | [relation-type](../unit-structure/relation-type/README.md) |
 | Valid triple rule | `docs/meta/00-schemas/valid-triple-rule.md` | [valid-triple](../unit-structure/valid-triple/README.md) |
 | Theory package | `docs/meta/00-schemas/theory-package.md` | [theory](../unit-structure/theory/README.md) |
@@ -68,7 +68,7 @@ Không đưa:
 
 - code/schema/API detail vào business layer;
 - app-specific detail vào pure theory;
-- candidate relation vào app docs như relation canonical;
+- relation chưa có slot/meta rule vào app docs như relation canonical;
 - decision rationale dài vào implementation file.
 
 Không tự tạo metadata field, heading hoặc relation mới nếu schema trong `docs/meta/00-schemas/` chưa cho phép.
@@ -95,7 +95,7 @@ Trước khi kết thúc, kiểm tra:
 - guide không chứa app truth thay cho `docs/app`;
 - app README layer không chứa generic theory dài;
 - meta chỉ chứa luật/schema/convention, không chứa app-specific detail;
-- entity mới có relation cần thiết hoặc có lý do rõ khi chưa tạo relation;
-- relation mới dùng relation type và valid triple hợp lệ;
+- entity mới không tự tạo relation ngoài slot của entity type;
+- relation mới dùng slot, relation type và valid triple hợp lệ;
 - path cũ, folder cũ và retired workflow không quay lại;
 - nếu workflow guide đổi, kiểm tra tác động tới `docs/AGENT_SKILLS`.

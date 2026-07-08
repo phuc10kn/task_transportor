@@ -30,14 +30,14 @@ touchpoints, user_expectations, pain_points, channels, outcomes
 
 draft → active → deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Journey → UserFlow (contains)
-Journey → Persona (for_audience)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| contains | `contains` | UserFlow | false | 0..n |
+| for_audience | `for_audience` | Persona | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

@@ -30,14 +30,14 @@ members, invariants, allowed_external_access, transaction_boundary, lifecycle
 
 modeled → active → refactored
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Aggregate → DomainEntity (contains)
-Aggregate → Invariant (enforces)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| contains | `contains` | DomainEntity | false | 0..n |
+| enforces | `enforces` | Invariant | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

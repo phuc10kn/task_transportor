@@ -51,15 +51,15 @@ Additional validation:
 
 - Stakeholder là business participant/owner, không phải UI persona.
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Stakeholder → Problem (affected_by)
-Stakeholder → Process (participates_in)
-Stakeholder → Persona (may_map_to)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| affected_by | `affected_by` | Problem | false | 0..n |
+| participates_in | `participates_in` | Process | false | 0..n |
+| may_map_to | `may_map_to` | Persona | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

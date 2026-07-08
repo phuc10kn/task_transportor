@@ -20,8 +20,8 @@ theory_basis:
 decision_basis:
   - DEC-021
 relations:
-  - type: depends_on
-    target: MOD-001
+  governed_by:
+    - BRULE-001
 ---
 ```
 
@@ -43,9 +43,10 @@ theory_basis, decision_basis, relations, tags, owner, created, updated
 
 ```yaml
 relations:
-  - type: applies_to
-    target: PROB-001-manual-reconciliation
+  affects_problems:
+    - PROB-001-manual-reconciliation
 ```
 
-`type` phải là Relation Type canonical từ `02-relation-types/`.
-`target` là ID hoặc path tới instance.
+Key dưới `relations` là slot name đã định nghĩa trong `relations_template` của entity type.
+
+Mỗi target là ID hoặc path tới instance. Relation slot phải resolve được tới relation type, target entity type và valid triple tương ứng.

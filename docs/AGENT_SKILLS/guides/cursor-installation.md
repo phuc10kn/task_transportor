@@ -1,12 +1,18 @@
-# Cursor Installation
+# Agent Skill Installation
 
-Folder này là nguồn nội bộ để copy skill sang Cursor khi cần.
+Folder này là nguồn nội bộ để dùng skill/checklist cho Codex, Cursor hoặc agent runner khác khi cần.
 
-Cursor không tự discover skill từ `docs/AGENT_SKILLS`.
+Các agent không mặc định tự discover skill từ `docs/AGENT_SKILLS`. Cần trỏ thủ công, copy thủ công hoặc cấu hình runner theo cơ chế của từng tool.
 
-## Cài Thủ Công
+## Dùng Với Codex
 
-Copy từng folder skill cần dùng sang nơi Cursor đọc skill cá nhân.
+Trong repo này, Codex nên đọc trực tiếp file skill/checklist liên quan trong `docs/AGENT_SKILLS` sau khi đã đọc `docs/guide/README.md#luồng-vận-hành-chuẩn`.
+
+Không cần copy folder nếu Codex đang làm việc trong repo.
+
+## Cài Thủ Công Cho Cursor/Agent Khác
+
+Copy từng folder skill cần dùng sang nơi tool đó đọc skill cá nhân.
 
 Skill folders chính:
 

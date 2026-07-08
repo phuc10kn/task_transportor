@@ -39,13 +39,15 @@ public_surface, owned_state, inbound_dependencies, outbound_dependencies, theory
 
 proposed -> active -> deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Module -> ModuleBoundary (governed_by)
-Module -> InteractionFlow (participates_in)
-Module -> StateOwner (owns)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| governed_by | `governed_by` | ModuleBoundary | false | 0..n |
+| participates_in | `participates_in` | InteractionFlow | false | 0..n |
+| owns | `owns` | StateOwner | false | 0..n |
+
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

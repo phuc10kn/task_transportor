@@ -39,13 +39,15 @@ allowed_dependencies, forbidden_dependencies, read_exceptions, write_policy, the
 
 draft -> active -> superseded
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-ModuleBoundary -> Module (constrains)
-ModuleBoundary -> CodingRule (refined_in)
-ModuleBoundary -> RiskRecord (affected_by)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| constrains | `constrains` | Module | false | 0..n |
+| refined_in | `refined_in` | CodingRule | false | 0..n |
+| affected_by | `affected_by` | RiskRecord | false | 0..n |
+
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

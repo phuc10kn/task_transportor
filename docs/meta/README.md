@@ -171,7 +171,7 @@ required fields
 optional fields
 ID pattern
 lifecycle
-allowed relations
+relations_template
 validation expectations
 ```
 
@@ -357,7 +357,7 @@ Rules có thể định nghĩa:
 ```text
 valid source type
 valid target type
-allowed relation
+relation slot
 cardinality
 required relation
 forbidden relation

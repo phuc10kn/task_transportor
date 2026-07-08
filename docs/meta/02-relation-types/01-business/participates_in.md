@@ -18,6 +18,7 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 Stakeholder --participates_in--> Process
+Module --participates_in--> InteractionFlow
 ```
 
 ## non-examples

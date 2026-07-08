@@ -22,7 +22,6 @@ Các file:
 | [documentation-architecture.md](documentation-architecture.md) | Bức tranh tổng thể của docs system. |
 | [layer-model.md](layer-model.md) | Cách hiểu layer trong `docs/app`. |
 | [entity-model.md](entity-model.md) | Entity type và entity instance. |
-| [relation-model.md](relation-model.md) | Relation type, valid triple, trace. |
+| [relation-model.md](relation-model.md) | Relation slot, relation type, valid triple và trace. |
 | [theory-and-decision-model.md](theory-and-decision-model.md) | Theory, decision và app application. |
 | [validation-and-lifecycle.md](validation-and-lifecycle.md) | Validation, status và lifecycle. |
-

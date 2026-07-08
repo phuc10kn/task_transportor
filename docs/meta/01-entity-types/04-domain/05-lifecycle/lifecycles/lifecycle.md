@@ -30,14 +30,14 @@ allowed_transitions, transition_triggers, terminal_states, invalid_transitions, 
 
 draft → active → superseded
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Lifecycle → DomainEntity (describes)
-Lifecycle → DomainEvent (emits)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| describes | `describes` | DomainEntity | false | 0..n |
+| emits | `emits` | DomainEvent | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

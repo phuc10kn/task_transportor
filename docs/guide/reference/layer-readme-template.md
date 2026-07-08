@@ -41,7 +41,7 @@ Ví dụ:
 | --- | --- |
 | Folder structure của layer | `docs/guide/reference/folder-structure.md#<layer-anchor>` |
 | Entity type canonical | `docs/meta/01-entity-types/` |
-| Relation/valid triple canonical | `docs/meta/02-relation-types/` và `docs/meta/03-rules/` |
+| Relation slot/type/triple canonical | Entity type `relations_template`, `docs/meta/02-relation-types/` và `docs/meta/03-rules/` |
 | Unit template | `docs/guide/unit-structure/` |
 
 ## Entity Index

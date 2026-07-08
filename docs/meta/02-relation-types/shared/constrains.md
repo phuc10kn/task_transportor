@@ -37,4 +37,5 @@ Không dùng relation này nếu chưa có valid triple trong 03-rules/.
 BusinessConstraint --constrains--> Process
 NonFunctionalRequirement --constrains--> Feature
 ContextConstraint --constrains--> layers/entities
+ModuleBoundary --constrains--> Module
 ```

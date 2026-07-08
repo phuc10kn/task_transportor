@@ -39,13 +39,15 @@ canonical_status, transformation, ownership_notes, sensitivity, theory_basis
 
 planned -> active -> retired
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-DataFlow -> StateOwner (moves)
-DataFlow -> Interface (crosses)
-DataFlow -> DataStore (stored_on)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| moves | `moves` | StateOwner | false | 0..n |
+| crosses | `crosses` | Interface | false | 0..n |
+| stored_on | `stored_on` | DataStore | false | 0..n |
+
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

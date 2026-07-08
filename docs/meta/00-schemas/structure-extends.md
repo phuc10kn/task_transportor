@@ -31,7 +31,7 @@ Trong `## structure extends`, entity type được phép:
 - thêm required body section;
 - thêm optional body section;
 - siết validation rule;
-- siết relation cardinality nếu đã có valid triple;
+- siết relation slot/cardinality nếu đã có `relations_template` và valid triple;
 - định nghĩa lifecycle riêng.
 
 Entity type không được:
@@ -39,7 +39,7 @@ Entity type không được:
 - bỏ required frontmatter của base;
 - bỏ base body sections `Summary`, `Meaning`, `Relations`, `Validation Notes`;
 - đổi meaning của field base;
-- cho phép relation chưa canonical;
+- cho phép relation không có slot trong entity type;
 - thêm section tùy ý mà không khai báo.
 
 ## Extension Ownership
@@ -48,6 +48,7 @@ Entity type không được:
 | --- | --- |
 | Field/section chung của mọi entity | `docs/meta/00-schemas/entity-instance.md` |
 | Section riêng của từng entity type | `docs/meta/01-entity-types/**/<entity-type>.md` |
+| Relation slot của từng entity type | `docs/meta/01-entity-types/**/<entity-type>.md` |
 | Valid relation giữa entity type | `docs/meta/03-rules/**/valid-triples.md` |
 | Template copy nhanh | `docs/guide/unit-structure/` |
 

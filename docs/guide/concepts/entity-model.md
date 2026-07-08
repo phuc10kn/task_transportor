@@ -47,8 +47,10 @@ Entity Type là loại knowledge có:
 
 - meaning ổn định;
 - nhiều instance tiềm năng;
-- schema hoặc section chung;
-- relation/lifecycle riêng khi cần.
+- schema hoặc section chung cho instance;
+- criteria để biết khi nào tạo instance;
+- lifecycle/status flow cho instance khi cần;
+- `relations_template` định nghĩa relation slot cho instance; relation canonical vẫn phải có relation type và valid triple tương ứng.
 
 Canonical entity types nằm trong:
 

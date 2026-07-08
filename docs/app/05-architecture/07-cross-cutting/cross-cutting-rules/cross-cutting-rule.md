@@ -34,13 +34,15 @@ affected_units, enforcement_points, quality_impact, theory_basis, decision_basis
 
 draft -> active -> superseded
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-CrossCuttingRule -> Module (affects)
-CrossCuttingRule -> CodingRule (refined_in)
-CrossCuttingRule -> QualityObjective (supports)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| affects | `affects` | Module | false | 0..n |
+| refined_in | `refined_in` | CodingRule | false | 0..n |
+| supports | `supports` | QualityObjective | false | 0..n |
+
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

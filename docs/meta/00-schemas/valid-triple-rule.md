@@ -2,7 +2,9 @@
 
 Schema này áp dụng cho file `docs/meta/03-rules/**/valid-triples.md`.
 
-Valid triple quyết định relation nào được dùng giữa hai entity type cụ thể.
+Valid triple quyết định relation nào được phép giữa hai entity type cụ thể.
+
+Entity instance vẫn chỉ được ghi relation nếu entity type của source có slot tương ứng trong `relations_template`.
 
 Unit template: [valid-triple](../../guide/unit-structure/valid-triple/README.md).
 
@@ -40,6 +42,7 @@ Combination hợp lệ: `Source --relation--> Target`
 - `Relation` phải tồn tại trong `02-relation-types/`.
 - Direction phải khớp canonical direction.
 - Cardinality mặc định là `0..n` nếu column chưa có.
+- Source entity type phải có relation slot tương ứng trong `relations_template` trước khi instance được ghi relation.
 - Required relation phải có lý do rõ; không dùng để ép graph thành pipeline.
 
 ## Forbidden

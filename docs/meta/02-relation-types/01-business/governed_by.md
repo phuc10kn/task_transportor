@@ -18,6 +18,7 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 Process --governed_by--> BusinessRule
+Module --governed_by--> ModuleBoundary
 ```
 
 ## non-examples

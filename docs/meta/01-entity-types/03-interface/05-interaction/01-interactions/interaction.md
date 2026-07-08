@@ -30,14 +30,14 @@ precondition, feedback, state_change, failure_behavior
 
 draft → active → deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Interaction → Screen (occurs_on)
-Interaction → UIState (transitions_to)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| occurs_on | `occurs_on` | Screen | false | 0..n |
+| transitions_to | `transitions_to` | UIState | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

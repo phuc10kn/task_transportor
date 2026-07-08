@@ -20,6 +20,7 @@ Task Progress:
 - [ ] Xác nhận entity type trong docs/meta/01-entity-types/ hoặc layer-local type hợp lệ
 - [ ] Xác nhận ID/status/naming theo docs/meta/04-conventions/
 - [ ] Draft file theo schema, không tự thêm field ngoài schema
+- [ ] Nếu có relation, chỉ dùng slot đã có trong entity type relations_template
 - [ ] Validate relation bằng docs/guide/workflows/trace-impact.md và meta-validate
 ```
 
@@ -29,11 +30,7 @@ Task Progress:
 docs/app/<NN-layer>/<NN-concern>/<NN-entity-type-folder>/<ID-slug>/README.md
 ```
 
-Ví dụ:
-
-```text
-docs/app/01-business/04-behavior/01-processes/PROC-001-backlog-to-cis-lite/README.md
-```
+Không copy placeholder path thành file thật. Khi tạo entity, lấy path cụ thể từ `docs/guide/reference/folder-structure.md`, entity type canonical và ID convention trong `docs/meta`.
 
 ## Required Sources
 
@@ -43,6 +40,7 @@ docs/app/01-business/04-behavior/01-processes/PROC-001-backlog-to-cis-lite/READM
 | Unit template | `docs/guide/unit-structure/entity/README.md` |
 | Folder structure | `docs/guide/reference/folder-structure.md` |
 | Entity type | `docs/meta/01-entity-types/` |
+| Relation slot | entity type `relations_template` |
 | Relation type | `docs/meta/02-relation-types/` |
 | Valid triple | `docs/meta/03-rules/` |
 | Convention | `docs/meta/04-conventions/` |
@@ -71,9 +69,10 @@ meta-validate / theory-review / none
 ## Guardrails
 
 - Không tạo entity type mới trong `docs/app`.
-- Không bịa schema, ID prefix, relation type hoặc valid triple.
+- Không bịa schema, ID prefix, relation slot, relation type hoặc valid triple.
+- Không ghi relation nếu entity type chưa có slot tương ứng.
 - Không tạo workbench item vì workbench chưa hoạt động.
-- Nếu chưa chắc, dùng `NOTE-OPEN` hoặc `NOTE-CANDIDATE`.
+- Nếu chưa chắc relation, reject relation khỏi entity draft; không ghi relation nghi ngờ.
 
 ## References
 

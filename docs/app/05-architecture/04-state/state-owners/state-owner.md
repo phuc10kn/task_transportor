@@ -39,13 +39,15 @@ consumers, write_policy, consistency_notes, read_exceptions, theory_basis
 
 draft -> active -> superseded
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-StateOwner -> Module (owned_by)
-StateOwner -> DataFlow (shared_via)
-StateOwner -> ModuleBoundary (constrained_by)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| owned_by | `owned_by` | Module | false | 0..n |
+| shared_via | `shared_via` | DataFlow | false | 0..n |
+| constrained_by | `constrained_by` | ModuleBoundary | false | 0..n |
+
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

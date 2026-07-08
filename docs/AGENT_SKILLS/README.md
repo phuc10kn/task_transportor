@@ -2,7 +2,7 @@
 
 ## Mục Đích
 
-`docs/AGENT_SKILLS/` là home cho checklist và Cursor Agent Skills khi agent làm việc với hệ thống docs.
+`docs/AGENT_SKILLS/` là home cho checklist và agent skills khi Codex, Cursor hoặc agent runner khác làm việc với hệ thống docs.
 
 Folder này không thay `docs/guide` và không định nghĩa rule mới. Luồng vận hành chuẩn nằm ở:
 
@@ -52,7 +52,7 @@ Task mới
 - Agent output là proposal/draft/report, không tự chốt canonical truth.
 - Khi guide mâu thuẫn với meta, ưu tiên `docs/meta`.
 - Khi guide mâu thuẫn với app truth, ưu tiên `docs/app`.
-- Không tự tạo schema, entity type, relation type, valid triple hoặc ID prefix.
+- Không tự tạo schema, entity type, relation slot, relation type, valid triple hoặc ID prefix.
 - Không dùng `docs/workbench` làm source of truth vì workbench chưa được đi vào hoạt động.
 - Không coi `docs/app_variants` là app truth; chỉ dùng như reusable taxonomy/template.
 
@@ -64,7 +64,7 @@ Task mới
 | [guides/reading-strategy.md](guides/reading-strategy.md) | Progressive disclosure |
 | [guides/mandatory-rules.md](guides/mandatory-rules.md) | Rules bắt buộc cho agent |
 | [guides/note-types.md](guides/note-types.md) | NOTE vocabulary |
-| [guides/cursor-installation.md](guides/cursor-installation.md) | Cài skill vào Cursor |
+| [guides/cursor-installation.md](guides/cursor-installation.md) | Dùng/cài skill cho Codex, Cursor hoặc agent runner khác |
 | [reference/layer-routing.md](reference/layer-routing.md) | Routing phụ, canonical vẫn ở guide folder-structure |
 | [reference/entity-instance-template.md](reference/entity-instance-template.md) | Template phụ, canonical vẫn ở meta schema + guide unit structure |
 | [reference/theory-file-structure.md](reference/theory-file-structure.md) | Structure theory package |

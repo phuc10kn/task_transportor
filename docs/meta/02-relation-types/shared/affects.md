@@ -36,4 +36,5 @@ Không dùng relation này nếu chưa có valid triple trong 03-rules/.
 ```text
 Problem --affects--> Stakeholder
 Assumption --affects--> entities
+CrossCuttingRule --affects--> Module
 ```

@@ -24,8 +24,8 @@ theory_basis:
 decision_basis:
   - DEC-001
 relations:
-  - type: governed_by
-    target: BRULE-001
+  governed_by:
+    - BRULE-001
 ---
 ```
 
@@ -49,7 +49,7 @@ relations:
 | --- | --- |
 | `theory_basis` | Danh sách theory ID khi instance dựa vào theory. |
 | `decision_basis` | Danh sách decision ID/path khi instance dựa vào decision. |
-| `relations` | Relation canonical, validate bằng relation type và valid triple. |
+| `relations` | Relation canonical theo slot đã định nghĩa trong `relations_template` của entity type. |
 | `tags` | Từ khóa hỗ trợ tìm kiếm, không thay thế relation. |
 | `owner` | Người/role chịu trách nhiệm nội dung. |
 | `created` | `YYYY-MM-DD`. |
@@ -83,9 +83,19 @@ Nếu entity type có `structure extends`, instance phải giữ các section ba
 
 ## Relations Section
 
-Relation canonical nên nằm trong frontmatter `relations`. Body `## Relations` dùng để giải thích ngữ cảnh relation bằng link người đọc được.
+Relation canonical phải nằm trong YAML frontmatter field `relations`, ở đầu file entity README.
+
+`relations` dùng slot name từ `relations_template` của entity type:
 
 Unit template cho relation block: [entity-relations](../../guide/unit-structure/entity-relations/README.md).
+
+```yaml
+relations:
+  governed_by:
+    - BRULE-001
+```
+
+Body `## Relations` chỉ dùng để giải thích ngữ cảnh relation cho người đọc, không thay thế canonical relation.
 
 ```md
 ## Relations
@@ -93,17 +103,12 @@ Unit template cho relation block: [entity-relations](../../guide/unit-structure/
 - `BRULE-001` - rule chi phối process này.
 ```
 
-Nếu relation chưa canonical:
-
-```md
-## Open Relation Question
-
-> NOTE-CANDIDATE: cần relation giữa `Process` và `QualityGate`.
-```
+Nếu không có slot phù hợp trong entity type, reject relation. Muốn thêm relation mới phải cập nhật entity type `relations_template`, relation type và valid triple trước.
 
 ## Forbidden
 
 - Không tạo relation bằng prose tự do rồi coi là canonical.
+- Không ghi relation ngoài slot đã định nghĩa trong entity type.
 - Không bỏ qua `entity_type` vì file đã nằm trong folder đúng.
 - Không thêm section đặc thù nếu entity type chưa khai báo trong `structure extends`.
 - Không nhét app truth tổng hợp vào entity instance không có identity rõ.

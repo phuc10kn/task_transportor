@@ -30,13 +30,13 @@ global_navigation, local_navigation, hierarchy, entry_points, exit_points, back_
 
 draft → active → deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Navigation → Screen (connects)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| connects | `connects` | Screen | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

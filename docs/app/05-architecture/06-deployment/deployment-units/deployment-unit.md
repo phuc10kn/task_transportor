@@ -39,13 +39,15 @@ hosted_modules, dependencies, scaling_notes, failure_impact
 
 planned -> active -> deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-DeploymentUnit -> Module (hosts)
-DeploymentUnit -> Platform (runs_on)
-DeploymentUnit -> RuntimeEnvironment (operated_by)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| hosts | `hosts` | Module | false | 0..n |
+| runs_on | `runs_on` | Platform | false | 0..n |
+| runs_in | `runs_in` | RuntimeEnvironment | false | 0..n |
+
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

@@ -26,9 +26,11 @@ Task Progress:
 
 ### Schema
 
-- [ ] Unit có schema canonical.
-- [ ] Frontmatter có required fields.
-- [ ] Không có field tự phát ngoài schema.
+- [ ] Nếu target là schema-managed unit, unit có schema canonical.
+- [ ] Nếu target là schema-managed unit, frontmatter có required fields.
+- [ ] Nếu target là schema-managed unit, không có field tự phát ngoài schema.
+
+Lưu ý: schema gate không áp dụng máy móc cho mọi Markdown file. README layer, guide workflow, guide reference, checklist agent và prose guide chỉ cần validate theo placement/boundary/link liên quan, trừ khi file đó tự khai báo hoặc được meta quy định là schema-managed unit.
 
 ### Placement
 
@@ -43,10 +45,13 @@ Task Progress:
 
 ### Relation
 
+- [ ] Relation slot tồn tại trong entity type `relations_template`.
 - [ ] Relation type tồn tại.
-- [ ] Source/target entity type đúng.
+- [ ] Source/target entity type đúng slot.
 - [ ] Valid triple tồn tại.
 - [ ] Direction đúng canonical direction.
+- [ ] Target instance tồn tại nếu slot được điền.
+- [ ] Frontmatter `relations` dùng đúng slot shape.
 
 ### Boundary
 
@@ -81,6 +86,7 @@ Task Progress:
 
 - Output là validation report, không tự apply fix nếu fix làm đổi canonical rule.
 - Không coi `NOTE-CANDIDATE` là pass.
+- Không coi relation thiếu slot là warning; đó là violation/reject.
 - Không sửa `docs/meta` trừ khi task yêu cầu rõ.
 
 ## References

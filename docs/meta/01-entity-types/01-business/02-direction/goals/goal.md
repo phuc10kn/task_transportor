@@ -51,14 +51,14 @@ Additional validation:
 
 - Goal phải là outcome business, không phải feature, screen hoặc implementation task.
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Goal → Problem (addresses)
-Goal → SuccessCriterion (measured_by)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| addresses | `addresses` | Problem | false | 0..n |
+| measured_by | `measured_by` | SuccessCriterion | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

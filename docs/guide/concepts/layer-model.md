@@ -22,23 +22,19 @@ Ví dụ:
 
 ## Layer không phải pipeline cứng
 
-Thứ tự folder giúp đọc dễ hơn, nhưng app knowledge là graph.
+Thứ tự folder giúp đọc dễ hơn. Nó không mô tả vòng đời của entity.
 
-Ví dụ:
+Mỗi entity instance thuộc đúng một layer/concern theo path canonical:
 
 ```text
-Business Process
-    -> Product Use Case
-    -> UI Flow
-
-Business Rule
-    -> Domain Invariant
-
-Architecture Boundary
-    -> Implementation Contract
+docs/app/<layer>/<concern>/<entity-type>/<entity-instance>
 ```
 
-Không bắt mọi entity phải đi qua đủ mọi layer.
+Relation hoặc trace path mới có thể nối entity ở nhiều layer khác nhau.
+
+Ví dụ, một business process có thể có relation tới product use case, hoặc một architecture boundary có thể có relation tới implementation contract. Những relation đó chỉ hợp lệ khi entity type có relation slot trong `relations_template`, relation type tồn tại và valid triple tương ứng đã được chốt trong `docs/meta`.
+
+Không bắt mọi entity phải có relation cross-layer. Không tạo relation chỉ để làm đủ chuỗi layer.
 
 ## Layer README nên làm gì
 

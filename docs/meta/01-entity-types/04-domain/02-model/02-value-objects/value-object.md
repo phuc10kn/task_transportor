@@ -30,14 +30,14 @@ validity_rules, equality_semantics, operations
 
 modeled → active
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-ValueObject → DomainEntity (used_by)
-ValueObject → Invariant (constrained_by)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| used_by | `used_by` | DomainEntity | false | 0..n |
+| constrained_by | `constrained_by` | Invariant | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

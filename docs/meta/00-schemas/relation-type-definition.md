@@ -2,7 +2,7 @@
 
 Schema này áp dụng cho file trong `docs/meta/02-relation-types/`.
 
-Relation type definition định nghĩa vocabulary và direction. Nó không tự quyết định source/target entity type nào hợp lệ.
+Relation type definition định nghĩa vocabulary và direction. Nó không tự quyết định source/target entity type nào hợp lệ và không tự cho phép entity instance ghi relation.
 
 Unit template: [relation-type](../../guide/unit-structure/relation-type/README.md).
 
@@ -46,7 +46,7 @@ Unit template: [relation-type](../../guide/unit-structure/relation-type/README.m
 | `examples` | Ví dụ đúng direction. |
 | `non-examples` | Ví dụ sai direction hoặc sai semantic. |
 | `anti-patterns` | Cách dùng bị cấm. |
-| `valid usage` | Trích valid triples đã chốt, không thay thế `03-rules/`. |
+| `valid usage` | Trích valid triples đã chốt, không thay thế `03-rules/` hoặc relation slot trong entity type. |
 
 ## Inverse Kind
 
@@ -59,5 +59,5 @@ Unit template: [relation-type](../../guide/unit-structure/relation-type/README.m
 ## Forbidden
 
 - Không tạo passive relation chỉ để đảo chiều.
-- Không dùng relation nếu chưa có valid triple.
+- Không dùng relation nếu chưa có valid triple và relation slot trong entity type `relations_template`.
 - Không đặt rule source/target chi tiết trong relation type thay cho `03-rules/`.

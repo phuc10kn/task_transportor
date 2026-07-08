@@ -30,14 +30,14 @@ supported_requirements, users_or_actors, inputs, outputs, boundaries, maturity
 
 planned → active → deprecated
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Capability → BusinessRequirement (supports)
-Capability → Feature (delivered_by)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| supports | `supports` | BusinessRequirement | false | 0..n |
+| delivered_by | `delivered_by` | Feature | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

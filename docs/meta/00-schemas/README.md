@@ -9,6 +9,7 @@ Mục tiêu là để người viết và AI không tự do tạo format mới k
 ```text
 Entity Instance Schema
   <- extended by Entity Type Definition
+  <- constrained by Entity Type Relation Slot
   <- constrained by Relation Type Definition
   <- constrained by Valid Triple Rule
   <- formatted by Conventions

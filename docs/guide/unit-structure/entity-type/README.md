@@ -65,10 +65,12 @@ entity_type_definition:
       - Inputs
       - Decisions
       - Exceptions
-  allowed_relations_candidate:
-    - source: Process
-      relation: governed_by
-      target: BusinessRule
+  relations_template:
+    governed_by:
+      relation_type: governed_by
+      target_entity_type: BusinessRule
+      required: false
+      cardinality: 0..n
   validation:
     - Không mô tả API, database, technical implementation.
 ```
@@ -99,9 +101,19 @@ entity_type_definition:
 
 ## structure extends
 
-## allowed relations
+## relations_template
+
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| governed_by | `governed_by` | BusinessRule | false | 0..n |
 
 ## validation
 ```
 
 `folder` chỉ ghi registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `processes/`. App placement path vẫn lấy từ `docs/guide/reference/folder-structure.md`, ví dụ `docs/app/01-business/04-behavior/01-processes/`.
+
+`relations_template` định nghĩa slot relation mà entity instance của type này được phép điền. Không có slot thì instance không được ghi relation đó.
+
+Canonical representation trong file Markdown là table dưới `## relations_template`. YAML ở trên chỉ là review shape để giải thích field; không thay thế table canonical.
+
+Slot name ưu tiên là role ngắn, thường trùng với relation type, ví dụ `governed_by`, `informs`, `part_of`. Chỉ mở rộng tên slot khi cùng một relation type cần phân biệt nhiều role hoặc nhiều target trong cùng entity type.

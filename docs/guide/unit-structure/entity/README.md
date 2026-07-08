@@ -22,8 +22,8 @@ theory_basis:
 decision_basis:
   - DEC-001
 relations:
-  - type: governed_by
-    target: BRULE-001
+  governed_by:
+    - BRULE-001
 ---
 ```
 
@@ -46,7 +46,7 @@ Entity này có meaning gì trong app.
 
 ## Validation Notes
 
-- Entity type, path và relation đã được kiểm tra với `docs/meta`.
+- Entity type, path, relation slot, relation type và valid triple đã được kiểm tra với `docs/meta`.
 ```
 
 ## Extension Hook

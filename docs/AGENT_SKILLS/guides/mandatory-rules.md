@@ -19,6 +19,7 @@ Không tự tạo:
 - schema name;
 - metadata field;
 - entity type;
+- relation slot;
 - relation type;
 - valid triple;
 - ID prefix;
@@ -77,7 +78,13 @@ Chi tiết: [reading-strategy.md](reading-strategy.md).
 
 ## Rule 9 - Relation Discipline
 
-Không tự tạo relation type trong app docs.
+Không tự tạo relation slot hoặc relation type trong app docs.
+
+Canonical relation slot nằm trong entity type `relations_template`:
+
+```text
+docs/meta/01-entity-types/
+```
 
 Canonical relation type:
 
@@ -91,4 +98,6 @@ Valid triple:
 docs/meta/03-rules/
 ```
 
-Khi thiếu relation canonical, dùng `Open Relation Question` hoặc `NOTE-OPEN`.
+Entity instance chỉ được ghi relation vào slot đã có.
+
+Khi thiếu slot, relation type hoặc valid triple, reject relation khỏi entity instance. Không ghi relation nghi ngờ trong entity README.

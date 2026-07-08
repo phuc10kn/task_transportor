@@ -36,4 +36,5 @@ Không dùng relation này nếu chưa có valid triple trong 03-rules/.
 ```text
 ValueObject --constrained_by--> Invariant
 DomainEntity --constrained_by--> Invariant
+StateOwner --constrained_by--> ModuleBoundary
 ```

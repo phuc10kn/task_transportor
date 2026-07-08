@@ -18,6 +18,7 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 UseCase --uses--> Capability
+InteractionFlow --uses--> Interface
 ```
 
 ## non-examples

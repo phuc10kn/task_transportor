@@ -30,14 +30,14 @@ affected_model, violation_meaning, enforcement_expectation, related_business_rul
 
 draft → active → superseded
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Invariant → DomainEntity (applies_to)
-Invariant → BusinessRule (refined_from)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| applies_to | `applies_to` | DomainEntity | false | 0..n |
+| refined_from | `refined_from` | BusinessRule | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

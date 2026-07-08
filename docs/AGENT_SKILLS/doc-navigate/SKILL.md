@@ -55,6 +55,6 @@ doc-create-entity / meta-validate / theory-find / theory-review / none
 
 ## References
 
-- Guide: [../guide/README.md](../../guide/README.md)
+- Guide: [../../guide/README.md](../../guide/README.md)
 - Reading strategy: [../guides/reading-strategy.md](../guides/reading-strategy.md)
 - Layer routing helper: [../reference/layer-routing.md](../reference/layer-routing.md)

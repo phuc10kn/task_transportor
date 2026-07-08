@@ -30,14 +30,14 @@ related_requirement, related_feature, validation_method
 
 draft → active → passed | failed
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-AcceptanceCriterion → FunctionalRequirement (accepts)
-AcceptanceCriterion → Feature (accepts)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| accepts_functional_requirements | `accepts` | FunctionalRequirement | false | 0..n |
+| accepts_features | `accepts` | Feature | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

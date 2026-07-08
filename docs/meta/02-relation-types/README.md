@@ -33,6 +33,7 @@ Relation Type không tự quyết định entity type nào được nối với 
 ├── 02-product/       relations chủ yếu trong product layer
 ├── 03-interface/     relations chủ yếu trong interface layer
 ├── 04-domain/        relations chủ yếu trong domain layer
+├── 05-architecture/  relations chủ yếu trong architecture layer
 ├── cross-layer/      relations nối entities giữa các layer
 ├── shared/           relations generic, dùng ở nhiều layer
 └── structural/       depends_on, supersedes (architecture, decisions)
@@ -42,7 +43,7 @@ Relation Type không tự quyết định entity type nào được nối với 
 
 | Folder | Khi nào |
 |--------|---------|
-| `00-context` … `04-domain` | Relation chủ yếu phục vụ một layer |
+| `00-context` … `05-architecture` | Relation chủ yếu phục vụ một layer |
 | `cross-layer` | Relation nối entities thuộc layer khác nhau |
 | `shared` | Relation generic (`applies_to`, `constrains`, …) dùng ở ≥2 layer |
 | `structural` | Relation cấu trúc hệ thống, reserved cho layers 05+ |
@@ -129,6 +130,19 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | `raised_by` | [04-domain/raised_by.md](04-domain/raised_by.md) |
 | `used_by` | [04-domain/used_by.md](04-domain/used_by.md) |
 
+### 05-architecture
+
+| Relation | File |
+|----------|------|
+| `crosses` | [05-architecture/crosses.md](05-architecture/crosses.md) |
+| `involves` | [05-architecture/involves.md](05-architecture/involves.md) |
+| `moves` | [05-architecture/moves.md](05-architecture/moves.md) |
+| `owned_by` | [05-architecture/owned_by.md](05-architecture/owned_by.md) |
+| `owns` | [05-architecture/owns.md](05-architecture/owns.md) |
+| `runs_on` | [05-architecture/runs_on.md](05-architecture/runs_on.md) |
+| `shared_via` | [05-architecture/shared_via.md](05-architecture/shared_via.md) |
+| `stored_on` | [05-architecture/stored_on.md](05-architecture/stored_on.md) |
+
 ### cross-layer
 
 | Relation | File |
@@ -201,6 +215,8 @@ Không tạo passive relation mơ hồ chỉ để đảo chiều, ví dụ `led
 
 ## Không tạo relation tùy ý
 
-Chỉ dùng relation đã định nghĩa tại đây. Trước khi chốt: dùng `Related Entities` + `Open Relation Question`.
+Chỉ dùng relation đã định nghĩa tại đây.
+
+Entity instance chỉ được ghi relation khi entity type có slot tương ứng trong `relations_template` và valid triple đã tồn tại. Nếu thiếu slot hoặc valid triple, reject relation ở entity instance.
 
 Valid combinations: [03-rules/](../03-rules/)

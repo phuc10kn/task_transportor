@@ -18,6 +18,7 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 Application --runs_in--> Environment
+DeploymentUnit --runs_in--> RuntimeEnvironment
 ```
 
 ## non-examples

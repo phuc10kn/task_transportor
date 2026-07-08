@@ -36,4 +36,5 @@ Không dùng relation này nếu chưa có valid triple trong 03-rules/.
 ```text
 Capability --supports--> BusinessRequirement
 Screen --supports--> Feature
+CrossCuttingRule --supports--> QualityObjective
 ```

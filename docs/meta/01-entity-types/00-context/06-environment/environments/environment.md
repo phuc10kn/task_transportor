@@ -30,13 +30,13 @@ users, data_sensitivity, external_dependencies, availability_expectation, produc
 
 active → retired
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-Environment → Application (hosts)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| hosts | `hosts` | Application | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 

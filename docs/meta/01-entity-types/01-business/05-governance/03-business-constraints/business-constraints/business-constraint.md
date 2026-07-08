@@ -51,13 +51,13 @@ Additional validation:
 
 - BusinessConstraint là giới hạn business, không phải config hoặc technical limitation.
 
-## allowed relations (candidate)
+## relations_template
 
-```text
-BusinessConstraint → Process (constrains)
-```
+| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| --- | --- | --- | --- | --- |
+| constrains | `constrains` | Process | false | 0..n |
 
-Relation chưa canonical cho tới khi chốt tại `docs/meta/02-relation-types/`.
+Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
