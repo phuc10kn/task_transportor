@@ -1,5 +1,16 @@
 # Relation Model
 
+## Query ngược (Reverse Query)
+
+Truy vấn ngược được khuyến nghị thực hiện theo hướng derived-first:
+- repository search;
+- derived inverse;
+- index/tooling khi cần reverse query thường xuyên.
+
+Không tạo inverse canonical chỉ để đọc ngược.
+
+Chỉ tạo inverse riêng khi inverse có semantic độc lập và có nhu cầu query first-class.
+
 ## Bốn tầng bắt buộc
 
 ```text
@@ -16,14 +27,16 @@ Entity Relation
     = entity instance điền target instance vào slot đã có
 ```
 
-Canonical homes:
+Canonical homes theo loại knowledge:
 
 ```text
-docs/meta/02-relation-types/
-docs/meta/03-rules/
-docs/meta/01-entity-types/
-docs/app/**/<entity-instance>/README.md
+Relation Type      -> docs/meta/02-relation-types/
+Valid Triple       -> docs/meta/03-rules/
+Relation Slot      -> docs/meta/01-entity-types/**/relations_template
+Entity Relation    -> frontmatter relations trong docs/app/**/<entity-instance>/README.md
 ```
+
+README body và prose relation chỉ giải thích ngữ cảnh cho người đọc; chúng không phải canonical home của relation instance.
 
 ## Relation Type
 
@@ -66,6 +79,10 @@ Valid triple cho phép edge ở mức type, nhưng entity instance chỉ đượ
 
 Không có slot thì reject relation.
 
+Target entity type phải là entity type thật. Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
+
+Broad premise như Assumption hoặc ContextConstraint không tự tạo outbound relation tới mọi entity. Khi một entity thật sự bị ảnh hưởng, entity type của entity đó phải có slot cụ thể tới Assumption/ContextConstraint và valid triple cụ thể. Nếu chưa có slot/triple, ghi bằng field hoặc section mô tả trong premise, không ghi relation canonical.
+
 ## Entity Relation
 
 Entity Relation là relation thật của một entity instance.
@@ -85,6 +102,21 @@ Body `## Relations` chỉ giải thích ngữ cảnh cho người đọc.
 Mỗi fact nên có một canonical direction.
 
 Không mirror cùng một fact ở hai README chỉ để có hai chiều đọc.
+
+Canonical direction được chọn theo nơi fact gốc được quản trị và theo chiều semantic chủ động, rõ nhất.
+
+Ưu tiên:
+
+- owner -> owned
+- container -> member
+- cause/source -> impacted target
+- rule/constraint -> governed target
+- abstract requirement/spec -> concrete realization/evidence
+- flow -> participant
+
+Không tạo inverse canonical chỉ để đọc ngược. Trace ngược mặc định dùng derived inverse qua search hoặc tooling.
+
+Chỉ giữ inverse như relation riêng khi inverse có semantic độc lập và có nhu cầu query first-class.
 
 Trace ngược bằng:
 

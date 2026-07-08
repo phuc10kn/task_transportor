@@ -72,7 +72,7 @@ Mỗi slot phải nêu:
 
 - slot name;
 - relation type;
-- target entity type;
+- target entity type canonical;
 - required;
 - cardinality.
 
@@ -87,9 +87,14 @@ Relation của entity instance chỉ được ghi canonical khi:
 
 Nếu một relation chưa có slot trong entity type, relation đó bị reject khỏi entity instance.
 
+Target entity type trong `relations_template` phải là entity type thật. Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
+
+Broad premise entity type như Assumption hoặc ContextConstraint không nên khai báo outbound relation slot tới mọi entity. Nếu một entity bị ảnh hưởng cần trace canonical, relation slot phải nằm ở entity type của entity bị ảnh hưởng và target Assumption/ContextConstraint bằng valid triple cụ thể.
+
 ## Forbidden
 
 - Không đặt app instance như `PROC-001 Backlog Pull` trong entity type definition.
 - Không dùng `relations_template` để bỏ qua `02-relation-types/` hoặc `03-rules/`.
 - Không tạo `structure extends` phá base required field của `entity-instance/v1`.
 - Không dùng `folder` để ghi parent path hoặc app placement path.
+- Không dùng selector hoặc wildcard target trong `relations_template`.

@@ -5,6 +5,7 @@
 | **name** | `supports` |
 | **canonical direction** | Source --supports--> Target |
 | **inverse** | `supported_by` |
+| **inverse kind** | `paired` |
 
 ## meaning
 
@@ -36,5 +37,4 @@ Không dùng relation này nếu chưa có valid triple trong 03-rules/.
 ```text
 Capability --supports--> BusinessRequirement
 Screen --supports--> Feature
-CrossCuttingRule --supports--> QualityObjective
 ```

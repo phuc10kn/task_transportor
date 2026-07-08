@@ -32,12 +32,13 @@ active → relaxed | retired
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
-| --- | --- | --- | --- | --- |
-| constrains | `constrains` | layers/entities | false | 0..n |
+Không có relation slot canonical hiện tại.
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Phân biệt Assumption, ContextConstraint, BusinessConstraint
+- ContextConstraint không tự tạo outbound relation tới `layers/entities` hoặc target rộng.
+- Entity bị constraint chi phối chỉ tạo relation tới ContextConstraint khi entity type của entity đó có slot cụ thể và valid triple cụ thể.
+- Nếu chưa có relation cụ thể, ghi phạm vi bằng `affected_layers`, `affected_entities` hoặc `exceptions`.

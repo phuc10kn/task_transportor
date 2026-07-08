@@ -7,7 +7,6 @@ Product — relations trong layer 02-product
 | `accepts` | [accepts.md](accepts.md) |
 | `delivered_by` | [delivered_by.md](delivered_by.md) |
 | `implemented_by` | [implemented_by.md](implemented_by.md) |
-| `included_in` | [included_in.md](included_in.md) |
 | `includes` | [includes.md](includes.md) |
 | `satisfied_by` | [satisfied_by.md](satisfied_by.md) |
 | `specifies` | [specifies.md](specifies.md) |

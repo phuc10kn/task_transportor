@@ -44,8 +44,6 @@ planned -> active -> changed
 | Slot | Relation Type | Target Entity Type | Required | Cardinality |
 | --- | --- | --- | --- | --- |
 | involves | `involves` | Module | false | 0..n |
-| uses | `uses` | Interface | false | 0..n |
-| implemented_by | `implemented_by` | ExecutionMechanism | false | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 

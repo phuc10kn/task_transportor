@@ -44,8 +44,6 @@ planned -> active -> retired
 | Slot | Relation Type | Target Entity Type | Required | Cardinality |
 | --- | --- | --- | --- | --- |
 | moves | `moves` | StateOwner | false | 0..n |
-| crosses | `crosses` | Interface | false | 0..n |
-| stored_on | `stored_on` | DataStore | false | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 

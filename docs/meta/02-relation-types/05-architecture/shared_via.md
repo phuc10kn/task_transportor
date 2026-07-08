@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `shared_via` |
 | **canonical direction** | Source --shared_via--> Target |
-| **inverse** | _(none - derive by search)_ |
+| **inverse** | `none` |
+| **inverse kind** | `none` |
 
 ## meaning
 
@@ -23,7 +24,7 @@ StateOwner --shared_via--> DataFlow
 ## non-examples
 
 ```text
-StateOwner --shared_via--> Module   (module ownership dùng owns/owned_by)
+StateOwner --shared_via--> Module   (module ownership dùng Module --owns--> StateOwner)
 DataFlow --shared_via--> StateOwner   (sai direction)
 Free-text relation không qua Relation Type canonical
 ```

@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `uses` |
 | **canonical direction** | Source --uses--> Target |
-| **inverse** | _(none — symmetric or derive later)_ |
+| **inverse** | `none` |
+| **inverse kind** | `none` |
 
 ## meaning
 
@@ -18,7 +19,6 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 UseCase --uses--> Capability
-InteractionFlow --uses--> Interface
 ```
 
 ## non-examples

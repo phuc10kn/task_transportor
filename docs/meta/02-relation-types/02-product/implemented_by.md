@@ -5,6 +5,7 @@
 | **name** | `implemented_by` |
 | **canonical direction** | Source --implemented_by--> Target |
 | **inverse** | `implements` |
+| **inverse kind** | `paired` |
 
 ## meaning
 
@@ -18,7 +19,6 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 UseCase --implemented_by--> Feature
-InteractionFlow --implemented_by--> ExecutionMechanism
 ```
 
 ## non-examples

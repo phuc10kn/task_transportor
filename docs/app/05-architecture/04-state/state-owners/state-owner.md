@@ -43,7 +43,6 @@ draft -> active -> superseded
 
 | Slot | Relation Type | Target Entity Type | Required | Cardinality |
 | --- | --- | --- | --- | --- |
-| owned_by | `owned_by` | Module | false | 0..n |
 | shared_via | `shared_via` | DataFlow | false | 0..n |
 | constrained_by | `constrained_by` | ModuleBoundary | false | 0..n |
 

@@ -37,7 +37,7 @@ relation_type_definition:
 | **name** | `governed_by` |
 | **canonical direction** | Source --governed_by--> Target |
 | **inverse** | `governs` |
-| **inverse kind** | paired |
+| **inverse kind** | `paired` |
 
 ## meaning
 
@@ -51,3 +51,6 @@ relation_type_definition:
 
 ## valid usage
 ```
+
+`inverse kind` bắt buộc cho mọi file mới và file relation type được chỉnh sửa.
+File legacy chưa có trường này được chấp nhận tạm theo luật suy diễn (`inverse` có giá trị → `paired`, không có `inverse` → `none`) cho đến khi file đó được chỉnh sửa.

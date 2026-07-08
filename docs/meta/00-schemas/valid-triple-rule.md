@@ -44,9 +44,12 @@ Combination hợp lệ: `Source --relation--> Target`
 - Cardinality mặc định là `0..n` nếu column chưa có.
 - Source entity type phải có relation slot tương ứng trong `relations_template` trước khi instance được ghi relation.
 - Required relation phải có lý do rõ; không dùng để ép graph thành pipeline.
+- Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
+- Broad premise như Assumption hoặc ContextConstraint không tự tạo outbound relation tới mọi entity; entity bị ảnh hưởng phải có slot/triple cụ thể nếu cần relation canonical.
 
 ## Forbidden
 
 - Không thêm relation trực tiếp giữa hai type xa nhau nếu chưa có semantic rõ.
 - Không ghi app instance ID trong valid triple.
 - Không dùng valid triple để định nghĩa meaning của relation.
+- Không dùng valid triple để mô phỏng selector hoặc wildcard target.

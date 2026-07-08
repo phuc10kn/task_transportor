@@ -33,7 +33,6 @@ planned -> active -> deprecated
 ## allowed relations (candidate)
 
 ```text
-PublicContract -> Module (owned_by)
 PublicContract -> Interface (exposes)
 PublicContract -> VerificationCheck (verified_by)
 ```

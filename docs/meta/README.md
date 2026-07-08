@@ -274,29 +274,15 @@ docs/meta/00-schemas/relation-type-definition.md
 
 ---
 
-## Direction
+## Direction Routing
 
-Direction phải ổn định.
+`docs/meta/README.md` không giữ doctrine về direction/inverse.
 
-Ví dụ:
+Đây là routing note cho direction:
 
-```text
-A
-    --relation-->
-B
-```
-
-khác với:
-
-```text
-B
-    --inverse_relation-->
-A
-```
-
-Hệ thống nên có một canonical direction.
-
-Inverse relation có thể được derive.
+- `docs/guide/concepts/relation-model.md` (canonical direction, inverse, reverse query)
+- `docs/meta/02-relation-types/README.md` (summary vận hành)
+- `docs/meta/00-schemas/relation-type-definition.md` (schema)
 
 ---
 

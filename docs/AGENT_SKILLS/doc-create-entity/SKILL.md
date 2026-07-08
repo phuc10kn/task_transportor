@@ -21,6 +21,7 @@ Task Progress:
 - [ ] Xác nhận ID/status/naming theo docs/meta/04-conventions/
 - [ ] Draft file theo schema, không tự thêm field ngoài schema
 - [ ] Nếu có relation, chỉ dùng slot đã có trong entity type relations_template
+- [ ] Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`
 - [ ] Validate relation bằng docs/guide/workflows/trace-impact.md và meta-validate
 ```
 
@@ -71,6 +72,8 @@ meta-validate / theory-review / none
 - Không tạo entity type mới trong `docs/app`.
 - Không bịa schema, ID prefix, relation slot, relation type hoặc valid triple.
 - Không ghi relation nếu entity type chưa có slot tương ứng.
+- Không tạo outbound relation từ Assumption hoặc ContextConstraint tới mọi entity.
+- Chỉ tạo relation tới Assumption/ContextConstraint khi entity bị ảnh hưởng có slot cụ thể và valid triple cụ thể.
 - Không tạo workbench item vì workbench chưa hoạt động.
 - Nếu chưa chắc relation, reject relation khỏi entity draft; không ghi relation nghi ngờ.
 

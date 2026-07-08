@@ -42,7 +42,7 @@ draft -> active -> superseded
 ## allowed relations (candidate)
 
 ```text
-StateOwner -> Module (owned_by)
+Module -> StateOwner (owns)
 StateOwner -> DataFlow (shared_via)
 StateOwner -> ModuleBoundary (constrained_by)
 ```

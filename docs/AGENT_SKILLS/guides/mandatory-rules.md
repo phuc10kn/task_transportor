@@ -101,3 +101,7 @@ docs/meta/03-rules/
 Entity instance chỉ được ghi relation vào slot đã có.
 
 Khi thiếu slot, relation type hoặc valid triple, reject relation khỏi entity instance. Không ghi relation nghi ngờ trong entity README.
+
+Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
+
+Assumption và ContextConstraint không tự tạo outbound relation tới mọi entity. Chỉ tạo relation tới các premise này khi entity bị ảnh hưởng có slot cụ thể và valid triple cụ thể.

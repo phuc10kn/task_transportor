@@ -19,7 +19,6 @@ Combination hợp lệ: `Source --relation--> Target`
 | Process | `informs` | UseCase | 0..n |
 | Process | `part_of` | Scenario | 0..n |
 | Scenario | `composes` | Process | 0..n |
-| Stakeholder | `affected_by` | Problem | 0..n |
 | Stakeholder | `may_map_to` | Persona | 0..n |
 | Stakeholder | `participates_in` | Process | 0..n |
 | SuccessCriterion | `validates` | Goal | 0..n |

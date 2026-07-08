@@ -6,11 +6,7 @@ Folder này chỉ là grouping/discovery aid. Relation chỉ hợp lệ khi trip
 
 | Relation | File |
 |----------|------|
-| `crosses` | [crosses.md](crosses.md) |
 | `involves` | [involves.md](involves.md) |
 | `moves` | [moves.md](moves.md) |
-| `owned_by` | [owned_by.md](owned_by.md) |
 | `owns` | [owns.md](owns.md) |
-| `runs_on` | [runs_on.md](runs_on.md) |
 | `shared_via` | [shared_via.md](shared_via.md) |
-| `stored_on` | [stored_on.md](stored_on.md) |

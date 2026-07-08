@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `includes` |
 | **canonical direction** | Source --includes--> Target |
-| **inverse** | `included_in` |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
@@ -23,7 +24,7 @@ Release --includes--> Feature
 ## non-examples
 
 ```text
-Target --includes--> Source   (sai direction nếu inverse được định nghĩa)
+Feature --includes--> Release   (sai direction; dùng derived inverse khi cần trace ngược)
 Free-text relation không qua Relation Type canonical
 ```
 

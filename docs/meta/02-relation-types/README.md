@@ -1,5 +1,13 @@
 # Relation Types
 
+## Tách nguồn tri thức
+
+Doc này chỉ đóng vai trò meta summary cho relation vocabulary:
+- canonical direction theo `relation-model.md`;
+- mô tả file-level `relation type` tại cấp definition;
+- không thay thế logic truy vấn reverse/query, logic đó ở guide/`relation-model.md`;
+- valid triple vẫn do `03-rules` làm.
+
 Vocabulary cho relations giữa entities. Mỗi Relation Type = một file `.md`, **phân nhóm theo folder để dễ tìm**.
 
 Schema canonical cho mỗi file relation type definition nằm ở:
@@ -69,7 +77,6 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | Relation | File |
 |----------|------|
 | `addresses` | [01-business/addresses.md](01-business/addresses.md) |
-| `affected_by` | [01-business/affected_by.md](01-business/affected_by.md) |
 | `composes` | [01-business/composes.md](01-business/composes.md) |
 | `generates` | [01-business/generates.md](01-business/generates.md) |
 | `governed_by` | [01-business/governed_by.md](01-business/governed_by.md) |
@@ -88,7 +95,6 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | `accepts` | [02-product/accepts.md](02-product/accepts.md) |
 | `delivered_by` | [02-product/delivered_by.md](02-product/delivered_by.md) |
 | `implemented_by` | [02-product/implemented_by.md](02-product/implemented_by.md) |
-| `included_in` | [02-product/included_in.md](02-product/included_in.md) |
 | `includes` | [02-product/includes.md](02-product/includes.md) |
 | `satisfied_by` | [02-product/satisfied_by.md](02-product/satisfied_by.md) |
 | `specifies` | [02-product/specifies.md](02-product/specifies.md) |
@@ -134,14 +140,10 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 
 | Relation | File |
 |----------|------|
-| `crosses` | [05-architecture/crosses.md](05-architecture/crosses.md) |
 | `involves` | [05-architecture/involves.md](05-architecture/involves.md) |
 | `moves` | [05-architecture/moves.md](05-architecture/moves.md) |
-| `owned_by` | [05-architecture/owned_by.md](05-architecture/owned_by.md) |
 | `owns` | [05-architecture/owns.md](05-architecture/owns.md) |
-| `runs_on` | [05-architecture/runs_on.md](05-architecture/runs_on.md) |
 | `shared_via` | [05-architecture/shared_via.md](05-architecture/shared_via.md) |
-| `stored_on` | [05-architecture/stored_on.md](05-architecture/stored_on.md) |
 
 ### cross-layer
 
@@ -181,7 +183,7 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 ## Schema mỗi file
 
 ```text
-name, canonical direction, inverse
+name, canonical direction, inverse, inverse kind
 meaning, allowed semantic
 examples, non-examples, anti-patterns
 valid usage (triples từ entity types)
@@ -189,29 +191,23 @@ valid usage (triples từ entity types)
 
 Không tạo field/section ngoài schema nếu chưa cập nhật `docs/meta/00-schemas/`.
 
-## Direction rule
+## Direction routing
 
-Mỗi fact nên có một canonical direction.
+File này chỉ tóm tắt relation vocabulary và index theo folder.
 
-Không mirror cùng một fact ở hai entity README chỉ để có hai chiều đọc.
-
-Trace ngược nên dùng:
+Source of truth cho canonical direction, inverse và reverse query là:
 
 ```text
-repository search
-derived inverse
-relation type cặp đã được định nghĩa
+docs/guide/concepts/relation-model.md
 ```
 
-Các kiểu inverse:
+Schema field bắt buộc của từng relation type nằm ở:
 
-| Kiểu | Cách dùng |
-| --- | --- |
-| Derived inverse | Không lưu relation mới, chỉ trace ngược bằng search hoặc tooling. |
-| Paired relation | Hai relation khác tên và khác semantic đều được định nghĩa rõ. |
-| No inverse | Chỉ canonical direction được dùng; trace ngược là thao tác đọc, không phải relation mới. |
+```text
+docs/meta/00-schemas/relation-type-definition.md
+```
 
-Không tạo passive relation mơ hồ chỉ để đảo chiều, ví dụ `led_by`, nếu relation đó chưa được định nghĩa rõ.
+Không thêm inverse canonical chỉ để đọc ngược. Khi cần trace ngược, dùng derived inverse theo guide.
 
 ## Không tạo relation tùy ý
 

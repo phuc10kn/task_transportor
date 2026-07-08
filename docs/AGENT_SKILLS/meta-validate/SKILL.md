@@ -52,6 +52,8 @@ Lưu ý: schema gate không áp dụng máy móc cho mọi Markdown file. README
 - [ ] Direction đúng canonical direction.
 - [ ] Target instance tồn tại nếu slot được điền.
 - [ ] Frontmatter `relations` dùng đúng slot shape.
+- [ ] Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
+- [ ] Broad premise như Assumption/ContextConstraint không có outbound relation tới mọi entity.
 
 ### Boundary
 
@@ -87,6 +89,7 @@ Lưu ý: schema gate không áp dụng máy móc cho mọi Markdown file. README
 - Output là validation report, không tự apply fix nếu fix làm đổi canonical rule.
 - Không coi `NOTE-CANDIDATE` là pass.
 - Không coi relation thiếu slot là warning; đó là violation/reject.
+- Không coi pseudo target là warning; đó là violation/reject.
 - Không sửa `docs/meta` trừ khi task yêu cầu rõ.
 
 ## References

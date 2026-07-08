@@ -40,6 +40,11 @@ Target instance tồn tại nếu slot được điền?
 
 ## Trace Validation
 
+### Query ngược
+
+- Trace ngược bắt buộc dùng derived inverse (search/tooling/index), không bắt buộc inverse canonical cho mục tiêu đọc ngược.
+- Chỉ khi cần truy vấn first-class riêng mới cân nhắc inverse semantic độc lập.
+
 Khi cần kiểm tra A có trace tới B không, dùng workflow:
 
 ```text

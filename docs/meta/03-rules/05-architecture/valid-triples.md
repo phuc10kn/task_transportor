@@ -8,23 +8,12 @@ Combination hợp lệ: `Source --relation--> Target`
 | Module | `participates_in` | InteractionFlow | 0..n |
 | Module | `owns` | StateOwner | 0..n |
 | ModuleBoundary | `constrains` | Module | 0..n |
-| ModuleBoundary | `refined_in` | CodingRule | 0..n |
-| ModuleBoundary | `affected_by` | RiskRecord | 0..n |
 | InteractionFlow | `involves` | Module | 0..n |
-| InteractionFlow | `uses` | Interface | 0..n |
-| InteractionFlow | `implemented_by` | ExecutionMechanism | 0..n |
-| StateOwner | `owned_by` | Module | 0..n |
 | StateOwner | `shared_via` | DataFlow | 0..n |
 | StateOwner | `constrained_by` | ModuleBoundary | 0..n |
 | DataFlow | `moves` | StateOwner | 0..n |
-| DataFlow | `crosses` | Interface | 0..n |
-| DataFlow | `stored_on` | DataStore | 0..n |
 | DeploymentUnit | `hosts` | Module | 0..n |
-| DeploymentUnit | `runs_on` | Platform | 0..n |
-| DeploymentUnit | `runs_in` | RuntimeEnvironment | 0..n |
 | CrossCuttingRule | `affects` | Module | 0..n |
-| CrossCuttingRule | `refined_in` | CodingRule | 0..n |
-| CrossCuttingRule | `supports` | QualityObjective | 0..n |
 
 ## validation
 

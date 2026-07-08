@@ -5,6 +5,7 @@
 | **name** | `runs_in` |
 | **canonical direction** | Source --runs_in--> Target |
 | **inverse** | `hosts` |
+| **inverse kind** | `paired` |
 
 ## meaning
 
@@ -18,7 +19,6 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 Application --runs_in--> Environment
-DeploymentUnit --runs_in--> RuntimeEnvironment
 ```
 
 ## non-examples

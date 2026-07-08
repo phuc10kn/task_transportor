@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `moves` |
 | **canonical direction** | Source --moves--> Target |
-| **inverse** | _(none - derive by search)_ |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
@@ -30,7 +31,7 @@ Free-text relation không qua Relation Type canonical
 
 ## anti-patterns
 
-Không dùng `moves` để nói ownership transfer. Ownership vẫn phải trace bằng `owns`/`owned_by`.
+Không dùng `moves` để nói ownership transfer. Ownership canonical vẫn phải trace bằng `Module --owns--> StateOwner` và derived inverse khi cần đọc ngược.
 
 ## valid usage (from entity types)
 

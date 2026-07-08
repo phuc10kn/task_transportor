@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `refined_in` |
 | **canonical direction** | Source --refined_in--> Target |
-| **inverse** | _(none — symmetric or derive later)_ |
+| **inverse** | `none` |
+| **inverse kind** | `none` |
 
 ## meaning
 
@@ -18,8 +19,6 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 UseCase --refined_in--> UserFlow
-ModuleBoundary --refined_in--> CodingRule
-CrossCuttingRule --refined_in--> CodingRule
 ```
 
 ## non-examples

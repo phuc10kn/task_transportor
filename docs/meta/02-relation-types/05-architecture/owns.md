@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `owns` |
 | **canonical direction** | Source --owns--> Target |
-| **inverse** | `owned_by` |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 

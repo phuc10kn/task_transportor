@@ -22,12 +22,11 @@ Relations giữa các layer khác nhau (00-context → 04-domain).
 | Module | `depends_on` | Module | architecture (05+) — reserved |
 | Decision | `supersedes` | Decision | decisions (10) — reserved |
 
-## generic targets
+## broad premise trace
 
-| Source | Relation | Target | Notes |
-|--------|----------|--------|-------|
-| Assumption | `affects` | _any Entity_ | ghi rõ ID instance trong prose |
-| ContextConstraint | `constrains` | _layer / entity_ | ghi scope cụ thể |
+Không dùng pseudo target như `_any Entity_`, `_layer / entity_`, `entities` hoặc `layers/entities` trong valid triple.
+
+Broad premise như Assumption hoặc ContextConstraint không tự tạo outbound relation tới mọi entity. Nếu một entity thật sự phụ thuộc hoặc bị ràng buộc bởi premise, entity đó phải có relation slot cụ thể tới Assumption/ContextConstraint và valid triple cụ thể. Nếu chưa có slot/triple cụ thể, ghi bằng field/section như `affected_entities`, `affected_layers`, `validation_method`, `review_trigger` hoặc `exceptions` trong premise.
 
 ## theory và decision references
 

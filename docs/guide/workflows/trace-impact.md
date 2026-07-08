@@ -1,5 +1,11 @@
 # Trace Impact
 
+## Hướng dẫn truy vấn ngược
+
+- Theo dõi reverse lookup mặc định qua `frontmatter` và `derived inverse`.
+- Ưu tiên `repository search`/`index`/`tooling` trước khi cân nhắc tạo relation ngược.
+- Chỉ tạo inverse riêng khi có semantic độc lập và nhu cầu query first-class.
+
 ## Mục đích trace
 
 | Mục đích | Câu hỏi |
@@ -35,6 +41,7 @@ Khi thêm hoặc sửa entity, kiểm tra relation theo thứ tự:
 6. Direction có đúng canonical direction chưa?
 7. Target instance có tồn tại nếu slot được điền chưa?
 8. Frontmatter `relations` đã dùng đúng slot chưa?
+9. Target có phải entity type canonical, không phải pseudo target hoặc wildcard không?
 ```
 
 Kết quả hợp lệ chỉ thuộc một trong các trạng thái:
@@ -50,6 +57,8 @@ Kết quả hợp lệ chỉ thuộc một trong các trạng thái:
 - Không nhảy thẳng qua nhiều layer nếu chưa có valid triple.
 - Không ghi relation nếu entity type chưa có slot tương ứng.
 - Không coi thiếu relation là bug nếu cardinality là `0..n`.
+- Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
+- Không tạo outbound relation từ Assumption hoặc ContextConstraint tới mọi entity.
 
 ## Khi thiếu slot hoặc path
 
@@ -63,3 +72,5 @@ Nếu relation thật sự cần thiết, chỉ cập nhật phần metadata đa
 3. thiếu valid triple -> cập nhật docs/meta/03-rules/
 4. đủ metadata -> ghi entity instance relations
 ```
+
+Với Assumption hoặc ContextConstraint rộng, chỉ tạo relation canonical khi entity bị ảnh hưởng có slot cụ thể tới Assumption/ContextConstraint và valid triple cụ thể. Nếu chưa đủ điều kiện, ghi tác động bằng `affected_entities`, `affected_layers`, `validation_method`, `review_trigger` hoặc `exceptions`.

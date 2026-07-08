@@ -16,10 +16,23 @@ Unit template: [relation-type](../../guide/unit-structure/relation-type/README.m
 | **name** | `governed_by` |
 | **canonical direction** | Source --governed_by--> Target |
 | **inverse** | `governs` |
-| **inverse kind** | paired |
+| **inverse kind** | `paired` |
 ```
 
-`inverse kind` bắt buộc cho file mới hoặc file được sửa. File legacy chưa có field này được infer: có `inverse` thì coi là `paired`, không có `inverse` thì coi là `none`.
+| Field | Bắt buộc (new/edited) | Ghi chú |
+| --- | --- | --- |
+| `name` | bắt buộc | Tên relation type phải khớp file name. |
+| `canonical direction` | bắt buộc | Quyết định chiều direction canonical. |
+| `inverse` | bắt buộc | Dùng tên inverse relation hoặc `none` khi không có. |
+| `inverse kind` | bắt buộc | Chỉ nhận `derived`, `paired`, `none`. |
+
+`inverse kind` là trường bắt buộc khi tạo mới hoặc sửa file relation type.
+File legacy chưa có field này được infer:
+
+- Có `inverse` => `paired`
+- Không có `inverse` => `none`
+
+Sau khi file đã được chỉnh sửa, phải bổ sung `inverse kind` đầy đủ.
 
 ## Required Sections
 

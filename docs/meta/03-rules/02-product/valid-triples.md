@@ -12,7 +12,6 @@ Combination hợp lệ: `Source --relation--> Target`
 | Capability | `supports` | BusinessRequirement | 0..n |
 | Feature | `exposed_via` | Screen | 0..n |
 | Feature | `implements` | Capability | 0..n |
-| Feature | `included_in` | Release | 0..n |
 | FunctionalRequirement | `specifies` | Feature | 0..n |
 | FunctionalRequirement | `verified_by` | AcceptanceCriterion | 0..n |
 | NonFunctionalRequirement | `constrains` | Feature | 0..n |

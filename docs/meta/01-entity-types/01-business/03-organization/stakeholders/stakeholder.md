@@ -55,7 +55,6 @@ Additional validation:
 
 | Slot | Relation Type | Target Entity Type | Required | Cardinality |
 | --- | --- | --- | --- | --- |
-| affected_by | `affected_by` | Problem | false | 0..n |
 | participates_in | `participates_in` | Process | false | 0..n |
 | may_map_to | `may_map_to` | Persona | false | 0..n |
 

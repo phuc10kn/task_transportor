@@ -5,7 +5,6 @@ Business — relations trong layer 01-business
 | Relation | File |
 |----------|------|
 | `addresses` | [addresses.md](addresses.md) |
-| `affected_by` | [affected_by.md](affected_by.md) |
 | `composes` | [composes.md](composes.md) |
 | `generates` | [generates.md](generates.md) |
 | `governed_by` | [governed_by.md](governed_by.md) |

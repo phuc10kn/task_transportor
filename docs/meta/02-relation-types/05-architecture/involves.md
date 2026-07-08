@@ -5,6 +5,7 @@
 | **name** | `involves` |
 | **canonical direction** | Source --involves--> Target |
 | **inverse** | `participates_in` |
+| **inverse kind** | `paired` |
 
 ## meaning
 
@@ -24,7 +25,6 @@ InteractionFlow --involves--> Module
 
 ```text
 Module --involves--> InteractionFlow   (dùng participates_in cho chiều này)
-InteractionFlow --involves--> Interface   (dùng uses nếu flow dùng interface)
 Free-text relation không qua Relation Type canonical
 ```
 
