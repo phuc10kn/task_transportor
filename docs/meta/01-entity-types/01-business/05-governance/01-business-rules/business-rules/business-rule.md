@@ -7,6 +7,7 @@
 | **concern** | `05-governance` |
 | **folder** | `business-rules/` |
 | **ID pattern** | `BRULE-{NNN}-{slug}` |
+| **schema** | `entity-instance/v1` |
 
 ## meaning
 
@@ -18,9 +19,9 @@ Khi business có rule rõ ràng ảnh hưởng process hoặc decision.
 
 ## required fields
 
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 
-Body: statement, condition, outcome
+Body: Summary, Meaning, Statement, Condition, Outcome, Scope, Relations, Validation Notes
 
 ## optional fields
 
@@ -29,6 +30,28 @@ scope, owner, exceptions, affected_processes, theory_basis
 ## lifecycle
 
 draft → active → superseded → retired
+
+## structure extends
+
+Base: `entity-instance/v1`
+
+Required sections:
+
+- `Statement`
+- `Condition`
+- `Outcome`
+- `Scope`
+
+Optional sections:
+
+- `Owner`
+- `Exceptions`
+- `Affected Processes`
+
+Additional validation:
+
+- BusinessRule phải đánh giá được đúng/sai trong business context.
+- Không dùng BusinessRule để ghi domain invariant hoặc database constraint.
 
 ## allowed relations (candidate)
 

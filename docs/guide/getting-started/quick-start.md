@@ -30,10 +30,12 @@ docs/guide/reference/folder-structure.md
 Đọc:
 
 ```text
+docs/guide/README.md#luồng-vận-hành-chuẩn
 docs/guide/reference/folder-map.md
 docs/guide/reference/folder-structure.md
 docs/guide/workflows/write-docs.md
 docs/guide/workflows/trace-impact.md
+docs/guide/unit-structure/
 ```
 
 ## Nếu bạn muốn thêm relation hoặc entity type
@@ -42,20 +44,23 @@ docs/guide/workflows/trace-impact.md
 
 ```text
 docs/meta/README.md
+docs/meta/00-schemas/
 docs/meta/01-entity-types/
 docs/meta/02-relation-types/
 docs/meta/03-rules/
 docs/meta/04-conventions/
+docs/guide/unit-structure/
 ```
 
 Guide chỉ giúp định hướng, không thay meta.
 
 ## Nếu bạn thấy một ghi chú hay nhưng chưa chắc đúng
 
-Đưa vào:
+Không đưa thẳng vào app/theory/meta nếu chưa biết nó là app truth, meta rule hay theory.
 
 ```text
-docs/backlog-theories/
+NOTE-OPEN
+NOTE-CANDIDATE
 ```
 
-Không nhét thẳng vào `docs/app` hoặc `docs/theories` nếu chưa biết nó là app truth, meta rule hay theory.
+`docs/workbench/` hiện chưa được đi vào hoạt động, nên không dùng làm nơi lưu candidate thật cho tới khi guide có harness quản lý rõ ràng.

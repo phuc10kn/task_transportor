@@ -1,6 +1,6 @@
 # 06 - Technical
 
-`06-technical/` mô tả cơ chế kỹ thuật dùng để hiện thực Architecture. File này giữ technical truth đã đối chiếu với code hiện tại trong Phase 04. Giải thích generic về technical layer nằm ở `docs/guide/`.
+`06-technical/` mô tả cơ chế kỹ thuật dùng để hiện thực Architecture. File này giữ technical truth đã đối chiếu với code hiện tại. Giải thích generic về technical layer nằm ở `docs/guide/`.
 
 ## Nguồn hướng dẫn
 
@@ -69,10 +69,10 @@ Chỉ mục nhanh:
 
 - `01-platforms/`
 - `02-interfaces/`
-- `03-persistence/`
-- `04-communication/`
+- `03-state-and-storage/`
+- `04-exchange/`
 - `05-security/`
-- `06-execution/`
+- `06-processing/`
 - `07-configuration/`
 - `08-performance/`
 
@@ -90,4 +90,3 @@ Chỉ mục nhanh:
 - Translation module không tự gọi `fetch`, `child_process`, `spawn`, `spawnSync`.
 - Code/UI mới dùng `translation_ai_*`, không dùng `translation_provider`/`translation_model` làm config canonical.
 - Source organization và code-level contract thuộc `07-implementation/`.
-- Rule generic của technical layer đọc ở `docs/guide/reference/folder-structure.md#06-technical`.

@@ -73,13 +73,13 @@ README này không lặp lại lý do tồn tại của từng concern; nó ch�
 
 Chỉ mục nhanh:
 
-- `01-runtime/`
-- `02-deployment/`
-- `03-observability/`
+- `01-operating-context/`
+- `02-release-and-change/`
+- `03-signals/`
 - `04-reliability/`
-- `05-incidents/`
-- `06-recovery/`
-- `07-capacity/`
+- `05-operational-events/`
+- `06-continuity/`
+- `07-resources/`
 - `08-maintenance/`
 
 ## Theory Routing
@@ -94,4 +94,3 @@ Chỉ mục nhanh:
 - Không bypass dry-run/mapping/anomaly gate để publish Jira trong vận hành.
 - Runbook không hard-code credential/path riêng máy vào repo.
 - Operation feedback tạo input ngược cho Quality, Product và Decision khi behavior thực tế lệch expectation.
-- Rule generic của operation layer đọc ở `docs/guide/reference/folder-structure.md#09-operation`.

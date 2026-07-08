@@ -81,4 +81,4 @@ Không tạo entity mới chỉ vì:
 - chưa biết đặt nội dung ở đâu;
 - framework ngoài có một thuật ngữ tương tự.
 
-Nếu chưa chắc, dùng `NOTE-OPEN` hoặc đưa vào `docs/backlog-theories/`.
+Nếu chưa chắc, dùng `NOTE-OPEN` hoặc giữ ngoài docs cho tới khi đủ promote. Không dùng `docs/workbench/` khi workbench chưa được kích hoạt.

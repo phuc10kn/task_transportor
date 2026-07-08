@@ -7,6 +7,7 @@
 | **concern** | `06-measurement` |
 | **folder** | `metrics/` |
 | **ID pattern** | `METRIC-{NNN}-{slug}` |
+| **schema** | `entity-instance/v1` |
 
 ## meaning
 
@@ -18,9 +19,9 @@ Khi business cần theo dõi đại lượng cụ thể.
 
 ## required fields
 
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 
-Body: name, definition, unit
+Body: Summary, Meaning, Definition, Unit, Source, Relations, Validation Notes
 
 ## optional fields
 
@@ -29,6 +30,27 @@ calculation, source, frequency, owner, baseline
 ## lifecycle
 
 active → deprecated
+
+## structure extends
+
+Base: `entity-instance/v1`
+
+Required sections:
+
+- `Definition`
+- `Unit`
+- `Source`
+
+Optional sections:
+
+- `Calculation`
+- `Frequency`
+- `Owner`
+- `Baseline`
+
+Additional validation:
+
+- Metric là đại lượng đo, không phải ngưỡng đạt/chưa đạt.
 
 ## allowed relations (candidate)
 

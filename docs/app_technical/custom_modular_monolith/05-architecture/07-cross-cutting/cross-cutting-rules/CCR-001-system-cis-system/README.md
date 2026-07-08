@@ -54,4 +54,3 @@ Inbound đi vào CIS để canonicalize và review; outbound lấy dữ liệu t
 ## Evidence
 
 - `docs/app/05-architecture/README.md`
-- Legacy work product overview, retained only as Phase 02 architecture provenance until architecture truth is fully migrated.

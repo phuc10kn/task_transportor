@@ -7,6 +7,7 @@
 | **concern** | `03-organization` |
 | **folder** | `stakeholders/` |
 | **ID pattern** | `STK-{NNN}-{slug}` |
+| **schema** | `entity-instance/v1` |
 
 ## meaning
 
@@ -18,9 +19,9 @@ Khi cần document ai tham gia, quyết định, chịu trách nhiệm.
 
 ## required fields
 
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 
-Body: name, type, interests
+Body: Summary, Meaning, Stakeholder Type, Interests, Responsibilities, Relations, Validation Notes
 
 ## optional fields
 
@@ -29,6 +30,26 @@ role, responsibilities, pain_points, authority, affected_processes, related_goal
 ## lifecycle
 
 active → inactive
+
+## structure extends
+
+Base: `entity-instance/v1`
+
+Required sections:
+
+- `Stakeholder Type`
+- `Interests`
+- `Responsibilities`
+
+Optional sections:
+
+- `Authority`
+- `Pain Points`
+- `Affected Processes`
+
+Additional validation:
+
+- Stakeholder là business participant/owner, không phải UI persona.
 
 ## allowed relations (candidate)
 

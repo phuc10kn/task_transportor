@@ -1,9 +1,3 @@
-
-
-================================================================================
-# FILE: docs/meta/README.md
-================================================================================111111111
-
 # Documentation Meta Model
 
 > Canonical root của hệ documentation hiện tại là `docs/`.
@@ -101,6 +95,7 @@ Conventions
 ```text
 docs/meta/
 ├── README.md
+├── 00-schemas/
 ├── 01-entity-types/
 ├── 02-relation-types/
 ├── 03-rules/
@@ -110,6 +105,8 @@ docs/meta/
 Các folder được đánh số vì có dependency logic.
 
 ```text
+Schemas
+    ↓
 Entity Types
     ↓
 Relation Types
@@ -125,11 +122,29 @@ Không phải runtime pipeline.
 
 ---
 
+# `00-schemas/`
+
+## Mục đích
+
+Định nghĩa contract Markdown cho entity instance, entity type definition, relation type definition, valid triple rule và cơ chế `structure extends`.
+
+Đọc trước khi tạo file mới:
+
+```text
+docs/meta/00-schemas/
+```
+
+Schema không chứa app knowledge cụ thể. Schema chỉ nói file phải có field/section nào và extension được phép làm gì.
+
+---
+
 # `01-entity-types/`
 
 ## Mục đích
 
 Định nghĩa loại documentation entity nào được phép tồn tại.
+
+Hiện `01-entity-types/` là registry canonical cho layers `00-context` đến `04-domain`. Các type ở layers `05+` có thể còn nằm layer-local trong `docs/app` cho tới khi có decision promote/migrate riêng, nhưng vẫn phải tuân thủ schema tại `00-schemas/entity-type-definition.md`.
 
 Ví dụ:
 
@@ -158,6 +173,13 @@ ID pattern
 lifecycle
 allowed relations
 validation expectations
+```
+
+Schema chi tiết nằm ở:
+
+```text
+docs/meta/00-schemas/entity-type-definition.md
+docs/meta/00-schemas/structure-extends.md
 ```
 
 Entity Type không chứa instance cụ thể của app.
@@ -242,6 +264,12 @@ allowed semantic
 anti-patterns
 examples
 non-examples
+```
+
+Schema chi tiết nằm ở:
+
+```text
+docs/meta/00-schemas/relation-type-definition.md
 ```
 
 ---
@@ -335,6 +363,12 @@ required relation
 forbidden relation
 cross-layer constraint
 validation condition
+```
+
+Schema chi tiết nằm ở:
+
+```text
+docs/meta/00-schemas/valid-triple-rule.md
 ```
 
 ---

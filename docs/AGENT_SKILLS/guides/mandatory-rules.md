@@ -2,133 +2,93 @@
 
 Các rule bắt buộc khi agent đọc hoặc sửa documentation.
 
----
+## Rule 1 - Guide Owns Operating Flow
 
-## Rule 1 — Theory Ownership
-
-```text
-Theory là project-owned synthesis.
-```
-
-Không phải bản copy của tài liệu bên ngoài.
-
----
-
-## Rule 2 — Pure Theory Boundary
+Trước khi sửa docs, đọc:
 
 ```text
-docs/theories/
+docs/guide/README.md#luồng-vận-hành-chuẩn
 ```
 
-không chứa project-specific implementation detail.
+`docs/AGENT_SKILLS` không thay `docs/guide`.
 
----
+## Rule 2 - Meta Owns Schema And Rules
 
-## Rule 3 — Application Location
+Không tự tạo:
 
-Cách áp dụng Theory phải nằm trong `docs/app/` theo đúng layer responsibility:
+- schema name;
+- metadata field;
+- entity type;
+- relation type;
+- valid triple;
+- ID prefix;
+- cardinality.
+
+Nếu thiếu rule/schema, dừng và báo `NOTE-OPEN` hoặc explicit request để sửa `docs/meta`.
+
+## Rule 3 - App Owns App Truth
+
+App-specific behavior, scope, rule, architecture, quality và operation của CIS nằm trong `docs/app`.
+
+Không đưa app truth vào `docs/guide`, `docs/meta`, `docs/theories` hoặc `docs/AGENT_SKILLS`.
+
+## Rule 4 - Theory Boundary
+
+`docs/theories` chứa pure theory/reasoning foundation.
+
+Không copy full theory vào app docs. App docs chỉ reference stable theory ID hoặc derived rule cần thiết.
+
+## Rule 5 - Workbench Is Inactive
+
+`docs/workbench` hiện chưa được đi vào hoạt động.
+
+Agent không được:
+
+- ghi candidate thật vào workbench;
+- promote từ workbench;
+- dùng workbench như source of truth;
+- lấy workbench làm nơi chứa note chưa rõ home.
+
+## Rule 6 - App Variants Are Reusable Only
+
+`docs/app_variants` là reusable taxonomy/template.
+
+Muốn áp dụng vào app phải đi qua `docs/guide/workflows/write-docs.md` và canonical home trong `docs/app` hoặc `docs/meta`.
+
+## Rule 7 - Agent Authority Boundary
 
 ```text
-01-business/
-02-product/
-04-domain/
-05-architecture/
-06-technical/
-07-implementation/
-...
+Agent output = proposal / draft / validation report
+Agent output != canonical approval
 ```
 
----
+Agent có thể đọc, phân tích, draft và đề xuất. Agent không tự chốt decision, theory change hoặc meta rule nếu user chưa yêu cầu rõ.
 
-## Rule 4 — No Theory Duplication
+## Rule 8 - Progressive Disclosure
 
-Không copy toàn bộ Theory sang app docs.
-
-Dùng:
+Không đọc toàn bộ `docs/` theo mặc định.
 
 ```text
-stable ID + reference + derived rules
+read narrow first
+expand only when needed
 ```
 
-Ví dụ trong entity frontmatter:
+Chi tiết: [reading-strategy.md](reading-strategy.md).
 
-```yaml
-theory_basis:
-  - TH-MOD-03
-```
+## Rule 9 - Relation Discipline
 
----
+Không tự tạo relation type trong app docs.
 
-## Rule 5 — Git Owns History
-
-Không tạo revision system riêng.
+Canonical relation type:
 
 ```text
-Git = Theory revision history
+docs/meta/02-relation-types/
 ```
 
----
-
-## Rule 6 — Decision Explains Why
+Valid triple:
 
 ```text
-Git diff  → what changed
-Decision  → why changed
+docs/meta/03-rules/
 ```
 
----
-
-## Rule 7 — Challenge Does Not Invalidate Theory
-
-```text
-Challenge ≠ Theory invalid
-```
-
-Theory tiếp tục có hiệu lực cho tới khi có Decision thay đổi nó.
-
----
-
-## Rule 8 — Progressive Disclosure
-
-Agent không đọc toàn bộ Theory theo mặc định.
-
-```text
-Task Docs → Theory README → Full Theory → Governance
-```
-
-Chỉ mở rộng context khi cần. Xem [reading-strategy.md](reading-strategy.md).
-
----
-
-## Agent authority boundary
-
-```text
-Agent output = proposal / draft / candidate
-Agent output ≠ canonical mutation
-```
-
-Agent có thể: read, analyze, compare, propose, draft Challenge.
-
-Agent không được tự ý:
-- chốt canonical Theory change
-- resolve Challenge
-- tạo Relation Type mới khi Meta chưa canonical
-- bịa Entity Type schema khi Meta chưa chốt
-
----
-
-## Relation rules
-
-```text
-Không tự tạo Relation Type trong App docs.
-```
-
-Canonical Relation Type: `docs/meta/02-relation-types/`
-
-Trước khi relation được chốt trong Meta, chỉ ghi:
-
-```text
-Related Entities
-Possible Trace Direction
-Open Relation Question
-```
+Khi thiếu relation canonical, dùng `Open Relation Question` hoặc `NOTE-OPEN`.

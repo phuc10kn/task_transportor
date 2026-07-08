@@ -1,4 +1,4 @@
-# 05 - Architecture
+﻿# 05 - Architecture
 
 ## Mục tiêu
 
@@ -20,7 +20,7 @@ System -> CIS -> System
 
 Đó là ngữ liệu tốt để minh họa taxonomy, nhưng không giới hạn taxonomy chỉ còn những gì repo đang instantiate hôm nay.
 
-## Vai trò sau Phase 02
+## Vai Trò Hiện Tại
 
 Folder này giữ template/taxonomy reusable cho custom modular monolith. Nội dung app-specific của `task_transportor` nằm ở `docs/app/05-architecture`; reasoning theory nền nằm ở `docs/theories/modular-architecture`.
 
@@ -46,13 +46,9 @@ Không dùng folder này làm source of truth cho module thật của repo nếu
 - `task_transportor` hiện mới instantiate mạnh ở một số type tổng quát như `Module`, `ModuleBoundary`, `InteractionFlow`, `StateOwner`, `DataFlow`, `DeploymentUnit`, `CrossCuttingRule`.
 - Các type chi tiết hơn vẫn được định nghĩa để làm khung chuẩn cho các repo hiện tại và tương lai.
 
-## Evidence Phase 02
+## Nguồn Đối Chiếu
 
-Phase 02 chỉ chốt vai trò của folder này là template/taxonomy reusable và tách nó khỏi app-specific truth. Deep import từ legacy theory folder vẫn thuộc Phase 05 theo `docs/plans/migrate_new_docs/migration_matrix.md`.
-
-Nguồn đối chiếu hiện tại:
-
-- `docs/app_technical/custom_modular_monolith/**`
+- `docs/app_variants/custom_modular_monolith/**`
 - `docs/theories/modular-architecture/**`
 - `docs/app/05-architecture/**`
 

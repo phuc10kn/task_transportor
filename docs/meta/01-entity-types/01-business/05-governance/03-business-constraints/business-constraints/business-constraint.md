@@ -7,6 +7,7 @@
 | **concern** | `05-governance` |
 | **folder** | `business-constraints/` |
 | **ID pattern** | `BCON-{NNN}-{slug}` |
+| **schema** | `entity-instance/v1` |
 
 ## meaning
 
@@ -18,9 +19,9 @@ Khi constraint gắn với regulatory hoặc operational business.
 
 ## required fields
 
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 
-Body: statement, source
+Body: Summary, Meaning, Constraint, Reason, Impact, Relations, Validation Notes
 
 ## optional fields
 
@@ -29,6 +30,26 @@ scope, affected_processes, exceptions
 ## lifecycle
 
 active → relaxed | retired
+
+## structure extends
+
+Base: `entity-instance/v1`
+
+Required sections:
+
+- `Constraint`
+- `Reason`
+- `Impact`
+
+Optional sections:
+
+- `Source`
+- `Affected Processes`
+- `Review Trigger`
+
+Additional validation:
+
+- BusinessConstraint là giới hạn business, không phải config hoặc technical limitation.
 
 ## allowed relations (candidate)
 

@@ -39,31 +39,22 @@ Business rules còn hiệu lực:
 
 - Backlog là nguồn yêu cầu từ khách hàng; Jira là nơi dev làm việc chính.
 - CIS là điểm kiểm soát trung gian, không phải cache phụ.
-- Manual pull và project pull là đường vận hành chính của Lite.
-- Scheduled pull là optional.
-- Webhook chưa là dependency để vận hành Lite.
+- Manual pull và project pull là đường vận hành chính của Lite; scheduled pull là optional; webhook chưa là dependency vận hành Lite.
 - Translation là trợ lý AI; human review/admin giữ quyết định cuối.
-- Mapping required phải được approve trước sync thật.
-- Dry-run Jira bắt buộc trước khi ghi Jira thật.
-- Critical/open anomaly và mapping gap chặn outbound tới khi xử lý.
+- Mapping required phải được approve, critical/open anomaly phải xử lý và Jira dry-run phải pass trước sync thật.
 - Retry là recovery có chủ đích sau khi hiểu nguyên nhân.
 - Attachment download failure có recovery riêng, không mặc định làm fail toàn bộ issue ingest.
+- Medium/Full flow như Jira -> CIS đầy đủ, CIS -> Backlog, webhook bắt buộc, AI learning nâng cao và notification ngoài UI không thuộc Lite nếu chưa có decision accepted mới.
 
-Medium/Full flow như Jira -> CIS đầy đủ, CIS -> Backlog, webhook bắt buộc, AI learning nâng cao và notification ngoài UI không thuộc Lite nếu chưa có decision accepted mới.
-
-## Workflow Còn Sống Từ Phase 03
+Workflow Lite còn sống:
 
 - Admin login -> project config -> project sync control.
-- Backlog one-issue ingest -> issue review entry.
-- Backlog project ingest -> enqueue candidate issues; không sync thẳng Jira.
-- Scheduled Backlog monitoring -> tạo candidate ingest định kỳ; optional trong Lite.
+- Backlog one-issue ingest -> CIS review entry; project ingest -> candidate queue; không sync thẳng Jira.
 - Translation review -> AI draft -> human approve/manual edit/reject.
-- Mapping approval -> approve/edit/hold mapping trước outbound.
-- Anomaly handling -> resolve/ignore/keep open theo rủi ro.
-- Issue preparation for Jira -> canonical edit làm stale preview cũ nếu dữ liệu đổi.
-- Jira sync preview -> dry-run payload và gate `can_sync`.
-- Jira sync publish -> ghi Jira thật và phản hồi kết quả về CIS.
-- Dashboard monitoring, failed job retry, attachment retry, audit/journal review -> recovery có chủ đích.
+- Mapping/anomaly handling -> approve/edit/hold mapping và resolve/ignore/keep open anomaly trước outbound.
+- Issue preparation -> canonical edit làm stale preview cũ nếu dữ liệu đổi.
+- Jira sync preview/publish -> dry-run payload, gate `can_sync`, rồi ghi Jira thật khi pass.
+- Dashboard, failed job retry, attachment retry, audit/journal review -> recovery có chủ đích.
 
 ## Folder Structure
 
@@ -91,9 +82,8 @@ Chỉ mục nhanh:
 
 - Business flow của Lite luôn đi qua CIS; không mô tả Backlog -> Jira direct sync như workflow chính.
 - Admin/operator là chủ thể quyết định; scheduler, worker và AI transport chỉ là cơ chế thực thi/hỗ trợ.
-- Business process không chứa API, schema, database hoặc retry implementation; các phần đó thuộc Technical/Implementation/Operation.
+- Business process không chứa API, schema, database, retry implementation; các phần đó thuộc Technical/Implementation/Operation.
 - Business entity phải trace được tới Context/Product/Decision liên quan bằng relation canonical trong `docs/meta/`.
-- Rule generic của business layer đọc ở `docs/guide/reference/folder-structure.md#01-business`.
 
 ## Routing Sang Layer Khác
 

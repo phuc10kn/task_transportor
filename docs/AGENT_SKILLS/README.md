@@ -1,109 +1,72 @@
-# AGENT_SKILLS — Theory Governance Lite
+# AGENT_SKILLS - Docs Operating Skills
 
-## Mục đích
+## Mục Đích
 
-`AGENT_SKILLS/` là canonical source cho hướng dẫn và Cursor Agent Skills khi làm việc với hệ thống documentation Theory Governance Lite.
+`docs/AGENT_SKILLS/` là home cho checklist và Cursor Agent Skills khi agent làm việc với hệ thống docs.
+
+Folder này không thay `docs/guide` và không định nghĩa rule mới. Luồng vận hành chuẩn nằm ở:
 
 ```text
-docs/meta/         → định nghĩa luật
-docs/theories/     → nguyên lý suy luận
-docs/app/          → application knowledge
-docs/guide/        → manual cho người và agent hiểu cách dùng hệ docs
-docs/AGENT_SKILLS/ → dạy agent cách đọc và sửa Markdown đúng luật
+docs/guide/README.md#luồng-vận-hành-chuẩn
 ```
 
-Cursor **không** tự discover skills từ thư mục này. Cài thủ công theo [guides/cursor-installation.md](guides/cursor-installation.md) khi cần.
+## Canonical Boundaries
 
----
+```text
+docs/guide/        -> manual vận hành docs
+docs/meta/         -> schema, rule, relation, convention canonical
+docs/app/          -> app truth của CIS
+docs/theories/     -> reasoning foundation
+docs/app_variants/ -> reusable taxonomy/template, không phải app truth
+docs/workbench/    -> chưa được đi vào hoạt động
+docs/AGENT_SKILLS/ -> agent checklist, không thay guide/meta
+```
 
 ## Skill Index
 
-| Skill | Khi nào dùng | Path |
-|-------|--------------|------|
-| `theory-find` | Tìm Theory liên quan task | [theory-find/SKILL.md](theory-find/SKILL.md) |
-| `theory-review` | Kiểm tra docs/code có mâu thuẫn Theory | [theory-review/SKILL.md](theory-review/SKILL.md) |
-| `theory-challenge` | Tạo Challenge khi Theory có vấn đề | [theory-challenge/SKILL.md](theory-challenge/SKILL.md) |
-| `theory-refine` | Đề xuất thay đổi Theory | [theory-refine/SKILL.md](theory-refine/SKILL.md) |
-| `theory-impact` | Tìm docs bị ảnh hưởng khi Theory đổi | [theory-impact/SKILL.md](theory-impact/SKILL.md) |
+| Skill | Khi dùng | Path |
+| --- | --- | --- |
 | `doc-navigate` | Đọc app documentation theo task | [doc-navigate/SKILL.md](doc-navigate/SKILL.md) |
-| `doc-create-entity` | Tạo entity instance mới trong docs/app | [doc-create-entity/SKILL.md](doc-create-entity/SKILL.md) |
-| `meta-validate` | Validate structure, relation, ID, placement | [meta-validate/SKILL.md](meta-validate/SKILL.md) |
+| `doc-create-entity` | Tạo draft entity instance trong `docs/app` | [doc-create-entity/SKILL.md](doc-create-entity/SKILL.md) |
+| `meta-validate` | Validate schema, placement, relation, ID | [meta-validate/SKILL.md](meta-validate/SKILL.md) |
+| `theory-find` | Tìm theory liên quan task | [theory-find/SKILL.md](theory-find/SKILL.md) |
+| `theory-review` | Review docs/code theo theory | [theory-review/SKILL.md](theory-review/SKILL.md) |
+| `theory-challenge` | Ghi challenge khi theory có vấn đề | [theory-challenge/SKILL.md](theory-challenge/SKILL.md) |
+| `theory-refine` | Đề xuất refine theory | [theory-refine/SKILL.md](theory-refine/SKILL.md) |
+| `theory-impact` | Trace impact khi theory đổi | [theory-impact/SKILL.md](theory-impact/SKILL.md) |
 
----
-
-## Chọn skill
+## Chọn Skill
 
 ```text
 Task mới
-    │
-    ├─ Liên quan Theory?
-    │   ├─ Tìm theory liên quan        → theory-find
-    │   ├─ Review alignment            → theory-review
-    │   ├─ Theory có vấn đề              → theory-challenge
-    │   ├─ Đề xuất sửa theory            → theory-refine
-    │   └─ Theory đã thay đổi            → theory-impact
-    │
-    └─ Không liên quan Theory trực tiếp
-        ├─ Đọc app knowledge             → doc-navigate
-        ├─ Tạo entity mới                → doc-create-entity
-        └─ Validate structure/meta       → meta-validate
+-> đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+-> nếu chỉ đọc app knowledge: doc-navigate
+-> nếu tạo/sửa entity: doc-create-entity + meta-validate
+-> nếu có relation/impact: meta-validate + docs/guide/workflows/trace-impact.md
+-> nếu liên quan theory: theory-find / theory-review / theory-impact
+-> nếu theory có vấn đề: theory-challenge / theory-refine
 ```
 
----
+## Nguyên Tắc Bắt Buộc
 
-## Progressive Disclosure
+- Agent output là proposal/draft/report, không tự chốt canonical truth.
+- Khi guide mâu thuẫn với meta, ưu tiên `docs/meta`.
+- Khi guide mâu thuẫn với app truth, ưu tiên `docs/app`.
+- Không tự tạo schema, entity type, relation type, valid triple hoặc ID prefix.
+- Không dùng `docs/workbench` làm source of truth vì workbench chưa được đi vào hoạt động.
+- Không coi `docs/app_variants` là app truth; chỉ dùng như reusable taxonomy/template.
 
-Agent không đọc toàn bộ `docs/`. Mở rộng context theo level:
-
-```text
-Level 1 — Task Docs       → layer/concern/entity liên quan
-Level 2 — Theory Summary  → docs/theories/<theory>/README.md hoặc agent.md
-Level 3 — Full Theory     → theory.md (conflict, challenge, sửa theory)
-Level 4 — Governance      → governance.md (challenge, decision, reference note)
-```
-
-Chi tiết: [guides/reading-strategy.md](guides/reading-strategy.md)
-
----
-
-## Nguyên tắc chung
-
-```text
-Agent output = proposal / draft
-Markdown trong Git = canonical source
-Không tự chốt Entity Type, Relation Type, ID prefix khi Meta chưa canonical
-Không fill gap bằng assumption ẩn
-```
-
-Chi tiết: [guides/mandatory-rules.md](guides/mandatory-rules.md)
-
----
-
-## Guides và Reference
+## Guides Và Reference
 
 | File | Nội dung |
-|------|----------|
-| [guides/system-overview.md](guides/system-overview.md) | Meta / Theory / App — vai trò và ranh giới |
-| [guides/reading-strategy.md](guides/reading-strategy.md) | 4 levels progressive disclosure |
-| [guides/mandatory-rules.md](guides/mandatory-rules.md) | Rules bắt buộc |
-| [guides/note-types.md](guides/note-types.md) | NOTE-OPEN, NOTE-CANDIDATE, ... |
+| --- | --- |
+| [guides/system-overview.md](guides/system-overview.md) | Vai trò các vùng docs |
+| [guides/reading-strategy.md](guides/reading-strategy.md) | Progressive disclosure |
+| [guides/mandatory-rules.md](guides/mandatory-rules.md) | Rules bắt buộc cho agent |
+| [guides/note-types.md](guides/note-types.md) | NOTE vocabulary |
 | [guides/cursor-installation.md](guides/cursor-installation.md) | Cài skill vào Cursor |
-| [reference/layer-routing.md](reference/layer-routing.md) | Task → layer → concern |
-| [reference/theory-file-structure.md](reference/theory-file-structure.md) | Cấu trúc file Theory |
-| [reference/entity-instance-template.md](reference/entity-instance-template.md) | Template entity instance |
+| [reference/layer-routing.md](reference/layer-routing.md) | Routing phụ, canonical vẫn ở guide folder-structure |
+| [reference/entity-instance-template.md](reference/entity-instance-template.md) | Template phụ, canonical vẫn ở meta schema + guide unit structure |
+| [reference/theory-file-structure.md](reference/theory-file-structure.md) | Structure theory package |
 
-Manual đầy đủ cho cả người và agent: [../guide/README.md](../guide/README.md)
-
----
-
-## Đường dẫn docs
-
-Skills tham chiếu đường dẫn triển khai chuẩn:
-
-```text
-docs/app/
-docs/meta/
-docs/theories/
-```
-
-Spec thiết kế nằm tại `docs/` trong repo này.
+Manual đầy đủ: [../guide/README.md](../guide/README.md).

@@ -1,4 +1,4 @@
-# 10 - Decisions
+﻿# 10 - Decisions
 
 `10-decisions/` lưu các quyết định quan trọng còn hiệu lực, phương án đã cân nhắc và quyết định đã bị thay thế. Decision là layer cross-cutting; không chỉ dành cho Architecture. Giải thích generic về decision model nằm ở `docs/guide/`.
 
@@ -27,7 +27,7 @@
 | Mapping required cần approval | accepted | Missing mapping chặn sync thật. |
 | Medium/Full plan không tự động thành scope Lite | accepted | Chỉ là future scope/provenance nếu chưa có decision mới. |
 
-## Business/Domain Decisions Từ Phase 03
+## Business/Domain Decisions
 
 | Quyết định | Trạng thái | Ý nghĩa |
 | --- | --- | --- |
@@ -37,15 +37,15 @@
 | Attachment có lifecycle riêng | accepted | Attachment download failure không mặc định fail toàn bộ issue ingest; retry attachment có đường riêng. |
 | Mapping và anomaly là hai lớp chặn độc lập | accepted | Issue chỉ ready khi mapping required approved và anomaly block đã xử lý. |
 | Business workflow không chứa chi tiết code/schema | accepted | API/schema/handler/retry implementation thuộc Technical/Implementation. |
-| Legacy Lite implement plans không còn là execution source | accepted | Source hiện tại là `docs/app/07-implementation`, `docs/app/08-quality`, `docs/app/09-operation` và code. |
+| Lite implementation source nằm trong docs/app hiện hành và code | accepted | Source hiện tại là `docs/app/07-implementation`, `docs/app/08-quality`, `docs/app/09-operation` và code. |
 
-## Theory/Governance Decisions Từ Phase 05
+## Theory/Governance Decisions
 
 | Quyết định | Trạng thái | Ý nghĩa |
 | --- | --- | --- |
 | 6 theory core là active set hiện tại | accepted | `TH-MODULAR`, `TH-HUBFLOW`, `TH-CANON`, `TH-AI-GOV`, `TH-SYNC-SAFE`, `TH-OPS-TRACE` dùng cho toàn app. |
-| `custom_modular_monolith` cũ phải split theo meaning | accepted | Pure modular reasoning thuộc `TH-MODULAR`; app architecture thuộc `docs/app/05-architecture`; template reusable thuộc `docs/app_technical/custom_modular_monolith`; implementation/runtime detail thuộc `06/07/09`. |
-| Import theory plan cũ chỉ còn provenance | accepted | Import plan cũ không còn là execution plan. |
+| `custom_modular_monolith` phải split theo meaning | accepted | Pure modular reasoning thuộc `TH-MODULAR`; app architecture thuộc `docs/app/05-architecture`; template reusable thuộc `docs/app_variants/custom_modular_monolith`; implementation/runtime detail thuộc `06/07/09`. |
+| Theory source hiện hành nằm trong `docs/theories` | accepted | Không dùng tài liệu import hoặc ghi chú trung gian làm execution source. |
 | Documentation governance thuộc `docs/meta` | accepted | Ownership/update/checklist rule của docs là meta-governance, không phải business rule của Central Sync Hub. |
 
 ## Folder Structure
@@ -88,4 +88,3 @@ Decision là nơi app chọn cách áp dụng, giới hạn, challenge và tinh 
 - Không xóa decision cũ; dùng `superseded`, `deprecated`, `rejected` theo lifecycle folder.
 - Alternative chỉ lưu khi có giá trị giải thích lâu dài.
 - Agent được draft decision; decision impact lớn cần human approval trước khi accepted.
-- Rule generic của decision layer đọc ở `docs/guide/reference/folder-structure.md#10-decisions`.

@@ -1,72 +1,37 @@
 # Cursor Installation
 
-`AGENT_SKILLS/` là canonical source. Cursor discover skills từ:
+Folder này là nguồn nội bộ để copy skill sang Cursor khi cần.
+
+Cursor không tự discover skill từ `docs/AGENT_SKILLS`.
+
+## Cài Thủ Công
+
+Copy từng folder skill cần dùng sang nơi Cursor đọc skill cá nhân.
+
+Skill folders chính:
 
 ```text
-~/.cursor/skills/<skill-name>/SKILL.md     # personal — mọi project
-.cursor/skills/<skill-name>/SKILL.md       # project — chia sẻ trong repo
+doc-navigate/
+doc-create-entity/
+meta-validate/
+theory-find/
+theory-review/
+theory-challenge/
+theory-refine/
+theory-impact/
 ```
 
-**Không** đặt skills trong `~/.cursor/skills-cursor/` — thư mục đó dành cho Cursor built-in.
-
----
-
-## Cài một skill
-
-```bash
-# Personal (khuyến nghị nếu dùng nhiều project)
-mkdir -p ~/.cursor/skills/theory-find
-cp docs/AGENT_SKILLS/theory-find/SKILL.md ~/.cursor/skills/theory-find/
-
-# Project (chia sẻ với team)
-mkdir -p .cursor/skills/theory-find
-cp docs/AGENT_SKILLS/theory-find/SKILL.md .cursor/skills/theory-find/
-```
-
-Lặp lại cho từng skill cần dùng.
-
----
-
-## Cài tất cả skills
-
-```bash
-SKILLS_SRC="docs/AGENT_SKILLS"
-DEST="$HOME/.cursor/skills"   # hoặc .cursor/skills cho project
-
-for skill in theory-find theory-review theory-challenge theory-refine theory-impact \
-             doc-navigate doc-create-entity meta-validate; do
-  mkdir -p "$DEST/$skill"
-  cp "$SKILLS_SRC/$skill/SKILL.md" "$DEST/$skill/"
-done
-```
-
----
-
-## Guides và reference
-
-Guides (`guides/`, `reference/`) **không** cần copy sang `.cursor/skills/`.
-
-Skills link tới chúng qua đường dẫn trong repo. Khi agent chạy trong repo, đọc trực tiếp từ:
+Nếu copy skill ra ngoài repo, copy thêm:
 
 ```text
-docs/AGENT_SKILLS/guides/
-docs/AGENT_SKILLS/reference/
+guides/
+reference/
 ```
 
-Nếu cài skill personal và làm việc ngoài repo, copy cả thư mục `AGENT_SKILLS/guides/` và `reference/` vào cùng vị trí hoặc chỉnh link trong SKILL.md.
+Các link trong skill giả định structure này còn cùng cấp với folder skill.
 
----
+## Lưu Ý
 
-## Verify
-
-1. Mở Cursor Settings → Rules / Skills
-2. Skill xuất hiện với `name` và `description` từ YAML frontmatter
-3. Gọi skill bằng tên (ví dụ `@theory-find`) hoặc mô tả task phù hợp trigger terms
-
----
-
-## Cập nhật skill
-
-Sau khi sửa SKILL.md trong `AGENT_SKILLS/`, copy lại sang destination đã cài.
-
-Giữ `AGENT_SKILLS/` là source of truth; `.cursor/skills/` là bản deploy.
+- Không copy `docs/guide` vào skill; skill phải trỏ về guide trong repo.
+- Nếu guide đổi, review lại skill đã copy.
+- Skill không chứa canonical schema/rule riêng.

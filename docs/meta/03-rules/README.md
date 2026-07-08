@@ -10,6 +10,12 @@ Source Entity Type + Relation Type + Target Entity Type
 
 `02-relation-types/` định nghĩa vocabulary và meaning. `03-rules/` mới quyết định relation đó có được dùng giữa hai entity type cụ thể hay không.
 
+Schema canonical cho valid triple rule nằm ở:
+
+```text
+docs/meta/00-schemas/valid-triple-rule.md
+```
+
 ## Cấu trúc
 
 Mirror `docs/app/` layers (00-context → 04-domain) + cross-layer.
@@ -19,7 +25,7 @@ Mirror `docs/app/` layers (00-context → 04-domain) + cross-layer.
 | [00-context/valid-triples.md](00-context/valid-triples.md) | Rules trong context layer |
 | [01-business/valid-triples.md](01-business/valid-triples.md) | Rules trong business layer |
 | [02-product/valid-triples.md](02-product/valid-triples.md) | Rules trong product layer |
-| [03-ui/valid-triples.md](03-ui/valid-triples.md) | Rules trong ui layer |
+| [03-interface/valid-triples.md](03-interface/valid-triples.md) | Rules trong interface layer |
 | [04-domain/valid-triples.md](04-domain/valid-triples.md) | Rules trong domain layer |
 | [cross-layer/valid-triples.md](cross-layer/valid-triples.md) | Rules xuyên layer |
 

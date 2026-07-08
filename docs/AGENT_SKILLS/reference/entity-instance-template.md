@@ -1,135 +1,72 @@
-# Entity Instance Template
+# Entity Instance Template Helper
 
-Template cho `README.md` — canonical entry point của Entity Instance.
-
-Path:
+Canonical schema:
 
 ```text
-docs/app/<NN-layer>/<concern>/<entity-type-plural>/<ID-slug>/README.md
+docs/meta/00-schemas/entity-instance.md
 ```
 
----
+Canonical unit guide:
 
-## Template
+```text
+docs/guide/unit-structure/entity/README.md
+```
 
-```markdown
+File này chỉ là helper cho agent, không thay schema/meta.
+
+## Path
+
+```text
+docs/app/<NN-layer>/<NN-concern>/<NN-entity-type-folder>/<ID-slug>/README.md
+```
+
+## Frontmatter
+
+```yaml
 ---
-id: MOD-004
-slug: spec-graph
-entity_type: Module
-layer: 05-architecture
-concern: structure
-status: draft
+schema: entity-instance/v1
+id: PROC-001
+slug: backlog-to-cis-lite
+title: Backlog To CIS Lite Flow
+entity_type: Process
+layer: 01-business
+concern: 04-behavior
+status: active
+summary: Business flow Lite từ Backlog vào CIS.
 theory_basis:
-  - TH-MOD-03
+  - TH-HUBFLOW
 decision_basis:
-  - DEC-021
+  - DEC-001
+relations:
+  - type: governed_by
+    target: BRULE-001
 ---
+```
 
-# MOD-004 — Spec Graph
+## Body
+
+```md
+# PROC-001 - Backlog To CIS Lite Flow
+
+## Summary
 
 ## Meaning
 
-[Một đoạn: entity này là gì trong context app]
+## Relations
 
-## Responsibility
+## Validation Notes
+```
 
-[Boundary và trách nhiệm]
-
-## Key properties
-
-| Property | Value |
-|----------|-------|
-| [name] | [value] |
-
-## Rules / constraints
-
-- [derived rule từ theory — không copy full theory]
-- [project-specific rule]
-
-## Behavior (nếu áp dụng)
-
-[Mô tả behavior có giá trị — không document mọi method]
-
-## State / lifecycle (nếu áp dụng)
-
-[State evolution có domain hoặc architecture meaning]
-
-## Related Entities
-
-- `MOD-001-orders` — [mô tả liên hệ]
+Nếu entity type có `structure extends`, thêm section required từ entity type definition.
 
 ## Open Relation Question
 
-> Chỉ dùng khi Relation Type chưa canonical trong Meta.
-> **NOTE-CANDIDATE**: Relation X→Y chưa có type trong docs/meta/02-relation-types/
-
-## Open questions
-
-> **NOTE-OPEN**: [thông tin chưa có]
-
-## Evidence (nếu cần)
-
-> **NOTE-EVIDENCE**: [link incident, metric, ...]
-
-## History
-
-Không tạo revision system riêng — Git là history.
-Ghi Decision reference nếu có thay đổi quan trọng qua `decision_basis`.
+```md
+> **NOTE-OPEN**: Chưa có relation type/valid triple canonical cho quan hệ này.
 ```
 
----
+## Sau Khi Draft
 
-## Frontmatter fields
-
-| Field | Bắt buộc | Mô tả |
-|-------|----------|-------|
-| `id` | yes | Stable ID (MOD-004, PROB-001, FE-012) |
-| `slug` | yes | URL/folder slug |
-| `entity_type` | yes | Canonical name từ Meta |
-| `layer` | yes | Layer number + name |
-| `concern` | yes | Concern folder |
-| `status` | recommended | draft / active / deprecated |
-| `theory_basis` | khi có | List TH-* IDs |
-| `decision_basis` | khi có | List DEC-* IDs |
-
-Thêm fields chỉ khi Entity Type definition trong Meta yêu cầu.
-
----
-
-## ID pattern (gợi ý)
-
-| Entity Type | Prefix | Ví dụ folder |
-|-------------|--------|--------------|
-| Problem | PROB | `PROB-001-manual-reconciliation/` |
-| Process | PROC | `PROC-003-order-fulfillment/` |
-| Feature | FE | `FE-012-bulk-import/` |
-| Module | MOD | `MOD-004-spec-graph/` |
-| Risk | RISK | `RISK-002-shared-state/` |
-| Incident | INC | `INC-003-api-timeout/` |
-| Decision | DEC | `DEC-021-module-boundary/` |
-
-Xác nhận pattern chính thức tại `docs/meta/04-conventions/` trước khi tạo.
-
----
-
-## Supporting docs
-
-Chỉ thêm khi cần:
-
-```text
-views/
-examples/
-assets/
-notes/
-```
-
-`README.md` vẫn là entry point — agent đọc README trước.
-
----
-
-## Sau khi tạo
-
-1. Chạy `meta-validate` trên path mới
-2. Nếu có `theory_basis` — cân nhắc `theory-review`
-3. Commit qua Git — không revision system riêng
+1. Chạy `meta-validate`.
+2. Kiểm tra `docs/guide/workflows/trace-impact.md` nếu có relation.
+3. Nếu có `theory_basis`, cân nhắc `theory-review`.

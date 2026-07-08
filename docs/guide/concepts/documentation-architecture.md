@@ -1,4 +1,4 @@
-# Documentation Architecture
+﻿# Documentation Architecture
 
 ## Mô hình tổng thể
 
@@ -14,9 +14,6 @@ docs/app/
 
 source code / operation
     ↓ provides observed reality
-
-docs/backlog-theories/
-    ↓ holds candidate knowledge before promotion
 ```
 
 ## Ranh giới chính
@@ -26,8 +23,8 @@ docs/backlog-theories/
 | `docs/meta` | Entity types, relation types, valid triples, conventions. | App-specific business/product truth. |
 | `docs/theories` | Project-owned principles and reasoning. | Jira/Backlog/module cụ thể. |
 | `docs/app` | Central Sync Hub truth theo layer. | Generic explanation lặp lại của docs system. |
-| `docs/app_technical` | Reusable technical taxonomy/template. | Source of truth cụ thể của repo nếu `docs/app` đã có. |
-| `docs/backlog-theories` | Candidate, review, unpromoted notes. | Rule đang có hiệu lực. |
+| `docs/app_variants` | Universal app origin và pattern extension reusable. | Source of truth cụ thể của repo nếu `docs/app` đã có. |
+| `docs/workbench` | Candidate entity/relation workbench dự kiến, hiện chưa được đi vào hoạt động. | Source of truth, app truth, meta rule đang có hiệu lực. |
 | `docs/guide` | Cách dùng hệ docs. | Canonical rule mới. |
 | `docs/AGENT_SKILLS` | Agent workflows/checklists. | Human-facing full manual. |
 
@@ -39,7 +36,7 @@ Layer README nên ngày càng nhẹ:
 Layer README
     = layer-specific purpose
     + app truth hiện tại
-    + concern list
+    + routing ngắn tới folder structure/meta
     + rule riêng của layer
     + link về guide cho mô hình chung
 ```

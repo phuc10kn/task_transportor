@@ -52,16 +52,19 @@ Lite hiện ưu tiên:
 - CIS -> Jira phải qua dry-run/pre-check trước khi ghi thật;
 - webhook và Jira inbound đầy đủ chưa là đường chính của Lite.
 
-## Concerns
+## Routing Nhanh
 
-| Concern path | Dùng để giữ |
+| Cần tìm | Đọc |
 | --- | --- |
-| `01-overview/` | App là gì, mục đích tổng quan. |
-| `02-scope/` | In scope/out of scope theo app/phase/release. |
-| `03-premises/` | Assumption và constraint. |
-| `04-language/` | Glossary/shared meaning. |
-| `05-ecosystem/` | External systems và relationship. |
-| `06-environment/` | Environment có ý nghĩa với project. |
+| Folder structure của context | docs/guide/reference/folder-structure.md#00-context |
+| Entity type canonical | docs/meta/01-entity-types/ |
+| Relation rule canonical | docs/meta/02-relation-types/ và docs/meta/03-rules/ |
+
+## Entity Index
+
+| Entity type | Canonical definition |
+| --- | --- |
+| Application | docs/meta/01-entity-types/... |
 
 ## Rule Riêng Của Context
 

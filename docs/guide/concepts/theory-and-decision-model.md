@@ -19,6 +19,10 @@ Canonical home:
 docs/theories/
 ```
 
+Unit template: [theory](../unit-structure/theory/README.md).
+
+Schema canonical: [theory-package.md](../../meta/00-schemas/theory-package.md).
+
 Theory không nhắc app-specific detail như Jira, Backlog, module cụ thể hoặc source path.
 
 ## App application
@@ -57,6 +61,10 @@ Canonical home:
 docs/app/10-decisions/
 ```
 
+Unit template: [decision](../unit-structure/decision/README.md).
+
+Schema canonical: [decision.md](../../meta/00-schemas/decision.md).
+
 ## Khi nào dùng cái nào
 
 | Tình huống | Dùng |
@@ -65,4 +73,3 @@ docs/app/10-decisions/
 | App áp dụng nguyên lý vào Central Sync Hub | App docs |
 | Lựa chọn dài hạn/trade-off | Decision |
 | Ý tưởng chưa chín | Backlog theories |
-

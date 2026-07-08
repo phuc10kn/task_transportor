@@ -10,7 +10,7 @@ Thư mục này là nền tảng tài liệu native dùng để tổ chức know
 - `meta/` chứa entity types, relation types, convention và validation rule.
 - `guide/` là manual hướng dẫn cách đọc, viết, trace và evolve hệ docs.
 - `AGENT_SKILLS/` chứa hướng dẫn cho agent khi đọc, tạo, review hoặc refine tài liệu.
-- `backlog-theories/` chứa review/candidate knowledge chưa đủ hoặc chưa cần promote vào canonical docs.
+- `workbench/` là khu vực dự kiến cho modeling candidate, nhưng hiện **chưa được đi vào hoạt động**.
 
 ## Trạng thái hiện tại
 
@@ -32,8 +32,12 @@ Theory system đã có nền usable:
 
 Nếu câu hỏi là cách sử dụng toàn bộ hệ docs, đọc `guide/README.md` trước.
 
-Migration record nằm trong `plans/migrate_new_docs/` nếu cần audit lịch sử chuyển đổi tài liệu.
-
 Nếu câu hỏi là app hiện tại áp dụng theory như thế nào, đọc tiếp `app/`.
 
 Nếu câu hỏi là format, status, relation hoặc validation, đọc tiếp `meta/`.
+
+## Workbench Chưa Operational
+
+`docs/workbench/` tồn tại để giữ chỗ cho luồng chuyển ý tưởng/code observation thành candidate entity và relation của CIS.
+
+Không dùng folder này làm source of truth hoặc nơi lưu candidate thật cho tới khi `docs/guide/` có harness quản lý rõ ràng.

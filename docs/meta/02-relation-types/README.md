@@ -2,6 +2,12 @@
 
 Vocabulary cho relations giữa entities. Mỗi Relation Type = một file `.md`, **phân nhóm theo folder để dễ tìm**.
 
+Schema canonical cho mỗi file relation type definition nằm ở:
+
+```text
+docs/meta/00-schemas/relation-type-definition.md
+```
+
 ```text
 Source --relation--> Target
 ```
@@ -25,7 +31,7 @@ Relation Type không tự quyết định entity type nào được nối với 
 ├── 00-context/       relations chủ yếu trong context layer
 ├── 01-business/      relations chủ yếu trong business layer
 ├── 02-product/       relations chủ yếu trong product layer
-├── 03-ui/            relations chủ yếu trong ui layer
+├── 03-interface/     relations chủ yếu trong interface layer
 ├── 04-domain/        relations chủ yếu trong domain layer
 ├── cross-layer/      relations nối entities giữa các layer
 ├── shared/           relations generic, dùng ở nhiều layer
@@ -88,24 +94,24 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | `uses` | [02-product/uses.md](02-product/uses.md) |
 | `verified_by` | [02-product/verified_by.md](02-product/verified_by.md) |
 
-### 03-ui
+### 03-interface
 
 | Relation | File |
 |----------|------|
-| `composed_of` | [03-ui/composed_of.md](03-ui/composed_of.md) |
-| `connects` | [03-ui/connects.md](03-ui/connects.md) |
-| `contained_in` | [03-ui/contained_in.md](03-ui/contained_in.md) |
-| `displayed_on` | [03-ui/displayed_on.md](03-ui/displayed_on.md) |
-| `follows` | [03-ui/follows.md](03-ui/follows.md) |
-| `for_audience` | [03-ui/for_audience.md](03-ui/for_audience.md) |
-| `governs` | [03-ui/governs.md](03-ui/governs.md) |
-| `occurs_on` | [03-ui/occurs_on.md](03-ui/occurs_on.md) |
-| `submits_via` | [03-ui/submits_via.md](03-ui/submits_via.md) |
-| `transitions_to` | [03-ui/transitions_to.md](03-ui/transitions_to.md) |
-| `traverses` | [03-ui/traverses.md](03-ui/traverses.md) |
-| `triggered_by` | [03-ui/triggered_by.md](03-ui/triggered_by.md) |
-| `undertakes` | [03-ui/undertakes.md](03-ui/undertakes.md) |
-| `used_in` | [03-ui/used_in.md](03-ui/used_in.md) |
+| `composed_of` | [03-interface/composed_of.md](03-interface/composed_of.md) |
+| `connects` | [03-interface/connects.md](03-interface/connects.md) |
+| `contained_in` | [03-interface/contained_in.md](03-interface/contained_in.md) |
+| `displayed_on` | [03-interface/displayed_on.md](03-interface/displayed_on.md) |
+| `follows` | [03-interface/follows.md](03-interface/follows.md) |
+| `for_audience` | [03-interface/for_audience.md](03-interface/for_audience.md) |
+| `governs` | [03-interface/governs.md](03-interface/governs.md) |
+| `occurs_on` | [03-interface/occurs_on.md](03-interface/occurs_on.md) |
+| `submits_via` | [03-interface/submits_via.md](03-interface/submits_via.md) |
+| `transitions_to` | [03-interface/transitions_to.md](03-interface/transitions_to.md) |
+| `traverses` | [03-interface/traverses.md](03-interface/traverses.md) |
+| `triggered_by` | [03-interface/triggered_by.md](03-interface/triggered_by.md) |
+| `undertakes` | [03-interface/undertakes.md](03-interface/undertakes.md) |
+| `used_in` | [03-interface/used_in.md](03-interface/used_in.md) |
 
 ### 04-domain
 
@@ -166,6 +172,8 @@ meaning, allowed semantic
 examples, non-examples, anti-patterns
 valid usage (triples từ entity types)
 ```
+
+Không tạo field/section ngoài schema nếu chưa cập nhật `docs/meta/00-schemas/`.
 
 ## Direction rule
 

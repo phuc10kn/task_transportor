@@ -10,7 +10,7 @@
 ## Reference notes
 
 - App-specific adoption hiện tại dùng mô hình `System -> CIS -> System`, nhưng theory giữ ở mức generic `System -> Core Hub -> System`.
-- Phase 05 đã nhập provenance từ legacy work/architecture/import-theories vào root theory governance và decision layer.
+- App-specific adoption được ghi trong root theory governance và decision layer; theory này chỉ giữ reasoning generic.
 
 ## Challenges
 

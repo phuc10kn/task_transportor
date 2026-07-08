@@ -1,4 +1,4 @@
-# Theory System Governance
+﻿# Theory System Governance
 
 ## Mục đích
 
@@ -279,18 +279,18 @@ và canonical chỗ giữ là file này.
 
 ---
 
-## Phase 05 provenance
+## Provenance Policy
 
-Theory system hiện tại được materialize từ các nguồn migration cũ và đã được chuyển về root theory governance, 6 theory folders, `docs/app/10-decisions` và `docs/app_technical/custom_modular_monolith`.
+Theory system hiện tại đã được materialize vào root theory governance, 6 theory folders, `docs/app/10-decisions` và `docs/app_variants/custom_modular_monolith`.
 
-Kết luận Phase 05:
+Kết luận hiện hành:
 
 - 6 theory core đã được materialize và là active theory set hiện tại.
-- Import theory plan cũ chỉ còn là migration provenance, không còn là execution plan.
-- Explain synthesis cũ đã được supersede về mặt reasoning bởi root governance này, 6 theory folder, `docs/app/10-decisions` và `docs/app_technical/custom_modular_monolith`.
-- Theory governance chỉ giữ reasoning reusable; app-specific code path, schema, route, runtime và template chi tiết phải ở `docs/app/*`, `docs/app_technical/*` hoặc `docs/meta/*`.
+- Tài liệu import hoặc ghi chú trung gian không còn là execution source.
+- Reasoning hiện hành nằm trong root governance này, 6 theory folder, `docs/app/10-decisions` và `docs/app_variants/custom_modular_monolith`.
+- Theory governance chỉ giữ reasoning reusable; app-specific code path, schema, route, runtime và template chi tiết phải ở `docs/app/*`, `docs/app_variants/*` hoặc `docs/meta/*`.
 
-Nếu sau này phát hiện một reasoning quan trọng chỉ tồn tại trong migration history, không copy thẳng vào theory. Phải phân loại trước:
+Nếu sau này phát hiện một reasoning quan trọng chỉ tồn tại trong Git history hoặc ghi chú trung gian, không copy thẳng vào theory. Phải phân loại trước:
 
 ```text
 Pure Theory

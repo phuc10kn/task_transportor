@@ -41,17 +41,16 @@ docs/meta/04-conventions/status-vocabulary.md
 
 Nếu status chưa có trong vocabulary, không tự bịa status mới. Dùng `NOTE-OPEN` hoặc cập nhật meta trước.
 
-## Backlog lifecycle
+## Candidate lifecycle
 
 Candidate knowledge thường đi theo luồng:
 
 ```text
-backlog-theories
-    ↓ review
+candidate
+    ↓ đủ rõ nghĩa và home
 promote to canonical home
     ↓
-delete or keep provenance note
+remove temporary note or keep short provenance if needed
 ```
 
-Nếu không đủ chín, giữ backlog và ghi rõ lý do.
-
+Nếu không đủ chín, dùng `NOTE-OPEN` trong file canonical gần nhất hoặc giữ ngoài docs. `docs/workbench/` hiện chưa được đi vào hoạt động.

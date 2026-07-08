@@ -1,36 +1,55 @@
 # README Structure
 
-Entity Instance `README.md` nên có:
+Schema canonical: [entity-instance.md](../00-schemas/entity-instance.md) và [structure-extends.md](../00-schemas/structure-extends.md).
+
+Entity Instance `README.md` base phải có:
 
 ```markdown
 ---
 [frontmatter]
 ---
 
-# {ID} — {Title}
+# {ID} - {Title}
 
+## Summary
 ## Meaning
-## Responsibility / Purpose
-## Key properties
-## Rules / constraints
-## Behavior (nếu có)
-## Related Entities
-## Open Relation Question (nếu relation chưa canonical)
-## Open questions (NOTE-OPEN)
+## Relations
+## Validation Notes
 ```
 
-## Related Entities
+Entity type đặc thù có thể thêm section qua `structure extends`.
+
+Nếu entity type không khai báo extension, dùng core sections mặc định:
+
+```markdown
+## Responsibility
+## Rules
+```
+
+Ví dụ `Process`:
+
+```markdown
+## Trigger
+## Participants
+## Steps
+## Outcomes
+```
+
+## Relations
+
+Relation canonical nên nằm trong frontmatter `relations`. Body `## Relations` dùng để giải thích link cho người đọc.
 
 Khi Relation Type chưa chốt:
 
 ```markdown
-## Related Entities
-- `MOD-001` — mô tả
+## Relations
 
-## Open Relation Question
-> NOTE-CANDIDATE: relation type X→Y chưa có trong Meta
+- `MOD-001` - mô tả relation chưa canonical.
+
+## Open Relation Question (nếu relation chưa canonical)
+> NOTE-CANDIDATE: relation type X -> Y chưa có trong Meta.
 ```
 
 ## Không bắt buộc
 
-Duplicate Theory content, full code, revision history (Git là history).
+Duplicate theory content, full code, revision history (Git là history).

@@ -1,68 +1,65 @@
 # System Overview
 
-## Ba vùng documentation
+## Các Vùng Documentation
 
 ```text
-docs/meta/
-→ định nghĩa luật của documentation system
-→ Entity Types, Relation Types, Rules, Conventions
+docs/guide/
+-> manual vận hành docs cho người và agent
 
-docs/theories/
-→ Pure Theory — project-owned reasoning foundation
-→ không chứa application-specific detail
+docs/meta/
+-> schema, entity type, relation type, valid triple, convention canonical
 
 docs/app/
-→ application knowledge cụ thể
-→ Layer → Concern → Entity Type → Entity Instance
+-> app truth cụ thể của CIS
+
+docs/theories/
+-> pure theory và reasoning foundation
+
+docs/app_variants/
+-> reusable taxonomy/template, không phải app truth
+
+docs/workbench/
+-> candidate workspace dự kiến, hiện chưa được đi vào hoạt động
+
+docs/AGENT_SKILLS/
+-> agent checklist/skill, không thay guide/meta
 ```
 
-## Luồng ảnh hưởng
+## Luồng Vận Hành
+
+Agent bắt đầu từ:
 
 ```text
-Meta
-    ↓ defines
-Documentation Structure
-
-Theory
-    ↓ influences
-App Documentation
-    ↓ guides
-Source Code
-    ↓ feedback
-Challenge / Decision
-    ↓
-Theory Evolution
+docs/guide/README.md#luồng-vận-hành-chuẩn
 ```
 
-## Ranh giới bắt buộc
+Sau đó chọn skill phù hợp:
+
+- app knowledge: `doc-navigate`;
+- tạo entity: `doc-create-entity`;
+- validate schema/relation/path: `meta-validate`;
+- theory: `theory-find`, `theory-review`, `theory-impact`;
+- theory governance: `theory-challenge`, `theory-refine`.
+
+## Ranh Giới Bắt Buộc
 
 | Vùng | Chứa | Không chứa |
-|------|------|------------|
-| `docs/meta/` | luật, schema, relation rules | Pure Theory, app instances |
-| `docs/theories/` | principles, reasoning, tensions | project-specific rules, code detail |
-| `docs/app/` | problems, features, modules, decisions | full Theory copy |
+| --- | --- | --- |
+| `docs/guide` | workflow, reference, example, unit structure hướng dẫn dùng | canonical schema/rule mới |
+| `docs/meta` | schema/rule/convention canonical | app truth, handbook dài |
+| `docs/app` | knowledge cụ thể của CIS | generic theory/docs-system explanation |
+| `docs/theories` | principle/reasoning reusable | implementation detail của CIS |
+| `docs/app_variants` | reusable taxonomy/template | source of truth cụ thể khi `docs/app` đã có |
+| `docs/workbench` | status/harness nháp | source of truth; hiện chưa hoạt động |
+| `docs/AGENT_SKILLS` | agent checklist | human-facing full manual |
 
-## Meta-model app docs
-
-```text
-Layer       → vùng knowledge lớn (00-context … 10-decisions)
-Concern     → nhóm câu hỏi ổn định
-Entity Type → loại knowledge có instance (Problem, Module, Feature, ...)
-Entity Instance → knowledge cụ thể (PROB-001-..., MOD-004-...)
-```
-
-## Canonical source
+## Canonical Priority
 
 ```text
-Markdown trong Git = canonical source
-Graph DB / search index = derived (có thể rebuild từ Git)
+scope/behavior app -> docs/app
+schema/rule/meta   -> docs/meta
+operating manual   -> docs/guide
+pure reasoning     -> docs/theories
+reusable template  -> docs/app_variants
+agent procedure    -> docs/AGENT_SKILLS
 ```
-
-## Agent entry points
-
-| Task | Đọc trước |
-|------|-----------|
-| App knowledge | `docs/app/README.md` |
-| Theory | `docs/theories/README.md` |
-| Meta / validation | `docs/meta/README.md` |
-| Chọn skill | `AGENT_SKILLS/README.md` |

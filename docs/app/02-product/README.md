@@ -82,12 +82,11 @@ Chỉ mục nhanh:
 - Product behavior phải giữ đường `Backlog -> CIS -> Jira`; không định nghĩa capability đi tắt Backlog -> Jira.
 - Khi thay đổi scope/behavior Lite, cập nhật Product, Quality và Decision liên quan cùng lúc.
 - Relation cụ thể phải tuân theo canonical relation types trong `docs/meta/02-relation-types/` và rule trong `docs/meta/03-rules/`.
-- Rule generic của product layer đọc ở `docs/guide/reference/folder-structure.md#02-product`.
 
 ## Routing Sang Layer Khác
 
 - Business reason và process: `docs/app/01-business/`.
-- UI flow, screen, state: `docs/app/03-ui/`.
+- UI flow, screen, state: `docs/app/03-interface/`.
 - Domain meaning và invariant: `docs/app/04-domain/`.
 - Architecture boundary và interaction: `docs/app/05-architecture/`.
 - Quality acceptance và verify gate: `docs/app/08-quality/`.

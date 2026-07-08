@@ -36,5 +36,4 @@ Mặc định cardinality là `0..n`. Không ép tạo relation cho mọi instan
 
 ## Khi thiếu relation
 
-Dùng `NOTE-OPEN` hoặc backlog. Không tự bịa relation.
-
+Dùng `NOTE-OPEN`. Không tự bịa relation và không dùng `docs/workbench/` khi workbench chưa được kích hoạt.

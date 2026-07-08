@@ -30,7 +30,6 @@ Trong Lite hiện tại:
 - Webhook Backlog/Jira và Jira -> CIS đầy đủ chưa là đường vận hành chính của Lite.
 - CIS -> Jira phải đi qua dry-run/pre-check trước khi ghi thật.
 - Backlog không được gọi Jira trực tiếp; mọi dữ liệu phải vào CIS trước.
-- Legacy product context đã được hấp thụ trong Phase 01, evidence nằm ở `docs/plans/migrate_new_docs/migration_matrix.md`.
 
 ## Folder Structure
 
@@ -57,9 +56,7 @@ Context chỉ reference theory bằng ID và ý nghĩa trong app. Không copy re
 ## Rule Riêng Hiện Tại
 
 - Context giữ invariant `System -> CIS -> System`, vai trò Backlog/CIS/Jira và scope nền của Lite.
-- Legacy product context chỉ còn là provenance sau Phase 01, không là source of truth mới.
-- Context không là nơi gom knowledge chưa biết đặt ở đâu; nếu chưa hấp thụ được, đưa vào backlog theory hoặc decision/provenance phù hợp.
-- Rule generic về scope, premise, language, ecosystem và environment đọc ở `docs/guide/reference/folder-structure.md#00-context`.
+- Context không là nơi gom knowledge chưa biết đặt ở đâu; nếu chưa hấp thụ được vào canonical docs, dùng `NOTE-OPEN` hoặc giữ ngoài docs cho tới khi đủ promote.
 
 ## Cách Đọc Nhanh
 

@@ -3,11 +3,11 @@
 Workflow an toàn cho thay đổi docs đầu tiên:
 
 ```text
-1. Xác định nội dung là app truth, meta rule, theory, decision hay backlog.
+1. Xác định nội dung là app truth, meta rule, theory, decision hay candidate chưa chắc.
 2. Mở canonical home tương ứng.
 3. Sửa file hiện có trước khi tạo file mới.
 4. Nếu thay đổi cross-layer, kiểm tra theory_basis, decision_basis và relation/reference.
-5. Nếu chưa chắc, dùng NOTE-OPEN hoặc đưa vào backlog-theories.
+5. Nếu chưa chắc, dùng NOTE-OPEN hoặc giữ ngoài docs cho tới khi đủ promote.
 6. Chạy git diff --check cho file đã sửa.
 ```
 
@@ -23,4 +23,3 @@ Muốn làm rõ Jira dry-run là bắt buộc trước sync thật:
 | Có theory liên quan? | `TH-SYNC-SAFE`. |
 
 Không đặt rule này vào `docs/theories/` vì nó nhắc Jira cụ thể, tức là app-specific.
-

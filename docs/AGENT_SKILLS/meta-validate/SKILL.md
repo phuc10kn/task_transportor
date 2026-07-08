@@ -1,138 +1,89 @@
 ---
 name: meta-validate
-description: Validates documentation structure, entity placement, relation references, and ID patterns against docs/meta/ rules. Use when creating entities, reviewing folder structure, checking broken references, or resolving placement ambiguity.
+description: Validate documentation schema, placement, relation references, ID patterns, and canonical boundaries against docs/meta and docs/guide.
 ---
 
 # meta-validate
 
-Validate structure, relation, ID, và placement theo `docs/meta/`.
-
-## Trigger
-
-```text
-tạo Entity Type hoặc instance mới
-tạo Relation
-validate structure trước commit
-kiểm tra broken references
-review documentation model
-resolve placement ambiguity
-sau doc-create-entity
-```
+Validate structure, relation, ID và placement theo `docs/meta` và `docs/guide`.
 
 ## Workflow
 
 ```text
 Task Progress:
+- [ ] Đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+- [ ] Đọc docs/guide/workflows/write-docs.md nếu validate unit mới/sửa
+- [ ] Đọc docs/guide/workflows/trace-impact.md nếu có relation/impact
 - [ ] Đọc docs/meta/README.md
-- [ ] Load relevant Entity Type definition từ 01-entity-types/
-- [ ] Nếu có relations → 02-relation-types/ + 03-rules/
-- [ ] Kiểm tra ID, naming, folder path theo 04-conventions/
-- [ ] Liệt kê violations và warnings
-- [ ] Đề xuất fix — không tự canonical hóa Meta
+- [ ] Đọc schema liên quan trong docs/meta/00-schemas/
+- [ ] Đọc entity type liên quan trong docs/meta/01-entity-types/
+- [ ] Nếu có relation, đọc docs/meta/02-relation-types/ và docs/meta/03-rules/
+- [ ] Đọc convention liên quan trong docs/meta/04-conventions/
+- [ ] Báo passed, violations, warnings, open questions
 ```
 
-## Luồng đọc Meta
+## Checklist
 
-```text
-docs/meta/README.md
-    ↓
-01-entity-types/<type>.md (khi validate entity)
-    ↓
-02-relation-types/ (khi validate relation)
-    ↓
-03-rules/ (valid combinations, cardinality)
-    ↓
-04-conventions/ (ID pattern, folder naming)
-```
+### Schema
 
-## Checklist validation
+- [ ] Unit có schema canonical.
+- [ ] Frontmatter có required fields.
+- [ ] Không có field tự phát ngoài schema.
 
-### Structure
+### Placement
 
-```text
-- [ ] Path: docs/app/<layer>/<concern>/<entity-type-plural>/<id>/README.md
-- [ ] Layer number và concern folder khớp layer README
-- [ ] README.md tồn tại làm entry point
-- [ ] Không có concern wrapper vô nghĩa (chỉ 1 entity type, không routing value)
-```
+- [ ] Path khớp `docs/guide/reference/folder-structure.md`.
+- [ ] Layer/concern/entity type đúng.
+- [ ] README layer không phình thành generic theory.
 
 ### Entity Type
 
-```text
-- [ ] Entity Type được định nghĩa trong Meta (hoặc NOTE-CANDIDATE nếu chưa)
-- [ ] Required fields trong frontmatter đủ
-- [ ] ID khớp pattern (prefix, numbering)
-- [ ] Instance không chứa Pure Theory content
-```
+- [ ] Entity type resolve được trong `docs/meta/01-entity-types/` hoặc layer-local type hợp lệ.
+- [ ] ID prefix/status/naming đúng convention.
 
-### Relations
+### Relation
 
-```text
-- [ ] Relation Type canonical trong Meta (hoặc Open Relation Question)
-- [ ] Direction rule từ 03-rules/ được tuân thủ
-- [ ] Không tự bịa relation type name
-- [ ] Cross-layer relations hợp lệ theo rules
-```
+- [ ] Relation type tồn tại.
+- [ ] Source/target entity type đúng.
+- [ ] Valid triple tồn tại.
+- [ ] Direction đúng canonical direction.
 
-### References
+### Boundary
 
-```text
-- [ ] theory_basis IDs tồn tại trong docs/theories/
-- [ ] decision_basis IDs tồn tại trong docs/app/10-decisions/
-- [ ] Related entity paths resolve được
-```
+- [ ] Guide không chứa app truth thay `docs/app`.
+- [ ] Meta không chứa app-specific detail.
+- [ ] Theory không chứa implementation cụ thể.
+- [ ] Workbench không được dùng như source of truth.
+- [ ] App variants không được dùng như app truth.
 
-## Output template
+## Output
 
-```markdown
+```md
 ## meta-validate result
 
 ### Target
-[path hoặc mô tả scope]
+[path/scope]
 
 ### Passed
-- [item]
+- ...
 
-### Violations (must fix)
-- [rule ref] — [mô tả]
+### Violations
+- [must fix]
 
 ### Warnings
-- [ambiguous placement, NOTE-CANDIDATE items]
+- [review]
 
 ### Open questions
-- NOTE-OPEN: [...]
-
-### Suggested fixes
-- [đề xuất — không apply tự động nếu ảnh hưởng Meta canonical]
+- NOTE-OPEN: ...
 ```
 
-## Khi Meta chưa chốt
+## Guardrails
 
-```text
-không tự bịa schema
-không tự bịa relation
-không tự bịa ID prefix
-không tự bịa cardinality
-```
+- Output là validation report, không tự apply fix nếu fix làm đổi canonical rule.
+- Không coi `NOTE-CANDIDATE` là pass.
+- Không sửa `docs/meta` trừ khi task yêu cầu rõ.
 
-Dùng NOTE-CANDIDATE / NOTE-OPEN.
+## References
 
-## Ràng buộc
-
-- Validator logic derive từ Meta — Meta Markdown là source of truth
-- Agent không sửa `docs/meta/` canonical definitions trừ khi explicit task
-- Output = validation report
-
-## Anti-patterns
-
-```text
-coi NOTE-CANDIDATE như đã pass validation
-validate mà không đọc entity type definition
-bỏ qua relation direction rules
-```
-
-## Thêm
-
-- System overview: [../guides/system-overview.md](../guides/system-overview.md)
 - Mandatory rules: [../guides/mandatory-rules.md](../guides/mandatory-rules.md)
-- Entity template: [../reference/entity-instance-template.md](../reference/entity-instance-template.md)
+- System overview: [../guides/system-overview.md](../guides/system-overview.md)

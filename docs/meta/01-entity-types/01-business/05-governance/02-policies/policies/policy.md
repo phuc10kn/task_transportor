@@ -7,6 +7,7 @@
 | **concern** | `05-governance` |
 | **folder** | `policies/` |
 | **ID pattern** | `POL-{NNN}-{slug}` |
+| **schema** | `entity-instance/v1` |
 
 ## meaning
 
@@ -18,9 +19,9 @@ Khi policy có thể sinh nhiều Business Rule.
 
 ## required fields
 
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 
-Body: statement, scope
+Body: Summary, Meaning, Statement, Scope, Governance Intent, Relations, Validation Notes
 
 ## optional fields
 
@@ -29,6 +30,26 @@ owner, derived_rules, exceptions
 ## lifecycle
 
 draft → active → superseded
+
+## structure extends
+
+Base: `entity-instance/v1`
+
+Required sections:
+
+- `Statement`
+- `Scope`
+- `Governance Intent`
+
+Optional sections:
+
+- `Owner`
+- `Derived Rules`
+- `Exceptions`
+
+Additional validation:
+
+- Policy rộng hơn một rule đơn lẻ và có thể sinh nhiều BusinessRule.
 
 ## allowed relations (candidate)
 

@@ -1,15 +1,20 @@
 # Metadata Format
 
+Schema canonical: [entity-instance.md](../00-schemas/entity-instance.md).
+
 YAML frontmatter bắt buộc cho Entity Instance:
 
 ```yaml
 ---
+schema: entity-instance/v1
 id: MOD-004
 slug: spec-graph
+title: Spec Graph
 entity_type: Module
 layer: 05-architecture
-concern: structure
+concern: 01-structure
 status: draft
+summary: Module mô tả spec graph.
 theory_basis:
   - TH-MOD-03
 decision_basis:
@@ -20,11 +25,13 @@ relations:
 ---
 ```
 
-## Required fields (mọi instance)
+## Required fields
 
 ```text
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 ```
+
+Các field này bắt buộc cho file mới hoặc file được sửa. File legacy chưa có `schema` được infer theo path; khi sửa file đó phải bổ sung `schema: entity-instance/v1`.
 
 ## Optional fields
 

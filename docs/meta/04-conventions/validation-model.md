@@ -10,6 +10,14 @@ Layer → Concern → Entity Type → Entity Instance
 
 Entity Instance không được nằm trực tiếp dưới Layer.
 
+## Schema Validation
+
+```text
+File có đúng schema trong docs/meta/00-schemas/?
+Entity type có khai báo structure extends nếu cần section đặc thù?
+Instance có đủ frontmatter và body section bắt buộc?
+```
+
 ## Semantic Validation
 
 ```text

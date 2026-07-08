@@ -1,8 +1,8 @@
-# Folder Structure Chuẩn
+﻿# Folder Structure Chuẩn
 
-File này là bản hướng dẫn đọc và dùng tree chuẩn trong `docs/folder_structure.md`.
+File này là home canonical cho folder structure chuẩn của docs.
 
-`docs/folder_structure.md` giữ raw structure. File này giải thích vì sao từng folder tồn tại, folder đó là concern gì, chứa entity type nào, và khi nào không đặt nội dung vào đó.
+Không duy trì thêm `docs/folder_structure.md` ở root. Folder structure chuẩn và phần giải thích cách dùng đều nằm trong file này để tránh hai nguồn truth song song.
 
 ## Nguyên Tắc Chung
 
@@ -40,20 +40,19 @@ Luật:
 
 - README layer và guide phải dùng đúng path có prefix, ví dụ `01-overview/`, không viết rút gọn `overview/`.
 - Khi nói meaning chung, dùng tên concern không prefix được; khi nói path, dùng path có prefix.
-- Không tự thêm concern mới nếu chưa cập nhật `docs/folder_structure.md` và guide tương ứng.
+- Không tự thêm concern mới nếu chưa cập nhật file này và guide/workflow liên quan.
 
 ## Top-Level Docs
 
 | Folder | Vì sao tồn tại | Chứa | Không chứa |
 | --- | --- | --- | --- |
-| `docs/app/` | Giữ truth cụ thể của Central Sync Hub. | Context, business, product, UI, domain, architecture, technical, implementation, quality, operation, decisions. | Generic explanation của docs system. |
-| `docs/guide/` | Giúp người và agent dùng docs system đúng. | Hướng dẫn đọc, viết, trace, folder structure, ví dụ. | Canonical rule mới. |
-| `docs/meta/` | Định nghĩa rule/schema/convention canonical của docs system. | Entity type, relation type, valid triple, validation convention. | App-specific truth và handbook hướng dẫn đọc. |
+| `docs/app/` | Giữ truth cụ thể của Central Sync Hub. | Context, business, product, interface, domain, architecture, technical, implementation, quality, operation, decisions. | Generic explanation của docs system. |
+| `docs/guide/` | Giúp người và agent dùng docs system đúng. | Hướng dẫn đọc, viết, trace, folder structure, unit template, ví dụ. | Canonical rule mới. |
+| `docs/meta/` | Định nghĩa rule/schema/convention canonical của docs system. | Schema contract, entity type, relation type, valid triple, validation convention. | App-specific truth và handbook hướng dẫn đọc. |
 | `docs/theories/` | Giữ reusable reasoning foundation. | Principle, theory, governance, challenge. | Jira/Backlog/module cụ thể. |
-| `docs/app_technical/` | Giữ reusable technical taxonomy/template. | Custom modular monolith template. | Source of truth cụ thể nếu `docs/app` đã có. |
-| `docs/backlog-theories/` | Giữ candidate chưa đủ chín. | Review note, unpromoted idea, provenance tạm. | Rule đang có hiệu lực. |
+| `docs/app_variants/` | Giữ universal app origin và pattern extension reusable. | `raw_app_original` và pattern template như `custom_modular_monolith`. | Source of truth cụ thể nếu `docs/app` đã có. |
+| `docs/workbench/` | Giữ chỗ cho candidate entity/relation workbench. | Status và harness nháp. | Source of truth, app truth, meta rule; hiện chưa được đi vào hoạt động. |
 | `docs/AGENT_SKILLS/` | Giữ checklist/skill cho agent. | Reading strategy, operating checklist. | Human-facing full manual. |
-| `docs/plans/` | Giữ migration plan và provenance. | Migration matrix, phase notes. | Canonical product truth hiện tại. |
 
 ## 00-context
 
@@ -94,19 +93,19 @@ Layer này trả lời: product phải cung cấp gì để phục vụ business
 | `02-product/05-specification/` | Specification | Giữ requirement có thể kiểm chứng. | `01-functional-requirements/`, `02-non-functional-requirements/` | Architecture mechanism. |
 | `02-product/06-acceptance/` | Acceptance | Ghi điều kiện product được chấp nhận. | `acceptance-criteria/` | Automated test implementation. |
 
-## 03-ui
+## 03-interface
 
-Layer này trả lời: người dùng nhìn thấy, hiểu và thao tác với product như thế nào.
+Layer này trả lời: người dùng hoặc operator chạm vào product qua touchpoint nào.
 
 | Path | Concern | Vì sao có folder này | Entity type chuẩn | Không đặt ở đây |
 | --- | --- | --- | --- | --- |
-| `03-ui/01-audience/` | Audience | Ghi kiểu người dùng và nhu cầu UI. | `personas/` | Business stakeholder đầy đủ. |
-| `03-ui/02-experience/` | Experience | Ghi journey và user flow. | `01-journeys/`, `02-user-flows/` | Business process, architecture interaction. |
-| `03-ui/03-structure/` | Structure | Ghi navigation và screen. | `01-navigation/`, `02-screens/` | Product requirement. |
-| `03-ui/04-composition/` | Composition | Ghi component/form có knowledge value. | `01-components/`, `02-forms/` | Source component tree chi tiết. |
-| `03-ui/05-interaction/` | Interaction | Ghi interaction và UI state người dùng thấy. | `01-interactions/`, `02-ui-states/` | Domain lifecycle nội bộ. |
-| `03-ui/06-quality/` | UI Quality | Ghi quality riêng của UI experience. | `accessibility/` | Product-wide quality gate. |
-| `03-ui/07-system/` | UI System | Giữ design system và consistency rule. | `design-systems/` | Global docs convention. |
+| `03-interface/01-audience/` | Audience | Ghi kiểu người hoặc actor chạm vào interface. | `personas/` | Business stakeholder đầy đủ. |
+| `03-interface/02-experience/` | Experience | Ghi journey và flow tại touchpoint. | `01-journeys/`, `02-user-flows/` | Business process, architecture interaction. |
+| `03-interface/03-structure/` | Structure | Ghi navigation, screen hoặc entry structure của touchpoint. | `01-navigation/`, `02-screens/` | Product requirement. |
+| `03-interface/04-composition/` | Composition | Ghi component/form có knowledge value. | `01-components/`, `02-forms/` | Source component tree chi tiết. |
+| `03-interface/05-interaction/` | Interaction | Ghi interaction và visible state tại interface. | `01-interactions/`, `02-ui-states/` | Domain lifecycle nội bộ. |
+| `03-interface/06-quality/` | Interface Quality | Ghi quality riêng của experience tại touchpoint. | `accessibility/` | Product-wide quality gate. |
+| `03-interface/07-system/` | Interface System | Giữ design system và consistency rule của touchpoint. | `design-systems/` | Global docs convention. |
 
 ## 04-domain
 
@@ -142,10 +141,10 @@ Layer này trả lời: mechanism kỹ thuật nào được dùng để hiện 
 | --- | --- | --- | --- |
 | `06-technical/01-platforms/` | Platforms | Ghi runtime, framework, database, tool nền. | Module ownership. |
 | `06-technical/02-interfaces/` | Interfaces | Ghi API/protocol/schema contract. | Controller code. |
-| `06-technical/03-persistence/` | Persistence | Ghi database, migration, storage mechanism. | Domain model meaning. |
-| `06-technical/04-communication/` | Communication | Ghi HTTP, webhook, queue, external protocol. | Business interaction. |
+| `06-technical/03-state-and-storage/` | State And Storage | Ghi database, cache, queue state, file/storage mechanism. | Domain model meaning. |
+| `06-technical/04-exchange/` | Exchange | Ghi HTTP, webhook, queue, file hoặc protocol exchange. | Business interaction. |
 | `06-technical/05-security/` | Security | Ghi auth, credential, secret, security control. | Real secret value. |
-| `06-technical/06-execution/` | Execution | Ghi worker/job/scheduler execution mechanism. | Operation incident response. |
+| `06-technical/06-processing/` | Processing | Ghi worker/job/scheduler hoặc processing mechanism. | Operation incident response. |
 | `06-technical/07-configuration/` | Configuration | Ghi env var, config key, feature flag. | Deployment-specific secret. |
 | `06-technical/08-performance/` | Performance | Ghi timeout, limit, resource budget. | Business KPI. |
 
@@ -158,8 +157,8 @@ Layer này trả lời: technical/architecture được hiện thực trong sour
 | `07-implementation/01-organization/` | Organization | Ghi source layout, module folder, entrypoint. | Architecture rationale dài. |
 | `07-implementation/02-contracts/` | Contracts | Ghi public API/interface ở code level. | Product API contract cho user. |
 | `07-implementation/03-behavior/` | Behavior | Ghi use case implementation và handler/service. | Business process nguyên thủy. |
-| `07-implementation/04-data-access/` | Data Access | Ghi repository/query/transaction/mapping. | Domain meaning. |
-| `07-implementation/05-integration/` | Integration | Ghi client/adapter/webhook handler. | External ecosystem overview. |
+| `07-implementation/04-data-handling/` | Data Handling | Ghi repository/query/transaction/mapping hoặc reader/writer handling. | Domain meaning. |
+| `07-implementation/05-external-boundaries/` | External Boundaries | Ghi client/adapter/webhook handler và external code boundary. | External ecosystem overview. |
 | `07-implementation/06-evolution/` | Evolution | Ghi migration/refactor/compatibility. | Decision rationale cross-layer. |
 | `07-implementation/07-automation/` | Automation | Ghi codegen và AI coding rule. | Generic agent skill. |
 | `07-implementation/08-coding-rules/` | Coding Rules | Ghi import, style, review rule của code. | Documentation meta rule. |
@@ -185,13 +184,13 @@ Layer này trả lời: hệ thống được chạy, quan sát, duy trì và ph
 
 | Path | Concern | Vì sao có folder này | Không đặt ở đây |
 | --- | --- | --- | --- |
-| `09-operation/01-runtime/` | Runtime | Ghi runtime env, dependency, topology thực tế. | Context environment meaning. |
-| `09-operation/02-deployment/` | Deployment | Ghi deploy/release/migration runbook. | Architecture deployment unit abstract. |
-| `09-operation/03-observability/` | Observability | Ghi dashboard, log, metric, alert. | Product dashboard requirement. |
+| `09-operation/01-operating-context/` | Operating Context | Ghi runtime env, dependency, topology hoặc operating context thực tế. | Context environment meaning. |
+| `09-operation/02-release-and-change/` | Release And Change | Ghi deploy/release/migration/change runbook. | Architecture deployment unit abstract. |
+| `09-operation/03-signals/` | Signals | Ghi dashboard, log, metric, alert hoặc signal evidence khác. | Product dashboard requirement. |
 | `09-operation/04-reliability/` | Reliability | Ghi availability, retry, failover. | Quality objective abstract nếu chưa vận hành. |
-| `09-operation/05-incidents/` | Incidents | Ghi incident response/history. | Defect list thuần quality. |
-| `09-operation/06-recovery/` | Recovery | Ghi backup/restore/disaster recovery. | Technical persistence design. |
-| `09-operation/07-capacity/` | Capacity | Ghi resource, load, scale note. | Product traffic assumption nếu chưa observed. |
+| `09-operation/05-operational-events/` | Operational Events | Ghi incident, failed run hoặc operational event history. | Defect list thuần quality. |
+| `09-operation/06-continuity/` | Continuity | Ghi backup/restore/disaster recovery hoặc replay/reprocess plan. | Technical persistence design. |
+| `09-operation/07-resources/` | Resources | Ghi resource, load, scale, quota hoặc cost note. | Product traffic assumption nếu chưa observed. |
 | `09-operation/08-maintenance/` | Maintenance | Ghi patch, data cleanup, scheduled maintenance. | Implementation refactor plan. |
 
 ## 10-decisions

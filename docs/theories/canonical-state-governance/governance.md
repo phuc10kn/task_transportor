@@ -9,7 +9,7 @@
 
 ## Reference notes
 
-- Phase 05 đã nhập provenance từ legacy CIS/workflow/import-theories vào root theory governance và decision layer.
+- App-specific adoption được ghi trong root theory governance và decision layer.
 - Theory giữ generic; app docs mới nói chi tiết schema thật.
 
 ## Challenges

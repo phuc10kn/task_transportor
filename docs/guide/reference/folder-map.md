@@ -1,4 +1,4 @@
-# Folder Map
+﻿# Folder Map
 
 File này là cheat sheet route nhanh: có loại knowledge X thì mở folder nào trước.
 
@@ -23,11 +23,10 @@ docs/guide/reference/folder-structure.md
 | Decision, alternative, superseded decision | `docs/app/10-decisions/README.md` |
 | Documentation rule/schema/convention canonical | `docs/meta/` |
 | Reusable reasoning foundation | `docs/theories/` |
-| Reusable technical taxonomy/template | `docs/app_technical/` |
-| Candidate chưa đủ chín | `docs/backlog-theories/` |
+| Reusable technical taxonomy/template | `docs/app_variants/` |
+| Workbench candidate | `docs/workbench/README.md` chỉ để xem status; hiện chưa được đi vào hoạt động. |
 | Cách dùng docs system | `docs/guide/` |
 | Agent checklist/skill | `docs/AGENT_SKILLS/` |
-| Migration/plan/provenance | `docs/plans/` |
 
 ## Route Theo Câu Hỏi App
 
@@ -36,7 +35,7 @@ docs/guide/reference/folder-structure.md
 | App là gì, scope nền là gì? | `docs/app/00-context/` |
 | Business cần gì và vận hành thế nào? | `docs/app/01-business/` |
 | Product phải cung cấp gì? | `docs/app/02-product/` |
-| Người dùng thao tác thế nào? | `docs/app/03-ui/` |
+| Người dùng hoặc operator thao tác qua touchpoint nào? | `docs/app/03-interface/` |
 | Meaning/domain rule nội bộ là gì? | `docs/app/04-domain/` |
 | System được tổ chức và chia boundary thế nào? | `docs/app/05-architecture/` |
 | Mechanism kỹ thuật nào được chọn? | `docs/app/06-technical/` |

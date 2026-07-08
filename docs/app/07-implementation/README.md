@@ -63,8 +63,8 @@ Chỉ mục nhanh:
 - `01-organization/`
 - `02-contracts/`
 - `03-behavior/`
-- `04-data-access/`
-- `05-integration/`
+- `04-data-handling/`
+- `05-external-boundaries/`
 - `06-evolution/`
 - `07-automation/`
 - `08-coding-rules/`
@@ -82,4 +82,3 @@ Chỉ mục nhanh:
 - Controller/route không chứa business flow dài.
 - Source code detail dài không copy vào docs; docs chỉ giữ contract/rule có giá trị lâu dài.
 - Khi sửa `src/modules`, đọc lại `docs/app/05-architecture/01-structure/README.md` và `docs/app/05-architecture/02-boundaries/README.md`.
-- Rule generic của implementation layer đọc ở `docs/guide/reference/folder-structure.md#07-implementation`.

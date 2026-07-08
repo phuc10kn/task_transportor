@@ -7,6 +7,7 @@
 | **concern** | `04-behavior` |
 | **folder** | `scenarios/` |
 | **ID pattern** | `SCN-{NNN}-{slug}` |
+| **schema** | `entity-instance/v1` |
 
 ## meaning
 
@@ -18,9 +19,9 @@ Khi cần mô tả journey business qua nhiều process.
 
 ## required fields
 
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 
-Body: name, description, composed_processes
+Body: Summary, Meaning, Scenario Context, Composed Processes, Outcomes, Relations, Validation Notes
 
 ## optional fields
 
@@ -29,6 +30,26 @@ trigger, outcomes, stakeholders
 ## lifecycle
 
 draft → active → deprecated
+
+## structure extends
+
+Base: `entity-instance/v1`
+
+Required sections:
+
+- `Scenario Context`
+- `Composed Processes`
+- `Outcomes`
+
+Optional sections:
+
+- `Trigger`
+- `Stakeholders`
+- `Exceptions`
+
+Additional validation:
+
+- Scenario là end-to-end business situation, không phải UI journey hoặc architecture flow.
 
 ## allowed relations (candidate)
 

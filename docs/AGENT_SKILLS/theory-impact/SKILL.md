@@ -1,101 +1,47 @@
 ---
 name: theory-impact
-description: Finds project documentation files affected when a Theory stable ID changes. Searches docs/ for TH-* references using repository grep. Use after theory-refine, theory ID rename, or position changes requiring app doc review.
+description: Trace docs impacted by a theory change or proposed refinement.
 ---
 
 # theory-impact
 
-Tìm project docs nào có thể bị ảnh hưởng khi Theory thay đổi.
-
-Không cần graph database — stable IDs + repository search đủ cho bản Lite.
-
-## Input
-
-```text
-theory stable ID(s): TH-XXX-NN
-optional: mô tả thay đổi (position, boundary, principle)
-```
+Trace impact khi theory đổi hoặc có proposal refine.
 
 ## Workflow
 
 ```text
 Task Progress:
-- [ ] Nhận theory ID(s) đã hoặc sẽ thay đổi
-- [ ] Search toàn bộ docs/ theo ID
-- [ ] Search theory_basis / decision_basis trong frontmatter
-- [ ] Phân loại files theo layer
-- [ ] Đánh giá mức review cần thiết
-- [ ] Trả output theo template
+- [ ] Xác định theory ID/stable position thay đổi
+- [ ] Search references trong docs/app, docs/meta, docs/theories
+- [ ] Kiểm tra app entities có theory_basis liên quan
+- [ ] Kiểm tra decisions liên quan
+- [ ] Phân loại impact: must update, review, no action
+- [ ] Trả report, không tự sửa hàng loạt nếu chưa được yêu cầu
 ```
 
-## Search commands
+## Search Gợi Ý
 
-```bash
-# Tìm stable ID
-rg "TH-MOD-05" docs/
-
-# Tìm trong frontmatter
-rg "theory_basis" docs/ -l
-rg "TH-MOD-05" docs/app/ docs/meta/
+```powershell
+rg -n "TH-[A-Z0-9-]+|<theory-id>|theory_basis" docs/app docs/meta docs/theories
 ```
 
-Mở rộng pattern nếu ID prefix khác (TH-DOM-*, TH-QLT-*, ...).
+## Output
 
-## Output template
-
-```markdown
+```md
 ## theory-impact result
 
-### Theory changed
-- ID: TH-XXX-NN
-- Change summary: [mô tả ngắn]
+### Theory
 
-### Direct references
-| Path | Context | Review priority |
-|------|---------|-----------------|
-| docs/app/05-architecture/.../MOD-001/README.md | theory_basis | high |
+### Must update
 
-### Indirect / derived rules
-| Path | Reason |
-|------|--------|
-| docs/app/07-implementation/.../README.md | rule derived from TH-XXX-NN |
+### Review
 
-### By layer
-- 01-business: [count + paths]
-- 05-architecture: [...]
-- 06-technical: [...]
-- 10-decisions: [...]
+### No action
 
-### Rules requiring review
-- [rule hoặc section cần human xem lại]
-
-### No action needed
-- [files reference ID nhưng không bị ảnh hưởng bởi change type]
+### Open questions
 ```
 
-## Phân loại review priority
+## Guardrails
 
-```text
-high   — theory_basis trực tiếp + derived rule phụ thuộc position đổi
-medium — mention trong prose, cần verify vẫn đúng
-low    — historical reference trong Decision đã superseded
-```
-
-## Ràng buộc
-
-- Chỉ liệt kê — không tự sửa app docs
-- Sau impact review, human hoặc doc-create-entity skill áp dụng thay đổi
-- Search cả `docs/app/`, `docs/meta/` (nếu meta reference theory), `docs/theories/` (cross-refs)
-
-## Anti-patterns
-
-```text
-chỉ search một layer
-bỏ qua theory_basis trong YAML frontmatter
-giả định không có reference vì không thấy trong prose
-```
-
-## Thêm
-
-- Chạy sau theory-refine: [../theory-refine/SKILL.md](../theory-refine/SKILL.md)
-- Layer routing: [../reference/layer-routing.md](../reference/layer-routing.md)
+- Không thay app truth chỉ vì theory đổi nếu decision hiện tại còn hiệu lực.
+- Nếu app/product decision mâu thuẫn theory, ghi finding thay vì tự resolve.

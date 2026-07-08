@@ -38,7 +38,7 @@ Lite ưu tiên:
 | `00-context` | Bối cảnh Central Sync Hub, scope nền, premise, language, ecosystem, environment |
 | `01-business` | Business reality, actor, process, rule, metric |
 | `02-product` | Scope Lite, capability, use case, requirement, acceptance |
-| `03-ui` | Admin UI experience, flow, screen, UI state |
+| `03-interface` | Admin UI experience, operator touchpoint, flow, screen, interaction state |
 | `04-domain` | Vocabulary, entity meaning, lifecycle, invariant |
 | `05-architecture` | Module structure, boundary, interaction, state/data/deployment ownership |
 | `06-technical` | Runtime, API, schema, config, integration mechanism |
@@ -52,7 +52,7 @@ Lite ưu tiên:
 - `00-context`: `TH-HUBFLOW`, `TH-CANON`
 - `01-business`: `TH-HUBFLOW`, `TH-AI-GOV`, `TH-SYNC-SAFE`, `TH-OPS-TRACE`
 - `02-product`: `TH-HUBFLOW`, `TH-CANON`, `TH-AI-GOV`, `TH-SYNC-SAFE`
-- `03-ui`: application của business/product truth
+- `03-interface`: application của business/product truth qua UI/operator touchpoint
 - `04-domain`: `TH-CANON`, `TH-MODULAR`
 - `05-architecture`: toàn bộ 6 theory core
 - `06-technical`: `TH-CANON`, `TH-AI-GOV`, `TH-SYNC-SAFE`, `TH-OPS-TRACE`

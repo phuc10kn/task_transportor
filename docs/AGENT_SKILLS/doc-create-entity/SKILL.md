@@ -1,115 +1,82 @@
 ---
 name: doc-create-entity
-description: Creates new Entity Instance documentation in docs/app/ following Meta entity types, layer/concern placement, ID conventions, and README template. Use when adding problems, features, modules, screens, or other documented entities.
+description: Draft a new docs/app entity instance using docs/meta schemas, docs/guide unit structure, folder-structure, and relation validation.
 ---
 
 # doc-create-entity
 
-Tạo entity instance mới trong `docs/app/` theo Meta và conventions.
-
-## Input
-
-```text
-entity type (Problem, Module, Feature, Screen, ...)
-tên / mô tả ngắn
-optional: theory_basis, decision_basis IDs
-```
+Tạo draft entity instance trong `docs/app`.
 
 ## Workflow
 
 ```text
 Task Progress:
-- [ ] Xác nhận Entity Type canonical trong docs/meta/01-entity-types/
-- [ ] Nếu chưa canonical → NOTE-CANDIDATE, không tự bịa schema
-- [ ] Chọn Layer + Concern đúng (doc-navigate hoặc layer-routing)
-- [ ] Xác nhận ID pattern từ Meta conventions
-- [ ] Tạo folder: <entity-type-plural>/<ID-slug>/README.md
-- [ ] Điền README theo template
-- [ ] Ghi relations — không tự tạo Relation Type mới
-- [ ] Chạy meta-validate trên draft
+- [ ] Đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+- [ ] Đọc docs/guide/workflows/write-docs.md
+- [ ] Xác định canonical home
+- [ ] Chọn schema canonical: docs/meta/00-schemas/entity-instance.md
+- [ ] Chọn unit template: docs/guide/unit-structure/entity/README.md
+- [ ] Xác định layer/concern/entity type bằng docs/guide/reference/folder-structure.md
+- [ ] Xác nhận entity type trong docs/meta/01-entity-types/ hoặc layer-local type hợp lệ
+- [ ] Xác nhận ID/status/naming theo docs/meta/04-conventions/
+- [ ] Draft file theo schema, không tự thêm field ngoài schema
+- [ ] Validate relation bằng docs/guide/workflows/trace-impact.md và meta-validate
 ```
 
-## Placement
+## Path Chuẩn
 
 ```text
-docs/app/<NN-layer>/<concern>/<entity-type-plural>/<ID-slug>/README.md
+docs/app/<NN-layer>/<NN-concern>/<NN-entity-type-folder>/<ID-slug>/README.md
 ```
 
 Ví dụ:
 
 ```text
-docs/app/05-architecture/01-structure/modules/MOD-004-spec-graph/README.md
+docs/app/01-business/04-behavior/01-processes/PROC-001-backlog-to-cis-lite/README.md
 ```
 
-## Trước khi tạo
+## Required Sources
 
-| Kiểm tra | Nguồn |
-|----------|-------|
-| Entity Type tồn tại? | `docs/meta/01-entity-types/` |
-| ID prefix đúng? | `docs/meta/04-conventions/` |
-| Layer/concern đúng? | [../reference/layer-routing.md](../reference/layer-routing.md) |
-| Theory reference? | `theory_basis` — không copy full theory |
+| Cần biết | Đọc |
+| --- | --- |
+| Schema entity instance | `docs/meta/00-schemas/entity-instance.md` |
+| Unit template | `docs/guide/unit-structure/entity/README.md` |
+| Folder structure | `docs/guide/reference/folder-structure.md` |
+| Entity type | `docs/meta/01-entity-types/` |
+| Relation type | `docs/meta/02-relation-types/` |
+| Valid triple | `docs/meta/03-rules/` |
+| Convention | `docs/meta/04-conventions/` |
 
 ## Output
 
-Tạo file theo [../reference/entity-instance-template.md](../reference/entity-instance-template.md).
-
-Trả summary:
-
-```markdown
+```md
 ## doc-create-entity result
 
-### Created
-- Path: docs/app/.../README.md
-- ID: XXX-NNN-slug
-- Entity Type: [type]
-- Layer / Concern: [path]
-
-### Open items
-- NOTE-OPEN: [...]
+### Drafted
+- Path:
+- ID:
+- Entity type:
+- Layer/concern:
 
 ### Validation
-- [ ] meta-validate passed / issues listed
+- Schema:
+- Entity type:
+- Relations:
+- Open questions:
 
-### Related skills
-- theory-find nếu cần bổ sung theory_basis
+### Suggested next
+meta-validate / theory-review / none
 ```
 
-## Relations
+## Guardrails
 
-Trước khi Relation Type chốt trong Meta:
+- Không tạo entity type mới trong `docs/app`.
+- Không bịa schema, ID prefix, relation type hoặc valid triple.
+- Không tạo workbench item vì workbench chưa hoạt động.
+- Nếu chưa chắc, dùng `NOTE-OPEN` hoặc `NOTE-CANDIDATE`.
 
-```markdown
-## Related Entities
-- `MOD-001-orders` — [mô tả liên hệ]
+## References
 
-## Open Relation Question
-- Relation giữa X và Y chưa có canonical type — NOTE-CANDIDATE
-```
-
-Không tự đặt relation type name như canonical.
-
-## Ràng buộc
-
-```text
-Agent output = draft entity — human reviews before commit
-README.md = canonical entry point
-Không tạo supporting docs (views/, examples/) trừ khi cần thiết
-```
-
-Thiếu thông tin → NOTE-OPEN, không assumption ẩn.
-
-## Anti-patterns
-
-```text
-tạo entity type mới trong app/ mà không qua Meta
-đặt Module trong 02-product/
-copy full Theory vào entity README
-bịa ID không theo convention
-```
-
-## Thêm
-
-- Template: [../reference/entity-instance-template.md](../reference/entity-instance-template.md)
-- Validate: [../meta-validate/SKILL.md](../meta-validate/SKILL.md)
+- Entity template helper: [../reference/entity-instance-template.md](../reference/entity-instance-template.md)
+- Meta validate: [../meta-validate/SKILL.md](../meta-validate/SKILL.md)
 - Note types: [../guides/note-types.md](../guides/note-types.md)

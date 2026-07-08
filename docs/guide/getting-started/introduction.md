@@ -1,4 +1,4 @@
-# Introduction
+﻿# Introduction
 
 Hệ docs của repo dùng mô hình Markdown-native:
 
@@ -27,9 +27,9 @@ Vì vậy repo có nhiều folder tài liệu, nhưng mỗi folder có một vai
 | `docs/meta/` | Luật chơi của documentation system. |
 | `docs/app/` | Knowledge cụ thể của Central Sync Hub. |
 | `docs/theories/` | Nguyên lý suy luận reusable mà project tin dùng. |
-| `docs/app_technical/` | Template/taxonomy reusable cho technical architecture. |
+| `docs/app_variants/` | Template/taxonomy reusable cho technical architecture. |
 | `docs/app/10-decisions/` | Quyết định và rationale cross-layer. |
-| `docs/backlog-theories/` | Candidate/chưa promote, không canonical. |
+| `docs/workbench/` | Khu vực dự kiến cho candidate entity/relation, hiện chưa được đi vào hoạt động. |
 | `docs/guide/` | Manual hướng dẫn cách dùng hệ docs. |
 | `docs/AGENT_SKILLS/` | Checklist/skill cho agent thao tác docs. |
 
@@ -46,13 +46,7 @@ Những phần đó là kiến thức chung của documentation system. Guide go
 
 ## Folder structure chuẩn
 
-Raw tree nằm ở:
-
-```text
-docs/folder_structure.md
-```
-
-Bản giải thích dùng để đọc và viết docs nằm ở:
+Folder structure chuẩn và bản giải thích dùng để đọc/viết docs nằm ở:
 
 ```text
 docs/guide/reference/folder-structure.md

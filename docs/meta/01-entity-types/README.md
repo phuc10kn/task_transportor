@@ -2,6 +2,13 @@
 
 Canonical definitions cho Entity Types trong `docs/app/`, layers `00-context` đến `04-domain`.
 
+Schema canonical cho mỗi file entity type definition nằm ở:
+
+```text
+docs/meta/00-schemas/entity-type-definition.md
+docs/meta/00-schemas/structure-extends.md
+```
+
 ## Cấu trúc
 
 Folder mirror `docs/app/` — mỗi Entity Type = một file `.md`:
@@ -64,21 +71,21 @@ docs/app/<cùng-path>/[<entity-type-folder>/]<ID-slug>/README.md
 | NonFunctionalRequirement | `NFR-` | [non-functional-requirement.md](02-product/05-specification/02-non-functional-requirements/non-functional-requirements/non-functional-requirement.md) |
 | AcceptanceCriterion | `AC-` | [acceptance-criterion.md](02-product/06-acceptance/acceptance-criteria/acceptance-criterion.md) |
 
-### 03-ui
+### 03-interface
 
 | Entity Type | ID | Definition |
 |-------------|-----|------------|
-| Persona | `PER-` | [persona.md](03-ui/01-audience/personas/persona.md) |
-| Journey | `JNY-` | [journey.md](03-ui/02-experience/01-journeys/journey.md) |
-| UserFlow | `FLOW-` | [user-flow.md](03-ui/02-experience/02-user-flows/user-flow.md) |
-| Navigation | `NAV-` | [navigation.md](03-ui/03-structure/01-navigation/navigation.md) |
-| Screen | `SCR-` | [screen.md](03-ui/03-structure/02-screens/screen.md) |
-| UIComponent | `CMP-` | [ui-component.md](03-ui/04-composition/01-components/ui-component.md) |
-| Form | `FORM-` | [form.md](03-ui/04-composition/02-forms/form.md) |
-| Interaction | `INT-` | [interaction.md](03-ui/05-interaction/01-interactions/interaction.md) |
-| UIState | `UIST-` | [ui-state.md](03-ui/05-interaction/02-ui-states/ui-state.md) |
-| AccessibilityRequirement | `A11Y-` | [accessibility-requirement.md](03-ui/06-quality/accessibility/accessibility-requirement.md) |
-| DesignSystem | `DS-` | [design-system.md](03-ui/07-system/design-systems/design-system.md) |
+| Persona | `PER-` | [persona.md](03-interface/01-audience/personas/persona.md) |
+| Journey | `JNY-` | [journey.md](03-interface/02-experience/01-journeys/journey.md) |
+| UserFlow | `FLOW-` | [user-flow.md](03-interface/02-experience/02-user-flows/user-flow.md) |
+| Navigation | `NAV-` | [navigation.md](03-interface/03-structure/01-navigation/navigation.md) |
+| Screen | `SCR-` | [screen.md](03-interface/03-structure/02-screens/screen.md) |
+| UIComponent | `CMP-` | [ui-component.md](03-interface/04-composition/01-components/ui-component.md) |
+| Form | `FORM-` | [form.md](03-interface/04-composition/02-forms/form.md) |
+| Interaction | `INT-` | [interaction.md](03-interface/05-interaction/01-interactions/interaction.md) |
+| UIState | `UIST-` | [ui-state.md](03-interface/05-interaction/02-ui-states/ui-state.md) |
+| AccessibilityRequirement | `A11Y-` | [accessibility-requirement.md](03-interface/06-quality/accessibility/accessibility-requirement.md) |
+| DesignSystem | `DS-` | [design-system.md](03-interface/07-system/design-systems/design-system.md) |
 
 ### 04-domain
 
@@ -108,6 +115,26 @@ lifecycle
 allowed relations (candidate)
 validation
 ```
+
+Không tạo field/section ngoài schema nếu chưa cập nhật `docs/meta/00-schemas/`.
+
+## Schema chung và schema extend
+
+`entity-instance/v1` giữ phần chung cho mọi entity instance.
+
+Phần khác biệt theo từng `entity_type` phải nằm trong file definition của type đó, tại section:
+
+```md
+## structure extends
+```
+
+Ví dụ:
+
+```text
+docs/meta/01-entity-types/01-business/04-behavior/01-processes/processes/process.md
+```
+
+Nếu một type không khai báo `structure extends`, instance của type đó dùng base schema và core sections mặc định.
 
 ## Relation Types
 

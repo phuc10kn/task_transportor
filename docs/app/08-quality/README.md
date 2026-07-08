@@ -26,15 +26,6 @@ Lite được coi là đạt ở mức product khi:
 - Job lỗi retry theo policy, hết retry chuyển `failed`, admin retry được.
 - Dashboard/Admin UI hiển thị pending review, missing mapping, failed job và open anomaly.
 
-Business scenario evidence từ Phase 03:
-
-- Happy path validates end-to-end `Backlog -> CIS -> review/prepare -> Jira dry-run -> CIS -> Jira`.
-- Blocked sync validates mapping/anomaly/dry-run gates trước outbound.
-- Retry flow validates dashboard/journal trước khi retry.
-- Người đọc biết issue bị block vì missing mapping, anomaly, stale dry-run, translation review, config thiếu, credential thiếu.
-- Người đọc biết attachment failure có recovery riêng và không mặc định làm fail toàn bộ issue ingest.
-- Người đọc biết state business của issue/translation/anomaly/job khác với mechanism kỹ thuật của worker/API.
-
 Quality objectives Lite hiện tại:
 
 - Correctness: dữ liệu đi đúng `Backlog -> CIS -> Jira`, không đi tắt Backlog -> Jira.
@@ -43,6 +34,7 @@ Quality objectives Lite hiện tại:
 - Recoverability: failed job, attachment failure và stale preview có đường xử lý rõ.
 - Operator clarity: Dashboard/Admin UI hiển thị pending review, missing mapping, failed job và open anomaly.
 - Data separation: source snapshot, canonical CIS data và target preview không bị trộn.
+- Quality evidence hiện tại bao phủ happy path, blocked sync, retry flow, operator visibility và tách state business khỏi mechanism kỹ thuật.
 
 Verification command:
 
@@ -67,14 +59,7 @@ Manual acceptance Lite còn sống:
 - Sync Jira thật chỉ chạy sau khi dry-run hợp lệ.
 - Dashboard hiển thị pending review, missing mapping, failed job và open anomaly.
 - SQLite backup được chạy theo operation runbook trước khi coi demo/release an toàn.
-
-Issue Editor quality gate:
-
-- Dry-run Jira dùng canonical effective values mới nhất.
-- Translation queue/review không còn là gate riêng chặn Issue Editor sync Jira; sync state vẫn chặn `pending_translate`.
-- Attachment outbound chưa nối vào Issue Editor dry-run/sync, nên không dùng attachment warning làm gate v1.
-- Translation source chỉ lấy từ Backlog branch hiện tại; stale queue item không fill nội dung dịch.
-- `Pull whole project` đang disable ở FE nên manual acceptance hiện ưu tiên `Pull one issue` và `Resync from Backlog`.
+- Issue Editor gate: dry-run dùng canonical effective values mới nhất; stale queue item không fill nội dung dịch; attachment warning chưa là gate v1; manual acceptance ưu tiên `Pull one issue` và `Resync from Backlog`.
 
 ## Folder Structure
 
@@ -106,4 +91,3 @@ Chỉ mục nhanh:
 - Checklist `Unit test check (Agent)` chỉ tick khi lệnh/test tự động pass thật.
 - Checklist `Manual check (Người review)` chỉ tick khi user xác nhận manual pass.
 - Nếu một item chưa thể tick, để nguyên chưa tick và ghi lý do.
-- Rule generic của quality layer đọc ở `docs/guide/reference/folder-structure.md#08-quality`.

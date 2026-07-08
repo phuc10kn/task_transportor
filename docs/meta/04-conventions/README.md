@@ -2,6 +2,8 @@
 
 Cách documentation được viết và tổ chức. Nguồn: [meta/README.md](../README.md).
 
+Schema contract canonical nằm ở [00-schemas/](../00-schemas/). Conventions chỉ chuẩn hóa naming, status, reference và format chi tiết.
+
 | File | Nội dung |
 |------|----------|
 | [id-conventions.md](id-conventions.md) | ID pattern, prefix |
@@ -14,4 +16,4 @@ Cách documentation được viết và tổ chức. Nguồn: [meta/README.md](.
 | [note-format.md](note-format.md) | NOTE-OPEN, NOTE-CANDIDATE, ... |
 | [theory-reference.md](theory-reference.md) | theory_basis format |
 | [decision-reference.md](decision-reference.md) | decision_basis format |
-| [validation-model.md](validation-model.md) | 5 loại validation |
+| [validation-model.md](validation-model.md) | Validation layers |

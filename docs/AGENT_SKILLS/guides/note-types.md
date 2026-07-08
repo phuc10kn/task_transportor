@@ -1,80 +1,64 @@
 # Note Types
 
-Khi thiếu thông tin, agent **không** fix bừa, không tự chốt, không fill gap bằng assumption ẩn.
-
-Dùng note type phù hợp trong entity hoặc section tương ứng.
-
----
+Khi thiếu thông tin, agent không fix bừa và không fill gap bằng assumption ẩn.
 
 ## NOTE-OPEN
 
-Thông tin chưa có, cần người hoặc process bổ sung.
+Thông tin chưa có hoặc cần người/process bổ sung.
 
-```markdown
-> **NOTE-OPEN**: ID prefix cho entity type này chưa được Meta chốt.
+```md
+> **NOTE-OPEN**: Chưa xác định canonical home cho nội dung này.
 ```
-
----
 
 ## NOTE-CANDIDATE
 
 Đề xuất chưa được canonical hóa.
 
-```markdown
-> **NOTE-CANDIDATE**: Entity type `DomainEvent` có thể cần thêm vào Meta — chưa chốt.
+```md
+> **NOTE-CANDIDATE**: Entity type `DomainEvent` chưa được chốt trong `docs/meta`.
 ```
 
-Candidate **không** được coi là canonical.
-
----
+Candidate không được coi là canonical.
 
 ## NOTE-CONFLICT
 
-Hai nguồn knowledge mâu thuẫn nhau.
+Hai nguồn knowledge mâu thuẫn.
 
-```markdown
-> **NOTE-CONFLICT**: MOD-002 nói state owned locally; TH-MOD-05 yêu cầu single owner.
+```md
+> **NOTE-CONFLICT**: Product scope và decision hiện tại mô tả khác nhau.
 ```
-
----
 
 ## NOTE-EVIDENCE
 
-Thiếu evidence hoặc cần trích dẫn nguồn.
+Thiếu evidence hoặc cần dẫn nguồn.
 
-```markdown
-> **NOTE-EVIDENCE**: Cần link tới incident INC-003 để chứng minh rule này.
+```md
+> **NOTE-EVIDENCE**: Cần link incident hoặc metric để chứng minh rule này.
 ```
-
----
 
 ## NOTE-DECISION
 
-Cần Decision trước khi chốt knowledge.
+Cần decision trước khi chốt knowledge.
 
-```markdown
-> **NOTE-DECISION**: Placement của aggregate boundary cần DEC mới.
+```md
+> **NOTE-DECISION**: Cần decision trước khi đổi boundary module.
 ```
-
----
 
 ## NOTE-THEORY
 
-Cần xem xét hoặc reference Theory trước khi chốt.
+Cần xem xét theory trước khi chốt.
 
-```markdown
-> **NOTE-THEORY**: Rule này có thể vi phạm TH-MOD-03 — cần theory-review.
+```md
+> **NOTE-THEORY**: Rule này cần review với theory modular architecture.
 ```
 
----
+## Khi Nào Dùng
 
-## Khi nào dùng
-
-| Tình huống | Note type |
-|------------|-----------|
-| Thiếu thông tin | NOTE-OPEN |
-| Đề xuất chưa chốt | NOTE-CANDIDATE |
-| Mâu thuẫn giữa docs | NOTE-CONFLICT |
-| Thiếu nguồn chứng minh | NOTE-EVIDENCE |
-| Cần quyết định project | NOTE-DECISION |
-| Liên quan Theory chưa rõ | NOTE-THEORY |
+| Tình huống | Note |
+| --- | --- |
+| Thiếu thông tin | `NOTE-OPEN` |
+| Đề xuất chưa chốt | `NOTE-CANDIDATE` |
+| Mâu thuẫn | `NOTE-CONFLICT` |
+| Thiếu evidence | `NOTE-EVIDENCE` |
+| Cần quyết định | `NOTE-DECISION` |
+| Cần review theory | `NOTE-THEORY` |

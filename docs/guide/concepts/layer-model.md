@@ -11,7 +11,7 @@ Ví dụ:
 | `00-context` | App tồn tại trong bối cảnh nào? |
 | `01-business` | Business cần gì và vận hành thế nào? |
 | `02-product` | Product phải cung cấp gì? |
-| `03-ui` | Người dùng trải nghiệm và tương tác ra sao? |
+| `03-interface` | Người dùng hoặc operator tương tác qua touchpoint nào? |
 | `04-domain` | Meaning/domain rule nội bộ là gì? |
 | `05-architecture` | System được tổ chức và boundary thế nào? |
 | `06-technical` | Mechanism kỹ thuật nào được chọn? |
@@ -59,7 +59,6 @@ Layer README không nên lặp lại toàn bộ documentation architecture chung
 Mỗi layer trong `docs/app` dùng concern folder có prefix số theo:
 
 ```text
-docs/folder_structure.md
 docs/guide/reference/folder-structure.md
 ```
 

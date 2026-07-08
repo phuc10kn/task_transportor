@@ -78,7 +78,6 @@ Chỉ mục nhanh:
 ## Rule Riêng Hiện Tại
 
 - Source snapshot, canonical CIS data và target preview là ba meaning khác nhau; không gộp trong Domain.
-- Domain meaning không được đổi chỉ để khớp schema, API hoặc source layout hiện tại.
+- Domain meaning không được đổi chỉ để khớp schema, API, source layout hiện tại.
 - Thay đổi invariant/gate như mapping gap, anomaly block, stale preview phải trace tới Product/Decision liên quan.
 - UI, Technical và Implementation chỉ hiện thực/trình bày domain meaning, không tự tạo domain rule mới.
-- Rule generic của domain layer đọc ở `docs/guide/reference/folder-structure.md#04-domain`.

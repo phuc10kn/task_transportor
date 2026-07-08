@@ -19,6 +19,18 @@ expand only when needed
 7. Mở docs/meta nếu cần validate structure/relation/convention.
 ```
 
+## Output Sau Khi Đọc
+
+Sau workflow đọc, phải kết luận được:
+
+- canonical home của nội dung cần đọc hoặc sửa;
+- layer/concern/entity type liên quan nếu task chạm `docs/app`;
+- schema/unit structure cần dùng nếu task tạo hoặc sửa knowledge unit;
+- relation hoặc valid triple cần kiểm tra nếu task có impact;
+- workflow tiếp theo cần dùng: `write-docs`, `trace-impact`, `slim-layer-readme` hoặc `promote-candidate`.
+
+Nếu chưa kết luận được các điểm trên, dừng ở `docs/guide/reference/canonical-map.md` và `docs/guide/reference/folder-structure.md` trước khi sửa file.
+
 ## Khi nào đọc guide
 
 Đọc guide khi:
@@ -27,7 +39,7 @@ expand only when needed
 - cần biết đặt nội dung ở đâu;
 - cần trace relation;
 - cần cleanup docs rời rạc;
-- cần promote backlog.
+- cần promote candidate.
 
 Không cần đọc guide cho mọi task code nhỏ nếu bạn đã biết đường đi.
 
@@ -41,4 +53,3 @@ Chỉ đọc full `theory.md` khi:
 - cần deep reasoning;
 - cần sửa theory;
 - cần tạo/challenge principle.
-

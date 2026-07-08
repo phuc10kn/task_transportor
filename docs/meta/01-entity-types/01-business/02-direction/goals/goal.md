@@ -7,6 +7,7 @@
 | **concern** | `02-direction` |
 | **folder** | `goals/` |
 | **ID pattern** | `GOAL-{NNN}-{slug}` |
+| **schema** | `entity-instance/v1` |
 
 ## meaning
 
@@ -18,9 +19,9 @@ Khi business có outcome mong muốn rõ ràng.
 
 ## required fields
 
-id, slug, entity_type, layer, concern, status
+schema, id, slug, title, entity_type, layer, concern, status, summary
 
-Body: statement, reason, priority
+Body: Summary, Meaning, Statement, Reason, Priority, Relations, Validation Notes
 
 ## optional fields
 
@@ -29,6 +30,26 @@ target_outcome, related_problems, time_horizon, owner, theory_basis
 ## lifecycle
 
 draft → active → achieved | abandoned
+
+## structure extends
+
+Base: `entity-instance/v1`
+
+Required sections:
+
+- `Statement`
+- `Reason`
+- `Priority`
+
+Optional sections:
+
+- `Target Outcome`
+- `Time Horizon`
+- `Owner`
+
+Additional validation:
+
+- Goal phải là outcome business, không phải feature, screen hoặc implementation task.
 
 ## allowed relations (candidate)
 
