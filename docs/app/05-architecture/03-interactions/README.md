@@ -4,7 +4,7 @@ Concern này định nghĩa các loại flow chuẩn cho custom modular monolith
 
 ## Entity type chuẩn
 
-- [InteractionFlow](./interaction-flows/interaction-flow.md)
+- [InteractionFlow](../../../meta/01-entity-types/05-architecture/03-interactions/interaction-flows/interaction-flow.md) *(canonical: docs/meta)*
 - [InboundIngestFlow](./inbound-ingest-flows/inbound-ingest-flow.md)
 - [HumanReviewFlow](./human-review-flows/human-review-flow.md)
 - [CanonicalEditFlow](./canonical-edit-flows/canonical-edit-flow.md)

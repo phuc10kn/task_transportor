@@ -33,7 +33,6 @@ proposed -> active -> retired
 ## allowed relations (candidate)
 
 ```text
-PerformanceStrategy -> QualityObjective (supports)
 PerformanceStrategy -> CapacityPlan (affects)
 PerformanceStrategy -> DataStore (optimizes)
 ```

@@ -21,7 +21,7 @@ decision_basis:
   - DEC-021
 relations:
   governed_by:
-    - BRULE-001
+    - MB-001
 ---
 ```
 

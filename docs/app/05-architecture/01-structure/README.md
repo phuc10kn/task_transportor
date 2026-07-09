@@ -4,7 +4,7 @@ Concern này định nghĩa khung structure chuẩn cho custom modular monolith,
 
 ## Entity type chuẩn
 
-- [Module](./modules/module.md)
+- [Module](../../../meta/01-entity-types/05-architecture/01-structure/modules/module.md) *(canonical: docs/meta)*
 - [ModuleGroup](./module-groups/module-group.md)
 - [IntegrationModule](./integration-modules/integration-module.md)
 - [ReadModelComponent](./read-model-components/read-model-component.md)

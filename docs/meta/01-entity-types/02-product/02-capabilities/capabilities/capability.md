@@ -1,4 +1,4 @@
-# Capability
+﻿# Capability
 
 | Field | Value |
 |-------|-------|
@@ -24,7 +24,7 @@ Body: statement, purpose
 
 ## optional fields
 
-supported_requirements, users_or_actors, inputs, outputs, boundaries, maturity
+related_requirements, users_or_actors, inputs, outputs, boundaries, maturity
 
 ## lifecycle
 
@@ -32,13 +32,14 @@ planned → active → deprecated
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| supports | `supports` | BusinessRequirement | false | 0..n |
-| delivered_by | `delivered_by` | Feature | false | 0..n |
+| delivered_by | `delivered_by` | Feature | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Không mô tả screen, API endpoint, class
+
+

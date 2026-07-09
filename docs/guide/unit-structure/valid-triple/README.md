@@ -10,20 +10,19 @@ Schema canonical: [valid-triple-rule.md](../../../meta/00-schemas/valid-triple-r
 valid_triple_rule:
   scope: 01-business
   triples:
-    - source: Process
-      relation: governed_by
-      target: BusinessRule
+    - source: BusinessRule
+      relation: governs
+      target: Process
       cardinality: 0..n
-      required: false
       notes: Rule chi phối process.
 ```
 
 ## Markdown Table
 
 ```md
-| Source | Relation | Target | Cardinality | Required? | Notes |
-| --- | --- | --- | --- | --- | --- |
-| Process | `governed_by` | BusinessRule | 0..n | no | Rule chi phối process. |
+| Source | Relation | Target | Cardinality | Notes |
+| --- | --- | --- | --- | --- |
+| BusinessRule | `governs` | Process | 0..n | Rule chi phối process. |
 ```
 
 ## Rule
@@ -31,4 +30,4 @@ valid_triple_rule:
 - `Source` và `Target` phải là entity type.
 - `Relation` phải là relation type canonical.
 - Valid triple không chứa app instance ID.
-- Cardinality mặc định là `0..n` nếu file legacy chưa có column này.
+- Cardinality mặc định `0..n` nếu file legacy chưa có cột này.

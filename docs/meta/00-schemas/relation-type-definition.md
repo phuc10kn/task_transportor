@@ -9,14 +9,14 @@ Unit template: [relation-type](../../guide/unit-structure/relation-type/README.m
 ## Header Table
 
 ```md
-# governed_by
+# governs
 
 | Field | Value |
 | --- | --- |
-| **name** | `governed_by` |
-| **canonical direction** | Source --governed_by--> Target |
-| **inverse** | `governs` |
-| **inverse kind** | `paired` |
+| **name** | `governs` |
+| **canonical direction** | Source --governs--> Target |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 ```
 
 | Field | Bắt buộc (new/edited) | Ghi chú |

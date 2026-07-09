@@ -7,7 +7,6 @@ Business — relations trong layer 01-business
 | `addresses` | [addresses.md](addresses.md) |
 | `composes` | [composes.md](composes.md) |
 | `generates` | [generates.md](generates.md) |
-| `governed_by` | [governed_by.md](governed_by.md) |
 | `input_to` | [input_to.md](input_to.md) |
 | `measured_by` | [measured_by.md](measured_by.md) |
 | `measures` | [measures.md](measures.md) |

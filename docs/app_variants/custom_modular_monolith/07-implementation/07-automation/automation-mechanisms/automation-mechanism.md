@@ -35,7 +35,6 @@ proposed -> active -> deprecated
 ```text
 AutomationMechanism -> CodingRule (enforces)
 AutomationMechanism -> VerificationCheck (runs)
-AutomationMechanism -> SourceStructure (supports)
 ```
 
 ## validation

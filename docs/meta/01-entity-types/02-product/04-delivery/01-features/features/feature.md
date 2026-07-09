@@ -1,4 +1,4 @@
-# Feature
+﻿# Feature
 
 | Field | Value |
 |-------|-------|
@@ -32,13 +32,14 @@ planned → active → retired
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| implements | `implements` | Capability | false | 0..n |
-| exposed_via | `exposed_via` | Screen | false | 0..n |
+| implements | `implements` | Capability | allowed_when_known | 0..n |
+| exposed_via | `exposed_via` | Screen | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Không chứa implementation detail
+

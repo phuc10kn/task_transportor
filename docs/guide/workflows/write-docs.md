@@ -4,12 +4,12 @@
 
 Trước khi sửa file, phải xác định:
 
-- task đang sửa canonical knowledge hay chỉ thêm ghi chú chưa chốt;
+- task đang sửa canonical knowledge hay chỉ thêm ghi chú chưa chót;
 - canonical home nằm ở `docs/app`, `docs/meta`, `docs/theories`, `docs/app_variants` hay `docs/AGENT_SKILLS`;
 - unit cần sửa là README layer, entity instance, entity type, relation type, valid triple, theory hay decision;
 - workflow trace impact có cần chạy sau khi sửa không.
 
-Nếu chưa xác định được canonical home hoặc unit type, quay lại [read-for-task.md](read-for-task.md).
+Nếu chưa chắc canonical home hay unit type, quay lại [read-for-task.md](read-for-task.md).
 
 ## Bước 1: phân loại knowledge
 
@@ -20,7 +20,7 @@ Nếu chưa xác định được canonical home hoặc unit type, quay lại [r
 | Reusable reasoning principle | `docs/theories/` |
 | Reusable technical taxonomy/template | `docs/app_variants/` |
 | Long-term choice/trade-off | `docs/app/10-decisions/` |
-| Candidate/chưa chắc | Chưa có home đang hoạt động; dùng `NOTE-OPEN` hoặc giữ ngoài docs cho tới khi đủ promote. |
+| Candidate/chưa chốt | Chưa có home đang hoạt động; dùng `NOTE-OPEN` hoặc note ngoài docs cho tới khi promote. |
 
 Sau khi xác định home là `docs/app/`, chọn layer, concern và entity type theo:
 
@@ -28,7 +28,7 @@ Sau khi xác định home là `docs/app/`, chọn layer, concern và entity type
 docs/guide/reference/folder-structure.md
 ```
 
-Không dùng tên concern rút gọn nếu đang viết path. Path chuẩn có prefix số như `01-business/04-behavior/01-processes/`.
+Không dùng tên concern rút gọn khi viết path. Path chuẩn có prefix số như `01-business/04-behavior/01-processes/`.
 
 Trước khi tạo hoặc sửa knowledge unit, chọn schema canonical:
 
@@ -45,14 +45,14 @@ Trước khi tạo hoặc sửa knowledge unit, chọn schema canonical:
 
 Schema gate:
 
-- Không tạo unit mới nếu chưa chọn được schema canonical.
+- Không tạo unit mới nếu chưa chọn schema canonical.
 - Không tự tạo schema name trong guide.
-- Nếu schema chưa tồn tại trong `docs/meta/00-schemas/`, dừng và xử lý ở `docs/meta` trước.
-- Nếu chỉ cần ví dụ hoặc cách dùng schema, sửa `docs/guide/unit-structure/`, không sửa schema canonical.
+- Nếu schema chưa tồn tại trong `docs/meta/00-schemas/`, xử lý trước ở `docs/meta`.
+- Nếu chỉ cần ví dụ hoá schema, sửa guide/unit template, không sửa schema canonical.
 
 ## Bước 2: sửa file hiện có trước
 
-Không tạo file mới nếu nội dung vẫn cùng chủ đề với file hiện có.
+Không tạo file mới nếu nội dung vẫn trùng chủ đề với file hiện có.
 
 Ví dụ:
 
@@ -60,7 +60,7 @@ Ví dụ:
 Dry-run Jira requirement
 ```
 
-thường nên cập nhật `docs/app/02-product`, `docs/app/05-architecture`, hoặc `docs/app/08-quality`, không tạo một file lẻ nếu chưa có entity rõ.
+Thông thường cập nhật `docs/app/02-product`, `docs/app/05-architecture`, hoặc `docs/app/08-quality`; không tạo file thừa nếu chưa có entity đã rõ.
 
 ## Bước 3: kiểm tra boundary
 
@@ -68,7 +68,7 @@ Không đưa:
 
 - code/schema/API detail vào business layer;
 - app-specific detail vào pure theory;
-- relation chưa có slot/meta rule vào app docs như relation canonical;
+- relation chưa có slot/meta rule vào app docs như canonical relation;
 - decision rationale dài vào implementation file.
 
 Không tự tạo metadata field, heading hoặc relation mới nếu schema trong `docs/meta/00-schemas/` chưa cho phép.
@@ -77,15 +77,13 @@ Không tự tạo metadata field, heading hoặc relation mới nếu schema tro
 
 Nếu chưa chắc:
 
-```text
-NOTE-OPEN
-NOTE-CANDIDATE
-NOTE-CONFLICT
-NOTE-DECISION
-NOTE-THEORY
-```
+- NOTE-OPEN
+- NOTE-CANDIDATE
+- NOTE-CONFLICT
+- NOTE-DECISION
+- NOTE-THEORY
 
-Không đưa vào `docs/workbench/` vì workbench hiện chưa được đi vào hoạt động.
+Không đưa vào `docs/workbench/` khi workbench chưa được kích hoạt.
 
 ## Bước 5: review sau khi sửa
 
@@ -96,6 +94,9 @@ Trước khi kết thúc, kiểm tra:
 - app README layer không chứa generic theory dài;
 - meta chỉ chứa luật/schema/convention, không chứa app-specific detail;
 - entity mới không tự tạo relation ngoài slot của entity type;
-- relation mới dùng slot, relation type và valid triple hợp lệ;
-- path cũ, folder cũ và retired workflow không quay lại;
-- nếu workflow guide đổi, kiểm tra tác động tới `docs/AGENT_SKILLS`.
+- khi tạo entity mới:
+  - nếu slot relation là `required_at_creation` thì target bắt buộc tồn tại trước khi tạo entity;
+  - nếu slot relation là `allowed_when_known` thì relation ghi khi đã có fact và target; thiếu vẫn không phải lỗi hard;
+- relation mới phải dùng slot, relation type và valid triple hợp lệ;
+- path, folder, workflow retired không quay lại;
+- nếu guide thay đổi, kiểm tra tác động tới `docs/AGENT_SKILLS`.

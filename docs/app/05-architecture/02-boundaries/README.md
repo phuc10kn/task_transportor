@@ -4,7 +4,7 @@ Concern này định nghĩa taxonomy boundary chuẩn cho custom modular monolit
 
 ## Entity type chuẩn
 
-- [ModuleBoundary](./module-boundaries/module-boundary.md)
+- [ModuleBoundary](../../../meta/01-entity-types/05-architecture/02-boundaries/module-boundaries/module-boundary.md) *(canonical: docs/meta)*
 - [ImportBoundary](./import-boundaries/import-boundary.md)
 - [ControllerBoundary](./controller-boundaries/controller-boundary.md)
 - [PublicApiBoundary](./public-api-boundaries/public-api-boundary.md)

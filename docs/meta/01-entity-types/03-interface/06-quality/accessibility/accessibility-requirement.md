@@ -1,4 +1,4 @@
-# AccessibilityRequirement
+﻿# AccessibilityRequirement
 
 | Field | Value |
 |-------|-------|
@@ -32,12 +32,13 @@ draft → active → verified
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| applies_to | `applies_to` | Screen | false | 0..n |
+| constrains | `constrains` | Screen | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - 03-interface/quality ≠ 08-quality system assurance
+

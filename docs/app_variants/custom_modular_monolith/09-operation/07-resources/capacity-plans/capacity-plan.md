@@ -33,7 +33,7 @@ draft -> active -> revised
 ## allowed relations (candidate)
 
 ```text
-CapacityPlan -> RuntimeEnvironment (applies_to)
+CapacityPlan -> RuntimeEnvironment (plans_capacity_for)
 CapacityPlan -> PerformanceStrategy (informed_by)
 CapacityPlan -> ObservabilitySignal (tracked_by)
 ```

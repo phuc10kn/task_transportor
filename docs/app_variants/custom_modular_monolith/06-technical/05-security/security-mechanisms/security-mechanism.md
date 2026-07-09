@@ -34,7 +34,6 @@ proposed -> active -> deprecated
 
 ```text
 SecurityMechanism -> Interface (protects)
-SecurityMechanism -> QualityObjective (supports)
 SecurityMechanism -> MaintenanceProcedure (maintained_by)
 ```
 

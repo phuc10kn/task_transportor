@@ -5,10 +5,10 @@
 Doc này chỉ đóng vai trò meta summary cho relation vocabulary:
 - canonical direction theo `relation-model.md`;
 - mô tả file-level `relation type` tại cấp definition;
-- không thay thế logic truy vấn reverse/query, logic đó ở guide/`relation-model.md`;
+- không thay thế logic reverse/query, logic đó ở guide/`relation-model.md`;
 - valid triple vẫn do `03-rules` làm.
 
-Vocabulary cho relations giữa entities. Mỗi Relation Type = một file `.md`, **phân nhóm theo folder để dễ tìm**.
+Vocabulary cho relations giữa entities. Mỗi Relation Type = một file `.md`, phân nhóm theo folder để dễ tìm.
 
 Schema canonical cho mỗi file relation type definition nằm ở:
 
@@ -44,7 +44,7 @@ Relation Type không tự quyết định entity type nào được nối với 
 ├── 05-architecture/  relations chủ yếu trong architecture layer
 ├── cross-layer/      relations nối entities giữa các layer
 ├── shared/           relations generic, dùng ở nhiều layer
-└── structural/       depends_on, supersedes (architecture, decisions)
+└── structural/       reserved structural relations nếu được promote lại
 ```
 
 ## Quy tắc phân nhóm
@@ -53,8 +53,8 @@ Relation Type không tự quyết định entity type nào được nối với 
 |--------|---------|
 | `00-context` … `05-architecture` | Relation chủ yếu phục vụ một layer |
 | `cross-layer` | Relation nối entities thuộc layer khác nhau |
-| `shared` | Relation generic (`applies_to`, `constrains`, …) dùng ở ≥2 layer |
-| `structural` | Relation cấu trúc hệ thống, reserved cho layers 05+ |
+| `shared` | Relation generic hoặc reusable (`constrains`, `governs`, …) dùng ở ≥2 layer hoặc app variant |
+| `structural` | Relation cấu trúc hệ thống, hiện chưa có active relation type |
 
 Folder là grouping/discovery aid, không phải valid-usage rule.
 
@@ -62,15 +62,12 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 
 ## Index theo nhóm
 
-
 ### 00-context
 
 | Relation | File |
 |----------|------|
 | `has_scope` | [00-context/has_scope.md](00-context/has_scope.md) |
 | `hosts` | [00-context/hosts.md](00-context/hosts.md) |
-| `integrates_with_context` | [00-context/integrates_with_context.md](00-context/integrates_with_context.md) |
-| `runs_in` | [00-context/runs_in.md](00-context/runs_in.md) |
 
 ### 01-business
 
@@ -79,7 +76,6 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | `addresses` | [01-business/addresses.md](01-business/addresses.md) |
 | `composes` | [01-business/composes.md](01-business/composes.md) |
 | `generates` | [01-business/generates.md](01-business/generates.md) |
-| `governed_by` | [01-business/governed_by.md](01-business/governed_by.md) |
 | `input_to` | [01-business/input_to.md](01-business/input_to.md) |
 | `measured_by` | [01-business/measured_by.md](01-business/measured_by.md) |
 | `measures` | [01-business/measures.md](01-business/measures.md) |
@@ -111,7 +107,6 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | `displayed_on` | [03-interface/displayed_on.md](03-interface/displayed_on.md) |
 | `follows` | [03-interface/follows.md](03-interface/follows.md) |
 | `for_audience` | [03-interface/for_audience.md](03-interface/for_audience.md) |
-| `governs` | [03-interface/governs.md](03-interface/governs.md) |
 | `occurs_on` | [03-interface/occurs_on.md](03-interface/occurs_on.md) |
 | `submits_via` | [03-interface/submits_via.md](03-interface/submits_via.md) |
 | `transitions_to` | [03-interface/transitions_to.md](03-interface/transitions_to.md) |
@@ -125,7 +120,6 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | Relation | File |
 |----------|------|
 | `applied_by` | [04-domain/applied_by.md](04-domain/applied_by.md) |
-| `constrained_by` | [04-domain/constrained_by.md](04-domain/constrained_by.md) |
 | `describes` | [04-domain/describes.md](04-domain/describes.md) |
 | `emits` | [04-domain/emits.md](04-domain/emits.md) |
 | `enforces` | [04-domain/enforces.md](04-domain/enforces.md) |
@@ -149,17 +143,10 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 
 | Relation | File |
 |----------|------|
-| `aligns_with` | [cross-layer/aligns_with.md](cross-layer/aligns_with.md) |
 | `derived_from` | [cross-layer/derived_from.md](cross-layer/derived_from.md) |
 | `exposed_via` | [cross-layer/exposed_via.md](cross-layer/exposed_via.md) |
-| `informs` | [cross-layer/informs.md](cross-layer/informs.md) |
-| `leads_to` | [cross-layer/leads_to.md](cross-layer/leads_to.md) |
 | `maps_from` | [cross-layer/maps_from.md](cross-layer/maps_from.md) |
-| `may_map_to` | [cross-layer/may_map_to.md](cross-layer/may_map_to.md) |
-| `may_refine_to` | [cross-layer/may_refine_to.md](cross-layer/may_refine_to.md) |
 | `refined_from` | [cross-layer/refined_from.md](cross-layer/refined_from.md) |
-| `refined_in` | [cross-layer/refined_in.md](cross-layer/refined_in.md) |
-| `related_term` | [cross-layer/related_term.md](cross-layer/related_term.md) |
 | `specializes` | [cross-layer/specializes.md](cross-layer/specializes.md) |
 
 ### shared
@@ -167,18 +154,17 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | Relation | File |
 |----------|------|
 | `affects` | [shared/affects.md](shared/affects.md) |
-| `applies_to` | [shared/applies_to.md](shared/applies_to.md) |
 | `constrains` | [shared/constrains.md](shared/constrains.md) |
 | `contains` | [shared/contains.md](shared/contains.md) |
+| `deploys_to` | [shared/deploys_to.md](shared/deploys_to.md) |
+| `governed_by` | [shared/governed_by.md](shared/governed_by.md) |
+| `governs` | [shared/governs.md](shared/governs.md) |
 | `implements` | [shared/implements.md](shared/implements.md) |
-| `supports` | [shared/supports.md](shared/supports.md) |
+| `plans_capacity_for` | [shared/plans_capacity_for.md](shared/plans_capacity_for.md) |
 
 ### structural
 
-| Relation | File |
-|----------|------|
-| `depends_on` | [structural/depends_on.md](structural/depends_on.md) |
-| `supersedes` | [structural/supersedes.md](structural/supersedes.md) |
+Hiện chưa có relation type active trong nhóm này.
 
 ## Schema mỗi file
 

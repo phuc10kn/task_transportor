@@ -1,4 +1,4 @@
-# Persona
+﻿# Persona
 
 | Field | Value |
 |-------|-------|
@@ -32,13 +32,15 @@ draft → active → deprecated
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| maps_from | `maps_from` | Stakeholder | false | 0..n |
-| undertakes | `undertakes` | Journey | false | 0..n |
+| maps_from | `maps_from` | Stakeholder | allowed_when_known | 0..n |
+| undertakes | `undertakes` | Journey | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Phân biệt Persona vs Stakeholder
+
+

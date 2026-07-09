@@ -34,7 +34,6 @@ proposed -> active -> deprecated
 
 ```text
 Platform -> DeploymentUnit (runs)
-Platform -> DataStore (supports)
 Platform -> ExecutionMechanism (enables)
 ```
 

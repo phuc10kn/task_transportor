@@ -1,4 +1,4 @@
-# Goal
+﻿# Goal
 
 | Field | Value |
 |-------|-------|
@@ -53,13 +53,15 @@ Additional validation:
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| addresses | `addresses` | Problem | false | 0..n |
-| measured_by | `measured_by` | SuccessCriterion | false | 0..n |
+| addresses | `addresses` | Problem | allowed_when_known | 0..n |
+| measured_by | `measured_by` | SuccessCriterion | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Không viết solution cụ thể (dashboard, API, ...)
+
+

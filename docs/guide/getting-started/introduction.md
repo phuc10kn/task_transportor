@@ -14,7 +14,7 @@ Thêm một trục reasoning:
 
 ```text
 Theory
-    ↓ informs
+    ↓ guides
 App Docs
     ↓ governs
 Implementation

@@ -10,7 +10,6 @@ Interface — relations trong layer 03-interface
 | `displayed_on` | [displayed_on.md](displayed_on.md) |
 | `follows` | [follows.md](follows.md) |
 | `for_audience` | [for_audience.md](for_audience.md) |
-| `governs` | [governs.md](governs.md) |
 | `occurs_on` | [occurs_on.md](occurs_on.md) |
 | `submits_via` | [submits_via.md](submits_via.md) |
 | `transitions_to` | [transitions_to.md](transitions_to.md) |

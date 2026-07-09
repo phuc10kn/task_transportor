@@ -12,10 +12,8 @@ Schema liên quan:
 
 ```yaml
 relations:
-  governed_by:
-    - BRULE-001
-  informs:
-    - UC-001
+  governs:
+    - PROC-001
 ```
 
 ## YAML Review Shape
@@ -25,15 +23,15 @@ Dùng shape này khi review relation trước khi ghi canonical:
 ```yaml
 relation_review:
   source:
-    id: PROC-001
-    entity_type: Process
+    id: BRULE-001
+    entity_type: BusinessRule
   slots:
-    - slot: governed_by
-      relation: governed_by
+    - slot: governs
+      relation: governs
       target:
-        id: BRULE-001
-        entity_type: BusinessRule
-      valid_triple: Process --governed_by--> BusinessRule
+        id: PROC-001
+        entity_type: Process
+      valid_triple: BusinessRule --governs--> Process
       slot_defined: true
       status: valid
     - slot: unknown_slot
@@ -52,8 +50,7 @@ relation_review:
 ```md
 ## Relations
 
-- `BRULE-001` - rule chi phối process này.
-- `UC-001` - use case được process này inform.
+- `PROC-001` - process chịu sự chi phối của rule này.
 ```
 
 ## Rule

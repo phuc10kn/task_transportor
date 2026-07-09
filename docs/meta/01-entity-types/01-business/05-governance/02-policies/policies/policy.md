@@ -1,4 +1,4 @@
-# Policy
+﻿# Policy
 
 | Field | Value |
 |-------|-------|
@@ -53,12 +53,14 @@ Additional validation:
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| generates | `generates` | BusinessRule | false | 0..n |
+| generates | `generates` | BusinessRule | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Policy rộng hơn single rule
+
+

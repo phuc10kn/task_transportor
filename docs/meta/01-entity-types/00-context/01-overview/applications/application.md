@@ -1,4 +1,4 @@
-# Application
+﻿# Application
 
 | Field | Value |
 |-------|-------|
@@ -32,10 +32,9 @@ draft → active → deprecated
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| has_scope | `has_scope` | Scope | false | 0..n |
-| runs_in | `runs_in` | Environment | false | 0..n |
+| has_scope | `has_scope` | Scope | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
@@ -43,3 +42,5 @@ Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02
 
 - Không thay thế Business Goal, Product Requirement hay Architecture Overview
 - Không chứa implementation detail
+
+

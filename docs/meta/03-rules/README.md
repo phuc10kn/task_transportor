@@ -18,7 +18,7 @@ docs/meta/00-schemas/valid-triple-rule.md
 
 ## Cấu trúc
 
-Mirror `docs/app/` layers (00-context → 04-domain) + cross-layer.
+Mirror các layer đã có valid-triples canonical trong `docs/meta/`; hiện gồm `00-context` → `05-architecture`, cùng `cross-layer`.
 
 | Path | Nội dung |
 |------|----------|
@@ -41,6 +41,17 @@ App Rule      → instance cụ thể (MOD-001 không depend MOD-003)
 ## Cardinality
 
 Mặc định `0..n` trừ khi file rule ghi rõ `1..1` hoặc `1..n`.
+
+## Source Of Truth Theo Layer
+
+Valid triple chỉ có một source of truth:
+
+- Entity type cùng layer: ghi trong `docs/meta/03-rules/<layer>/valid-triples.md`.
+- Entity type khác layer: ghi trong `docs/meta/03-rules/cross-layer/valid-triples.md`.
+
+Không duplicate cùng một triple giữa layer-local file và `cross-layer/valid-triples.md`.
+
+`relations_template` vẫn nằm ở entity type source, vì nó quyết định entity instance nào được phép ghi relation slot. Ví dụ `BusinessRequirement --derived_from--> Problem` có slot ở `BusinessRequirement`, nhưng valid triple source of truth nằm trong `cross-layer/valid-triples.md`.
 
 ## Graph thưa, không ép pipeline
 

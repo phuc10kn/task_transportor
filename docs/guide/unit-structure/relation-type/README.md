@@ -8,36 +8,36 @@ Schema canonical: [relation-type-definition.md](../../../meta/00-schemas/relatio
 
 ```yaml
 relation_type_definition:
-  name: governed_by
-  canonical_direction: Source --governed_by--> Target
-  inverse: governs
-  inverse_kind: paired
-  meaning: Source bị chi phối bởi rule, policy hoặc governing entity ở Target.
+  name: governs
+  canonical_direction: Source --governs--> Target
+  inverse: none
+  inverse_kind: derived
+  meaning: Source đặt rule, policy, standard hoặc governing pattern mà Target phải tuân thủ.
   allowed_semantic:
-    - Target có authority hoặc rule ảnh hưởng trực tiếp tới Source.
+    - Source có authority hoặc rule ảnh hưởng trực tiếp tới Target.
   examples:
-    - Process --governed_by--> BusinessRule
+    - BusinessRule --governs--> Process
   non_examples:
-    - BusinessRule --governed_by--> Process
+    - Process --governs--> BusinessRule
   anti_patterns:
     - Dùng relation này khi chỉ có liên quan mơ hồ.
   valid_usage:
-    - source: Process
-      relation: governed_by
-      target: BusinessRule
+    - source: BusinessRule
+      relation: governs
+      target: Process
 ```
 
 ## Markdown Definition Skeleton
 
 ```md
-# governed_by
+# governs
 
 | Field | Value |
 | --- | --- |
-| **name** | `governed_by` |
-| **canonical direction** | Source --governed_by--> Target |
-| **inverse** | `governs` |
-| **inverse kind** | `paired` |
+| **name** | `governs` |
+| **canonical direction** | Source --governs--> Target |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 

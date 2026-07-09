@@ -1,6 +1,6 @@
 # Entity Types
 
-Canonical definitions cho Entity Types trong `docs/app/`, layers `00-context` đến `04-domain`.
+Canonical definitions cho Entity Types trong `docs/app/`; hiện registry này cover các layer `00-context` đến `05-architecture` đã được promote vào meta.
 
 Schema canonical cho mỗi file entity type definition nằm ở:
 
@@ -100,6 +100,18 @@ docs/app/<cùng-path>/[<entity-type-folder>/]<ID-slug>/README.md
 | DomainService | `DSVC-` | [domain-service.md](04-domain/04-behavior/01-domain-services/domain-service.md) |
 | DomainEvent | `DEVT-` | [domain-event.md](04-domain/04-behavior/02-domain-events/domain-event.md) |
 | Lifecycle | `LC-` | [lifecycle.md](04-domain/05-lifecycle/lifecycles/lifecycle.md) |
+
+### 05-architecture
+
+| Entity Type | ID | Definition |
+|-------------|-----|------------|
+| Module | `MOD-` | [module.md](05-architecture/01-structure/modules/module.md) |
+| ModuleBoundary | `MB-` | [module-boundary.md](05-architecture/02-boundaries/module-boundaries/module-boundary.md) |
+| InteractionFlow | `AF-` | [interaction-flow.md](05-architecture/03-interactions/interaction-flows/interaction-flow.md) |
+| StateOwner | `SO-` | [state-owner.md](05-architecture/04-state/state-owners/state-owner.md) |
+| DataFlow | `DF-` | [data-flow.md](05-architecture/05-data/data-flows/data-flow.md) |
+| DeploymentUnit | `DU-` | [deployment-unit.md](05-architecture/06-deployment/deployment-units/deployment-unit.md) |
+| CrossCuttingRule | `CCR-` | [cross-cutting-rule.md](05-architecture/07-cross-cutting/cross-cutting-rules/cross-cutting-rule.md) |
 
 ---
 

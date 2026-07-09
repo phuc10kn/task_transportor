@@ -1,10 +1,12 @@
 # Entity Type Definition Schema
 
-Schema này áp dụng cho file trong `docs/meta/01-entity-types/` và các layer-local entity type definition còn nằm trong `docs/app/05+`.
+Schema này áp dụng cho file trong `docs/meta/01-entity-types/` và layer-local entity type definition trong `docs/app/05+`.
 
-Entity type definition mô tả loại knowledge được phép tồn tại. Nó không chứa app instance cụ thể.
+Entity type definition là kiểu knowledge có thể tồn tại. Nó không chứa app instance.
 
-`docs/meta/01-entity-types/` là registry canonical cho các type đã promote. Các type 05+ hiện còn có thể nằm layer-local trong `docs/app` cho tới khi có quyết định promote/migrate riêng.
+`docs/meta/01-entity-types/` là registry canonical cho các type đã promote. Với type đã promote, `relations_template` canonical phải nằm trong `docs/meta`. Type `05+` chưa promote có thể nằm layer-local trong `docs/app` khi có quyết định promote/migrate riêng.
+
+Instance usage của một repo chỉ được dùng làm evidence để verify contract; không được dùng làm nguồn để derive canonical contract.
 
 Unit template: [entity-type](../../guide/unit-structure/entity-type/README.md).
 
@@ -25,7 +27,7 @@ Mỗi file phải bắt đầu bằng title và bảng field:
 | **schema** | `entity-instance/v1` |
 ```
 
-`schema` bắt buộc cho file mới hoặc file được sửa sau khi contract này có hiệu lực. File legacy không có field này được infer từ schema base.
+`schema` bắt buộc cho file mới hoặc file được sửa sau khi contract này có hiệu lực. File legacy không có field này được hiểu là kế thừa base schema.
 
 ## Required Sections
 
@@ -53,16 +55,16 @@ Mỗi file phải bắt đầu bằng title và bảng field:
 
 | Section | Rule |
 | --- | --- |
-| `meaning` | Nêu semantic của entity type, không nêu instance cụ thể. |
+| `meaning` | Mô tả semantic của entity type, không mô tả instance. |
 | `instance criteria` | Khi nào được tạo instance mới. |
 | `required fields` | Metadata và body sections bắt buộc. |
 | `optional fields` | Metadata và body sections được phép thêm. |
 | `lifecycle` | Status flow riêng nếu khác status vocabulary chung. |
-| `structure extends` | Per-type schema extension so với `entity-instance/v1`; đây là source of truth cho section riêng của entity type. |
-| `relations_template` | Slot relation mà instance của entity type này được phép điền; không có slot thì instance không được ghi relation đó. |
-| `validation` | Rule validate semantic và boundary của type. |
+| `structure extends` | Per-type schema extension cho `entity-instance/v1`; đây là source of truth cho section riêng của entity type. |
+| `relations_template` | Slot relation mà instance của type này được phép điền; không có slot thì instance không được ghi relation đó. |
+| `validation` | Validate semantic và boundary của type. |
 
-`folder` là registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `processes/`. Không đặt numbered parent path như `01-processes/` vào field này. App path vẫn lấy từ `docs/guide/reference/folder-structure.md`.
+`folder` là registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `processes/`. Không đưa numbered parent path như `01-processes/` vào field này. App placement path vẫn lấy từ `docs/guide/reference/folder-structure.md`.
 
 ## Relations Template
 
@@ -73,8 +75,13 @@ Mỗi slot phải nêu:
 - slot name;
 - relation type;
 - target entity type canonical;
-- required;
+- requirement_mode;
 - cardinality.
+
+`requirement_mode` cho phép chỉ hai giá trị:
+
+- `allowed_when_known`;
+- `required_at_creation`.
 
 Relation của entity instance chỉ được ghi canonical khi:
 
@@ -83,18 +90,20 @@ Relation của entity instance chỉ được ghi canonical khi:
 3. valid triple tương ứng tồn tại trong `docs/meta/03-rules/`;
 4. target entity type khớp slot;
 5. direction đúng canonical;
-6. target instance tồn tại khi slot được điền.
+6. target instance tồn tại khi slot đang được điền theo `requirement_mode`.
 
-Nếu một relation chưa có slot trong entity type, relation đó bị reject khỏi entity instance.
+Nếu `requirement_mode = required_at_creation` và target chưa tồn tại thì source chưa là identity canonical và không được tạo.
+
+Nếu chưa có slot cho relation thì relation sẽ bị reject.
 
 Target entity type trong `relations_template` phải là entity type thật. Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
 
-Broad premise entity type như Assumption hoặc ContextConstraint không nên khai báo outbound relation slot tới mọi entity. Nếu một entity bị ảnh hưởng cần trace canonical, relation slot phải nằm ở entity type của entity bị ảnh hưởng và target Assumption/ContextConstraint bằng valid triple cụ thể.
+Entity type ở scope rộng như Assumption/ContextConstraint không tự tạo outbound relation tới mọi entity. Khi một entity bị ảnh hưởng, entity type của nguồn phải có slot hợp lệ tới Assumption/ContextConstraint bằng valid triple phù hợp.
 
 ## Forbidden
 
-- Không đặt app instance như `PROC-001 Backlog Pull` trong entity type definition.
-- Không dùng `relations_template` để bỏ qua `02-relation-types/` hoặc `03-rules/`.
-- Không tạo `structure extends` phá base required field của `entity-instance/v1`.
+- Không đưa app instance như `PROC-001 Backlog Pull` trong entity type definition.
+- Không dùng `relations_template` để thay thế `02-relation-types/` hoặc `03-rules/`.
+- Không tạo `structure extends` trái với required field của `entity-instance/v1`.
 - Không dùng `folder` để ghi parent path hoặc app placement path.
 - Không dùng selector hoặc wildcard target trong `relations_template`.

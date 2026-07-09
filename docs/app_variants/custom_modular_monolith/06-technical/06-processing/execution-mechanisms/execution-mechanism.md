@@ -35,7 +35,6 @@ planned -> active -> evolved
 ```text
 ExecutionMechanism -> InteractionFlow (implements)
 ExecutionMechanism -> AutomationMechanism (invoked_by)
-ExecutionMechanism -> RuntimeEnvironment (runs_in)
 ```
 
 ## validation

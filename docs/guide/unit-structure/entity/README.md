@@ -9,32 +9,32 @@ Schema canonical: [entity-instance.md](../../../meta/00-schemas/entity-instance.
 ```yaml
 ---
 schema: entity-instance/v1
-id: PROC-001
-slug: backlog-to-cis-lite
-title: Backlog To CIS Lite Flow
-entity_type: Process
+id: BRULE-001
+slug: human-review-before-jira-write
+title: Human Review Before Jira Write
+entity_type: BusinessRule
 layer: 01-business
-concern: 04-behavior
+concern: 05-governance
 status: active
-summary: Business flow Lite từ Backlog vào CIS.
+summary: Jira write phải đi qua human review.
 theory_basis:
   - TH-HUBFLOW
 decision_basis:
   - DEC-001
 relations:
-  governed_by:
-    - BRULE-001
+  governs:
+    - PROC-001
 ---
 ```
 
 ## Markdown Body
 
 ```md
-# PROC-001 - Backlog To CIS Lite Flow
+# BRULE-001 - Human Review Before Jira Write
 
 ## Summary
 
-Business flow Lite từ Backlog vào CIS.
+Jira write phải đi qua human review.
 
 ## Meaning
 
@@ -42,7 +42,7 @@ Entity này có meaning gì trong app.
 
 ## Relations
 
-- `BRULE-001` - rule chi phối flow này.
+- `PROC-001` - process chịu sự chi phối của rule này.
 
 ## Validation Notes
 

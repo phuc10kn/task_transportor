@@ -1,4 +1,4 @@
-# BusinessRequirement
+﻿# BusinessRequirement
 
 | Field | Value |
 |-------|-------|
@@ -32,13 +32,15 @@ draft → active → satisfied | cancelled
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| derived_from | `derived_from` | Problem | false | 0..n |
-| satisfied_by | `satisfied_by` | Capability | false | 0..n |
+| derived_from | `derived_from` | Problem | allowed_when_known | 0..n |
+| satisfied_by | `satisfied_by` | Capability | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Không mô tả solution quá cụ thể (PostgreSQL, button, ...)
+
+

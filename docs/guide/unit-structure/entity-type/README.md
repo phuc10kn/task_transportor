@@ -1,4 +1,4 @@
-# Unit Structure - Entity Type
+﻿# Unit Structure - Entity Type
 
 Template này dùng cho entity type definition trong `docs/meta/01-entity-types/` hoặc layer-local type definition ở `docs/app/05+`.
 
@@ -10,15 +10,15 @@ Per-type extension thật phải được ghi trong file entity type definition 
 
 ```yaml
 entity_type_definition:
-  name: Process
+  name: BusinessRule
   layer: 01-business
-  concern: 04-behavior
-  folder: processes/
-  id_pattern: PROC-{NNN}-{slug}
+  concern: 05-governance
+  folder: business-rules/
+  id_pattern: BRULE-{NNN}-{slug}
   base_schema: entity-instance/v1
-  meaning: Đơn vị hành vi nghiệp vụ có trigger, participants, steps, outcomes.
+  meaning: Rule business có thể đánh giá đúng/sai.
   instance_criteria:
-    - Business operation có flow ổn định cần document.
+    - Business có rule rõ ràng ảnh hưởng process hoặc decision.
   required_fields:
     frontmatter:
       - schema
@@ -33,10 +33,10 @@ entity_type_definition:
     body_sections:
       - Summary
       - Meaning
-      - Trigger
-      - Participants
-      - Steps
-      - Outcomes
+      - Statement
+      - Condition
+      - Outcome
+      - Scope
       - Relations
       - Validation Notes
   optional_fields:
@@ -47,46 +47,45 @@ entity_type_definition:
       - tags
       - owner
     body_sections:
-      - Inputs
-      - Decisions
       - Exceptions
+      - Owner
   lifecycle:
     - draft
     - active
-    - deprecated
+    - superseded
+    - retired
   structure_extends:
     base: entity-instance/v1
     required_sections:
-      - Trigger
-      - Participants
-      - Steps
-      - Outcomes
+      - Statement
+      - Condition
+      - Outcome
+      - Scope
     optional_sections:
-      - Inputs
-      - Decisions
       - Exceptions
+      - Owner
   relations_template:
-    governed_by:
-      relation_type: governed_by
-      target_entity_type: BusinessRule
-      required: false
+    governs:
+      relation_type: governs
+      target_entity_type: Process
+      requirement_mode: allowed_when_known
       cardinality: 0..n
   validation:
-    - Không mô tả API, database, technical implementation.
+    - BusinessRule phải đánh giá được đúng/sai trong business context.
 ```
 
 ## Markdown Definition Skeleton
 
 ```md
-# Process
+# BusinessRule
 
 | Field | Value |
 | --- | --- |
-| **name** | Process |
+| **name** | BusinessRule |
 | **layer** | `01-business` |
-| **concern** | `04-behavior` |
-| **folder** | `processes/` |
-| **ID pattern** | `PROC-{NNN}-{slug}` |
+| **concern** | `05-governance` |
+| **folder** | `business-rules/` |
+| **ID pattern** | `BRULE-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning
@@ -103,17 +102,18 @@ entity_type_definition:
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| governed_by | `governed_by` | BusinessRule | false | 0..n |
+| governs | `governs` | Process | allowed_when_known | 0..n |
 
 ## validation
 ```
 
-`folder` chỉ ghi registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `processes/`. App placement path vẫn lấy từ `docs/guide/reference/folder-structure.md`, ví dụ `docs/app/01-business/04-behavior/01-processes/`.
+`folder` chỉ ghi registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `business-rules/`. App placement path vẫn lấy từ `docs/guide/reference/folder-structure.md`, ví dụ `docs/app/01-business/05-governance/01-business-rules/business-rules/`.
 
 `relations_template` định nghĩa slot relation mà entity instance của type này được phép điền. Không có slot thì instance không được ghi relation đó.
 
 Canonical representation trong file Markdown là table dưới `## relations_template`. YAML ở trên chỉ là review shape để giải thích field; không thay thế table canonical.
 
-Slot name ưu tiên là role ngắn, thường trùng với relation type, ví dụ `governed_by`, `informs`, `part_of`. Chỉ mở rộng tên slot khi cùng một relation type cần phân biệt nhiều role hoặc nhiều target trong cùng entity type.
+Slot name ưu tiên là role ngắn, thường trùng với relation type, ví dụ `governs`, `implements`, `part_of`. Chỉ mở rộng tên slot khi cùng một relation type cần phân biệt nhiều role hoặc nhiều target trong cùng entity type.
+

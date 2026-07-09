@@ -1,4 +1,4 @@
-# UserFlow
+﻿# UserFlow
 
 | Field | Value |
 |-------|-------|
@@ -32,13 +32,15 @@ draft → active → deprecated
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| traverses | `traverses` | Screen | false | 0..n |
-| implements | `implements` | UseCase | false | 0..n |
+| traverses | `traverses` | Screen | allowed_when_known | 0..n |
+| implements | `implements` | UseCase | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Phân biệt User Flow vs technical routing
+
+

@@ -2,7 +2,7 @@
 
 ## Query ngược (Reverse Query)
 
-Truy vấn ngược được khuyến nghị thực hiện theo hướng derived-first:
+Truy vấn ngược được ưu tiên theo hướng derived-first:
 - repository search;
 - derived inverse;
 - index/tooling khi cần reverse query thường xuyên.
@@ -11,11 +11,11 @@ Không tạo inverse canonical chỉ để đọc ngược.
 
 Chỉ tạo inverse riêng khi inverse có semantic độc lập và có nhu cầu query first-class.
 
-## Bốn tầng bắt buộc
+## Bản chất bắt buộc
 
 ```text
 Relation Type
-    = từ và meaning
+    = nguồn + meaning
 
 Valid Triple
     = Source Entity Type + Relation Type + Target Entity Type
@@ -24,7 +24,7 @@ Relation Slot
     = entity type cho phép instance dùng relation đó theo slot nào
 
 Entity Relation
-    = entity instance điền target instance vào slot đã có
+    = entity instance điền target instance vào slot đã có phép
 ```
 
 Canonical homes theo loại knowledge:
@@ -49,19 +49,19 @@ Relation Type định nghĩa:
 - anti-pattern;
 - examples/non-examples.
 
-Nó không tự quyết định được dùng giữa entity nào.
+Nó không tự quyết định cách dùng relation giữa entity nào.
 
 ## Valid Triple
 
-Valid Triple mới quyết định relation được dùng giữa hai entity type nào.
+Valid Triple quy định relation nào được phép giữa source và target.
 
 Ví dụ:
 
 ```text
-Problem --leads_to--> BusinessRequirement
+BusinessRequirement --derived_from--> Problem
 ```
 
-Chỉ hợp lệ nếu triple tương ứng tồn tại trong `docs/meta/03-rules/`.
+Chỉ hợp lệ khi triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## Relation Slot
 
@@ -72,22 +72,25 @@ Slot định nghĩa:
 - slot name;
 - relation type;
 - target entity type;
-- required;
+- requirement_mode;
 - cardinality.
 
-Valid triple cho phép edge ở mức type, nhưng entity instance chỉ được ghi relation khi entity type của nó có slot tương ứng.
+`requirement_mode` có hai mode:
+- `allowed_when_known`
+- `required_at_creation`.
 
-Không có slot thì reject relation.
+Entity instance chỉ ghi relation nếu slot hợp lệ theo `relations_template`; nếu thiếu slot thì reject relation.
 
 Target entity type phải là entity type thật. Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
 
-Broad premise như Assumption hoặc ContextConstraint không tự tạo outbound relation tới mọi entity. Khi một entity thật sự bị ảnh hưởng, entity type của entity đó phải có slot cụ thể tới Assumption/ContextConstraint và valid triple cụ thể. Nếu chưa có slot/triple, ghi bằng field hoặc section mô tả trong premise, không ghi relation canonical.
+Broad premise như Assumption/ContextConstraint không tự tạo outbound relation tới mọi entity.
+Nếu cần trace impact canonical, entity type nguồn phải có slot và valid triple rõ ràng tới Assumption/ContextConstraint.
 
 ## Entity Relation
 
-Entity Relation là relation thật của một entity instance.
+Entity Relation là relation thực của một entity instance.
 
-Relation canonical phải ghi trong YAML frontmatter field `relations` ở đầu file entity README, theo slot:
+Relation canonical phải ghi trong YAML frontmatter field `relations` ở đầu file entity README theo slot:
 
 ```yaml
 relations:
@@ -101,11 +104,9 @@ Body `## Relations` chỉ giải thích ngữ cảnh cho người đọc.
 
 Mỗi fact nên có một canonical direction.
 
-Không mirror cùng một fact ở hai README chỉ để có hai chiều đọc.
+Không mirror cùng lúc một fact ở hai README để có hai chiều đọc.
 
-Canonical direction được chọn theo nơi fact gốc được quản trị và theo chiều semantic chủ động, rõ nhất.
-
-Ưu tiên:
+Canonical direction chọn theo nơi fact gốc được quản trị và chiều semantic chủ động, rõ nhất:
 
 - owner -> owned
 - container -> member
@@ -114,24 +115,23 @@ Canonical direction được chọn theo nơi fact gốc được quản trị v
 - abstract requirement/spec -> concrete realization/evidence
 - flow -> participant
 
-Không tạo inverse canonical chỉ để đọc ngược. Trace ngược mặc định dùng derived inverse qua search hoặc tooling.
+Không tạo inverse canonical để đọc ngược.
 
-Chỉ giữ inverse như relation riêng khi inverse có semantic độc lập và có nhu cầu query first-class.
+Chỉ tạo inverse riêng khi inverse có semantic độc lập và có nhu cầu query first-class.
 
-Trace ngược bằng:
+Trace ngược mặc định bằng:
 
 - repository search;
 - derived inverse;
-- relation cặp đã được định nghĩa rõ.
+- tooling.
 
-## Graph thưa
+## Graph thừa
 
-Valid triple và relation slot cho phép edge tồn tại, không bắt mọi instance phải có edge nếu slot không required.
+Valid triple + relation slot cho phép tồn tại edge, không buộc mỗi instance phải có edge nếu mode là `allowed_when_known`.
 
-Không lấp relation chỉ để có chuỗi đẹp.
+Không lặp relation chỉ để có chuỗi flow.
 
 ## Khi chưa có relation slot phù hợp
 
-Reject relation. Không ghi relation nghi ngờ vào entity instance.
-
+Reject relation. Không ghi relation nghịch.
 Muốn thêm relation mới phải cập nhật entity type `relations_template`, relation type và valid triple trước.

@@ -1,26 +1,17 @@
 # Valid Triples — cross-layer
 
-Relations giữa các layer khác nhau (00-context → 04-domain).
+Relations giữa các layer khác nhau.
 
-| Source | Relation | Target | Notes |
-|--------|----------|--------|-------|
-| Problem | `leads_to` | BusinessRequirement | business → product |
-| BusinessRequirement | `derived_from` | Problem | product → business |
-| Process | `informs` | UseCase | business → product |
-| Stakeholder | `may_map_to` | Persona | business → ui |
-| Persona | `maps_from` | Stakeholder | ui → business |
-| UseCase | `refined_in` | UserFlow | product → ui |
-| Feature | `exposed_via` | Screen | product → ui |
-| BusinessRule | `may_refine_to` | Invariant | business → domain |
-| Invariant | `refined_from` | BusinessRule | domain → business |
-| GlossaryTerm | `related_term` | DomainConcept | context → domain |
-| DomainConcept | `specializes` | GlossaryTerm | domain → context |
-| Release | `aligns_with` | Scope | product → context |
-| Application | `has_scope` | Scope | context internal |
-| Application | `runs_in` | Environment | context internal |
-| ExternalSystem | `integrates_with_context` | Application | context internal |
-| Module | `depends_on` | Module | architecture (05+) — reserved |
-| Decision | `supersedes` | Decision | decisions (10) — reserved |
+Cross-layer valid triple là source of truth cho relation nối entity type thuộc hai layer khác nhau. Layer-local valid triple chỉ chứa relation trong cùng layer.
+
+| Source | Relation | Target | Cardinality | Notes |
+|--------|----------|--------|-------------|-------|
+| BusinessRequirement | `derived_from` | Problem | 0..n | product → business |
+| Persona | `maps_from` | Stakeholder | 0..n | ui → business |
+| UserFlow | `implements` | UseCase | 0..n | ui → product |
+| Feature | `exposed_via` | Screen | 0..n | product → ui |
+| Invariant | `refined_from` | BusinessRule | 0..n | domain → business |
+| DomainConcept | `specializes` | GlossaryTerm | 0..n | domain → context |
 
 ## broad premise trace
 

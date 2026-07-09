@@ -47,8 +47,8 @@ Ví dụ:
 
 ```yaml
 relations:
-  governed_by:
-    - BRULE-001
+  governs:
+    - PROC-001
 ```
 
 ## Không bắt buộc

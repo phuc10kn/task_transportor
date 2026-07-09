@@ -1,4 +1,4 @@
-# Journey
+﻿# Journey
 
 | Field | Value |
 |-------|-------|
@@ -32,13 +32,15 @@ draft → active → deprecated
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| contains | `contains` | UserFlow | false | 0..n |
-| for_audience | `for_audience` | Persona | false | 0..n |
+| contains | `contains` | UserFlow | allowed_when_known | 0..n |
+| for_audience | `for_audience` | Persona | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Journey rộng hơn User Flow
+
+

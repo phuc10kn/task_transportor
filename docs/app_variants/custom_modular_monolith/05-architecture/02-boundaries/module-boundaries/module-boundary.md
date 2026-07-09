@@ -43,7 +43,7 @@ draft -> active -> superseded
 
 ```text
 ModuleBoundary -> Module (constrains)
-ModuleBoundary -> CodingRule (refined_in)
+ModuleBoundary -> StateOwner (constrains)
 ```
 
 ## validation

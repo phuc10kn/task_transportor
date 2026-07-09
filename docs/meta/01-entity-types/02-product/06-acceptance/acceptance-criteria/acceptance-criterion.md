@@ -1,4 +1,4 @@
-# AcceptanceCriterion
+﻿# AcceptanceCriterion
 
 | Field | Value |
 |-------|-------|
@@ -32,13 +32,15 @@ draft → active → passed | failed
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| accepts_functional_requirements | `accepts` | FunctionalRequirement | false | 0..n |
-| accepts_features | `accepts` | Feature | false | 0..n |
+| accepts_functional_requirements | `accepts` | FunctionalRequirement | allowed_when_known | 0..n |
+| accepts_features | `accepts` | Feature | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Không phải full test case
+
+

@@ -11,7 +11,7 @@ Nó chỉ lo:
 - quyết định phase nào được mở;
 - ghi handoff note;
 - ghi blocked note;
-- quyết định nên quay về `planner.md` hay chuyển sang `executor.md`.
+- quyết định nên quay về `planner.md`
 
 Nó không dùng để:
 

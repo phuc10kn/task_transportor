@@ -4,7 +4,7 @@ Concern này định nghĩa data taxonomy chuẩn cho custom modular monolith, k
 
 ## Entity type chuẩn
 
-- [DataFlow](./data-flows/data-flow.md)
+- [DataFlow](../../../meta/01-entity-types/05-architecture/05-data/data-flows/data-flow.md) *(canonical: docs/meta)*
 - [OwnedAggregate](./owned-aggregates/owned-aggregate.md)
 - [RawEventRecord](./raw-event-records/raw-event-record.md)
 - [CanonicalModel](./canonical-models/canonical-model.md)

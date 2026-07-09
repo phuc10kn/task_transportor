@@ -5,7 +5,6 @@ Domain — relations trong layer 04-domain
 | Relation | File |
 |----------|------|
 | `applied_by` | [applied_by.md](applied_by.md) |
-| `constrained_by` | [constrained_by.md](constrained_by.md) |
 | `describes` | [describes.md](describes.md) |
 | `emits` | [emits.md](emits.md) |
 | `enforces` | [enforces.md](enforces.md) |

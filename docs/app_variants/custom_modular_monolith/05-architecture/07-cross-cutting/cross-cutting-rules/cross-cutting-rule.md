@@ -38,8 +38,6 @@ draft -> active -> superseded
 
 ```text
 CrossCuttingRule -> Module (affects)
-CrossCuttingRule -> CodingRule (refined_in)
-CrossCuttingRule -> QualityObjective (supports)
 ```
 
 ## validation

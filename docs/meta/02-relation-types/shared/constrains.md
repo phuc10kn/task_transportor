@@ -5,7 +5,7 @@
 | **name** | `constrains` |
 | **canonical direction** | Source --constrains--> Target |
 | **inverse** | `none` |
-| **inverse kind** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
@@ -24,7 +24,7 @@ BusinessConstraint --constrains--> Process
 ## non-examples
 
 ```text
-Target --constrains--> Source   (sai direction nếu inverse được định nghĩa)
+Target --constrains--> Source   (sai canonical direction)
 Free-text relation không qua Relation Type canonical
 ```
 
@@ -39,4 +39,8 @@ Không dùng `constrains` với pseudo target như `layers/entities`, `_layer / 
 BusinessConstraint --constrains--> Process
 NonFunctionalRequirement --constrains--> Feature
 ModuleBoundary --constrains--> Module
+ModuleBoundary --constrains--> StateOwner
+Invariant --constrains--> DomainEntity
+Invariant --constrains--> ValueObject
+AccessibilityRequirement --constrains--> Screen
 ```

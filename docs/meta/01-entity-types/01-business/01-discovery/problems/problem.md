@@ -1,4 +1,4 @@
-# Problem
+﻿# Problem
 
 | Field | Value |
 |-------|-------|
@@ -55,11 +55,10 @@ Additional validation:
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| motivates | `motivates` | Goal | false | 0..n |
-| affects | `affects` | Stakeholder | false | 0..n |
-| leads_to | `leads_to` | BusinessRequirement | false | 0..n |
+| motivates | `motivates` | Goal | allowed_when_known | 0..n |
+| affects | `affects` | Stakeholder | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
@@ -67,3 +66,4 @@ Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02
 
 - Mô tả business pain, không viết 'hệ thống chưa có X'
 - Cần evidence hoặc NOTE-EVIDENCE nếu chưa có
+

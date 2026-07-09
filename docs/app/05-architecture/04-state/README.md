@@ -4,7 +4,7 @@ Concern này định nghĩa taxonomy state chuẩn cho custom modular monolith.
 
 ## Entity type chuẩn
 
-- [StateOwner](./state-owners/state-owner.md)
+- [StateOwner](../../../meta/01-entity-types/05-architecture/04-state/state-owners/state-owner.md) *(canonical: docs/meta)*
 - [CanonicalState](./canonical-states/canonical-state.md)
 - [ReviewState](./review-states/review-state.md)
 - [ExecutionState](./execution-states/execution-state.md)

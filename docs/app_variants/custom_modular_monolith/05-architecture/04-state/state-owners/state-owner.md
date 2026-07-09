@@ -44,7 +44,6 @@ draft -> active -> superseded
 ```text
 Module -> StateOwner (owns)
 StateOwner -> DataFlow (shared_via)
-StateOwner -> ModuleBoundary (constrained_by)
 ```
 
 ## validation

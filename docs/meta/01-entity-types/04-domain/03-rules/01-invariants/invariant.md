@@ -1,4 +1,4 @@
-# Invariant
+﻿# Invariant
 
 | Field | Value |
 |-------|-------|
@@ -32,13 +32,15 @@ draft → active → superseded
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| applies_to | `applies_to` | DomainEntity | false | 0..n |
-| refined_from | `refined_from` | BusinessRule | false | 0..n |
+| constrains_domain_entity | `constrains` | DomainEntity | allowed_when_known | 0..n |
+| constrains_value_object | `constrains` | ValueObject | allowed_when_known | 0..n |
+| refined_from | `refined_from` | BusinessRule | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Domain Invariant ≠ Business Rule
+

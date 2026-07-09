@@ -4,7 +4,7 @@ Concern này định nghĩa loại rule cắt ngang chuẩn cho custom modular m
 
 ## Entity type chuẩn
 
-- [CrossCuttingRule](./cross-cutting-rules/cross-cutting-rule.md)
+- [CrossCuttingRule](../../../meta/01-entity-types/05-architecture/07-cross-cutting/cross-cutting-rules/cross-cutting-rule.md) *(canonical: docs/meta)*
 - [OwnershipRule](./ownership-rules/ownership-rule.md)
 - [IntegrationGuardrail](./integration-guardrails/integration-guardrail.md)
 - [ReliabilityRule](./reliability-rules/reliability-rule.md)

@@ -5,11 +5,7 @@ Combination hợp lệ: `Source --relation--> Target`
 | Source | Relation | Target | Cardinality |
 |--------|----------|--------|-------------|
 | Application | `has_scope` | Scope | 0..n |
-| Application | `runs_in` | Environment | 0..n |
 | Environment | `hosts` | Application | 0..n |
-| ExternalSystem | `integrates_with_context` | Application | 0..n |
-| GlossaryTerm | `related_term` | DomainConcept | 0..n |
-| Scope | `applies_to` | Application | 0..n |
 
 ## validation
 

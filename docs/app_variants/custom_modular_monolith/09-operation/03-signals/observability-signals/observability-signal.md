@@ -34,7 +34,6 @@ planned -> active -> deprecated
 
 ```text
 ObservabilitySignal -> RuntimeEnvironment (monitors)
-ObservabilitySignal -> ReliabilityControl (supports)
 ObservabilitySignal -> IncidentRecord (detects)
 ```
 

@@ -34,7 +34,6 @@ draft -> active -> retired
 
 ```text
 ReleaseGate -> VerificationCheck (requires)
-ReleaseGate -> AssuranceGate (depends_on)
 ReleaseGate -> DeploymentRunbook (controls)
 ```
 

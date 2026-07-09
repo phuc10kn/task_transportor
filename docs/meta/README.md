@@ -144,7 +144,7 @@ Schema không chứa app knowledge cụ thể. Schema chỉ nói file phải có
 
 Định nghĩa loại documentation entity nào được phép tồn tại.
 
-Hiện `01-entity-types/` là registry canonical cho layers `00-context` đến `04-domain`. Các type ở layers `05+` có thể còn nằm layer-local trong `docs/app` cho tới khi có decision promote/migrate riêng, nhưng vẫn phải tuân thủ schema tại `00-schemas/entity-type-definition.md`.
+Hiện `01-entity-types/` là registry canonical cho layers `00-context` đến `05-architecture` đã promote. `05-architecture` giữ canonical trong `docs/meta`, còn `docs/app` chỉ giữ app-specific route, instance, evidence; các layer khác trong `05+` có thể còn layer-local trong `docs/app` theo quyết định promote riêng, nhưng vẫn phải tuân thủ schema tại `00-schemas/entity-type-definition.md`.
 
 Ví dụ:
 
@@ -246,9 +246,9 @@ Hai entity liên hệ với nhau theo meaning nào?
 Ví dụ candidate:
 
 ```text
-depends_on
 derived_from
-supersedes
+maps_from
+specializes
 ```
 
 Nhưng một relation chỉ canonical khi được định nghĩa tại đây.
@@ -292,12 +292,11 @@ Không được tự viết:
 
 ```text
 realizes
-supports
 governs
 implements
 owns
 contains
-maps_to
+links_to
 ```
 
 và mặc định chúng là canonical.
@@ -383,13 +382,13 @@ Hai thứ khác nhau.
 Meta Rule:
 
 ```text
-Module may depend_on Module.
+Environment được phép relation tới Application bằng `hosts`.
 ```
 
 App Rule:
 
 ```text
-MOD-001 không được phụ thuộc MOD-003.
+ENV-001 chỉ host APP-001 và APP-002.
 ```
 
 Meta định nghĩa schema của knowledge.

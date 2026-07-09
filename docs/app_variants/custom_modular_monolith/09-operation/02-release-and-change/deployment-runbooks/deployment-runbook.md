@@ -33,7 +33,7 @@ draft -> active -> superseded
 ## allowed relations (candidate)
 
 ```text
-DeploymentRunbook -> RuntimeEnvironment (applies_to)
+DeploymentRunbook -> RuntimeEnvironment (deploys_to)
 DeploymentRunbook -> ReleaseGate (governed_by)
 DeploymentRunbook -> EvolutionPlan (rolls_out)
 ```

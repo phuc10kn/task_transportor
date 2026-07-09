@@ -11,21 +11,21 @@ File mới hoặc file được sửa sau khi schema này có hiệu lực phả
 ```yaml
 ---
 schema: entity-instance/v1
-id: PROC-001
-slug: backlog-to-cis-lite
-title: Backlog To CIS Lite Flow
-entity_type: Process
+id: BRULE-001
+slug: human-review-before-jira-write
+title: Human Review Before Jira Write
+entity_type: BusinessRule
 layer: 01-business
-concern: 04-behavior
+concern: 05-governance
 status: active
-summary: Business flow Lite từ Backlog vào CIS.
+summary: Jira write phải đi qua human review.
 theory_basis:
   - TH-HUBFLOW
 decision_basis:
   - DEC-001
 relations:
-  governed_by:
-    - BRULE-001
+  governs:
+    - PROC-001
 ---
 ```
 
@@ -91,8 +91,8 @@ Unit template cho relation block: [entity-relations](../../guide/unit-structure/
 
 ```yaml
 relations:
-  governed_by:
-    - BRULE-001
+  governs:
+    - PROC-001
 ```
 
 Body `## Relations` chỉ dùng để giải thích ngữ cảnh relation cho người đọc, không thay thế canonical relation.
@@ -100,7 +100,7 @@ Body `## Relations` chỉ dùng để giải thích ngữ cảnh relation cho ng
 ```md
 ## Relations
 
-- `BRULE-001` - rule chi phối process này.
+- `PROC-001` - process chịu sự chi phối của rule này.
 ```
 
 Nếu không có slot phù hợp trong entity type, reject relation. Muốn thêm relation mới phải cập nhật entity type `relations_template`, relation type và valid triple trước.

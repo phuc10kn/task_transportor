@@ -4,7 +4,7 @@ Concern này định nghĩa taxonomy deployment chuẩn cho custom modular monol
 
 ## Entity type chuẩn
 
-- [DeploymentUnit](./deployment-units/deployment-unit.md)
+- [DeploymentUnit](../../../meta/01-entity-types/05-architecture/06-deployment/deployment-units/deployment-unit.md) *(canonical: docs/meta)*
 - [ApplicationRuntime](./application-runtimes/application-runtime.md)
 - [WorkerRuntime](./worker-runtimes/worker-runtime.md)
 - [SchedulerRuntime](./scheduler-runtimes/scheduler-runtime.md)

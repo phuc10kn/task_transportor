@@ -35,7 +35,6 @@ planned -> active -> replaced
 ```text
 VerificationCheck -> CodingRule (checks)
 VerificationCheck -> PublicContract (verifies)
-VerificationCheck -> QualityObjective (supports)
 ```
 
 ## validation

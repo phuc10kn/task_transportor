@@ -1,4 +1,4 @@
-# BusinessRule
+﻿# BusinessRule
 
 | Field | Value |
 |-------|-------|
@@ -55,13 +55,13 @@ Additional validation:
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| applies_to | `applies_to` | Process | false | 0..n |
-| may_refine_to | `may_refine_to` | Invariant | false | 0..n |
+| governs | `governs` | Process | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Phân biệt Business Rule vs Domain Invariant
+

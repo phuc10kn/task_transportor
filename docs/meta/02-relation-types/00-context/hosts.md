@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `hosts` |
 | **canonical direction** | Source --hosts--> Target |
-| **inverse** | `runs_in` |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
@@ -36,4 +37,5 @@ Không dùng relation này nếu chưa có valid triple trong 03-rules/.
 
 ```text
 Environment --hosts--> Application
+DeploymentUnit --hosts--> Module
 ```

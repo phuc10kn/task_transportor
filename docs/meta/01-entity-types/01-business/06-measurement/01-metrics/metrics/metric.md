@@ -1,4 +1,4 @@
-# Metric
+﻿# Metric
 
 | Field | Value |
 |-------|-------|
@@ -54,13 +54,15 @@ Additional validation:
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Required | Cardinality |
+| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| measures | `measures` | Goal | false | 0..n |
-| input_to | `input_to` | SuccessCriterion | false | 0..n |
+| measures | `measures` | Goal | allowed_when_known | 0..n |
+| input_to | `input_to` | SuccessCriterion | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 
 ## validation
 
 - Phân biệt Metric vs SuccessCriterion
+
+
