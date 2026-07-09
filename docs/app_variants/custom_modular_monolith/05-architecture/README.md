@@ -2,29 +2,17 @@
 
 ## Mục tiêu
 
-Thư mục này dựng `khung entity type chuẩn` cho `custom_modular_monolith`, rồi dùng `task_transportor` làm ngữ liệu minh họa.
+Thư mục này dựng candidate entity-type taxonomy cho `custom_modular_monolith`.
 
 Trọng tâm không còn là chụp nhanh codebase theo 1 bucket mỗi concern, mà là:
 
 - chuẩn hóa taxonomy architecture dùng lại được;
-- giữ instance code hiện tại như ví dụ phụ;
-- bám theory của custom modular monolith nhưng không tách rời repo thật.
-
-## Mô hình áp dụng
-
-Repo hiện tại đang vận hành theo hướng:
-
-```text
-System -> CIS -> System
-```
-
-Đó là ngữ liệu tốt để minh họa taxonomy, nhưng không giới hạn taxonomy chỉ còn những gì repo đang instantiate hôm nay.
+- không bao gồm entity instance của một application;
+- bám theory của custom modular monolith.
 
 ## Vai Trò Hiện Tại
 
-Folder này giữ template/taxonomy reusable cho custom modular monolith. Nội dung app-specific của `task_transportor` nằm ở `docs/app/05-architecture`; reasoning theory nền nằm ở `docs/theories/modular-architecture`.
-
-Không dùng folder này làm source of truth cho module thật của repo nếu nội dung đó đã có entity instance trong `docs/app/05-architecture`.
+Folder này giữ template/taxonomy candidate cho custom modular monolith. Entity instance thuộc application instance space; reasoning theory nền nằm ở `docs/theories/modular-architecture`.
 
 ## Cấu trúc concern
 
@@ -43,14 +31,13 @@ Không dùng folder này làm source of truth cho module thật của repo nếu
 
 - Mỗi concern có thể có nhiều `entity type`.
 - Một số type là `type nền` cho mọi custom modular monolith.
-- `task_transportor` hiện mới instantiate mạnh ở một số type tổng quát như `Module`, `ModuleBoundary`, `InteractionFlow`, `StateOwner`, `DataFlow`, `DeploymentUnit`, `CrossCuttingRule`.
-- Các type chi tiết hơn vẫn được định nghĩa để làm khung chuẩn cho các repo hiện tại và tương lai.
+- Không chứa entity instance.
+- Mọi candidate type cần được review trước khi promote vào canonical registry.
 
 ## Nguồn Đối Chiếu
 
 - `docs/app_variants/custom_modular_monolith/**`
 - `docs/theories/modular-architecture/**`
-- `docs/app/05-architecture/**`
 
 ## Chỉ mục nhanh
 

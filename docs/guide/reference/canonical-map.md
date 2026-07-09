@@ -6,18 +6,21 @@ File này trả lời source of truth nằm ở đâu. Nó không định nghĩa
 docs/guide/reference/folder-structure.md
 ```
 
+`docs/app/` là application instance space: giữ truth cụ thể của một ứng dụng, không phải taxonomy của documentation system. Entity analysis map: [entity-maps/](entity-maps/README.md).
+
 | Cần biết | Đọc |
 | --- | --- |
 | Folder structure chuẩn | `docs/guide/reference/folder-structure.md` |
-| Product scope Lite | `docs/app/02-product/README.md` |
-| Business flow/rule | `docs/app/01-business/README.md` |
-| Quality gate/acceptance | `docs/app/08-quality/README.md` |
-| Decisions còn hiệu lực | `docs/app/10-decisions/README.md` |
-| Module architecture | `docs/app/05-architecture/README.md` |
-| Module structure | `docs/app/05-architecture/01-structure/README.md` |
-| Module boundary | `docs/app/05-architecture/02-boundaries/README.md` |
-| Workflow architecture | `docs/app/05-architecture/03-interactions/README.md` |
-| Schema/entity/relation/convention rule | `docs/meta/` |
+| Product scope / behavior (app) | `docs/app/02-product/README.md` |
+| Business flow / rule (app) | `docs/app/01-business/README.md` |
+| Quality gate / acceptance (app) | `docs/app/08-quality/README.md` |
+| Decisions còn hiệu lực (app) | `docs/app/10-decisions/README.md` |
+| Architecture app-specific | `docs/app/05-architecture/README.md` |
+| Module structure (app) | `docs/app/05-architecture/01-structure/README.md` |
+| Module boundary (app) | `docs/app/05-architecture/02-boundaries/README.md` |
+| Workflow architecture (app) | `docs/app/05-architecture/03-interactions/README.md` |
+| Schema / entity / relation / convention rule | `docs/meta/` |
+| Universal concern / generic taxonomy | `docs/app_variants/raw_app_original/` |
 | Entity instance schema | `docs/meta/00-schemas/entity-instance.md` |
 | Unit structure template | `docs/guide/unit-structure/` |
 | Theory reasoning | `docs/theories/` |
@@ -28,10 +31,11 @@ docs/guide/reference/folder-structure.md
 Nếu hai nguồn mâu thuẫn:
 
 ```text
-scope/behavior Lite      -> docs/app/02-product
-decision                 -> docs/app/10-decisions
+scope/behavior app        -> docs/app/02-product
+decision                  -> docs/app/10-decisions
 architecture app-specific -> docs/app/05-architecture
-folder structure         -> docs/guide/reference/folder-structure.md
-meta rule                -> docs/meta
-pure reasoning           -> docs/theories
+folder structure          -> docs/guide/reference/folder-structure.md
+meta rule                 -> docs/meta
+generic universal model   -> docs/app_variants/raw_app_original
+pure reasoning            -> docs/theories
 ```

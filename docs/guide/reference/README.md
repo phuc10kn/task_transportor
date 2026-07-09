@@ -6,6 +6,7 @@ Folder này là bảng tra ngắn. Nó không định nghĩa canonical rule mớ
 | --- | --- |
 | [canonical-map.md](canonical-map.md) | Source of truth nằm ở đâu. |
 | [concern-compatibility-map.md](concern-compatibility-map.md) | Historical alias map từ path cũ sang canonical path mới. |
+| [entity-maps/](entity-maps/README.md) | Bản đồ entity: default `NN-*.md` theo layer + `variants/<name>/<layer>/`. |
 | [folder-map.md](folder-map.md) | Folder nào dùng cho loại knowledge nào. |
 | [folder-structure.md](folder-structure.md) | Structure chuẩn, lý do từng folder tồn tại, concern và entity type chính. |
 | [status-and-notes.md](status-and-notes.md) | Status và note vocabulary. |

@@ -35,9 +35,10 @@ draft → active → deprecated
 | Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
 | uses | `uses` | Capability | allowed_when_known | 0..n |
-| implemented_by | `implemented_by` | Feature | allowed_when_known | 0..n |
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
+
+Trace Feature/UserFlow cover UseCase bằng reverse query từ fact gốc `implements` (ví dụ `UserFlow --implements--> UseCase`). Không dùng `UseCase --implemented_by--> Feature` như inverse của `implements`.
 
 ## validation
 

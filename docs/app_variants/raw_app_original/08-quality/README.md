@@ -20,6 +20,12 @@ Layer này trả lời:
 - `07-maintainability/`
 - `08-release-readiness/`
 
+## Generic Entity-Type Taxonomy
+
+Các entity type dưới từng concern là vocabulary generic tái dùng được, không phụ thuộc `custom_modular_monolith`.
+
+Chúng là template/reference cho application docs; chỉ promote type, relation slot hoặc valid triple sang `docs/meta/` sau khi meaning đã được chốt.
+
 ## Universal Boundary
 
 Quality không chỉ là testing. Layer này có thể đánh giá mọi layer khác, nhưng không thay thế:

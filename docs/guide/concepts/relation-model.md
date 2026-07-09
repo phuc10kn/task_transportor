@@ -112,10 +112,19 @@ Canonical direction chọn theo nơi fact gốc được quản trị và chiề
 - container -> member
 - cause/source -> impacted target
 - rule/constraint -> governed target
-- abstract requirement/spec -> concrete realization/evidence
+- concrete delivery/UI flow -> abstract capability/behavior khi dùng `implements`
 - flow -> participant
 
 Không tạo inverse canonical để đọc ngược.
+
+`implements` là ngoại lệ có chủ đích với heuristic requirement/specification: source là đơn vị cụ thể quản trị fact hiện thực hóa, target là capability hoặc behavior trừu tượng. Vì vậy dùng:
+
+```text
+Feature --implements--> Capability
+UserFlow --implements--> UseCase
+```
+
+Các fact theo chiều abstract → concrete phải dùng predicate diễn đạt đúng semantic riêng, ví dụ `specifies`, `accepts` hoặc `verified_by`; không đảo chiều `implements`.
 
 Chỉ tạo inverse riêng khi inverse có semantic độc lập và có nhu cầu query first-class.
 

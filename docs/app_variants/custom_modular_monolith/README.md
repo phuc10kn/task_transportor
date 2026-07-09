@@ -10,9 +10,9 @@ Nó không thay thế:
 
 Vai trò của folder này là:
 
-- đề xuất entity-type thực dụng cho các layer `05-architecture` đến `09-operation`;
+- đề xuất entity-type phụ thuộc `custom_modular_monolith` cho `05-architecture` và `07-implementation`;
 - giúp một app theo `custom_modular_monolith` có điểm bắt đầu rõ ràng khi `app/*` chưa có entity-type riêng;
-- tách riêng template app-specific khỏi meta chung của toàn nền.
+- tách riêng template phụ thuộc methodology khỏi universal origin model và meta chung.
 
 ## Cách dùng
 
@@ -27,10 +27,7 @@ Vai trò của folder này là:
 Folder này hiện bao phủ:
 
 - `05-architecture`
-- `06-technical`
 - `07-implementation`
-- `08-quality`
-- `09-operation`
 
 ## Ghi chú
 

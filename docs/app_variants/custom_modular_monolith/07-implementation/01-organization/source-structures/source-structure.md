@@ -33,7 +33,6 @@ draft -> active -> replaced
 ## allowed relations (candidate)
 
 ```text
-SourceStructure -> Module (implements)
 SourceStructure -> CodingRule (governed_by)
 SourceStructure -> PublicContract (exposed_via)
 ```

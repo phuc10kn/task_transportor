@@ -44,7 +44,6 @@ planned -> active -> changed
 ```text
 InteractionFlow -> Module (participates_in)
 InteractionFlow -> Interface (uses)
-InteractionFlow -> ExecutionMechanism (implemented_by)
 ```
 
 ## validation

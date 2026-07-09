@@ -28,7 +28,8 @@ Promote khi candidate đã có:
 | Entity/relation/validation/convention | `docs/meta/` |
 | App truth | `docs/app/` |
 | Reusable principle | `docs/theories/` |
-| Reusable technical taxonomy | `docs/app_variants/` |
+| Universal app model / generic taxonomy | `docs/app_variants/raw_app_original/` |
+| Methodology-specific template | `docs/app_variants/custom_modular_monolith/` |
 | Rationale/trade-off | `docs/app/10-decisions/` |
 
 ## Workbench note

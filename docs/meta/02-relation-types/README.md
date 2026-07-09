@@ -89,8 +89,6 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 | Relation | File |
 |----------|------|
 | `accepts` | [02-product/accepts.md](02-product/accepts.md) |
-| `delivered_by` | [02-product/delivered_by.md](02-product/delivered_by.md) |
-| `implemented_by` | [02-product/implemented_by.md](02-product/implemented_by.md) |
 | `includes` | [02-product/includes.md](02-product/includes.md) |
 | `satisfied_by` | [02-product/satisfied_by.md](02-product/satisfied_by.md) |
 | `specifies` | [02-product/specifies.md](02-product/specifies.md) |

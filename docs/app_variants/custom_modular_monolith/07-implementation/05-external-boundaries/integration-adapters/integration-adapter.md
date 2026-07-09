@@ -33,7 +33,6 @@ draft -> active -> retired
 ## allowed relations (candidate)
 
 ```text
-IntegrationAdapter -> Interface (implements)
 IntegrationAdapter -> ExecutionMechanism (used_by)
 IntegrationAdapter -> SecurityMechanism (uses)
 ```

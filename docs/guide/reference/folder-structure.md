@@ -123,6 +123,8 @@ Layer này trả lời: meaning, rule và lifecycle nội bộ của domain là 
 
 Layer này trả lời: hệ thống được tổ chức bằng boundary, module, state owner và interaction nào.
 
+> **NOTE:** Concern folder và cột *Entity type chuẩn* là canonical structure hiện tại. Map đọc: [entity-maps/05-architecture.md](entity-maps/05-architecture.md). Việc registry `04`/`05` có cần tách neutral pack và methodology pack hay không vẫn là quyết định chưa chốt.
+
 | Path | Concern | Vì sao có folder này | Không đặt ở đây |
 | --- | --- | --- | --- |
 | `05-architecture/01-structure/` | Structure | Ghi module/component architecture và vai trò owner. | Source file layout chi tiết. |

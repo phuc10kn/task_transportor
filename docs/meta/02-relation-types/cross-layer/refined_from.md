@@ -4,13 +4,16 @@
 |-------|-------|
 | **name** | `refined_from` |
 | **canonical direction** | Source --refined_from--> Target |
-| **inverse** | `refines` |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
-Source liên hệ với Target theo semantic `refined_from`.
+Source là bản tinh chỉnh domain của Target.
 
 ## allowed semantic
+
+Chỉ dùng khi Source cần khai báo provenance đã chốt rằng nó được refine từ Target.
 
 Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
@@ -23,13 +26,15 @@ Invariant --refined_from--> BusinessRule
 ## non-examples
 
 ```text
-Target --refined_from--> Source   (sai direction nếu inverse được định nghĩa)
+BusinessRule --refined_from--> Invariant   (sai canonical direction)
+Reverse trace từ BusinessRule tới Invariant chỉ để đọc ngược, không tạo relation canonical riêng.
 Free-text relation không qua Relation Type canonical
 ```
 
 ## anti-patterns
 
 Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không tạo inverse canonical chỉ để query từ BusinessRule sang Invariant.
 
 ## valid usage (from entity types)
 

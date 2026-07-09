@@ -22,7 +22,8 @@ Source of truth vẫn là:
 | Luật documentation system | `docs/meta/` |
 | App-specific knowledge | `docs/app/` |
 | Pure theory/reasoning nền | `docs/theories/` |
-| Reusable technical taxonomy | `docs/app_variants/` |
+| Universal app model / generic taxonomy | `docs/app_variants/raw_app_original/` |
+| Methodology-specific template | `docs/app_variants/custom_modular_monolith/` |
 | Workbench candidate | `docs/workbench/` hiện chưa được đi vào hoạt động; không dùng làm source of truth. |
 | Agent operating checklist | `docs/AGENT_SKILLS/` |
 
@@ -33,7 +34,8 @@ Nếu mới vào repo:
 1. [getting-started/quick-start.md](getting-started/quick-start.md)
 2. [concepts/documentation-architecture.md](concepts/documentation-architecture.md)
 3. [reference/canonical-map.md](reference/canonical-map.md)
-4. [workflows/read-for-task.md](workflows/read-for-task.md)
+4. [reference/entity-maps/overview.md](reference/entity-maps/overview.md)
+5. [workflows/read-for-task.md](workflows/read-for-task.md)
 
 Nếu chuẩn bị sửa docs:
 

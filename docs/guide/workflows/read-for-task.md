@@ -19,6 +19,8 @@ expand only when needed
 7. Mở docs/meta nếu cần validate structure/relation/convention.
 ```
 
+Khi cần định hướng layer/fact direction trước khi đào entity, xem [entity-maps/overview.md](../reference/entity-maps/overview.md). Cấu trúc: [entity-maps/](../reference/entity-maps/README.md) — default `NN-*.md` + `variants/<name>/<layer>/`.
+
 ## Output Sau Khi Đọc
 
 Sau workflow đọc, phải kết luận được:

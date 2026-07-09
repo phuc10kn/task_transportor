@@ -33,7 +33,6 @@ draft -> active -> superseded
 ## allowed relations (candidate)
 
 ```text
-CodingRule -> ModuleBoundary (implements)
 CodingRule -> AutomationMechanism (checked_by)
 CodingRule -> VerificationCheck (verified_by)
 ```

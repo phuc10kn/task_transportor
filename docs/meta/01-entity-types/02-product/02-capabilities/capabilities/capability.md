@@ -32,11 +32,15 @@ planned → active → deprecated
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
-| --- | --- | --- | --- | --- |
-| delivered_by | `delivered_by` | Feature | allowed_when_known | 0..n |
+Hiện không có outbound relation slot canonical.
 
-Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
+Trace Feature cover Capability bằng reverse query từ fact gốc:
+
+```text
+Feature --implements--> Capability
+```
+
+Không dùng `Capability --delivered_by--> Feature` như dual/mirror của fact trên.
 
 ## validation
 

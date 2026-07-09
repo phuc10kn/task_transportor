@@ -59,7 +59,7 @@ Trước khi code một phase, đọc:
 
 Nếu task có sửa hoặc thêm code trong `src/modules`, Codex bắt buộc phải đọc lại `docs/app/05-architecture/02-boundaries/README.md` và `docs/app/05-architecture/01-structure/README.md` trong lượt làm việc đó trước khi code.
 
-Khi tài liệu mâu thuẫn, ưu tiên `docs/app/02-product/README.md` cho scope/hành vi Lite, `docs/app/10-decisions/README.md` cho quyết định còn hiệu lực; ưu tiên `docs/app/05-architecture/**` cho cách repo hiện tại áp dụng kiến trúc; ưu tiên `docs/app_variants/custom_modular_monolith/**` cho template reusable; ưu tiên `docs/theories/modular-architecture/**` cho reasoning theory nền.
+Khi tài liệu mâu thuẫn, ưu tiên `docs/app/02-product/README.md` cho scope/hành vi Lite, `docs/app/10-decisions/README.md` cho quyết định còn hiệu lực; ưu tiên `docs/app/05-architecture/**` cho cách repo hiện tại áp dụng kiến trúc; ưu tiên `docs/app_variants/raw_app_original/**` cho universal concern và generic taxonomy; ưu tiên `docs/app_variants/custom_modular_monolith/**` cho template phụ thuộc modular monolith; ưu tiên `docs/theories/modular-architecture/**` cho reasoning theory nền.
 
 ## Công nghệ
 

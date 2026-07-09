@@ -18,7 +18,8 @@ Nếu chưa chắc canonical home hay unit type, quay lại [read-for-task.md](
 | App-specific behavior/scope/rule | `docs/app/` |
 | Documentation schema/rule/convention | `docs/meta/` |
 | Reusable reasoning principle | `docs/theories/` |
-| Reusable technical taxonomy/template | `docs/app_variants/` |
+| Universal app model / generic taxonomy | `docs/app_variants/raw_app_original/` |
+| Methodology-specific template | `docs/app_variants/custom_modular_monolith/` |
 | Long-term choice/trade-off | `docs/app/10-decisions/` |
 | Candidate/chưa chốt | Chưa có home đang hoạt động; dùng `NOTE-OPEN` hoặc note ngoài docs cho tới khi promote. |
 

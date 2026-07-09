@@ -33,7 +33,6 @@ draft -> active -> changed
 ## allowed relations (candidate)
 
 ```text
-ImplementationWorkflow -> InteractionFlow (implements)
 ImplementationWorkflow -> DataAccessComponent (uses)
 ImplementationWorkflow -> IntegrationAdapter (uses)
 ```

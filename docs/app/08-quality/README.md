@@ -9,6 +9,7 @@
 - Folder structure chuẩn: `docs/guide/reference/folder-structure.md#08-quality`
 - Status và note: `docs/guide/reference/status-and-notes.md`
 - Product scope: `docs/app/02-product/README.md`
+- Generic taxonomy: `docs/guide/reference/entity-maps/08-quality.md` → `docs/app_variants/raw_app_original/08-quality/`
 
 ## Acceptance Lite Hiện Tại
 
