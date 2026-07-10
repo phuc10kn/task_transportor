@@ -1,10 +1,13 @@
 ---
+schema: entity-instance/v1
 id: MOD-007
 slug: jira
+title: Jira
 entity_type: Module
 layer: 05-architecture
 concern: 01-structure
 status: active
+summary: Thực thi Jira dry-run và outbound sync có kiểm soát.
 theory_basis:
   - TH-MOD-01
   - TH-MOD-04
@@ -16,6 +19,10 @@ theory_basis:
 ---
 
 # MOD-007 - Jira
+
+## Summary
+
+Thực thi Jira dry-run và outbound sync có kiểm soát.
 
 ## Meaning
 
@@ -51,9 +58,18 @@ Module integration outbound cho Jira. Nó build dry-run preview, kiểm readines
 - [MOD-006-sync](../../modules/MOD-006-sync/README.md) - enqueue và worker execution
 - [MB-006-jira-outbound-guardrail](../../../02-boundaries/module-boundaries/MB-006-jira-outbound-guardrail/README.md) - guardrail outbound
 
+## Relations
+
+- Không có outbound relation canonical trong slice này. AF-006 và AF-007 ghi `involves: MOD-007`; MB-006 ghi `constrains: MOD-007`.
+- Các module còn lại trong Related Entities giữ ở prose vì Module chưa có slot canonical tới Module khác.
+
 ## Evidence
 
 - `src/modules/Jira/JiraApi.js`
 - `src/modules/Jira/application/runJiraDryRun.js`
 - `src/modules/Jira/application/requestJiraSync.js`
 - `src/modules/Jira/application/handlePushIssueJob.js`
+
+## Validation Notes
+
+- Không ghi dual relation `governed_by` hoặc `participates_in`; reverse trace lấy từ flow và boundary source.

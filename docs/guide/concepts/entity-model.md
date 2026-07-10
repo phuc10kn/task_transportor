@@ -19,9 +19,9 @@ Ví dụ architecture:
     ↓
 01-structure
     ↓
-modules
+<entity-type-folder>
     ↓
-MOD-001-cis
+<ENTITY-ID>
 ```
 
 ## Concern
@@ -58,11 +58,13 @@ Canonical entity types nằm trong:
 docs/meta/01-entity-types/
 ```
 
-Folder entity type cụ thể trong `docs/app` phải theo structure chuẩn ở:
+Layer/concern của entity instance trong `docs/app` lấy từ universal baseline:
 
 ```text
 docs/guide/reference/folder-structure.md
 ```
+
+Entity type folder cụ thể lấy từ contract active trong `docs/meta/` hoặc cấu trúc local đã được project chốt, không lấy từ universal baseline.
 
 ## Entity Instance
 
@@ -71,7 +73,7 @@ Entity Instance là knowledge cụ thể của app.
 Ví dụ:
 
 ```text
-docs/app/05-architecture/01-structure/modules/MOD-001-cis/README.md
+docs/app/<layer>/<concern>/<entity-type>/<ENTITY-ID>/README.md
 ```
 
 ## Khi nào không tạo entity mới
@@ -83,4 +85,4 @@ Không tạo entity mới chỉ vì:
 - chưa biết đặt nội dung ở đâu;
 - framework ngoài có một thuật ngữ tương tự.
 
-Nếu chưa chắc, dùng `NOTE-OPEN` hoặc giữ ngoài docs cho tới khi đủ promote. Không dùng `docs/workbench/` khi workbench chưa được kích hoạt.
+Nếu chưa xác định được entity/home, không tạo entity mới. Làm theo lifecycle local của project trước khi tiếp tục.

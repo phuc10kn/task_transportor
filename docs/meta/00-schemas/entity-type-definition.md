@@ -51,6 +51,30 @@ Mỗi file phải bắt đầu bằng title và bảng field:
 
 `structure extends` bắt buộc cho file mới hoặc file được sửa. File legacy chưa có section này được hiểu là dùng base schema và các body section đã ghi trong `required fields`.
 
+## Type Contract Gate
+
+Một entity type phải có cả header field `schema` và section `## structure extends` khi:
+
+- tạo entity type mới;
+- sửa entity type hiện có;
+- chuẩn bị tạo instance mới của type đó.
+
+Type legacy chưa có instance có thể giữ nguyên như technical debt. Không rewrite hàng loạt chỉ để đồng nhất hình thức.
+
+Kiểm tra target trước khi sửa type hoặc tạo instance:
+
+```text
+npm run verify:entity-type-contract -- --type <canonical-entity-type-path>
+```
+
+Sau khi tạo instance, có thể kiểm tra mapping type-instance:
+
+```text
+npm run verify:entity-type-contract -- --instance <docs/app-instance-readme-path>
+```
+
+Lệnh không có tham số chỉ audit toàn cục: legacy type đã có instance là lỗi, legacy type chưa có instance là warning.
+
 ## Section Rules
 
 | Section | Rule |

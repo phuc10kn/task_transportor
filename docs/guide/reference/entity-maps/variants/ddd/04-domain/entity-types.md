@@ -1,6 +1,6 @@
-# Entity Types — DDD / 04-domain
+# Type View — DDD / 04-domain
 
-Derived from: `docs/meta/01-entity-types/04-domain/`, [folder-structure.md](../../../../folder-structure.md) § 04-domain
+Status: **reading view**. Source pack: [../../../packs/variants/ddd/04-domain/README.md](../../../packs/variants/ddd/04-domain/README.md), [folder-structure.md](../../../../folder-structure.md) § 04-domain
 
 ## Concern → Entity
 
@@ -24,14 +24,6 @@ flowchart TB
   LifecycleC --> Lifecycle
 ```
 
-| Concern (04) | Entity types |
-| --- | --- |
-| Language | DomainConcept |
-| Model | DomainEntity, ValueObject, Aggregate |
-| Rules | Invariant, DomainPolicy |
-| Behavior | DomainService, DomainEvent |
-| Lifecycle | Lifecycle |
-
-Định nghĩa: `docs/meta/01-entity-types/04-domain/` (khi materialize theo pack này).
+Danh sách stable type template thuộc [DDD 04-domain base](../../../packs/variants/ddd/04-domain/README.md). `docs/meta/01-entity-types/04-domain/` giữ contract active của project.
 
 Quan hệ: [interaction-map.md](interaction-map.md).

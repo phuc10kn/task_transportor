@@ -26,6 +26,8 @@
     "verify:admin-ui-acceptance": "node scripts/verify/admin-ui-acceptance.js",
     "verify:issue-editor-api": "node scripts/verify/issue-editor-api.js",
     "verify:issue-editor-dryrun-sync": "node scripts/verify/issue-editor-dryrun-sync.js",
+    "verify:docs": "node scripts/verify/docs-navigation.js",
+    "verify:entity-type-contract": "node scripts/verify/entity-type-contract.js",
     "verify:issue-editor:phase01": "npm run verify:issue-editor-api",
     "verify:issue-editor:phase02": "npm run verify:issue-editor-dryrun-sync",
     "verify:issue-editor": "npm run verify:issue-editor:phase01 && npm run verify:issue-editor:phase02",
@@ -37,7 +39,7 @@
     "verify:phase05": "npm run verify:mapping-anomaly-dryrun",
     "verify:phase06": "npm run verify:jira-outbound",
     "verify:phase07": "npm run verify:admin-ui-acceptance",
-    "test": "npm run verify:phase00 && npm run verify:phase01 && npm run verify:phase02 && npm run verify:phase03 && npm run verify:phase04 && npm run verify:phase05 && npm run verify:phase06 && npm run verify:phase07"
+    "test": "npm run verify:phase00 && npm run verify:phase01 && npm run verify:phase02 && npm run verify:phase03 && npm run verify:phase04 && npm run verify:phase05 && npm run verify:phase06 && npm run verify:phase07 && npm run verify:docs && npm run verify:entity-type-contract"
   },
   "keywords": [],
   "author": "",

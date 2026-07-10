@@ -30,6 +30,8 @@ Mỗi entity instance thuộc đúng một layer/concern theo path canonical:
 docs/app/<layer>/<concern>/<entity-type>/<entity-instance>
 ```
 
+`<layer>/<concern>` dùng universal baseline; `<entity-type>` là contract local do project chốt trong `docs/meta` hoặc cấu trúc local tương ứng.
+
 Relation hoặc trace path mới có thể nối entity ở nhiều layer khác nhau.
 
 Ví dụ, một business process có thể có relation tới product use case, hoặc một architecture boundary có thể có relation tới implementation contract. Những relation đó chỉ hợp lệ khi entity type có relation slot trong `relations_template`, relation type tồn tại và valid triple tương ứng đã được chốt trong `docs/meta`.
@@ -50,9 +52,9 @@ Layer README nên giữ:
 
 Layer README không nên lặp lại toàn bộ documentation architecture chung.
 
-## Layer dùng folder structure chuẩn
+## Layer dùng universal baseline
 
-Mỗi layer trong `docs/app` dùng concern folder có prefix số theo:
+Mỗi layer trong `docs/app` dùng concern folder universal có prefix số theo:
 
 ```text
 docs/guide/reference/folder-structure.md

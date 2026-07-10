@@ -11,7 +11,7 @@ Validate structure, relation, ID và placement theo `docs/meta` và `docs/guide`
 
 ```text
 Task Progress:
-- [ ] Đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+- [ ] Đọc [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn)
 - [ ] Đọc docs/guide/workflows/write-docs.md nếu validate unit mới/sửa
 - [ ] Đọc docs/guide/workflows/trace-impact.md nếu có relation/impact
 - [ ] Đọc docs/meta/README.md
@@ -34,14 +34,16 @@ Lưu ý: schema gate không áp dụng máy móc cho mọi Markdown file. README
 
 ### Placement
 
-- [ ] Path khớp `docs/guide/reference/folder-structure.md`.
-- [ ] Layer/concern/entity type đúng.
+- [ ] Layer/concern khớp universal baseline trong `docs/guide/reference/folder-structure.md` hoặc local extension đã được chốt.
+- [ ] Entity type/path bên dưới concern khớp contract active trong `docs/meta` hoặc cấu trúc local đã được project chốt.
 - [ ] README layer không phình thành generic theory.
 
 ### Entity Type
 
 - [ ] Entity type resolve được trong `docs/meta/01-entity-types/` hoặc layer-local type hợp lệ.
 - [ ] ID prefix/status/naming đúng convention.
+- [ ] Nếu tạo/sửa entity type, type có explicit `schema` và `## structure extends`.
+- [ ] Nếu tạo instance, entity type đích pass Type Contract Gate trước khi draft và mapping `--instance` pass sau khi tạo.
 
 ### Relation
 

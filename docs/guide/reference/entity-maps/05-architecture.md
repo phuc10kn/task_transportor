@@ -20,26 +20,16 @@ flowchart TB
   A --> CrossCutting[Cross-cutting]
 ```
 
-| Concern | Ý nghĩa |
-| --- | --- |
-| Structure | Module / component architecture |
-| Boundaries | Ownership, public API, read/write rule |
-| Interactions | Flow giữa modules/systems |
-| State | State owner / lifecycle ở mức architecture |
-| Data | Data flow / ownership giữa parts |
-| Deployment | Deployment unit / topology |
-| Cross-cutting | Rule áp dụng nhiều module |
+Concern tree universal: [05-architecture pack](packs/universal/05-architecture/README.md).
 
 ## Variants
 
-Default map chỉ giữ concern lens. Type pack + graph theo style → đọc variant tương ứng:
+Default map chỉ giữ concern lens. Khi style thay đổi type/relation, đọc variant view tương ứng rồi route sang source pack:
 
 | Variant | Map |
 | --- | --- |
 | Modular monolith | [variants/modular-monolith/05-architecture/](variants/modular-monolith/05-architecture/README.md) |
 
-## Example
+## Source pack
 
-Template / instance mẫu (không phải SoT của guide):
-
-- `docs/app_variants/custom_modular_monolith/05-architecture/`
+Template reusable của modular monolith nằm ở [05-architecture guide pack](packs/variants/modular-monolith/05-architecture/README.md). Map này chỉ là concern lens mặc định; active contract và app-specific architecture truth vẫn nằm ở `docs/meta/` và `docs/app/` của project.

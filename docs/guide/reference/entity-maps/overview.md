@@ -2,7 +2,7 @@
 
 File này là **bản đồ chung** để đọc entity types và quan hệ giữa các layer.
 
-Nó không thay `docs/meta`. Cạnh hợp lệ (khi đã promote) lấy từ:
+Nó không thay `docs/meta`. Cạnh hợp lệ lấy từ:
 
 ```text
 docs/meta/01-entity-types/   → entity type + relations_template
@@ -26,10 +26,10 @@ Index folder: [README.md](README.md).
 | Nguồn | Vai trò | Home |
 | --- | --- | --- |
 | Default layer map | Cửa vào theo layer: câu hỏi, concern, type/graph status | `entity-maps/NN-*.md` |
-| Meta registry | Canonical entity type, relation type, valid triple đã promote | `docs/meta/` |
-| Universal origin model | Concern và generic taxonomy tái dùng, không phụ thuộc methodology | `docs/app_variants/raw_app_original/` |
-| Variant map | Type pack + graph chỉ khi phụ thuộc methodology/style | [variants/](variants/) |
-| App variant template | Vocabulary/template phụ thuộc methodology; không tự là entity-map variant | `docs/app_variants/` |
+| Meta registry | Canonical entity type, relation type, valid triple active | `docs/meta/` |
+| Universal origin model | Concern baseline và generic taxonomy tái dùng, không phụ thuộc methodology | [packs/universal/](packs/universal/README.md) |
+| Variant map | Reading view: câu hỏi/status/graph khi phụ thuộc methodology/style; không sở hữu type pack | [variants/](variants/) |
+| Methodology pack | Vocabulary/template phụ thuộc methodology; source nằm trong guide pack | [packs/variants/](packs/README.md) |
 
 ## Stack layer như lens phân tích
 
@@ -71,7 +71,7 @@ Thứ tự trên là **thứ tự đọc/hiểu**, không phải pipeline bắt 
 | `04-domain` | Meaning và invariant? | [04-domain.md](04-domain.md) | [variants/ddd/04-domain/](variants/ddd/04-domain/README.md) |
 | `05-architecture` | Module, boundary, flow? | [05-architecture.md](05-architecture.md) | [variants/modular-monolith/05-architecture/](variants/modular-monolith/05-architecture/README.md) |
 | `06-technical` | Mechanism/runtime/schema? | [06-technical.md](06-technical.md) | — |
-| `07-implementation` | Code/public API? | [07-implementation.md](07-implementation.md) | — (chưa có type pack/graph đã chốt) |
+| `07-implementation` | Code/public API? | [07-implementation.md](07-implementation.md) | — (chưa có stable methodology variant/graph) |
 | `08-quality` | Acceptance/verify? | [08-quality.md](08-quality.md) | — |
 | `09-operation` | Run/recover/observe? | [09-operation.md](09-operation.md) | — |
 | `10-decisions` | Vì sao chọn hướng này? | [10-decisions.md](10-decisions.md) | — |
@@ -143,7 +143,7 @@ Triples cụ thể: `docs/meta/03-rules/cross-layer/valid-triples.md`.
 Rule:
 
 1. Đọc default map của layer trước.
-2. Nếu layer có variant đang dùng → mở `variants/<name>/<layer>/`.
+2. Nếu project đã chọn methodology variant cho layer → mở `variants/<name>/<layer>/`, rồi route sang source pack.
 3. Cross-layer chỉ khi có valid triple trong meta.
 4. Theory/Decision không đi qua relation graph; dùng `theory_basis` / `decision_basis`.
 
@@ -151,7 +151,7 @@ Rule:
 
 ```text
 1. Xác định layer → mở entity-maps/NN-*.md (có mermaid).
-2. Nếu có variant cho layer đó → đọc type pack / graph trong variants/.
+2. Nếu có variant cho layer đó → đọc variant view, rồi source pack mà view route tới.
 3. Kiểm tra slot + triple trong docs/meta trước khi thêm relation.
 4. Chọn một chiều fact gốc; chiều ngược = derived trừ khi chứng minh độc lập.
 ```

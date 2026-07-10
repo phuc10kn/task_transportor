@@ -4,7 +4,9 @@
 
 Style tổ chức hệ thống thành module có ownership, boundary, flow, state owner, data flow, deployment unit, cross-cutting rule.
 
-Template entity dài hơn (nếu có): `docs/app_variants/custom_modular_monolith/`.
+Đây là reading view; source type/relation template nằm trong pack được route bên dưới.
+
+Pack source: [../../packs/variants/modular-monolith/README.md](../../packs/variants/modular-monolith/README.md).
 
 ## Layers trong variant này
 
@@ -18,4 +20,4 @@ Template entity dài hơn (nếu có): `docs/app_variants/custom_modular_monolit
 - Concern lens: [folder-structure.md](../../../folder-structure.md)
 - Index: [../../README.md](../../README.md)
 
-`07-implementation` hiện chỉ là default concern map. Chưa có type pack/interaction graph được chốt để đặt vào variant này.
+`07-implementation` không phải active layer map của variant này và hiện chưa có stable modular-monolith source pack cho layer.

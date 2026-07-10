@@ -11,31 +11,28 @@ Schema canonical: [decision.md](../../../meta/00-schemas/decision.md).
 ```yaml
 ---
 schema: decision/v1
-id: DEC-001
-slug: use-cis-as-sync-hub
-title: Use CIS As Sync Hub
-status: accepted
-summary: Đồng bộ phải đi qua CIS thay vì Backlog -> Jira trực tiếp.
+id: DEC-<NNN>
+slug: <decision-slug>
+title: <Decision Title>
+status: <project-defined-status>
+summary: <Decision summary.>
 affected_layers:
-  - 00-context
-  - 01-business
-  - 02-product
-  - 05-architecture
+  - <NN-layer>
 theory_basis:
-  - TH-HUBFLOW
+  - <TH-...>
 review_triggers:
-  - Medium scope mở Jira inbound đầy đủ.
+  - <Condition that requires review.>
 ---
 ```
 
 ## Markdown Body
 
 ```md
-# DEC-001 - Use CIS As Sync Hub
+# DEC-<NNN> - <Decision Title>
 
 ## Status
 
-accepted
+<project-defined-status>
 
 ## Decision
 

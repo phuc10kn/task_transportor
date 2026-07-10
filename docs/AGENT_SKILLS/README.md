@@ -4,11 +4,7 @@
 
 `docs/AGENT_SKILLS/` là home cho checklist và agent skills khi Codex, Cursor hoặc agent runner khác làm việc với hệ thống docs.
 
-Folder này không thay `docs/guide` và không định nghĩa rule mới. Luồng vận hành chuẩn nằm ở:
-
-```text
-docs/guide/README.md#luồng-vận-hành-chuẩn
-```
+Folder này không thay `docs/guide` và không định nghĩa rule mới. Mọi standard agent bắt đầu từ [Luồng vận hành chuẩn](../guide/README.md#luồng-vận-hành-chuẩn).
 
 ## Canonical Boundaries
 
@@ -17,12 +13,22 @@ docs/guide/        -> manual vận hành docs
 docs/meta/         -> schema, rule, relation, convention canonical
 docs/app/          -> app truth của CIS
 docs/theories/     -> reasoning foundation
-docs/app_variants/ -> reusable taxonomy/template, không phải app truth
-docs/workbench/    -> chưa được đi vào hoạt động
+docs/guide/reference/entity-maps/packs/ -> reusable taxonomy/template, không phải app truth
+docs/workbench/    -> workspace hỗ trợ, chưa được đi vào hoạt động
 docs/AGENT_SKILLS/ -> agent checklist, không thay guide/meta
 ```
 
-## Skill Index
+## Phân Loại Agent
+
+### Standard Agent
+
+Đây là đường mặc định cho mọi task docs. Các skill đang active trong index bên dưới đọc guide, làm việc với canonical home và không dùng workbench.
+
+### Workbench-Support Agent
+
+Workbench agent là một nhóm tách riêng, chỉ hỗ trợ standard agent sau khi project local đã kích hoạt workbench. `task_transportor` chưa có workbench-support agent active; không được dùng hoặc tạo workbench item trong task docs thông thường.
+
+## Standard Skill Index
 
 | Skill | Khi dùng | Path |
 | --- | --- | --- |
@@ -35,17 +41,15 @@ docs/AGENT_SKILLS/ -> agent checklist, không thay guide/meta
 | `theory-refine` | Đề xuất refine theory | [theory-refine/SKILL.md](theory-refine/SKILL.md) |
 | `theory-impact` | Trace impact khi theory đổi | [theory-impact/SKILL.md](theory-impact/SKILL.md) |
 
-## Chọn Skill
+## Chọn Standard Skill
 
-```text
-Task mới
--> đọc docs/guide/README.md#luồng-vận-hành-chuẩn
--> nếu chỉ đọc app knowledge: doc-navigate
--> nếu tạo/sửa entity: doc-create-entity + meta-validate
--> nếu có relation/impact: meta-validate + docs/guide/workflows/trace-impact.md
--> nếu liên quan theory: theory-find / theory-review / theory-impact
--> nếu theory có vấn đề: theory-challenge / theory-refine
-```
+Bắt đầu bằng [Luồng vận hành chuẩn](../guide/README.md#luồng-vận-hành-chuẩn), rồi chọn skill phù hợp:
+
+- Chỉ đọc app knowledge: [doc-navigate](doc-navigate/SKILL.md).
+- Tạo hoặc sửa entity: [doc-create-entity](doc-create-entity/SKILL.md) và [meta-validate](meta-validate/SKILL.md).
+- Có relation hoặc impact: [meta-validate](meta-validate/SKILL.md) và [trace-impact.md](../guide/workflows/trace-impact.md).
+- Liên quan theory: [theory-find](theory-find/SKILL.md), [theory-review](theory-review/SKILL.md) hoặc [theory-impact](theory-impact/SKILL.md).
+- Theory có vấn đề: [theory-challenge](theory-challenge/SKILL.md) hoặc [theory-refine](theory-refine/SKILL.md).
 
 ## Nguyên Tắc Bắt Buộc
 
@@ -54,7 +58,8 @@ Task mới
 - Khi guide mâu thuẫn với app truth, ưu tiên `docs/app`.
 - Không tự tạo schema, entity type, relation slot, relation type, valid triple hoặc ID prefix.
 - Không dùng `docs/workbench` làm source of truth vì workbench chưa được đi vào hoạt động.
-- Không coi `docs/app_variants` là app truth; chỉ dùng như reusable taxonomy/template.
+- Standard agent là mặc định; workbench-support agent chỉ có thể hỗ trợ sau local activation và phải handoff về standard flow.
+- Không coi guide pack là app truth; chỉ dùng `docs/guide/reference/entity-maps/packs/` như reusable taxonomy/template.
 
 ## Guides Và Reference
 

@@ -1,15 +1,25 @@
 ---
+schema: entity-instance/v1
 id: MOD-005
 slug: anomaly
+title: Anomaly
 entity_type: Module
 layer: 05-architecture
 concern: 01-structure
 status: active
+summary: Sở hữu anomaly resolution state và blocking checks cho risky outbound path.
 theory_basis:
   - TH-MOD-01
+relations:
+  owns:
+    - SO-006
 ---
 
 # MOD-005 - Anomaly
+
+## Summary
+
+Sở hữu anomaly resolution state và blocking checks cho risky outbound path.
 
 ## Meaning
 
@@ -43,8 +53,17 @@ Module ghi nhận anomaly và health finding có thể chặn sync hoặc cần 
 - [MOD-010-dashboard](../../modules/MOD-010-dashboard/README.md) - đọc anomaly cho vận hành
 - [SO-006-anomaly-resolution-state](../../../04-state/state-owners/SO-006-anomaly-resolution-state/README.md) - state owner tương ứng
 
+## Relations
+
+- `owns`: [SO-006-anomaly-resolution-state](../../../04-state/state-owners/SO-006-anomaly-resolution-state/README.md).
+- Consumer trong Related Entities giữ ở prose vì Module chưa có slot relation canonical tới Module khác.
+
 ## Evidence
 
 - `src/modules/Anomaly/AnomalyApi.js`
 - `src/modules/Anomaly/application/listBlockingAnomalies.js`
 - `src/modules/Anomaly/application/ensureMappingGapAnomaly.js`
+
+## Validation Notes
+
+- Ownership của Anomaly đối với SO-006 khớp với write policy của state owner.

@@ -95,7 +95,7 @@ Relation canonical phải ghi trong YAML frontmatter field `relations` ở đầ
 ```yaml
 relations:
   governed_by:
-    - BRULE-001
+    - <TARGET-ID>
 ```
 
 Body `## Relations` chỉ giải thích ngữ cảnh cho người đọc.
@@ -112,12 +112,12 @@ Canonical direction chọn theo nơi fact gốc được quản trị và chiề
 - container -> member
 - cause/source -> impacted target
 - rule/constraint -> governed target
-- concrete delivery/UI flow -> abstract capability/behavior khi dùng `implements`
+- concrete product/UI artifact -> abstract capability/behavior khi dùng `implements`
 - flow -> participant
 
 Không tạo inverse canonical để đọc ngược.
 
-`implements` là ngoại lệ có chủ đích với heuristic requirement/specification: source là đơn vị cụ thể quản trị fact hiện thực hóa, target là capability hoặc behavior trừu tượng. Vì vậy dùng:
+`implements` là ngoại lệ có chủ đích với heuristic requirement/specification: source là artifact product/UI cụ thể quản trị fact hiện thực hóa, target là capability hoặc behavior trừu tượng. Relation này chỉ dành cho product/UI realization, không dùng cho technical/implementation conformance. Vì vậy dùng:
 
 ```text
 Feature --implements--> Capability

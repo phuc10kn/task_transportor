@@ -1,6 +1,6 @@
 ﻿# Unit Structure - Entity Type
 
-Template này dùng cho entity type definition trong `docs/meta/01-entity-types/` hoặc layer-local type definition ở `docs/app/05+`.
+Template này dùng cho entity type definition trong `docs/meta/01-entity-types/` hoặc layer-local type definition ở `docs/app/05+`. Reusable guide pack chỉ là stable source template; `folder` vẫn là registry local của project.
 
 Schema canonical: [entity-type-definition.md](../../../meta/00-schemas/entity-type-definition.md).
 
@@ -50,10 +50,7 @@ entity_type_definition:
       - Exceptions
       - Owner
   lifecycle:
-    - draft
-    - active
-    - superseded
-    - retired
+    - <project-defined-status>
   structure_extends:
     base: entity-instance/v1
     required_sections:
@@ -109,7 +106,7 @@ entity_type_definition:
 ## validation
 ```
 
-`folder` chỉ ghi registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `business-rules/`. App placement path vẫn lấy từ `docs/guide/reference/folder-structure.md`, ví dụ `docs/app/01-business/05-governance/01-business-rules/business-rules/`.
+`folder` chỉ ghi registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `business-rules/`. App placement kết hợp layer/concern universal từ `docs/guide/reference/folder-structure.md` với entity type folder đã được project chốt trong meta; ví dụ `docs/app/01-business/05-governance/01-business-rules/business-rules/` chỉ hợp lệ khi local registry quy định như vậy.
 
 `relations_template` định nghĩa slot relation mà entity instance của type này được phép điền. Không có slot thì instance không được ghi relation đó.
 

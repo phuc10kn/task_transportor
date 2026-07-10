@@ -1,16 +1,23 @@
 ---
+schema: entity-instance/v1
 id: SO-001
 slug: canonical-issue-state
+title: Canonical Issue State
 entity_type: StateOwner
 layer: 05-architecture
 concern: 04-state
 status: active
+summary: Canonical internal issue state do Cis sở hữu.
 theory_basis:
   - TH-CANON-01
   - TH-CANON-04
 ---
 
 # SO-001 - Canonical Issue State
+
+## Summary
+
+Canonical internal issue state do Cis sở hữu.
 
 ## Meaning
 
@@ -59,7 +66,15 @@ Toàn bộ mô hình sản phẩm hiện tại đặt CIS làm trung tâm nên c
 - Mọi manual edit nghiêm túc phải quay về đây.
 - Mọi review flow chỉ được apply vào đây qua owner API.
 
+## Relations
+
+- Không có outbound relation canonical. Ownership được ghi ở [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md) qua `owns: SO-001`.
+
 ## Evidence
 
 - `docs/app/05-architecture/02-boundaries/README.md`
 - `src/modules/Cis/CisApi.js`
+
+## Validation Notes
+
+- Không tạo inverse relation riêng chỉ để biểu diễn owner của state.

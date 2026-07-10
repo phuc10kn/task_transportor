@@ -1,223 +1,205 @@
-﻿# Folder Structure Chuẩn
+# Folder Structure — Universal Baseline
 
-File này là home canonical cho folder structure chuẩn của docs.
+File này là canonical **chỉ** cho universal baseline `Layer -> Concern` của guide. Nó không sở hữu entity-type taxonomy, relation contract, app truth hoặc cấu trúc local cụ thể của project.
 
-Không duy trì thêm `docs/folder_structure.md` ở root. Folder structure chuẩn và phần giải thích cách dùng đều nằm trong file này để tránh hai nguồn truth song song.
+Universal pack là source reusable; file này là route/reference chuẩn để người và agent dùng cùng path layer/concern có prefix số.
 
-## Nguyên Tắc Chung
+## Phạm Vi
 
-App docs dùng mô hình:
+File này giữ:
+
+- layer `00` đến `10`;
+- concern universal và path có prefix số;
+- câu hỏi mà từng concern trả lời.
+
+File này không giữ:
+
+- entity type folder hoặc entity instance của project;
+- vocabulary phụ thuộc methodology, như DDD tactical hoặc modular-monolith type;
+- concern hoặc local structure chỉ có nghĩa trong một project;
+- decision, evidence, migration hoặc lifecycle của project.
+
+## Mô Hình Chung
 
 ```text
 Layer
-  -> Concern folder
-     -> Entity Type folder
-        -> Entity Instance folder/file
+  -> Concern universal
+     -> entity type / entity instance do project quản lý local
 ```
 
-Ví dụ:
+Ví dụ baseline:
 
 ```text
-docs/app/01-business/04-behavior/01-processes/PROC-001-backlog-ingest/README.md
+docs/app/01-business/04-behavior/
 ```
 
-Trong đó:
+Entity type folder và path instance bên dưới concern lấy từ contract active trong `docs/meta/` hoặc cấu trúc local đã được project chốt, không suy ra từ file này.
 
-| Cấp | Ý nghĩa |
-| --- | --- |
-| `01-business` | Layer: vùng câu hỏi lớn của app docs. |
-| `04-behavior` | Concern: nhóm câu hỏi ổn định trong layer. |
-| `01-processes` | Entity type folder: loại knowledge cụ thể. |
-| `PROC-001-backlog-ingest` | Entity instance: một knowledge item của app. |
-
-## Vì Sao Folder Có Prefix Số
+## Luật Prefix Số
 
 Prefix số giữ thứ tự đọc ổn định, không biến folder thành pipeline bắt buộc.
 
-Ví dụ `01-business/04-behavior` không có nghĩa behavior chỉ xuất hiện sau organization trong thực tế. Nó chỉ nói rằng khi đọc business layer, behavior thường dễ hiểu hơn sau discovery, direction và organization.
-
-Luật:
-
-- README layer và guide phải dùng đúng path có prefix, ví dụ `01-overview/`, không viết rút gọn `overview/`.
-- Khi nói meaning chung, dùng tên concern không prefix được; khi nói path, dùng path có prefix.
-- Không tự thêm concern mới nếu chưa cập nhật file này và guide/workflow liên quan.
+- Khi nói path universal, dùng prefix đầy đủ, ví dụ `01-business/04-behavior/`.
+- Khi nói meaning chung, có thể dùng tên concern không prefix.
+- Không tự thêm concern local vào file này.
 
 ## Top-Level Docs
 
-| Folder | Vì sao tồn tại | Chứa | Không chứa |
-| --- | --- | --- | --- |
-| `docs/app/` | Giữ truth cụ thể của Central Sync Hub. | Context, business, product, interface, domain, architecture, technical, implementation, quality, operation, decisions. | Generic explanation của docs system. |
-| `docs/guide/` | Giúp người và agent dùng docs system đúng. | Hướng dẫn đọc, viết, trace, folder structure, unit template, ví dụ. | Canonical rule mới. |
-| `docs/meta/` | Định nghĩa rule/schema/convention canonical của docs system. | Schema contract, entity type, relation type, valid triple, validation convention. | App-specific truth và handbook hướng dẫn đọc. |
-| `docs/theories/` | Giữ reusable reasoning foundation. | Principle, theory, governance, challenge. | Jira/Backlog/module cụ thể. |
-| `docs/app_variants/` | Giữ universal app origin và pattern extension reusable. | `raw_app_original` và pattern template như `custom_modular_monolith`. | Source of truth cụ thể nếu `docs/app` đã có. |
-| `docs/workbench/` | Giữ chỗ cho candidate entity/relation workbench. | Status và harness nháp. | Source of truth, app truth, meta rule; hiện chưa được đi vào hoạt động. |
-| `docs/AGENT_SKILLS/` | Giữ checklist/skill cho agent. | Reading strategy, operating checklist. | Human-facing full manual. |
+| Folder | Vai trò | Không chứa |
+| --- | --- | --- |
+| `docs/app/` | App truth và entity instance của từng project. | Generic explanation của docs system. |
+| `docs/guide/` | Manual, universal baseline, reusable pack và example. | Contract active hoặc app truth của project. |
+| `docs/meta/` | Schema, entity type, relation type, valid triple và convention active của project. | App-specific truth và handbook dài. |
+| `docs/theories/` | Reasoning foundation mà project đã áp dụng. | App/implementation detail cụ thể. |
+| `docs/guide/reference/entity-maps/packs/` | Stable reusable universal/methodology source. | Local lifecycle, project evidence hoặc active contract. |
+| `docs/workbench/` | Optional local workspace; chỉ dùng theo policy local của project. | Source of truth active. |
+| `docs/AGENT_SKILLS/` | Procedure/checklist active của agent trong project. | Human-facing full manual. |
 
-## 00-context
+## Universal Layer Và Concern Baseline
 
-Layer này trả lời: app tồn tại trong bối cảnh nào, phạm vi nền là gì, giả định nào đang được dùng.
+### 00-context
 
-| Path | Concern | Vì sao có folder này | Entity type chuẩn | Không đặt ở đây |
-| --- | --- | --- | --- | --- |
-| `00-context/01-overview/` | Overview | Cho người đọc biết app là gì trước khi đi vào chi tiết. | `applications/` | Business process, feature, architecture overview chi tiết. |
-| `00-context/02-scope/` | Scope | Giữ ranh giới in/out scope để tránh mở rộng âm thầm. | `scopes/` | Product requirement chi tiết, release implementation plan. |
-| `00-context/03-premises/` | Premises | Giữ điều project đang giả định và giới hạn phải tuân thủ. | `01-assumptions/`, `02-constraints/` | Business rule, technical config. |
-| `00-context/04-language/` | Language | Giữ meaning chung và thuật ngữ canonical. | `glossary-terms/` | Domain invariant hoặc UI label cụ thể. |
-| `00-context/05-ecosystem/` | Ecosystem | Ghi hệ thống/tổ chức bên ngoài có quan hệ với app. | `external-systems/` | Integration protocol, adapter implementation. |
-| `00-context/06-environment/` | Environment | Ghi environment có ý nghĩa ở mức context. | `environments/` | Runtime instance, deployment runbook. |
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `00-context/01-overview/` | Overview | Project là gì trước khi đi vào chi tiết? |
+| `00-context/02-scope/` | Scope | Ranh giới nền nào đang được giả định? |
+| `00-context/03-premises/` | Premises | Assumption và constraint nền là gì? |
+| `00-context/04-language/` | Language | Thuật ngữ chung nào cần nhất quán? |
+| `00-context/05-ecosystem/` | Ecosystem | Hệ thống/tổ chức bên ngoài nào có quan hệ với project? |
+| `00-context/06-environment/` | Environment | Environment nào có nghĩa ở mức context? |
 
-## 01-business
+### 01-business
 
-Layer này trả lời: business đang gặp vấn đề gì, muốn đạt kết quả gì, ai tham gia, vận hành thế nào.
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `01-business/01-discovery/` | Discovery | Problem/opportunity nào cần được hiểu trước solution? |
+| `01-business/02-direction/` | Direction | Goal/outcome nào định hướng product? |
+| `01-business/03-organization/` | Organization | Stakeholder và trách nhiệm business là gì? |
+| `01-business/04-behavior/` | Behavior | Business vận hành qua process/scenario nào? |
+| `01-business/05-governance/` | Governance | Rule/policy/constraint nào chi phối business? |
+| `01-business/06-measurement/` | Measurement | Metric/success criteria nào đánh giá kết quả? |
 
-| Path | Concern | Vì sao có folder này | Entity type chuẩn | Không đặt ở đây |
-| --- | --- | --- | --- | --- |
-| `01-business/01-discovery/` | Discovery | Tách problem/opportunity khỏi solution. | `problems/` | Feature request viết trá hình. |
-| `01-business/02-direction/` | Direction | Giữ goal/outcome để product trace về why. | `goals/` | UI screen, technical target. |
-| `01-business/03-organization/` | Organization | Ghi stakeholder và trách nhiệm business. | `stakeholders/` | Auth role implementation. |
-| `01-business/04-behavior/` | Behavior | Mô tả business vận hành bằng process/scenario. | `01-processes/`, `02-scenarios/` | API flow, worker flow, UI flow. |
-| `01-business/05-governance/` | Governance | Giữ rule/policy/constraint chi phối business. | `01-business-rules/`, `02-policies/`, `03-business-constraints/` | Validation code, database constraint. |
-| `01-business/06-measurement/` | Measurement | Ghi metric và success criteria. | `01-metrics/`, `02-success-criteria/` | Test case chi tiết. |
+### 02-product
 
-## 02-product
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `02-product/01-needs/` | Needs | Business need nào cần product đáp ứng? |
+| `02-product/02-capabilities/` | Capabilities | Product cần có khả năng bền vững nào? |
+| `02-product/03-behavior/` | Behavior | Product use case/response nào cần tồn tại? |
+| `02-product/04-delivery/` | Delivery | Giá trị nào được giao qua feature/release? |
+| `02-product/05-specification/` | Specification | Requirement kiểm chứng được là gì? |
+| `02-product/06-acceptance/` | Acceptance | Điều kiện nào cho thấy product được chấp nhận? |
 
-Layer này trả lời: product phải cung cấp gì để phục vụ business.
+### 03-interface
 
-| Path | Concern | Vì sao có folder này | Entity type chuẩn | Không đặt ở đây |
-| --- | --- | --- | --- | --- |
-| `02-product/01-needs/` | Needs | Chuyển business problem/goal thành nhu cầu product. | `business-requirements/` | Business process gốc. |
-| `02-product/02-capabilities/` | Capabilities | Giữ khả năng bền vững của product. | `capabilities/` | Một task implementation nhỏ. |
-| `02-product/03-behavior/` | Behavior | Mô tả product use case và phản hồi ở mức product. | `use-cases/` | UI click path, controller logic. |
-| `02-product/04-delivery/` | Delivery | Gom giá trị được giao theo feature/release. | `01-features/`, `02-releases/` | Source code plan chi tiết. |
-| `02-product/05-specification/` | Specification | Giữ requirement có thể kiểm chứng. | `01-functional-requirements/`, `02-non-functional-requirements/` | Architecture mechanism. |
-| `02-product/06-acceptance/` | Acceptance | Ghi điều kiện product được chấp nhận. | `acceptance-criteria/` | Automated test implementation. |
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `03-interface/01-audience/` | Audience | Ai chạm vào interface? |
+| `03-interface/02-experience/` | Experience | Journey/flow tại touchpoint là gì? |
+| `03-interface/03-structure/` | Structure | Navigation/screen/entry structure là gì? |
+| `03-interface/04-composition/` | Composition | Component/form có knowledge value nào tồn tại? |
+| `03-interface/05-interaction/` | Interaction | Interaction và visible state nào cần được hiểu? |
+| `03-interface/06-quality/` | Interface Quality | Quality riêng của experience là gì? |
+| `03-interface/07-system/` | Interface System | Consistency/design-system concern nào cần giữ? |
 
-## 03-interface
+### 04-domain
 
-Layer này trả lời: người dùng hoặc operator chạm vào product qua touchpoint nào.
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `04-domain/01-language/` | Domain Language | Vocabulary canonical trong domain là gì? |
+| `04-domain/02-model/` | Model | Conceptual model nào giải thích problem space? |
+| `04-domain/03-rules/` | Rules | Invariant/policy domain nào chi phối meaning? |
+| `04-domain/04-behavior/` | Behavior | Behavior có meaning domain nào xảy ra? |
+| `04-domain/05-lifecycle/` | Lifecycle | State/lifecycle domain nào cần được hiểu? |
 
-| Path | Concern | Vì sao có folder này | Entity type chuẩn | Không đặt ở đây |
-| --- | --- | --- | --- | --- |
-| `03-interface/01-audience/` | Audience | Ghi kiểu người hoặc actor chạm vào interface. | `personas/` | Business stakeholder đầy đủ. |
-| `03-interface/02-experience/` | Experience | Ghi journey và flow tại touchpoint. | `01-journeys/`, `02-user-flows/` | Business process, architecture interaction. |
-| `03-interface/03-structure/` | Structure | Ghi navigation, screen hoặc entry structure của touchpoint. | `01-navigation/`, `02-screens/` | Product requirement. |
-| `03-interface/04-composition/` | Composition | Ghi component/form có knowledge value. | `01-components/`, `02-forms/` | Source component tree chi tiết. |
-| `03-interface/05-interaction/` | Interaction | Ghi interaction và visible state tại interface. | `01-interactions/`, `02-ui-states/` | Domain lifecycle nội bộ. |
-| `03-interface/06-quality/` | Interface Quality | Ghi quality riêng của experience tại touchpoint. | `accessibility/` | Product-wide quality gate. |
-| `03-interface/07-system/` | Interface System | Giữ design system và consistency rule của touchpoint. | `design-systems/` | Global docs convention. |
+Type vocabulary của DDD tactical thuộc [DDD pack](entity-maps/packs/variants/ddd/README.md), không thuộc universal baseline này.
 
-## 04-domain
+### 05-architecture
 
-Layer này trả lời: meaning, rule và lifecycle nội bộ của domain là gì.
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `05-architecture/01-structure/` | Structure | Architectural unit chính và responsibility là gì? |
+| `05-architecture/02-boundaries/` | Boundaries | Ownership/dependency/trust boundary nằm ở đâu? |
+| `05-architecture/03-interactions/` | Interactions | Unit tương tác theo flow nào? |
+| `05-architecture/04-state/` | State | State nào tồn tại và ai sở hữu? |
+| `05-architecture/05-data/` | Data | Data ownership/flow/canonical data được tổ chức ra sao? |
+| `05-architecture/06-deployment/` | Deployment | Deployment topology ở mức architecture là gì? |
+| `05-architecture/07-cross-cutting/` | Cross-cutting | Concern/rule nào tác động nhiều unit? |
 
-| Path | Concern | Vì sao có folder này | Entity type chuẩn | Không đặt ở đây |
-| --- | --- | --- | --- | --- |
-| `04-domain/01-language/` | Domain Language | Ghi khái niệm domain và ubiquitous language. | `domain-concepts/` | Glossary chung toàn app. |
-| `04-domain/02-model/` | Model | Ghi model khái niệm của domain. | `01-entities/`, `02-value-objects/`, `03-aggregates/` | Database table, API schema. |
-| `04-domain/03-rules/` | Rules | Ghi invariant và policy domain. | `01-invariants/`, `02-domain-policies/` | Business policy rộng, code validation. |
-| `04-domain/04-behavior/` | Behavior | Ghi behavior/event có meaning domain. | `01-domain-services/`, `02-domain-events/` | Worker job flow. |
-| `04-domain/05-lifecycle/` | Lifecycle | Ghi state và lifecycle của domain object. | `lifecycles/` | Operation incident lifecycle. |
+Type vocabulary modular monolith thuộc [modular-monolith pack](entity-maps/packs/variants/modular-monolith/README.md), không thuộc universal baseline này.
 
-## 05-architecture
+### 06-technical
 
-Layer này trả lời: hệ thống được tổ chức bằng boundary, module, state owner và interaction nào.
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `06-technical/01-platforms/` | Platforms | Runtime/framework/platform nào được chọn? |
+| `06-technical/02-interfaces/` | Interfaces | API/protocol/schema contract nào được expose/consume? |
+| `06-technical/03-state-and-storage/` | State And Storage | State/storage mechanism nào được dùng? |
+| `06-technical/04-exchange/` | Exchange | Technical exchange diễn ra ra sao? |
+| `06-technical/05-security/` | Security | Technical security control nào tồn tại? |
+| `06-technical/06-processing/` | Processing | Worker/job/scheduler/pipeline mechanism nào được dùng? |
+| `06-technical/07-configuration/` | Configuration | Runtime behavior được cấu hình thế nào? |
+| `06-technical/08-performance/` | Performance | Limit/resource/performance mechanism nào được đặt? |
 
-> **NOTE:** Concern folder và cột *Entity type chuẩn* là canonical structure hiện tại. Map đọc: [entity-maps/05-architecture.md](entity-maps/05-architecture.md). Việc registry `04`/`05` có cần tách neutral pack và methodology pack hay không vẫn là quyết định chưa chốt.
+### 07-implementation
 
-| Path | Concern | Vì sao có folder này | Không đặt ở đây |
-| --- | --- | --- | --- |
-| `05-architecture/01-structure/` | Structure | Ghi module/component architecture và vai trò owner. | Source file layout chi tiết. |
-| `05-architecture/02-boundaries/` | Boundaries | Ghi ownership, public API, read/write rule. | Business rule hoặc coding style thuần. |
-| `05-architecture/03-interactions/` | Interactions | Ghi architecture flow giữa modules/systems. | UI flow, business process. |
-| `05-architecture/04-state/` | State | Ghi state owner và state lifecycle ở mức architecture. | Database schema chi tiết. |
-| `05-architecture/05-data/` | Data | Ghi data flow và ownership giữa parts. | Field-level implementation mapping dài. |
-| `05-architecture/06-deployment/` | Deployment | Ghi deployment unit/topology ở mức architecture. | Runbook thao tác production. |
-| `05-architecture/07-cross-cutting/` | Cross-cutting | Ghi architecture rule áp dụng nhiều module. | Generic theory không gắn app. |
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `07-implementation/01-organization/` | Organization | Source/package/module được tổ chức thế nào? |
+| `07-implementation/02-contracts/` | Contracts | Public/internal code-level contract là gì? |
+| `07-implementation/03-behavior/` | Behavior | Behavior được hiện thực trong code ra sao? |
+| `07-implementation/04-data-handling/` | Data Handling | Code đọc/ghi/map/transform data thế nào? |
+| `07-implementation/05-external-boundaries/` | External Boundaries | Code đi qua external boundary ra sao? |
+| `07-implementation/06-evolution/` | Evolution | Migration/compatibility/refactor được tổ chức thế nào? |
+| `07-implementation/07-automation/` | Automation | Automation/codegen/AI-assisted coding concern nằm ở đâu? |
+| `07-implementation/08-coding-rules/` | Coding Rules | Code rule/review rule nào áp dụng? |
 
-## 06-technical
+### 08-quality
 
-Layer này trả lời: mechanism kỹ thuật nào được dùng để hiện thực architecture.
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `08-quality/01-objectives/` | Objectives | Quality attribute/target nào quan trọng? |
+| `08-quality/02-verification/` | Verification | Check nào xác nhận hệ thống được xây đúng? |
+| `08-quality/03-validation/` | Validation | Check nào xác nhận hệ thống giải quyết đúng nhu cầu? |
+| `08-quality/04-assurance/` | Assurance | Review/audit/gate nào giữ chất lượng? |
+| `08-quality/05-risks/` | Risks | Quality risk/mitigation nào tồn tại? |
+| `08-quality/06-defects/` | Defects | Known issue/regression/defect được quản lý ra sao? |
+| `08-quality/07-maintainability/` | Maintainability | Debt/health/upkeep concern là gì? |
+| `08-quality/08-release-readiness/` | Release Readiness | Go/no-go/readiness evidence nào cần có? |
 
-| Path | Concern | Vì sao có folder này | Không đặt ở đây |
-| --- | --- | --- | --- |
-| `06-technical/01-platforms/` | Platforms | Ghi runtime, framework, database, tool nền. | Module ownership. |
-| `06-technical/02-interfaces/` | Interfaces | Ghi API/protocol/schema contract. | Controller code. |
-| `06-technical/03-state-and-storage/` | State And Storage | Ghi database, cache, queue state, file/storage mechanism. | Domain model meaning. |
-| `06-technical/04-exchange/` | Exchange | Ghi HTTP, webhook, queue, file hoặc protocol exchange. | Business interaction. |
-| `06-technical/05-security/` | Security | Ghi auth, credential, secret, security control. | Real secret value. |
-| `06-technical/06-processing/` | Processing | Ghi worker/job/scheduler hoặc processing mechanism. | Operation incident response. |
-| `06-technical/07-configuration/` | Configuration | Ghi env var, config key, feature flag. | Deployment-specific secret. |
-| `06-technical/08-performance/` | Performance | Ghi timeout, limit, resource budget. | Business KPI. |
+### 09-operation
 
-## 07-implementation
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `09-operation/01-operating-context/` | Operating Context | Runtime context/thực tế vận hành là gì? |
+| `09-operation/02-release-and-change/` | Release And Change | Deploy/release/change được thực hiện thế nào? |
+| `09-operation/03-signals/` | Signals | Metric/log/trace/audit signal nào cần theo dõi? |
+| `09-operation/04-reliability/` | Reliability | Retry/failover/SLO guardrail nào tồn tại? |
+| `09-operation/05-operational-events/` | Operational Events | Incident/failed run/support event được xử lý ra sao? |
+| `09-operation/06-continuity/` | Continuity | Backup/restore/rollback/replay được vận hành thế nào? |
+| `09-operation/07-resources/` | Resources | Capacity/quota/cost/resource constraint nào được theo dõi? |
+| `09-operation/08-maintenance/` | Maintenance | Patch/cleanup/maintenance được thực hiện thế nào? |
 
-Layer này trả lời: technical/architecture được hiện thực trong source code như thế nào.
+### 10-decisions
 
-| Path | Concern | Vì sao có folder này | Không đặt ở đây |
-| --- | --- | --- | --- |
-| `07-implementation/01-organization/` | Organization | Ghi source layout, module folder, entrypoint. | Architecture rationale dài. |
-| `07-implementation/02-contracts/` | Contracts | Ghi public API/interface ở code level. | Product API contract cho user. |
-| `07-implementation/03-behavior/` | Behavior | Ghi use case implementation và handler/service. | Business process nguyên thủy. |
-| `07-implementation/04-data-handling/` | Data Handling | Ghi repository/query/transaction/mapping hoặc reader/writer handling. | Domain meaning. |
-| `07-implementation/05-external-boundaries/` | External Boundaries | Ghi client/adapter/webhook handler và external code boundary. | External ecosystem overview. |
-| `07-implementation/06-evolution/` | Evolution | Ghi migration/refactor/compatibility. | Decision rationale cross-layer. |
-| `07-implementation/07-automation/` | Automation | Ghi codegen và AI coding rule. | Generic agent skill. |
-| `07-implementation/08-coding-rules/` | Coding Rules | Ghi import, style, review rule của code. | Documentation meta rule. |
-
-## 08-quality
-
-Layer này trả lời: chất lượng được định nghĩa, kiểm tra và giữ bằng gì.
-
-| Path | Concern | Vì sao có folder này | Không đặt ở đây |
-| --- | --- | --- | --- |
-| `08-quality/01-objectives/` | Objectives | Ghi quality objective và attribute. | Product feature scope. |
-| `08-quality/02-verification/` | Verification | Ghi automated check/test strategy. | Manual acceptance prose dài. |
-| `08-quality/03-validation/` | Validation | Ghi acceptance/usability/scenario validation. | Unit test implementation. |
-| `08-quality/04-assurance/` | Assurance | Ghi review, audit, quality gate. | Business policy. |
-| `08-quality/05-risks/` | Risks | Ghi quality risk và mitigation. | Incident record cụ thể. |
-| `08-quality/06-defects/` | Defects | Ghi known issue/regression. | Feature backlog thông thường. |
-| `08-quality/07-maintainability/` | Maintainability | Ghi debt và health. | Code refactor diff. |
-| `08-quality/08-release-readiness/` | Release Readiness | Ghi go/no-go và release gate. | Deployment runbook chi tiết. |
-
-## 09-operation
-
-Layer này trả lời: hệ thống được chạy, quan sát, duy trì và phục hồi thế nào.
-
-| Path | Concern | Vì sao có folder này | Không đặt ở đây |
-| --- | --- | --- | --- |
-| `09-operation/01-operating-context/` | Operating Context | Ghi runtime env, dependency, topology hoặc operating context thực tế. | Context environment meaning. |
-| `09-operation/02-release-and-change/` | Release And Change | Ghi deploy/release/migration/change runbook. | Architecture deployment unit abstract. |
-| `09-operation/03-signals/` | Signals | Ghi dashboard, log, metric, alert hoặc signal evidence khác. | Product dashboard requirement. |
-| `09-operation/04-reliability/` | Reliability | Ghi availability, retry, failover. | Quality objective abstract nếu chưa vận hành. |
-| `09-operation/05-operational-events/` | Operational Events | Ghi incident, failed run hoặc operational event history. | Defect list thuần quality. |
-| `09-operation/06-continuity/` | Continuity | Ghi backup/restore/disaster recovery hoặc replay/reprocess plan. | Technical persistence design. |
-| `09-operation/07-resources/` | Resources | Ghi resource, load, scale, quota hoặc cost note. | Product traffic assumption nếu chưa observed. |
-| `09-operation/08-maintenance/` | Maintenance | Ghi patch, data cleanup, scheduled maintenance. | Implementation refactor plan. |
-
-## 10-decisions
-
-Layer này trả lời: project đã chọn gì, tại sao, phương án nào bị loại, và quyết định nào đã bị thay thế.
-
-| Path | Concern | Vì sao có folder này | Entity type chuẩn | Không đặt ở đây |
-| --- | --- | --- | --- | --- |
-| `10-decisions/01-decision-making/` | Decision Making | Giữ decision hiện hành và alternative đã cân nhắc. | `01-decisions/`, `02-alternatives/` | Meeting note, Git history. |
-| `10-decisions/02-lifecycle/` | Decision Lifecycle | Giữ decision không còn hiệu lực nhưng cần lịch sử. | `superseded/` | Rule đang active. |
+| Path | Concern | Câu hỏi |
+| --- | --- | --- |
+| `10-decisions/01-decision-making/` | Decision Making | Đã chọn gì, vì sao và alternative nào bị loại? |
+| `10-decisions/02-lifecycle/` | Decision History | Decision history nào cần được giữ để đọc lại? |
 
 ## Khi Thêm Nội Dung Mới
 
-1. Xác định layer bằng câu hỏi chính.
-2. Xác định concern bằng bảng trong file này.
-3. Xác định entity type folder chuẩn.
-4. Nếu entity type chưa tồn tại trong structure, không tự thêm vội; mở `NOTE-OPEN` hoặc đề xuất cập nhật structure.
-5. Nếu nội dung là app truth, đặt trong `docs/app`.
-6. Nếu nội dung là cách dùng docs, đặt trong `docs/guide`.
-7. Nếu nội dung là rule/schema/convention canonical, đặt trong `docs/meta`.
+1. Xác định nội dung là reusable source hay local project knowledge.
+2. Nếu là universal layer/concern, dùng path trong file này.
+3. Nếu vocabulary type/relation phụ thuộc methodology, route sang methodology pack; không thêm vào universal baseline.
+4. Nếu concern chỉ có nghĩa trong một project, không thêm vào file này. Ghi/adapt trong decision và cấu trúc local đã được project chốt tại `docs/meta`/`docs/app` phù hợp.
+5. Entity type, relation slot, relation type và valid triple active luôn lấy từ `docs/meta` local.
+6. App truth nằm ở `docs/app`; theory active nằm ở `docs/theories`; procedure active nằm ở `docs/AGENT_SKILLS`.
 
 ## Anti-Patterns
 
-- Viết `overview/` khi path chuẩn là `01-overview/`.
-- Đẩy app truth vào `docs/guide` chỉ vì muốn layer README ngắn.
-- Đẩy hướng dẫn sử dụng docs vào `docs/meta`.
-- Tạo folder concern mới vì một note chưa biết đặt ở đâu.
-- Dùng layer README để dạy lại toàn bộ folder structure chuẩn.
+- Đẩy type DDD/modular-monolith vào universal baseline.
+- Dùng folder structure này làm registry entity type active của project.
+- Thêm concern local vào guide chỉ vì chưa biết đặt note ở đâu.
+- Đẩy app truth vào guide để làm README layer ngắn hơn.
+- Tạo path rút gọn như `overview/` khi đang nói universal concern path `01-overview/`.

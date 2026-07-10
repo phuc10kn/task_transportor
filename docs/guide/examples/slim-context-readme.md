@@ -56,7 +56,7 @@ Lite hiện ưu tiên:
 
 | Cần tìm | Đọc |
 | --- | --- |
-| Folder structure của context | docs/guide/reference/folder-structure.md#00-context |
+| Folder structure của context | [00-context trong folder-structure.md](../reference/folder-structure.md#00-context) |
 | Entity type canonical | docs/meta/01-entity-types/ |
 | Relation rule canonical | docs/meta/02-relation-types/ và docs/meta/03-rules/ |
 

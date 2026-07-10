@@ -9,7 +9,7 @@
 - Folder structure chuẩn: `docs/guide/reference/folder-structure.md#06-technical`
 - Canonical map: `docs/guide/reference/canonical-map.md`
 - Architecture source: `docs/app/05-architecture/README.md`
-- Generic taxonomy: `docs/guide/reference/entity-maps/06-technical.md` → `docs/app_variants/raw_app_original/06-technical/`
+- Generic taxonomy source: `docs/guide/reference/entity-maps/06-technical.md` → `docs/guide/reference/entity-maps/packs/universal/06-technical/`
 
 ## Technical Truth Hiện Tại
 

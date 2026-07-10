@@ -27,10 +27,11 @@ docs/guide/reference/folder-structure.md
 
 ## Nếu bạn muốn sửa docs
 
+Trước hết, đọc [Luồng vận hành chuẩn](../README.md#luồng-vận-hành-chuẩn).
+
 Đọc:
 
 ```text
-docs/guide/README.md#luồng-vận-hành-chuẩn
 docs/guide/reference/folder-map.md
 docs/guide/reference/folder-structure.md
 docs/guide/workflows/write-docs.md
@@ -54,13 +55,6 @@ docs/guide/unit-structure/
 
 Guide chỉ giúp định hướng, không thay meta.
 
-## Nếu bạn thấy một ghi chú hay nhưng chưa chắc đúng
+## Nếu project có nội dung chưa xác định được home
 
-Không đưa thẳng vào app/theory/meta nếu chưa biết nó là app truth, meta rule hay theory.
-
-```text
-NOTE-OPEN
-NOTE-CANDIDATE
-```
-
-`docs/workbench/` hiện chưa được đi vào hoạt động, nên không dùng làm nơi lưu candidate thật cho tới khi guide có harness quản lý rõ ràng.
+Không đưa thẳng vào app/theory/meta nếu chưa biết nó là app truth, meta rule hay theory. Guide không quản lý temporary lifecycle; đọc policy local của project trước khi tạo record.

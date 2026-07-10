@@ -281,14 +281,14 @@ và canonical chỗ giữ là file này.
 
 ## Provenance Policy
 
-Theory system hiện tại đã được materialize vào root theory governance, 6 theory folders, `docs/app/10-decisions` và `docs/app_variants/custom_modular_monolith`.
+Theory system hiện tại đã được materialize vào root theory governance, 6 theory folders, `docs/app/10-decisions` và guide pack modular-monolith.
 
 Kết luận hiện hành:
 
 - 6 theory core đã được materialize và là active theory set hiện tại.
 - Tài liệu import hoặc ghi chú trung gian không còn là execution source.
-- Reasoning hiện hành nằm trong root governance này, 6 theory folder, `docs/app/10-decisions` và `docs/app_variants/custom_modular_monolith`.
-- Theory governance chỉ giữ reasoning reusable; app-specific code path, schema, route, runtime và template chi tiết phải ở `docs/app/*`, `docs/app_variants/*` hoặc `docs/meta/*`.
+- Reasoning hiện hành nằm trong root governance này, 6 theory folder, `docs/app/10-decisions` và guide pack modular-monolith.
+- Theory governance chỉ giữ reasoning reusable; app-specific code path, schema, route, runtime và template chi tiết phải ở `docs/app/*`, `docs/guide/reference/entity-maps/packs/*` hoặc `docs/meta/*`.
 
 Nếu sau này phát hiện một reasoning quan trọng chỉ tồn tại trong Git history hoặc ghi chú trung gian, không copy thẳng vào theory. Phải phân loại trước:
 

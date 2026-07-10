@@ -27,7 +27,7 @@ Tài liệu chính:
 - `docs/app/05-architecture/01-structure/README.md` - module structure canonical của repo hiện tại.
 - `docs/app/05-architecture/02-boundaries/README.md` - boundary, ownership, read allowlist và AI/Translation boundary của repo hiện tại.
 - `docs/app/05-architecture/03-interactions/README.md` - workflow architecture và interaction flow hiện tại.
-- `docs/app_variants/custom_modular_monolith/05-architecture/README.md` - template/taxonomy reusable cho custom modular monolith.
+- `docs/guide/reference/entity-maps/packs/variants/modular-monolith/05-architecture/README.md` - template/taxonomy reusable cho custom modular monolith.
 - `docs/theories/modular-architecture/README.md` - theory nền về modular architecture.
 
 ## Luồng triển khai hiện tại
@@ -54,12 +54,12 @@ Trước khi code một phase, đọc:
 7. `docs/app/05-architecture/01-structure/README.md`.
 8. `docs/app/05-architecture/02-boundaries/README.md`.
 9. `docs/app/05-architecture/03-interactions/README.md`.
-10. `docs/app_variants/custom_modular_monolith/05-architecture/README.md`.
+10. `docs/guide/reference/entity-maps/packs/variants/modular-monolith/05-architecture/README.md`.
 11. `docs/theories/modular-architecture/README.md`.
 
 Nếu task có sửa hoặc thêm code trong `src/modules`, Codex bắt buộc phải đọc lại `docs/app/05-architecture/02-boundaries/README.md` và `docs/app/05-architecture/01-structure/README.md` trong lượt làm việc đó trước khi code.
 
-Khi tài liệu mâu thuẫn, ưu tiên `docs/app/02-product/README.md` cho scope/hành vi Lite, `docs/app/10-decisions/README.md` cho quyết định còn hiệu lực; ưu tiên `docs/app/05-architecture/**` cho cách repo hiện tại áp dụng kiến trúc; ưu tiên `docs/app_variants/raw_app_original/**` cho universal concern và generic taxonomy; ưu tiên `docs/app_variants/custom_modular_monolith/**` cho template phụ thuộc modular monolith; ưu tiên `docs/theories/modular-architecture/**` cho reasoning theory nền.
+Khi tài liệu mâu thuẫn, ưu tiên `docs/app/02-product/README.md` cho scope/hành vi Lite, `docs/app/10-decisions/README.md` cho quyết định còn hiệu lực; ưu tiên `docs/app/05-architecture/**` cho cách repo hiện tại áp dụng kiến trúc; ưu tiên `docs/guide/reference/entity-maps/packs/universal/**` cho universal concern và generic taxonomy; ưu tiên `docs/guide/reference/entity-maps/packs/variants/modular-monolith/**` cho template phụ thuộc modular monolith; ưu tiên `docs/theories/modular-architecture/**` cho reasoning theory nền.
 
 ## Công nghệ
 
@@ -82,7 +82,7 @@ Nếu phần triển khai thêm test, cập nhật `package.json` để có lệ
 
 ## Luật modular monolith boundary
 
-`docs/theories/modular-architecture` là theory nền cho modular architecture. Template reusable nằm ở `docs/app_variants/custom_modular_monolith`. Cách repo hiện tại áp dụng pattern này được chốt ở `docs/app/05-architecture`.
+`docs/theories/modular-architecture` là theory nền cho modular architecture. Template reusable nằm ở `docs/guide/reference/entity-maps/packs/variants/modular-monolith`. Cách repo hiện tại áp dụng pattern này được chốt ở `docs/app/05-architecture`.
 
 Khi đụng code module, Codex bắt buộc đọc và tuân thủ `docs/app/05-architecture/02-boundaries/README.md` cùng `docs/app/05-architecture/01-structure/README.md`. File boundary legacy chỉ còn là migration provenance và không còn là nơi cập nhật luật.
 
@@ -138,7 +138,7 @@ Hai lệnh `rg` đầu không được có kết quả.
 - Khi triển khai Lite, ưu tiên khớp với scope trong `docs/app/02-product/README.md` và acceptance trong `docs/app/08-quality/README.md`.
 - Mỗi lượt triển khai chỉ nên nằm trong phạm vi của phase hiện tại, trừ khi user yêu cầu mở rộng.
 - Ưu tiên module nhỏ, tập trung, tránh rewrite rộng.
-- Dùng cấu trúc module và boundary hiện tại của repo trong `docs/app/05-architecture/**`, dựa trên template reusable trong `docs/app_variants/custom_modular_monolith` và theory nền trong `docs/theories/modular-architecture`.
+- Dùng cấu trúc module và boundary hiện tại của repo trong `docs/app/05-architecture/**`, dựa trên template reusable trong `docs/guide/reference/entity-maps/packs/variants/modular-monolith` và theory nền trong `docs/theories/modular-architecture`.
 - Không commit secret. Dùng `.env` hoặc `.codex/config.toml` local cho credential/path riêng máy.
 - Không hard-code credential Backlog/Jira, API key AI, Codex auth path, JWT secret hoặc internal server path.
 - Dùng `direction_from` và `direction_to` cho sync job, sync journal và mapping direction. Không thay bằng một field `direction` nếu docs chưa được cập nhật có chủ ý.
@@ -158,7 +158,10 @@ Mỗi phase Lite có section `Checklist hoàn thành phase`.
 ## Luật tài liệu
 
 - Giữ tài liệu bằng tiếng Việt có dấu trừ khi user yêu cầu khác.
+- Khi đọc hoặc sửa tài liệu tiếng Việt bằng PowerShell, đặt console/output UTF-8 và đọc file với `-Encoding UTF8`, ví dụ: `$OutputEncoding = [System.Text.UTF8Encoding]::new(); [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new(); Get-Content -Raw -Encoding UTF8 "path"`.
+- Nếu output hiển thị mojibake, phải đọc lại bằng UTF-8 trước khi diễn giải hoặc chỉnh file.
 - Khi thay đổi hành vi triển khai, cập nhật file liên quan trong `docs/app`.
+- Khi tạo/sửa entity type hoặc tạo entity instance mới, chạy Type Contract Gate: `npm run verify:entity-type-contract -- --type <canonical-entity-type-path>` trước khi sửa/tạo và `npm run verify:entity-type-contract -- --instance <docs/app-instance-readme-path>` sau khi instance tồn tại. Type legacy chưa có instance chỉ là debt; type đang sửa hoặc sắp có instance phải được chuẩn hóa trước.
 - Giữ rõ khác biệt giữa:
   - `webhook_events`: log raw event đầu vào.
   - `sync_jobs`: hàng đợi job nội bộ cho đầu vào/đầu ra.

@@ -11,7 +11,7 @@ description: Draft a refinement proposal for an existing theory after challenge,
 
 ```text
 Task Progress:
-- [ ] Đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+- [ ] Đọc [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn)
 - [ ] Đọc target theory README.md, agent.md, theory.md
 - [ ] Đọc governance.md nếu có challenge/decision liên quan
 - [ ] Xác định stable position nào đổi, giữ, hoặc cần clarify

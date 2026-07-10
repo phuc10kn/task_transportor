@@ -1,8 +1,8 @@
 # Interaction Map — Modular Monolith / 05-architecture
 
-Quan hệ **trong** biến thể modular monolith ở layer `05-architecture`. Không phải map architecture portable chung.
+Reading view cho relation template của biến thể modular monolith ở layer `05-architecture`. Không phải source pack hoặc canonical graph của một project.
 
-Derived from (khi có): `docs/meta/03-rules/05-architecture/valid-triples.md`.
+Source template: [modular-monolith 05-architecture base](../../../packs/variants/modular-monolith/05-architecture/README.md). Active canonical graph thuộc `docs/meta/` của từng project.
 
 ## Graph
 
@@ -28,22 +28,8 @@ flowchart LR
   CCR -->|affects| M
 ```
 
-## Triple list
+## Ghi Chú
 
-| Source | Relation | Target |
-| --- | --- | --- |
-| Module | `governed_by` | ModuleBoundary |
-| ModuleBoundary | `constrains` | Module |
-| ModuleBoundary | `constrains` | StateOwner |
-| Module | `participates_in` | InteractionFlow |
-| InteractionFlow | `involves` | Module |
-| Module | `owns` | StateOwner |
-| StateOwner | `shared_via` | DataFlow |
-| DataFlow | `moves` | StateOwner |
-| DeploymentUnit | `hosts` | Module |
-| CrossCuttingRule | `affects` | Module |
-
-## Ghi chú
-
-- Dual còn mở có thể theo dõi ở `docs/review/review.md`.
+- Diagram chỉ mô tả stable relation template của base.
 - Variant khác = pack + interaction-map khác dưới layer tương ứng.
+- Triple list canonical của project thuộc `docs/meta/03-rules/05-architecture/valid-triples.md`.

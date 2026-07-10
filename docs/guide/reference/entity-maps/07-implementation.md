@@ -21,25 +21,10 @@ flowchart TB
   Imp --> CodingRules[Coding Rules]
 ```
 
-| Concern | Ý nghĩa |
-| --- | --- |
-| Organization | Source layout, module folder, entrypoint |
-| Contracts | Public API/interface ở code level |
-| Behavior | Use case implementation / handler |
-| Data Handling | Repository / query / mapping |
-| External Boundaries | Client / adapter / webhook handler |
-| Evolution | Migration / refactor / compatibility |
-| Automation | Codegen / AI coding rule |
-| Coding Rules | Import, style, review rule |
+Concern definition và boundary: [universal pack 07-implementation](packs/universal/07-implementation/README.md).
 
-## Status
+## Stable Source Boundary
 
-Hiện chưa có type pack hoặc interaction graph đã chốt cho `07-implementation`.
+Chưa có stable methodology-specific type pack, entity-map variant hoặc interaction graph cho `07-implementation`. Nội dung implementation có thể phụ thuộc architecture style, nhưng dependency đó chưa đủ để gọi layer này là entity-map variant.
 
-Nội dung implementation có thể phụ thuộc architecture style, nhưng dependency đó chưa đủ để gọi layer này là entity-map variant. Chỉ bổ sung variant khi đã review và chốt vocabulary type + graph riêng của layer.
-
-## Example
-
-Template / instance mẫu (không phải SoT của guide):
-
-- `docs/app_variants/custom_modular_monolith/07-implementation/`
+Project tự quản lý implementation type và relation trong local `docs/meta/`/`docs/app/`. Chỉ thêm stable source pack khi vocabulary và graph đã có reusable meaning được review độc lập.

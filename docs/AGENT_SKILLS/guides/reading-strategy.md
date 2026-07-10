@@ -4,11 +4,7 @@ Agent không đọc toàn bộ `docs/`. Mở rộng context theo nhu cầu.
 
 ## Level 0 - Operating Flow
 
-Luôn bắt đầu bằng:
-
-```text
-docs/guide/README.md#luồng-vận-hành-chuẩn
-```
+Luôn bắt đầu bằng [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn).
 
 Nếu task cụ thể, đọc thêm workflow liên quan:
 
@@ -16,7 +12,6 @@ Nếu task cụ thể, đọc thêm workflow liên quan:
 - `docs/guide/workflows/write-docs.md`;
 - `docs/guide/workflows/trace-impact.md`;
 - `docs/guide/workflows/slim-layer-readme.md`;
-- `docs/guide/workflows/promote-candidate.md`.
 
 ## Level 1 - Task Docs
 
@@ -72,9 +67,9 @@ Chỉ đọc `theory.md` hoặc `governance.md` khi:
 - cần tạo challenge;
 - cần trace impact khi theory đổi.
 
-## App Variants
+## Guide Packs
 
-Chỉ đọc `docs/app_variants` khi cần reusable taxonomy/template. Không coi variant là app truth nếu `docs/app` đã có canonical home.
+Chỉ đọc `docs/guide/reference/entity-maps/packs/` khi cần reusable taxonomy/template. Không coi pack là app truth nếu `docs/app/` hoặc `docs/meta/` đã có canonical home.
 
 ## Workbench
 

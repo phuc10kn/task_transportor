@@ -21,23 +21,12 @@ flowchart TB
   Q --> ReleaseReadiness[Release Readiness]
 ```
 
-| Concern | Ý nghĩa |
-| --- | --- |
-| Objectives | Mục tiêu chất lượng |
-| Verification | Kiểm chứng (test/verify) |
-| Validation | Kiểm xác nhận (acceptance) |
-| Assurance | Quy trình giữ chất lượng |
-| Risks | Rủi ro chất lượng |
-| Defects | Lỗi / defect tracking |
-| Maintainability | Khả năng bảo trì |
-| Release Readiness | Sẵn sàng release |
+Concern definition và boundary: [universal pack 08-quality](packs/universal/08-quality/README.md).
 
 ## Status
 
-Chưa có default canonical entity type set hoặc interaction graph đã chốt cho layer này. File hiện là concern map; bổ sung entity map khi vocabulary type và canonical relations được review/promote.
+Chưa có default canonical entity type set hoặc interaction graph đã chốt cho layer này. File hiện là concern map; chỉ bổ sung stable map khi vocabulary type và canonical relation đã có reusable meaning rõ.
 
 ## Generic taxonomy
 
-Taxonomy generic ở universal origin model (không phải canonical registry):
-
-- [docs/app_variants/raw_app_original/08-quality/](../../../app_variants/raw_app_original/08-quality/README.md)
+Taxonomy generic thuộc [universal pack 08-quality](packs/universal/08-quality/README.md), không phải canonical registry.

@@ -44,7 +44,7 @@
 | Quyết định | Trạng thái | Ý nghĩa |
 | --- | --- | --- |
 | 6 theory core là active set hiện tại | accepted | `TH-MODULAR`, `TH-HUBFLOW`, `TH-CANON`, `TH-AI-GOV`, `TH-SYNC-SAFE`, `TH-OPS-TRACE` dùng cho toàn app. |
-| `custom_modular_monolith` phải split theo meaning | accepted | Pure modular reasoning thuộc `TH-MODULAR`; app architecture và runtime truth thuộc `docs/app/**`; generic taxonomy `06/08/09` thuộc `docs/app_variants/raw_app_original/`; template phụ thuộc modular monolith thuộc `docs/app_variants/custom_modular_monolith/`. |
+| [Guide stable base boundary (`DEC-001`)](01-decision-making/01-decisions/DEC-001-guide-pack-materialization/README.md) | accepted | Guide chỉ giữ stable base xuyên dự án; `docs/meta/` giữ contract active, `docs/app/` giữ app truth cùng migration/provenance local. |
 | Theory source hiện hành nằm trong `docs/theories` | accepted | Không dùng tài liệu import hoặc ghi chú trung gian làm execution source. |
 | Documentation governance thuộc `docs/meta` | accepted | Ownership/update/checklist rule của docs là meta-governance, không phải business rule của Central Sync Hub. |
 

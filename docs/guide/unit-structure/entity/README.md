@@ -9,32 +9,32 @@ Schema canonical: [entity-instance.md](../../../meta/00-schemas/entity-instance.
 ```yaml
 ---
 schema: entity-instance/v1
-id: BRULE-001
-slug: human-review-before-jira-write
-title: Human Review Before Jira Write
-entity_type: BusinessRule
-layer: 01-business
-concern: 05-governance
-status: active
-summary: Jira write phải đi qua human review.
+id: <ID-PREFIX>-001
+slug: <entity-slug>
+title: <Entity Title>
+entity_type: <EntityType>
+layer: <NN-layer>
+concern: <NN-concern>
+status: <project-defined-status>
+summary: <One-line meaning of this entity.>
 theory_basis:
-  - TH-HUBFLOW
+  - <TH-...>
 decision_basis:
-  - DEC-001
+  - <DEC-...>
 relations:
-  governs:
-    - PROC-001
+  <relation-slot>:
+    - <TARGET-ID>
 ---
 ```
 
 ## Markdown Body
 
 ```md
-# BRULE-001 - Human Review Before Jira Write
+# <ID-PREFIX>-001 - <Entity Title>
 
 ## Summary
 
-Jira write phải đi qua human review.
+<One-line meaning of this entity.>
 
 ## Meaning
 
@@ -42,7 +42,7 @@ Entity này có meaning gì trong app.
 
 ## Relations
 
-- `PROC-001` - process chịu sự chi phối của rule này.
+- `<TARGET-ID>` - <Relation context.>
 
 ## Validation Notes
 

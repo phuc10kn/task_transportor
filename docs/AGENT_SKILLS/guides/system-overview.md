@@ -15,11 +15,11 @@ docs/app/
 docs/theories/
 -> pure theory và reasoning foundation
 
-docs/app_variants/
+docs/guide/reference/entity-maps/packs/
 -> reusable taxonomy/template, không phải app truth
 
 docs/workbench/
--> candidate workspace dự kiến, hiện chưa được đi vào hoạt động
+-> workspace hỗ trợ dự kiến, hiện chưa được đi vào hoạt động
 
 docs/AGENT_SKILLS/
 -> agent checklist/skill, không thay guide/meta
@@ -27,11 +27,7 @@ docs/AGENT_SKILLS/
 
 ## Luồng Vận Hành
 
-Agent bắt đầu từ:
-
-```text
-docs/guide/README.md#luồng-vận-hành-chuẩn
-```
+Standard agent bắt đầu từ [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn).
 
 Sau đó chọn skill phù hợp:
 
@@ -49,7 +45,7 @@ Sau đó chọn skill phù hợp:
 | `docs/meta` | schema/rule/convention canonical | app truth, handbook dài |
 | `docs/app` | knowledge cụ thể của CIS | generic theory/docs-system explanation |
 | `docs/theories` | principle/reasoning reusable | implementation detail của CIS |
-| `docs/app_variants` | reusable taxonomy/template | source of truth cụ thể khi `docs/app` đã có |
+| `docs/guide/reference/entity-maps/packs` | reusable taxonomy/template | source of truth cụ thể khi `docs/app` đã có |
 | `docs/workbench` | status inactive và template dự kiến | source of truth, app truth, meta rule, harness đang hoạt động |
 | `docs/AGENT_SKILLS` | agent checklist | human-facing full manual |
 
@@ -60,6 +56,8 @@ scope/behavior app -> docs/app
 schema/rule/meta   -> docs/meta
 operating manual   -> docs/guide
 pure reasoning     -> docs/theories
-reusable template  -> docs/app_variants
+reusable template  -> docs/guide/reference/entity-maps/packs
 agent procedure    -> docs/AGENT_SKILLS
 ```
+
+Standard agent là default. Workbench-support agent chỉ tồn tại sau local activation và chỉ hỗ trợ standard flow.

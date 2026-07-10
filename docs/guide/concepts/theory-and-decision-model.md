@@ -23,7 +23,7 @@ Unit template: [theory](../unit-structure/theory/README.md).
 
 Schema canonical: [theory-package.md](../../meta/00-schemas/theory-package.md).
 
-Theory không nhắc app-specific detail như Jira, Backlog, module cụ thể hoặc source path.
+Theory không nhắc app-specific detail như external system, module cụ thể hoặc source path.
 
 ## App application
 
@@ -33,10 +33,10 @@ Ví dụ:
 
 ```text
 Theory:
-Outbound write cần guardrail.
+External write cần guardrail.
 
 App:
-CIS -> Jira phải dry-run trước sync thật.
+<Source system> -> <Target system> phải qua pre-check trước khi ghi thật.
 ```
 
 App-specific truth nằm ở `docs/app/`.
@@ -70,6 +70,6 @@ Schema canonical: [decision.md](../../meta/00-schemas/decision.md).
 | Tình huống | Dùng |
 | --- | --- |
 | Nguyên lý reusable, không gắn app cụ thể | Theory |
-| App áp dụng nguyên lý vào Central Sync Hub | App docs |
+| App áp dụng nguyên lý vào bối cảnh cụ thể | App docs |
 | Lựa chọn dài hạn/trade-off | Decision |
-| Ý tưởng chưa chín | Backlog theories |
+| Ý tưởng chưa chín | Policy local của project |

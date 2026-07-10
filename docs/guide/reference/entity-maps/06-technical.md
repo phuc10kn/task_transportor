@@ -21,23 +21,12 @@ flowchart TB
   T --> Performance
 ```
 
-| Concern | Ý nghĩa |
-| --- | --- |
-| Platforms | Runtime, framework, database, tool nền |
-| Interfaces | API / protocol / schema contract |
-| State And Storage | DB, cache, queue, file storage |
-| Exchange | Communication / messaging mechanism |
-| Security | Authn/z, secret, trust boundary kỹ thuật |
-| Processing | Worker, job, pipeline mechanism |
-| Configuration | Config set / feature flag mechanism |
-| Performance | Caching, scaling, perf strategy |
+Concern definition và boundary: [universal pack 06-technical](packs/universal/06-technical/README.md).
 
 ## Status
 
-Chưa có default canonical entity type set hoặc interaction graph đã chốt cho layer này. File hiện là concern map; bổ sung entity map khi vocabulary type và canonical relations được review/promote.
+Chưa có default canonical entity type set hoặc interaction graph đã chốt cho layer này. File hiện là concern map; chỉ bổ sung stable map khi vocabulary type và canonical relation đã có reusable meaning rõ.
 
 ## Generic taxonomy
 
-Taxonomy generic ở universal origin model (không phải canonical registry):
-
-- [docs/app_variants/raw_app_original/06-technical/](../../../app_variants/raw_app_original/06-technical/README.md)
+Taxonomy generic thuộc [universal pack 06-technical](packs/universal/06-technical/README.md), không phải canonical registry.

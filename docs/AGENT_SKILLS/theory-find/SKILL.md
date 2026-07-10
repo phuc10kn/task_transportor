@@ -11,7 +11,7 @@ Tìm theory liên quan tới task hiện tại.
 
 ```text
 Task Progress:
-- [ ] Đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+- [ ] Đọc [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn)
 - [ ] Đọc docs/theories/README.md
 - [ ] Xác định problem space của task
 - [ ] Chọn candidate theory

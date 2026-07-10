@@ -2,7 +2,7 @@
 
 File này là cheat sheet route nhanh: có loại knowledge X thì mở folder nào trước.
 
-File này không định nghĩa structure chuẩn, prefix số, concern hay entity type chi tiết. Khi cần các phần đó, đọc:
+File này không định nghĩa structure chuẩn, prefix số, concern hay entity type chi tiết. Khi cần universal layer/concern baseline, đọc:
 
 ```text
 docs/guide/reference/folder-structure.md
@@ -24,10 +24,10 @@ docs/guide/reference/folder-structure.md
 | Runtime operation, backup, recovery, incident | `docs/app/09-operation/README.md` |
 | Decision, alternative, superseded decision | `docs/app/10-decisions/README.md` |
 | Documentation rule / schema / convention | `docs/meta/` |
-| Universal concern / generic entity-type taxonomy | `docs/app_variants/raw_app_original/` |
+| Universal concern / generic entity-type taxonomy | `docs/guide/reference/entity-maps/packs/universal/` |
 | Reusable reasoning foundation | `docs/theories/` |
-| Reusable taxonomy / template phụ thuộc methodology | `docs/app_variants/` |
-| Workbench candidate | `docs/workbench/README.md` chỉ để xem status; hiện chưa được đi vào hoạt động. |
+| Reusable taxonomy / template phụ thuộc methodology | `docs/guide/reference/entity-maps/packs/variants/` |
+| Local workspace (nếu project kích hoạt) | `docs/workbench/README.md`, sau đó đọc [use-workbench.md](../workflows/use-workbench.md) |
 | Cách dùng docs system | `docs/guide/` |
 | Agent checklist / skill | `docs/AGENT_SKILLS/` |
 

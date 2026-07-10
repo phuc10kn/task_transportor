@@ -18,17 +18,11 @@ flowchart TB
   D --> LifecycleC[Lifecycle]
 ```
 
-| Concern | Ý nghĩa |
-| --- | --- |
-| Language | Khái niệm domain / ubiquitous language |
-| Model | Model khái niệm |
-| Rules | Invariant / policy domain |
-| Behavior | Service / event có meaning domain |
-| Lifecycle | State / lifecycle object |
+Concern tree universal: [04-domain pack](packs/universal/04-domain/README.md).
 
 ## Variants
 
-Default map chỉ giữ concern lens. Type pack + graph theo methodology → đọc variant tương ứng:
+Default map chỉ giữ concern lens. Khi methodology thay đổi type/relation, đọc variant view tương ứng rồi route sang source pack:
 
 | Variant | Map |
 | --- | --- |
@@ -38,7 +32,7 @@ Default map chỉ giữ concern lens. Type pack + graph theo methodology → đ�
 
 Template / định nghĩa type mẫu (không phải SoT của guide):
 
-- `docs/meta/01-entity-types/04-domain/`
+- [DDD 04-domain pack](packs/variants/ddd/04-domain/README.md)
 
 ## Cross-layer (điểm ra)
 

@@ -15,10 +15,7 @@ flowchart TB
   Dec --> DecisionLifecycle[Decision Lifecycle]
 ```
 
-| Concern | Ý nghĩa |
-| --- | --- |
-| Decision Making | Chọn hướng, alternative, rationale |
-| Decision Lifecycle | Active / superseded |
+Concern tree universal: [10-decisions pack](packs/universal/10-decisions/README.md).
 
 ## Ghi chú
 

@@ -10,7 +10,7 @@ docs/theories/
     ↓ provides reusable reasoning
 
 docs/app/
-    ↓ applies meta + theory to Central Sync Hub
+    ↓ applies meta + theory to project truth
 
 source code / operation
     ↓ provides observed reality
@@ -21,11 +21,11 @@ source code / operation
 | Folder | Chứa | Không chứa |
 | --- | --- | --- |
 | `docs/meta` | Entity types, relation types, valid triples, conventions. | App-specific business/product truth. |
-| `docs/theories` | Project-owned principles and reasoning. | Jira/Backlog/module cụ thể. |
-| `docs/app` | Central Sync Hub truth theo layer. | Generic explanation lặp lại của docs system. |
-| `docs/app_variants` | Universal app origin và pattern extension reusable. | Source of truth cụ thể của repo nếu `docs/app` đã có. |
-| `docs/workbench` | Candidate entity/relation workbench dự kiến, hiện chưa được đi vào hoạt động. | Source of truth, app truth, meta rule đang có hiệu lực. |
-| `docs/guide` | Cách dùng hệ docs. | Canonical rule mới. |
+| `docs/theories` | Project-owned principles and reasoning. | External system, module hoặc source path cụ thể. |
+| `docs/app` | Project truth theo layer. | Generic explanation lặp lại của docs system. |
+| `docs/guide/reference/entity-maps/packs` | Universal app origin và methodology pack reusable xuyên dự án. | Source of truth active của project. |
+| `docs/workbench` | Optional local workspace khi project kích hoạt. | Source of truth, app truth, meta rule đang có hiệu lực. |
+| `docs/guide` | Cách dùng hệ docs và reusable pack source. | Contract active của project. |
 | `docs/AGENT_SKILLS` | Agent workflows/checklists. | Human-facing full manual. |
 
 ## Hướng cleanup

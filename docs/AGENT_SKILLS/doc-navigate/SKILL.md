@@ -11,11 +11,11 @@ description: Navigate docs/app documentation by task using docs/guide operating 
 
 ```text
 Task Progress:
-- [ ] Đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+- [ ] Đọc [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn)
 - [ ] Đọc docs/guide/workflows/read-for-task.md
 - [ ] Xác định canonical home bằng docs/guide/reference/canonical-map.md
 - [ ] Nếu task chạm docs/app, đọc docs/app/README.md
-- [ ] Chọn layer/concern/entity type bằng docs/guide/reference/folder-structure.md
+- [ ] Chọn layer/concern bằng docs/guide/reference/folder-structure.md; lấy entity type từ docs/meta hoặc cấu trúc local đã được project chốt
 - [ ] Đọc layer README liên quan
 - [ ] Đọc entity instance liên quan
 - [ ] Follow theory_basis, decision_basis, relations khi task cần impact
@@ -49,9 +49,9 @@ doc-create-entity / meta-validate / theory-find / theory-review / none
 ## Guardrails
 
 - Không đọc mọi layer cho task nhỏ.
-- Không dùng `docs/app_variants` như app truth.
+- Không dùng `docs/guide/reference/entity-maps/packs/` như app truth; đây là reusable source để materialize có chủ đích.
 - Không dùng `docs/workbench` vì workbench chưa hoạt động.
-- Không tự đoán placement khi `folder-structure` chưa rõ.
+- Không tự đoán placement khi universal layer/concern hoặc local entity type chưa rõ.
 
 ## References
 

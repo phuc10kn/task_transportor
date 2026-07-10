@@ -2,7 +2,7 @@
 
 Default map theo **layer**. Variant chỉ khi vocabulary type và relation của layer phụ thuộc methodology/style.
 
-Layer + concern SoT: [folder-structure.md](../folder-structure.md).
+Universal layer + concern baseline: [folder-structure.md](../folder-structure.md).
 
 ## Cấu trúc
 
@@ -14,6 +14,8 @@ entity-maps/
     ├── ddd/04-domain/
     └── modular-monolith/
         └── 05-architecture/
+packs/
+└── universal/ và variants/         reusable source packs
 ```
 
 ## Rule: khi nào là Variant
@@ -35,15 +37,22 @@ Chỉ tạo `variants/<name>/<layer>/` khi đồng thời có:
 2. interaction graph của layer phụ thuộc methodology/style;
 3. type pack thật cho đúng layer.
 
-`docs/app_variants/**` là template/candidate, không tự chứng minh một layer có entity-map variant.
+Reusable stable source nằm trong `entity-maps/packs/`. Project tự quản lý provenance và lifecycle local; source pack không tự chứng minh một layer có entity-map variant.
 
-Status ownership của `04-domain` và `05-architecture` còn mở: meta đang giữ type canonical, trong khi guide vẫn cần đánh giá type pack có thực sự variant-bound hay không.
+Guide giữ stable source pack; meta giữ contract active của project; app không khai báo methodology runtime.
+
+## Ownership Nội Dung
+
+- Default/variant map chỉ giữ câu hỏi đọc, diagram, active graph/status và route sang source phù hợp.
+- `folder-structure.md` giữ path layer/concern universal; pack giữ stable taxonomy, type template và relation/rule template.
+- `docs/meta/` giữ relation slot và valid triple canonical của project.
+- Không lặp concern table, type list hoặc triple table từ pack/meta vào map; map link tới owner thay vì chép lại.
 
 ## Luật khác
 
 1. Map layer mặc định nằm ngay dưới `entity-maps/`.
-2. Map phải thể hiện knowledge structure hoặc relation; chỉ dùng Mermaid khi diagram giúp đọc tốt hơn bảng/prose.
+2. Map phải thể hiện knowledge structure hoặc relation; chỉ dùng Mermaid khi diagram giúp đọc tốt hơn prose.
 3. Entity map phải có type set, hoặc ghi rõ type set/graph chưa được chốt và cần bổ sung.
 4. Luôn mở default map trước; chỉ đọc variant khi layer có type pack đã chốt.
 
-Đọc: [overview.md](overview.md). Variants: [variants/](variants/README.md).
+Đọc: [overview.md](overview.md). Variants: [variants/](variants/README.md). Packs: [packs/](packs/README.md).

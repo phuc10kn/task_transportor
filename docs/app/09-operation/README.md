@@ -9,7 +9,7 @@
 - Folder structure chuẩn: `docs/guide/reference/folder-structure.md#09-operation`
 - Quality gate: `docs/app/08-quality/README.md`
 - Technical config: `docs/app/06-technical/README.md`
-- Generic taxonomy: `docs/guide/reference/entity-maps/09-operation.md` → `docs/app_variants/raw_app_original/09-operation/`
+- Generic taxonomy source: `docs/guide/reference/entity-maps/09-operation.md` → `docs/guide/reference/entity-maps/packs/universal/09-operation/`
 
 ## Operation Truth Hiện Tại
 

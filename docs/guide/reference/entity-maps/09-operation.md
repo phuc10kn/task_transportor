@@ -21,23 +21,12 @@ flowchart TB
   O --> Maintenance
 ```
 
-| Concern | Ý nghĩa |
-| --- | --- |
-| Operating Context | Môi trường / ngữ cảnh vận hành |
-| Release And Change | Deploy / change window |
-| Signals | Metrics, logs, traces |
-| Reliability | SLO / error budget / resilience |
-| Operational Events | Incident / alert |
-| Continuity | Backup / recovery / DR |
-| Resources | Capacity / cost / quota |
-| Maintenance | Runbook / maintenance window |
+Concern definition và boundary: [universal pack 09-operation](packs/universal/09-operation/README.md).
 
 ## Status
 
-Chưa có default canonical entity type set hoặc interaction graph đã chốt cho layer này. File hiện là concern map; bổ sung entity map khi vocabulary type và canonical relations được review/promote.
+Chưa có default canonical entity type set hoặc interaction graph đã chốt cho layer này. File hiện là concern map; chỉ bổ sung stable map khi vocabulary type và canonical relation đã có reusable meaning rõ.
 
 ## Generic taxonomy
 
-Taxonomy generic ở universal origin model (không phải canonical registry):
-
-- [docs/app_variants/raw_app_original/09-operation/](../../../app_variants/raw_app_original/09-operation/README.md)
+Taxonomy generic thuộc [universal pack 09-operation](packs/universal/09-operation/README.md), không phải canonical registry.

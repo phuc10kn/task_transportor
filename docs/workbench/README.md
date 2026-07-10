@@ -2,15 +2,9 @@
 
 > STATUS: CHƯA ĐƯỢC ĐI VÀO HOẠT ĐỘNG.
 
-`docs/workbench/` là khu vực dự kiến dùng để biến ý tưởng, quan sát từ code hoặc câu hỏi về app thành candidate entity, candidate relation và review record trước khi promote vào docs canonical.
+`docs/workbench/` là workspace local dự kiến chỉ để hỗ trợ luồng documentation chuẩn. Nó không tạo một luồng canonical hoặc source of truth song song.
 
-Folder này hiện **chưa được đi vào hoạt động** vì khung quản lý trong `docs/guide/` chưa định nghĩa đầy đủ:
-
-- lifecycle chính thức cho workbench item;
-- schema bắt buộc cho candidate entity/relation;
-- review gate để promote vào `docs/app` hoặc `docs/meta`;
-- rule cleanup sau khi promote/reject;
-- agent checklist để tránh biến workbench thành source of truth song song.
+Guide có [boundary hướng dẫn dùng workbench](../guide/workflows/use-workbench.md), nhưng `task_transportor` chưa có local activation policy. Vì vậy chưa có workbench-support agent active; format, lifecycle, review, cleanup và handoff về standard agent chỉ được xác định khi project có decision riêng.
 
 ## Không Được Dùng Như Source Of Truth
 
@@ -20,20 +14,7 @@ Trong trạng thái hiện tại:
 - không dùng `docs/workbench/` để thay `docs/app`;
 - không dùng `docs/workbench/` để thay `docs/meta`;
 - không dùng `docs/workbench/` để lưu note chưa rõ home;
-- không promote nội dung từ workbench nếu `docs/guide` chưa có activation gate rõ ràng.
-
-## Mục Tiêu Dự Kiến
-
-Sau khi được kích hoạt bằng guide/harness riêng, workbench sẽ hỗ trợ luồng:
-
-```text
-idea/code observation
--> candidate entity
--> candidate relation
--> review
--> promote to docs/app or docs/meta
--> cleanup workbench item
-```
+- không dùng workbench làm entry point mặc định cho task documentation.
 
 ## Scope Hiện Có
 
@@ -41,12 +22,6 @@ idea/code observation
 | --- | --- | --- |
 | `cis/` | inactive | Workbench dự kiến cho Central Issue Store/Central Sync Hub. |
 
-## Activation Gate
+## Activation
 
-`docs/workbench/` chỉ được đưa vào hoạt động khi `docs/guide/` có tài liệu chính thức cho:
-
-- khi nào tạo workbench item;
-- format bắt buộc của workbench item;
-- ai/luồng nào review candidate;
-- điều kiện promote/reject/split/merge;
-- cách xóa hoặc đóng item sau khi quyết định.
+`docs/workbench/` chỉ được đưa vào hoạt động khi `task_transportor` có local decision/policy xác định owner, format, lifecycle, canonical destination và handoff về standard agent. Guide không giữ các rule local này.

@@ -25,11 +25,11 @@ Vì vậy repo có nhiều folder tài liệu, nhưng mỗi folder có một vai
 | Folder | Vai trò |
 | --- | --- |
 | `docs/meta/` | Luật chơi của documentation system. |
-| `docs/app/` | Knowledge cụ thể của Central Sync Hub. |
+| `docs/app/` | Knowledge cụ thể của project. |
 | `docs/theories/` | Nguyên lý suy luận reusable mà project tin dùng. |
-| `docs/app_variants/` | Template/taxonomy reusable cho technical architecture. |
+| `docs/guide/reference/entity-maps/packs/` | Template/taxonomy reusable xuyên dự án. |
 | `docs/app/10-decisions/` | Quyết định và rationale cross-layer. |
-| `docs/workbench/` | Khu vực dự kiến cho candidate entity/relation, hiện chưa được đi vào hoạt động. |
+| `docs/workbench/` | Local workspace tùy chọn; trạng thái do project quyết định. |
 | `docs/guide/` | Manual hướng dẫn cách dùng hệ docs. |
 | `docs/AGENT_SKILLS/` | Checklist/skill cho agent thao tác docs. |
 
@@ -44,12 +44,12 @@ Các layer README như `docs/app/00-context/README.md` từng phải giải thí
 
 Những phần đó là kiến thức chung của documentation system. Guide gom chúng về một nơi để layer README chỉ cần giữ app-specific truth và rule riêng.
 
-## Folder structure chuẩn
+## Universal Folder Baseline
 
-Folder structure chuẩn và bản giải thích dùng để đọc/viết docs nằm ở:
+Universal layer/concern baseline và bản giải thích dùng để đọc/viết docs nằm ở:
 
 ```text
 docs/guide/reference/folder-structure.md
 ```
 
-Khi sửa `docs/app`, dùng đúng path có prefix số trong structure chuẩn, ví dụ `00-context/01-overview/` thay vì viết rút gọn `00-context/overview/`.
+Khi sửa `docs/app`, dùng đúng path layer/concern có prefix số trong baseline, ví dụ `00-context/01-overview/` thay vì viết rút gọn `00-context/overview/`. Entity type folder lấy từ meta hoặc cấu trúc local đã được project chốt.

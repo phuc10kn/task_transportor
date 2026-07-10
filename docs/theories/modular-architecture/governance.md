@@ -11,7 +11,7 @@
 
 - Theory này giữ pure modular reasoning; app-specific architecture nằm ngoài theory.
 - App-specific architecture, source path, route, schema và runtime rule không nằm trong theory này.
-- App-specific adoption hiện tại nằm ở `docs/app/05-architecture`; template reusable nằm ở `docs/app_variants/custom_modular_monolith`.
+- App-specific adoption hiện tại nằm ở `docs/app/05-architecture`; template reusable nằm ở `docs/guide/reference/entity-maps/packs/variants/modular-monolith`.
 
 ## Challenges
 

@@ -1,55 +1,75 @@
-# Review Graph Docs - Phần Chưa Chắc Chắn
+# Review Chung - Documentation System
 
-File này chỉ giữ các điểm hiện vẫn chưa đủ chắc để coi là canonical sau đợt cleanup relation.
+Ngày cập nhật: 2026-07-10
 
-## Nguyên tắc đọc file này
+## Mục Đích
 
-- Đây là review artifact, chưa phải plan triển khai.
-- Không đổi relation chỉ vì tên nghe chưa đẹp.
-- Chỉ sửa khi đã chốt fact gốc, query intent và canonical direction.
+Đây là review artifact chung duy nhất trong `docs/review/`. File chỉ giữ finding còn hiệu lực, open question cần quyết định và snapshot đã được xác nhận; nó không thay thế source of truth trong `docs/meta/`, `docs/app/`, `docs/theories/` hoặc `docs/guide/`.
 
-## 1. Mirror / Passive Direction Chưa Chốt Hết
+Khi một finding được giải quyết, xóa nó khỏi file này. Decision, migration provenance và lịch sử triển khai thuộc canonical home local của project, không nằm ở review.
 
-| Nhóm | Relation đang có | Điều cần xác nhận |
-| --- | --- | --- |
-| Business composition | `Scenario --composes--> Process` và `Process --part_of--> Scenario` | Giữ container -> member hay cần cả hai vì semantic khác nhau? |
-| Domain composition | `Aggregate --contains--> DomainEntity` và `DomainEntity --member_of--> Aggregate` | `member_of` có chỉ là inverse lookup không? |
-| Architecture flow | `Module --participates_in--> InteractionFlow` và `InteractionFlow --involves--> Module` | Flow nên là fact gốc hay module participation là fact riêng? |
-| Architecture governance | `Module --governed_by--> ModuleBoundary` | `governed_by` ở architecture là semantic riêng hay passive relation nên thay bằng boundary/rule -> target? |
-| Domain usage | `ValueObject --used_by--> DomainEntity` | Đây là direction canonical thật hay inverse của relation kiểu `DomainEntity --uses--> ValueObject`? |
-| Business direction | `Problem --motivates--> Goal` và `Goal --addresses--> Problem` | Một fact hay hai fact độc lập? |
-| Business measurement | `Goal --measured_by--> SuccessCriterion` và `SuccessCriterion --validates--> Goal` | Một fact hay hai fact độc lập? |
+## Snapshot Đã Xác Nhận
 
-## 2. Relation Còn Mở Về Meaning Hoặc Governance
+- Guide là manual xuyên dự án và stable reusable source; `docs/meta/` giữ contract active, `docs/app/` giữ app truth. Boundary này đã được chốt tại [DEC-001](../app/10-decisions/01-decision-making/01-decisions/DEC-001-guide-pack-materialization/README.md).
+- Standard agent là đường mặc định; workbench chỉ là support path local và hiện chưa active trong `task_transportor`.
+- `docs/meta/01-entity-types/` có 52 entity type definition cho layers `00` đến `05`; cả 52 có `relations_template`.
+- 17/52 entity type đã có explicit `schema` và `structure extends`; 35 type legacy đang kế thừa base schema theo [entity-type-definition.md](../meta/00-schemas/entity-type-definition.md). Type Contract Gate chặn legacy type khi type bị sửa hoặc có instance mới.
+- Outbound Jira safety slice đã materialize 12 instance theo `entity-instance/v1` và 11 canonical relation edge; phần còn lại của app graph vẫn đang ở prose/link.
+- `docs/app/10-decisions/` đã có decision unit `DEC-001`; finding cũ về việc chưa có decision unit không còn hiệu lực.
 
-| Relation | Usage đáng chú ý | Vấn đề còn mở |
-| --- | --- | --- |
-| `affects` | `Problem --affects--> Stakeholder`, `CrossCuttingRule --affects--> Module` | Business impact đã rõ hơn, nhưng technical/architecture impact vẫn có thể quá rộng. |
-| `uses` / `used_by` | Product/domain/implementation candidate usage | Cần phân biệt dependency, runtime usage, API usage, data usage và inverse lookup. |
-| `participates_in` / `involves` | Business process và architecture flow | Cần xác nhận khi nào participant là fact gốc, khi nào flow là fact gốc. |
-| `implements` | `Feature --implements--> Capability`, `UserFlow --implements--> UseCase` | Direction concrete → abstract đang được ghi, nhưng scope chỉ product/UI hay còn technical/implementation conformance vẫn chưa chốt. |
+## Findings Còn Hiệu Lực
 
-## 3. App Instance Relations Chưa Query Được Chắc
+### R1 - App Graph Mới Materialize Một Safety Slice
 
-Điểm chưa xác nhận:
+Severity: High.
 
-- `docs/app` hiện vẫn chủ yếu dựa vào prose/link như `Related Entities`;
-- chưa có bằng chứng graph query chạy chủ yếu từ YAML `relations:` thay vì text search;
-- chưa xác nhận entity instance ưu tiên nào sẽ được promote sang canonical relation trước.
+`docs/meta/` đã quy định relation instance canonical qua `relations:` và relation chỉ hợp lệ khi có slot, relation type và valid triple. Outbound Jira safety slice hiện đã dùng contract này cho AF-006, AF-007, MB-006, bốn module và bốn state owner liên quan.
 
-## 4. Promotion Từ Template/Candidate
+Slice chứng minh được trace từ Jira dry-run/sync tới module participant, boundary và state owner. Ngoài phạm vi đó, graph app vẫn chủ yếu ở prose/link; tooling chưa thể query/trace toàn bộ architecture chỉ từ canonical YAML.
 
-`docs/app_variants/raw_app_original/` là universal origin model. `docs/app_variants/custom_modular_monolith/` giữ template phụ thuộc methodology; type/relation ở đây chỉ promote khi meaning và canonical usage đã được chốt.
+Hướng tiếp theo cần chốt theo nhu cầu trace mới. Không tự động chuyển toàn bộ prose sang relation, không tạo dual/inverse edge, và không thêm Boundary-to-Flow relation nếu chưa có slot, direction và valid triple.
 
-Điểm còn mở:
+## Open Questions
 
-- relation type mới như `deploys_to` và `plans_capacity_for` đã có vocabulary, nhưng chưa có active meta valid usage;
-- vẫn cần cơ chế rõ để promote template/candidate từ raw origin hoặc methodology template vào meta canonical.
+### Q1 - Relation Mirror Và Canonical Direction
 
-## 5. Checklist Trước Khi Sửa Tiếp
+Các cặp dưới đây cần được xem là fact độc lập hay inverse/mirror trước khi đổi vocabulary hoặc thêm rule:
 
-- [ ] Chốt relation nào là mirror/passive và relation nào có semantic độc lập (còn lại: business/domain/architecture duals).
-- [ ] Chốt scope semantic của `implements` sau direction concrete → abstract.
-- [ ] Chốt bộ relation meaning ưu tiên cần siết tiếp.
-- [ ] Chốt cơ chế promote relation từ raw origin hoặc methodology template sang canonical docs.
-- [ ] Chốt chiến lược migrate `Related Entities` sang YAML `relations:`.
+| Nhóm | Relation đang cần chốt |
+| --- | --- |
+| Business composition | `Scenario --composes--> Process` / `Process --part_of--> Scenario` |
+| Domain composition | `Aggregate --contains--> DomainEntity` / `DomainEntity --member_of--> Aggregate` |
+| Architecture flow | `Module --participates_in--> InteractionFlow` / `InteractionFlow --involves--> Module` |
+| Architecture governance | `Module --governed_by--> ModuleBoundary` |
+| Domain usage | `ValueObject --used_by--> DomainEntity` và direction `uses` tương ứng |
+| Business direction | `Problem --motivates--> Goal` / `Goal --addresses--> Problem` |
+| Business measurement | `Goal --measured_by--> SuccessCriterion` / `SuccessCriterion --validates--> Goal` |
+
+Không đổi relation chỉ vì tên nghe đối xứng. Mỗi quyết định phải chốt fact gốc, query intent, canonical direction và valid triple cần thiết.
+
+### Q2 - Requirement Model Có Cần Mở Rộng Không
+
+Contract hiện chỉ có `allowed_when_known` và `required_at_creation`. Đây là model active và đủ cho relation đã biết hoặc identity prerequisite khi tạo entity.
+
+Cần quyết định riêng nếu project thật sự cần lifecycle/release gate như `required_before_active`, `required_before_release` hoặc nhóm relation bắt buộc. Không tự thêm mode mới từ review này.
+
+### Q3 - Taxonomy `07-implementation`
+
+Guide chưa có stable methodology-specific type pack hoặc interaction graph cho `07-implementation`. Local proposal của project nằm trong decision local; guide chỉ nhận source mới khi vocabulary và graph đã có reusable meaning được review độc lập.
+
+Đây là boundary có chủ ý, không phải lý do để đưa candidate, migration hoặc lifecycle local trở lại guide.
+
+## Đã Đóng Hoặc Không Phải Finding Active
+
+- `implements` chỉ áp dụng cho product/UI realization theo concrete-to-abstract direction.
+- Ownership `04-domain` và `05-architecture` đã chốt: guide pack là reusable source, meta là contract active local, app là app truth; app không khai báo methodology runtime.
+- `P0-05` đã xác nhận template không còn application instance/relation cần migrate.
+- Root `Luồng vận hành chuẩn` đã tồn tại, route agent đã là Markdown link được kiểm tra; guide không còn finding active riêng.
+- Legacy entity type contract là debt có control: Type Contract Gate chặn type legacy khi type bị sửa hoặc khi tạo instance mới, nhưng không ép rewrite 35 type chưa dùng.
+- Workbench chưa active vì project chưa có local activation policy. Đây là trạng thái hiện hành, không phải một workflow thiếu trong guide.
+
+## Quy Tắc Dùng Review
+
+- Review ghi gap, risk và câu hỏi; không tự tạo schema, relation, entity type hoặc decision mới.
+- Khi xử lý một finding, cập nhật source of truth trước, rồi bỏ finding đã đóng khỏi file này.
+- Khi cần thay đổi cross-project reusable source, kiểm tra boundary guide/meta/app trước khi tạo scope triển khai.

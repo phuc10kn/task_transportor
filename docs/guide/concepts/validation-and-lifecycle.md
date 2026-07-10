@@ -33,24 +33,10 @@ Khi kiểm tra A có trace tới B:
 
 ## Lifecycle
 
-Status vocabulary canonical:
+Status vocabulary và lifecycle canonical thuộc project local:
 
 ```text
 docs/meta/04-conventions/status-vocabulary.md
 ```
 
-Nếu status chưa có trong vocabulary, không tự bịa status mới. Dùng `NOTE-OPEN` hoặc cập nhật meta trước.
-
-## Candidate lifecycle
-
-Candidate knowledge thường đi theo luồng:
-
-```text
-candidate
-    ↓ đủ rõ nghĩa và home
-promote to canonical home
-    ↓
-remove temporary note or keep short provenance if needed
-```
-
-Nếu không đủ chín, dùng `NOTE-OPEN` trong file canonical gần nhất hoặc giữ ngoài docs. `docs/workbench/` hiện chưa được đi vào hoạt động.
+Guide không định nghĩa temporary-record lifecycle. Nếu chưa có canonical home, dừng thay đổi và làm theo policy local của project.

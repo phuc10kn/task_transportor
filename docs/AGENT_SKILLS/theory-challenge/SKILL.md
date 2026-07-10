@@ -11,7 +11,7 @@ Tạo draft challenge khi theory có vấn đề hoặc project reality làm the
 
 ```text
 Task Progress:
-- [ ] Đọc docs/guide/README.md#luồng-vận-hành-chuẩn
+- [ ] Đọc [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn)
 - [ ] Chạy theory-find nếu chưa biết theory liên quan
 - [ ] Chạy theory-review để xác định conflict
 - [ ] Đọc theory governance.md

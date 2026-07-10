@@ -4,11 +4,7 @@ Các rule bắt buộc khi agent đọc hoặc sửa documentation.
 
 ## Rule 1 - Guide Owns Operating Flow
 
-Trước khi sửa docs, đọc:
-
-```text
-docs/guide/README.md#luồng-vận-hành-chuẩn
-```
+Trước khi sửa docs, đọc [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn).
 
 `docs/AGENT_SKILLS` không thay `docs/guide`.
 
@@ -43,6 +39,8 @@ Không copy full theory vào app docs. App docs chỉ reference stable theory ID
 
 `docs/workbench` hiện chưa được đi vào hoạt động.
 
+Chưa có workbench-support agent active. Standard agent không được chuyển task docs thường vào workbench.
+
 Agent không được:
 
 - ghi candidate thật vào workbench;
@@ -50,9 +48,9 @@ Agent không được:
 - dùng workbench như source of truth;
 - lấy workbench làm nơi chứa note chưa rõ home.
 
-## Rule 6 - App Variants Are Reusable Only
+## Rule 6 - Guide Packs Are Reusable Only
 
-`docs/app_variants` là reusable taxonomy/template.
+`docs/guide/reference/entity-maps/packs/` là reusable taxonomy/template xuyên dự án.
 
 Muốn áp dụng vào app phải đi qua `docs/guide/workflows/write-docs.md` và canonical home trong `docs/app` hoặc `docs/meta`.
 
@@ -105,3 +103,14 @@ Khi thiếu slot, relation type hoặc valid triple, reject relation khỏi enti
 Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
 
 Assumption và ContextConstraint không tự tạo outbound relation tới mọi entity. Chỉ tạo relation tới các premise này khi entity bị ảnh hưởng có slot cụ thể và valid triple cụ thể.
+
+## Rule 10 - Type Contract Gate
+
+Khi tạo/sửa entity type hoặc tạo instance mới, agent phải kiểm tra type có explicit `schema` và `## structure extends` theo `docs/meta/00-schemas/entity-type-definition.md`.
+
+Type legacy chưa có instance chỉ là debt. Type legacy đang được sửa hoặc sắp có instance mới phải được chuẩn hóa trước; không tạo instance để né gate.
+
+```text
+npm run verify:entity-type-contract -- --type <canonical-entity-type-path>
+npm run verify:entity-type-contract -- --instance <docs/app-instance-readme-path>
+```
