@@ -17,8 +17,6 @@ Khi một finding được giải quyết, xóa nó khỏi file này. Decision, 
 - Toàn bộ 42 architecture instance active đã đạt `entity-instance/v1`, base/type section contract và `npm run verify:architecture-baseline`; core graph Flow/Module/ModuleBoundary/StateOwner/DataFlow/DeploymentUnit/CrossCuttingRule giữ 127 canonical relation edge đã được validate. `architecture:trace` query canonical YAML với reverse trace derived; mọi link `Related Entities` đã được phân loại và verifier kiểm tra.
 - `docs/app/10-decisions/` đã có decision unit `DEC-001` và `DEC-002`; finding cũ về việc chưa có decision unit không còn hiệu lực.
 
-## Findings Còn Hiệu Lực
-
 ## Open Questions
 
 ### Q1 - Relation Mirror Và Canonical Direction
