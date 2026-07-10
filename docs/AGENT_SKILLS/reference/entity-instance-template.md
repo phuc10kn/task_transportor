@@ -28,11 +28,11 @@ docs/app/<NN-layer>/<NN-concern>/<NN-entity-type-folder>/<ID-slug>/README.md
 ---
 schema: entity-instance/v1
 id: EXAMPLE-001
-slug: example-entity
-title: Example Entity
-entity_type: Process
-layer: 01-business
-concern: 04-behavior
+slug: example-boundary
+title: Example Boundary
+entity_type: ModuleBoundary
+layer: 05-architecture
+concern: 02-boundaries
 status: active
 summary: Một câu mô tả meaning của entity ví dụ.
 theory_basis:
@@ -40,7 +40,7 @@ theory_basis:
 decision_basis:
   - DEC-EXAMPLE
 relations:
-  governed_by:
+  constrains:
     - EXAMPLE-RELATED-001
 ---
 ```
@@ -61,7 +61,7 @@ relations:
 
 Nếu entity type có `structure extends`, thêm section required từ entity type definition.
 
-Relation trong ví dụ chỉ hợp lệ nếu `governed_by` đã tồn tại trong `relations_template` của entity type và slot đó resolve được tới relation type + valid triple.
+Relation trong ví dụ chỉ hợp lệ nếu `constrains` đã tồn tại trong `relations_template` của entity type và slot đó resolve được tới relation type + valid triple.
 
 Không ghi relation nghi ngờ trong entity instance. Relation thiếu slot hoặc thiếu meta rule bị reject khỏi draft.
 

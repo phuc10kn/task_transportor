@@ -11,6 +11,10 @@ summary: State mapping rule approved và rejected do Mapping sở hữu.
 theory_basis:
   - TH-SYNC-SAFE-03
   - TH-CANON-04
+relations:
+  shared_via:
+    - DF-003
+    - DF-004
 ---
 
 # SO-005 - Mapping Approval State
@@ -42,9 +46,26 @@ Approved mapping là knowledge nội bộ cần review rõ ràng và không nên
 - `Projects`
 - admin mapping UI
 
+
+## Why this state is central
+
+State mapping rule approved và rejected do Mapping sở hữu. Ownership phải rõ để consumer không ghi trực tiếp hoặc suy diễn shared ownership.
+
+## What belongs to this state
+
+State, lifecycle và record do Owner nêu trong Meaning/Write policy quản lý thuộc instance này.
+
+## What does not belong here
+
+Business state của module khác, transport detail và state không do Owner quản lý không thuộc instance này.
+
+## Architectural implications
+
+Consumer đọc hoặc yêu cầu thay đổi qua public API/owner path; runtime hoặc shared storage không làm thay đổi ownership.
+
 ## Relations
 
-- Không có outbound relation canonical. Ownership được ghi ở [MOD-004-mapping](../../../01-structure/modules/MOD-004-mapping/README.md) qua `owns: SO-005`.
+`shared_via` ghi DataFlow đọc approved mapping cho preview hoặc outbound payload. Relation này không cấp write quyền cho consumer.
 
 ## Evidence
 
@@ -53,4 +74,5 @@ Approved mapping là knowledge nội bộ cần review rõ ràng và không nên
 
 ## Validation Notes
 
-- Jira là consumer của mapping state, không phải owner; không suy ra relation Module-to-Module mới.
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

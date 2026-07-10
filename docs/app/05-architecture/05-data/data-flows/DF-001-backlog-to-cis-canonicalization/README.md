@@ -1,16 +1,25 @@
 ---
+schema: entity-instance/v1
 id: DF-001
 slug: backlog-to-cis-canonicalization
+title: Backlog To CIS Canonicalization
 entity_type: DataFlow
 layer: 05-architecture
 concern: 05-data
 status: active
+summary: Luồng biến raw Backlog issue thành canonical issue state trong CIS.
 theory_basis:
   - TH-HUBFLOW-02
   - TH-CANON-01
+relations:
+  moves:
+    - SO-001
 ---
-
 # DF-001 - Backlog To CIS Canonicalization
+
+## Summary
+
+Luồng biến raw Backlog issue thành canonical issue state trong CIS.
 
 ## Meaning
 
@@ -53,15 +62,11 @@ Backlog payload được normalize và map về field shape nội bộ trước 
 
 ## What changes and what does not
 
-- Thay đổi: canonical issue aggregates trong `Cis`.
-- Không thay đổi: raw ownership của external issue bên Backlog.
-- Không được phép xảy ra: `Backlog` tự viết trực tiếp vào canonical tables như owner riêng.
+Flow chỉ thay đổi hoặc truyền dữ liệu theo Data path và Transformation đã nêu; ownership không tự chuyển ngoài boundary được mô tả.
 
 ## Read / write tiers involved
 
-- External read: Backlog source fetch.
-- Tier 0 write: chỉ `Cis` được write canonical issue state.
-- Tier 1 orchestration: `Backlog` được phép gọi owner API của `Cis`.
+Read/write đi qua owner API, orchestration hoặc worker path phù hợp; không dùng flow để hợp thức hóa cross-module write trực tiếp.
 
 ## Architectural payoff
 
@@ -77,9 +82,11 @@ Backlog payload được normalize và map về field shape nội bộ trước 
 
 ## Anti-patterns avoided
 
-- Dùng raw Backlog payload làm model chạy xuyên toàn app.
-- Cho `Jira` hoặc `Translation` đọc trực tiếp external payload thay vì canonical state.
-- Cho module integration chiếm owner write của state nội bộ.
+Không để external/raw payload trở thành canonical state, không bypass owner và không coi preview là outbound write.
+
+## Relations
+
+`moves` ghi state đích được canonical hóa. Backlog là external source nên không có StateOwner source để ghi `shared_via`.
 
 ## Evidence
 
@@ -90,7 +97,12 @@ Backlog payload được normalize và map về field shape nội bộ trước 
 
 ## Related Entities
 
-- [MOD-002-backlog](../../../01-structure/modules/MOD-002-backlog/README.md) - owner của inbound adaptation
-- [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md) - owner của canonical issue state
-- [AF-001-backlog-manual-pull](../../../03-interactions/interaction-flows/AF-001-backlog-manual-pull/README.md) - flow thao tác đơn issue
-- [MB-001-cis-canonical-ownership](../../../02-boundaries/module-boundaries/MB-001-cis-canonical-ownership/README.md) - boundary write được bảo vệ
+- Context/evidence: [MOD-002-backlog](../../../01-structure/modules/MOD-002-backlog/README.md) - owner của inbound adaptation
+- Context/evidence: [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md) - owner của canonical issue state
+- Context/evidence: [AF-001-backlog-manual-pull](../../../03-interactions/interaction-flows/AF-001-backlog-manual-pull/README.md) - flow thao tác đơn issue
+- Context/evidence: [MB-001-cis-canonical-ownership](../../../02-boundaries/module-boundaries/MB-001-cis-canonical-ownership/README.md) - boundary write được bảo vệ
+
+## Validation Notes
+
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

@@ -11,6 +11,11 @@ summary: Canonical internal issue state do Cis sở hữu.
 theory_basis:
   - TH-CANON-01
   - TH-CANON-04
+relations:
+  shared_via:
+    - DF-002
+    - DF-003
+    - DF-004
 ---
 
 # SO-001 - Canonical Issue State
@@ -25,7 +30,7 @@ State canonical của issue nội bộ sau khi dữ liệu đã đi vào CIS.
 
 ## Why this state is central
 
-Đây là source-of-truth nội bộ mà các flow review, dry-run, sync outbound và manual edit cùng dựa vào. Nếu state này bị chia owner, toàn bộ kiến trúc sẽ mất trục chính.
+Canonical internal issue state do Cis sở hữu. Ownership phải rõ để consumer không ghi trực tiếp hoặc suy diễn shared ownership.
 
 ## Owner
 
@@ -37,17 +42,11 @@ Toàn bộ mô hình sản phẩm hiện tại đặt CIS làm trung tâm nên c
 
 ## What belongs to this state
 
-- issue fields canonical
-- revision history liên quan
-- comment/attachment/worklog metadata gắn với issue
-- sync-related flags và một phần integration outcome nội bộ
+State, lifecycle và record do Owner nêu trong Meaning/Write policy quản lý thuộc instance này.
 
 ## What does not belong here
 
-- translation review queue lifecycle
-- sync execution queue state
-- project integration configuration
-- external source raw ownership
+Business state của module khác, transport detail và state không do Owner quản lý không thuộc instance này.
 
 ## Write policy
 
@@ -62,13 +61,11 @@ Toàn bộ mô hình sản phẩm hiện tại đặt CIS làm trung tâm nên c
 
 ## Architectural implications
 
-- Mọi integration outbound phải đọc từ đây hoặc từ snapshot build ra từ đây.
-- Mọi manual edit nghiêm túc phải quay về đây.
-- Mọi review flow chỉ được apply vào đây qua owner API.
+Consumer đọc hoặc yêu cầu thay đổi qua public API/owner path; runtime hoặc shared storage không làm thay đổi ownership.
 
 ## Relations
 
-- Không có outbound relation canonical. Ownership được ghi ở [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md) qua `owns: SO-001`.
+`shared_via` ghi các DataFlow chỉ expose canonical issue state như input. Ownership vẫn thuộc `Cis`; feedback write được trace bằng `DataFlow --moves--> SO-001`.
 
 ## Evidence
 
@@ -77,4 +74,5 @@ Toàn bộ mô hình sản phẩm hiện tại đặt CIS làm trung tâm nên c
 
 ## Validation Notes
 
-- Không tạo inverse relation riêng chỉ để biểu diễn owner của state.
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

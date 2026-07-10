@@ -114,3 +114,9 @@ Type legacy chưa có instance chỉ là debt. Type legacy đang được sửa 
 npm run verify:entity-type-contract -- --type <canonical-entity-type-path>
 npm run verify:entity-type-contract -- --instance <docs/app-instance-readme-path>
 ```
+
+## Rule 11 - Project Graph Trace Policy
+
+Khi materialize canonical relation trong `docs/app`, đọc `DEC-002 App Graph Materialization Policy` trước. Chỉ materialize vertical slice có trace query, evidence, relation type, valid triple, relation slot và target instance rõ.
+
+Không convert mọi prose relation, không ghi dual edge để query ngược, và báo edge cố ý giữ prose cùng lý do.

@@ -18,13 +18,13 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ```text
 Stakeholder --participates_in--> Process
-Module --participates_in--> InteractionFlow
 ```
 
 ## non-examples
 
 ```text
 Target --participates_in--> Source   (sai direction nếu inverse được định nghĩa)
+Module --participates_in--> InteractionFlow   (architecture dùng InteractionFlow --involves--> Module)
 Free-text relation không qua Relation Type canonical
 ```
 

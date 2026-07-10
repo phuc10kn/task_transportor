@@ -59,5 +59,4 @@ Khi một intent riêng đã đủ ổn định và có nhu cầu query rõ, ưu
 
 ```text
 Problem --affects--> Stakeholder
-CrossCuttingRule --affects--> Module
 ```

@@ -7,21 +7,21 @@ YAML frontmatter bắt buộc cho Entity Instance:
 ```yaml
 ---
 schema: entity-instance/v1
-id: MOD-004
-slug: spec-graph
-title: Spec Graph
-entity_type: Module
+id: MB-004
+slug: spec-graph-boundary
+title: Spec Graph Boundary
+entity_type: ModuleBoundary
 layer: 05-architecture
-concern: 01-structure
+concern: 02-boundaries
 status: draft
-summary: Module mô tả spec graph.
+summary: Boundary mô tả spec graph.
 theory_basis:
   - TH-MOD-03
 decision_basis:
   - DEC-021
 relations:
-  governed_by:
-    - MB-001
+  constrains:
+    - MOD-001
 ---
 ```
 

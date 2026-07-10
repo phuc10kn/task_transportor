@@ -4,16 +4,16 @@ Combination hợp lệ: `Source --relation--> Target`
 
 | Source | Relation | Target | Cardinality |
 |--------|----------|--------|-------------|
-| Module | `governed_by` | ModuleBoundary | 0..n |
-| Module | `participates_in` | InteractionFlow | 0..n |
 | Module | `owns` | StateOwner | 0..n |
 | ModuleBoundary | `constrains` | Module | 0..n |
 | ModuleBoundary | `constrains` | StateOwner | 0..n |
 | InteractionFlow | `involves` | Module | 0..n |
+| InteractionFlow | `changes` | StateOwner | 0..n |
 | StateOwner | `shared_via` | DataFlow | 0..n |
 | DataFlow | `moves` | StateOwner | 0..n |
 | DeploymentUnit | `hosts` | Module | 0..n |
-| CrossCuttingRule | `affects` | Module | 0..n |
+| CrossCuttingRule | `constrains` | Module | 0..n |
+| CrossCuttingRule | `constrains` | StateOwner | 0..n |
 
 ## validation
 

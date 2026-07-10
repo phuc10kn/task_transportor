@@ -43,9 +43,18 @@ Trước khi ghi Jira thật, hệ thống phải có dry-run/readiness, mapping
 
 ## Related Entities
 
-- [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md) - module thực thi outbound
-- [AF-006-jira-dry-run](../../../03-interactions/interaction-flows/AF-006-jira-dry-run/README.md) - flow preview
-- [AF-007-cis-to-jira-sync](../../../03-interactions/interaction-flows/AF-007-cis-to-jira-sync/README.md) - flow sync thật
+- Canonical relation: [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md) - module thực thi outbound
+- Context/evidence: [AF-006-jira-dry-run](../../../03-interactions/interaction-flows/AF-006-jira-dry-run/README.md) - flow preview
+- Context/evidence: [AF-007-cis-to-jira-sync](../../../03-interactions/interaction-flows/AF-007-cis-to-jira-sync/README.md) - flow sync thật
+
+
+## Why this boundary matters
+
+Guardrail cho outbound Jira có kiểm soát. Boundary này giữ owner, access hoặc write discipline không bị mơ hồ khi code thay đổi.
+
+## Architectural consequences
+
+Module chịu boundary này phải giữ public API, owner-write discipline và các read/write exception đã được nêu trong Statement.
 
 ## Relations
 

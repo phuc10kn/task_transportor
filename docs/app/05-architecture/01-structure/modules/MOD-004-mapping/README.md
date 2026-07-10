@@ -50,9 +50,9 @@ Module giữ mapping rules đã review hoặc approved để outbound sync và d
 
 ## Related Entities
 
-- [MOD-005-anomaly](../../modules/MOD-005-anomaly/README.md) - phản ánh mapping gap
-- [MOD-007-jira](../../modules/MOD-007-jira/README.md) - consumer chính của approved mapping
-- [SO-005-mapping-approval-state](../../../04-state/state-owners/SO-005-mapping-approval-state/README.md) - state owner tương ứng
+- Context/evidence: [MOD-005-anomaly](../../modules/MOD-005-anomaly/README.md) - phản ánh mapping gap
+- Context/evidence: [MOD-007-jira](../../modules/MOD-007-jira/README.md) - consumer chính của approved mapping
+- Canonical relation: [SO-005-mapping-approval-state](../../../04-state/state-owners/SO-005-mapping-approval-state/README.md) - state owner tương ứng
 
 ## Relations
 

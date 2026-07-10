@@ -94,7 +94,7 @@ Relation canonical phải ghi trong YAML frontmatter field `relations` ở đầ
 
 ```yaml
 relations:
-  governed_by:
+  constrains:
     - <TARGET-ID>
 ```
 

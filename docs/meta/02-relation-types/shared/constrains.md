@@ -40,6 +40,8 @@ BusinessConstraint --constrains--> Process
 NonFunctionalRequirement --constrains--> Feature
 ModuleBoundary --constrains--> Module
 ModuleBoundary --constrains--> StateOwner
+CrossCuttingRule --constrains--> Module
+CrossCuttingRule --constrains--> StateOwner
 Invariant --constrains--> DomainEntity
 Invariant --constrains--> ValueObject
 AccessibilityRequirement --constrains--> Screen

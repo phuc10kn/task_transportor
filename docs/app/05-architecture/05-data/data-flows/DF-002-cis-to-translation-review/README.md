@@ -1,16 +1,25 @@
 ---
+schema: entity-instance/v1
 id: DF-002
 slug: cis-to-translation-review
+title: CIS To Translation Review
 entity_type: DataFlow
 layer: 05-architecture
 concern: 05-data
 status: active
+summary: Luồng cung cấp context issue/project từ CIS sang Translation để tạo và review bản dịch.
 theory_basis:
   - TH-AI-GOV-01
   - TH-CANON-03
+relations:
+  moves:
+    - SO-002
 ---
-
 # DF-002 - CIS To Translation Review
+
+## Summary
+
+Luồng cung cấp context issue/project từ CIS sang Translation để tạo và review bản dịch.
 
 ## Meaning
 
@@ -37,9 +46,7 @@ Cis issue/project context
   -> collectTranslationContext(...)
   -> build translation input
   -> TranslationAdapter
-  -> translation_queue
-  -> reviewed result
-  -> Cis apply path
+  -> translation_queue / review state
 ```
 
 ## Transformation
@@ -50,12 +57,11 @@ Context được chọn lọc, build thành translation input, rồi sinh draft 
 
 - `Cis` vẫn sở hữu issue state nguồn.
 - `Translation` sở hữu state review mới được sinh ra từ context đó.
-- Apply reviewed result quay ngược lại `Cis` qua owner API, không phải write trực tiếp từ queue sang issue tables.
+- Reviewed result quay về `Cis` qua data flow riêng DF-005, không phải write trực tiếp từ queue sang issue tables.
 
 ## Read / write tiers involved
 
-- Tier 1: `Translation` đọc context issue/project tối thiểu.
-- Tier 0: `Translation` chỉ write `translation_queue`, không write canonical issue state.
+Read/write đi qua owner API, orchestration hoặc worker path phù hợp; không dùng flow để hợp thức hóa cross-module write trực tiếp.
 
 ## Architectural payoff
 
@@ -63,15 +69,34 @@ Context được chọn lọc, build thành translation input, rồi sinh draft 
 - Cho phép manual edit, reject hoặc retranslate mà không phá source-of-truth.
 - Giữ ranh giới rõ giữa AI transport và business review process.
 
+
+
+## What changes and what does not
+
+Flow chỉ thay đổi hoặc truyền dữ liệu theo Data path và Transformation đã nêu; ownership không tự chuyển ngoài boundary được mô tả.
+
+## Anti-patterns avoided
+
+Không để external/raw payload trở thành canonical state, không bypass owner và không coi preview là outbound write.
+
+## Relations
+
+`moves` ghi translation review state được tạo từ context. SO-001 ghi `shared_via` tới flow này vì chỉ expose canonical context, không đổi ownership.
+
 ## Evidence
 
 - `src/modules/Translation/application/collectTranslationContext.js`
 - `src/modules/Translation/application/buildStandardTranslationInput.js`
 - `src/modules/Translation/application/requestIssueTranslations.js`
-- `src/modules/Cis/application/applyReviewedIssueTranslation.js`
 
 ## Related Entities
 
-- [MOD-003-translation](../../../01-structure/modules/MOD-003-translation/README.md) - owner của review state
-- [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md) - owner của canonical issue state
-- [SO-002-translation-review-state](../../../04-state/state-owners/SO-002-translation-review-state/README.md) - state đích của flow review
+- Context/evidence: [MOD-003-translation](../../../01-structure/modules/MOD-003-translation/README.md) - owner của review state
+- Context/evidence: [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md) - owner của canonical issue state
+- Canonical relation: [SO-001-canonical-issue-state](../../../04-state/state-owners/SO-001-canonical-issue-state/README.md) - context nguồn được expose
+- Canonical relation: [SO-002-translation-review-state](../../../04-state/state-owners/SO-002-translation-review-state/README.md) - state đích của flow review
+
+## Validation Notes
+
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

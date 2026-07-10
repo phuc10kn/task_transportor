@@ -14,13 +14,11 @@ Concern này định nghĩa taxonomy deployment chuẩn cho custom modular monol
 
 ## Codebase hiện tại đang dùng mạnh nhất
 
-- Repo hiện tại có ngữ liệu rõ cho `ApplicationRuntime`, `WorkerRuntime`, `DataStoreUnit`, `StorageUnit`.
+- Repo hiện tại có một `DeploymentUnit` active. HTTP runtime, worker runtime, SQLite và local storage là concern bên trong hoặc dependency của unit đó.
 - `ApplicationDatabase` là type nền để nói rõ một app DB dùng chung engine nhưng không tạo shared ownership.
 - `SchedulerRuntime` là type chuẩn nhưng hiện chưa tách thành runtime riêng.
-- `DeploymentUnit` vẫn được giữ như bucket tổng quát để mô tả topology hiện tại nhanh.
+- `ApplicationRuntime`, `WorkerRuntime`, `DataStoreUnit`, `StorageUnit` hiện là taxonomy/reference; chúng không có app instance active riêng.
 
 ## Deployment unit instances theo code hiện tại
 
-- [DU-001-express-admin-app](./deployment-units/DU-001-express-admin-app/README.md)
-- [DU-002-internal-sync-worker](./deployment-units/DU-002-internal-sync-worker/README.md)
-- [DU-003-local-state-services](./deployment-units/DU-003-local-state-services/README.md)
+- [DU-001-node-monolith](./deployment-units/DU-001-node-monolith/README.md) - deployable Node process duy nhất; HTTP/admin, optional worker và local persistence dependency cùng nằm trong topology này.

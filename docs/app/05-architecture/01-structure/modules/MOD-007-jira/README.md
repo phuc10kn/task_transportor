@@ -52,16 +52,15 @@ Module integration outbound cho Jira. Nó build dry-run preview, kiểm readines
 
 ## Related Entities
 
-- [MOD-001-cis](../../modules/MOD-001-cis/README.md) - nguồn snapshot canonical
-- [MOD-004-mapping](../../modules/MOD-004-mapping/README.md) - approved mapping lookup
-- [MOD-005-anomaly](../../modules/MOD-005-anomaly/README.md) - blocking anomaly gate
-- [MOD-006-sync](../../modules/MOD-006-sync/README.md) - enqueue và worker execution
-- [MB-006-jira-outbound-guardrail](../../../02-boundaries/module-boundaries/MB-006-jira-outbound-guardrail/README.md) - guardrail outbound
+- Context/evidence: [MOD-001-cis](../../modules/MOD-001-cis/README.md) - nguồn snapshot canonical
+- Context/evidence: [MOD-004-mapping](../../modules/MOD-004-mapping/README.md) - approved mapping lookup
+- Context/evidence: [MOD-005-anomaly](../../modules/MOD-005-anomaly/README.md) - blocking anomaly gate
+- Context/evidence: [MOD-006-sync](../../modules/MOD-006-sync/README.md) - enqueue và worker execution
+- Canonical relation: [MB-006-jira-outbound-guardrail](../../../02-boundaries/module-boundaries/MB-006-jira-outbound-guardrail/README.md) - guardrail outbound
 
 ## Relations
 
-- Không có outbound relation canonical trong slice này. AF-006 và AF-007 ghi `involves: MOD-007`; MB-006 ghi `constrains: MOD-007`.
-- Các module còn lại trong Related Entities giữ ở prose vì Module chưa có slot canonical tới Module khác.
+Chưa có outbound relation canonical trong baseline hiện tại. Prose liên quan được giữ làm context hoặc evidence; chỉ materialize theo DEC-002.
 
 ## Evidence
 
@@ -72,4 +71,5 @@ Module integration outbound cho Jira. Nó build dry-run preview, kiểm readines
 
 ## Validation Notes
 
-- Không ghi dual relation `governed_by` hoặc `participates_in`; reverse trace lấy từ flow và boundary source.
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

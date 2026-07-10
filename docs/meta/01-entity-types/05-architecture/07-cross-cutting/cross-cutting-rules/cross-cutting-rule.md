@@ -59,7 +59,8 @@ Validation bổ sung:
 
 | Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| affects | `affects` | Module | allowed_when_known | 0..n |
+| constrains | `constrains` | Module | allowed_when_known | 0..n |
+| constrains_state_owner | `constrains` | StateOwner | allowed_when_known | 0..n |
 
 Relation slot hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/05-architecture/valid-triples.md`.
 

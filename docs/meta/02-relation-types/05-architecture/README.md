@@ -6,6 +6,7 @@ Folder này chỉ là grouping/discovery aid. Relation chỉ hợp lệ khi trip
 
 | Relation | File |
 |----------|------|
+| `changes` | [changes.md](changes.md) |
 | `involves` | [involves.md](involves.md) |
 | `moves` | [moves.md](moves.md) |
 | `owns` | [owns.md](owns.md) |

@@ -49,9 +49,9 @@ Module ghi nhận anomaly và health finding có thể chặn sync hoặc cần 
 
 ## Related Entities
 
-- [MOD-007-jira](../../modules/MOD-007-jira/README.md) - dùng anomaly để chặn outbound
-- [MOD-010-dashboard](../../modules/MOD-010-dashboard/README.md) - đọc anomaly cho vận hành
-- [SO-006-anomaly-resolution-state](../../../04-state/state-owners/SO-006-anomaly-resolution-state/README.md) - state owner tương ứng
+- Context/evidence: [MOD-007-jira](../../modules/MOD-007-jira/README.md) - dùng anomaly để chặn outbound
+- Context/evidence: [MOD-010-dashboard](../../modules/MOD-010-dashboard/README.md) - đọc anomaly cho vận hành
+- Canonical relation: [SO-006-anomaly-resolution-state](../../../04-state/state-owners/SO-006-anomaly-resolution-state/README.md) - state owner tương ứng
 
 ## Relations
 

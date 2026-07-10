@@ -15,8 +15,13 @@ theory_basis:
 relations:
   involves:
     - MOD-007
+    - MOD-001
     - MOD-004
     - MOD-005
+    - MOD-006
+  changes:
+    - SO-003
+    - SO-006
 ---
 
 # AF-006 - Jira Dry Run
@@ -43,13 +48,27 @@ User nhận preview payload và readiness signal trước khi sync thật.
 
 ## Related Entities
 
-- [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md)
-- [MOD-004-mapping](../../../01-structure/modules/MOD-004-mapping/README.md)
-- [MOD-005-anomaly](../../../01-structure/modules/MOD-005-anomaly/README.md)
+- Canonical relation: [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md)
+- Canonical relation: [MOD-004-mapping](../../../01-structure/modules/MOD-004-mapping/README.md)
+- Canonical relation: [MOD-005-anomaly](../../../01-structure/modules/MOD-005-anomaly/README.md)
+
+
+## Architectural role
+
+Preview payload outbound và readiness trước khi ghi Jira thật. Flow này là đơn vị trace cho trigger, participant, outcome và side effect kiến trúc.
+
+## Boundaries respected
+
+Participant chỉ đi qua owner/public API phù hợp; flow không chuyển ownership chỉ vì có orchestration hoặc side effect.
+
+## Anti-patterns avoided
+
+Không bypass owner state, không thực hiện side effect ngoài guardrail tương ứng và không biến flow thành mô tả payload/code-level detail.
 
 ## Relations
 
-- `involves`: [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md), [MOD-004-mapping](../../../01-structure/modules/MOD-004-mapping/README.md), [MOD-005-anomaly](../../../01-structure/modules/MOD-005-anomaly/README.md).
+- `involves`: [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md), [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md), [MOD-004-mapping](../../../01-structure/modules/MOD-004-mapping/README.md), [MOD-005-anomaly](../../../01-structure/modules/MOD-005-anomaly/README.md), [MOD-006-sync](../../../01-structure/modules/MOD-006-sync/README.md).
+- `changes`: [SO-003-sync-execution-state](../../../04-state/state-owners/SO-003-sync-execution-state/README.md) qua dry-run journal và [SO-006-anomaly-resolution-state](../../../04-state/state-owners/SO-006-anomaly-resolution-state/README.md) khi mapping gap tạo anomaly.
 - Không ghi inverse `participates_in`; reverse trace được suy ra từ relation `involves` của flow này.
 
 ## Evidence

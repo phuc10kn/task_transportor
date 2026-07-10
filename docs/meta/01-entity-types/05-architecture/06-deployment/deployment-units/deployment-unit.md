@@ -11,11 +11,11 @@
 
 ## meaning
 
-Runtime component được deploy hoặc vận hành như một topology unit tương đối tách biệt.
+Artifact/process runtime được deploy hoặc vận hành như một topology unit độc lập.
 
 ## instance criteria
 
-Dùng type này khi runtime topology của app cần deployment mapping rõ ràng như web app, worker, scheduler hoặc storage runtime.
+Dùng type này khi artifact/process có lifecycle deploy, rollout, health hoặc scale riêng. Không tạo instance riêng chỉ vì một worker chạy trong cùng process, hoặc vì local persistence là dependency của process đó.
 
 ## required fields
 
@@ -66,3 +66,4 @@ Relation slot hợp lệ khi relation type tồn tại trong `docs/meta/02-relat
 
 - DeploymentUnit phải mô tả ranh giới vận hành/chức năng rõ.
 - Không dùng file này để nêu số liệu production instance.
+- Worker role co-located và persistence dependency local thuộc body/evidence của deployable hiện tại, không phải DeploymentUnit riêng.

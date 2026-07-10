@@ -26,12 +26,10 @@
 
 | Source type | Source edge | Local status | Local disposition |
 | --- | --- | --- | --- |
-| `Module` | `Module -> ModuleBoundary (governed_by)` | source-match | Có trong valid triples active. |
-| `Module` | `Module -> InteractionFlow (participates_in)` | source-match | Có trong valid triples active. |
 | `Module` | `Module -> StateOwner (owns)` | source-match | Có trong valid triples active. |
 | `ModuleBoundary` | `ModuleBoundary -> Module (constrains)` | source-match | Có trong valid triples active. |
 | `ModuleBoundary` | `ModuleBoundary -> StateOwner (constrains)` | source-match | Có trong valid triples active. |
-| `InteractionFlow` | `InteractionFlow -> Module (participates_in)` | local-divergence | Local canonical dùng `InteractionFlow -> Module (involves)`. |
+| `InteractionFlow` | `InteractionFlow -> Module (involves)` | source-match | Có trong valid triples active; reverse trace không tạo `participates_in`. |
 | `InteractionFlow` | `InteractionFlow -> Interface (uses)` | not-active | Target triple chưa active trong project. |
 | `StateOwner` | `StateOwner -> DataFlow (shared_via)` | source-match | Có trong valid triples active. |
 | `DataFlow` | `DataFlow -> StateOwner (moves)` | source-match | Có trong valid triples active. |

@@ -1,16 +1,22 @@
 ---
+schema: entity-instance/v1
 id: MOD-002
 slug: backlog
+title: Backlog
 entity_type: Module
 layer: 05-architecture
 concern: 01-structure
 status: active
+summary: Module integration inbound cho Backlog. Nó kéo dữ liệu từ Backlog, normalize về shape nội bộ và chuyển giao cho `Cis` hoặc `Sync`.
 theory_basis:
   - TH-MOD-01
   - TH-MOD-04
 ---
-
 # MOD-002 - Backlog
+
+## Summary
+
+Module integration inbound cho Backlog. Nó kéo dữ liệu từ Backlog, normalize về shape nội bộ và chuyển giao cho `Cis` hoặc `Sync`.
 
 ## Meaning
 
@@ -69,11 +75,16 @@ Module integration inbound cho Backlog. Nó kéo dữ liệu từ Backlog, norma
 
 ## Related Entities
 
-- [MOD-001-cis](../../modules/MOD-001-cis/README.md) - owner canonical issue state
-- [MOD-006-sync](../../modules/MOD-006-sync/README.md) - worker thực thi manual pull job
-- [AF-001-backlog-manual-pull](../../../03-interactions/interaction-flows/AF-001-backlog-manual-pull/README.md) - flow đơn issue
-- [AF-002-backlog-project-pull](../../../03-interactions/interaction-flows/AF-002-backlog-project-pull/README.md) - flow batch theo project
-- [DF-001-backlog-to-cis-canonicalization](../../../05-data/data-flows/DF-001-backlog-to-cis-canonicalization/README.md) - data flow lõi
+- Context/evidence: [MOD-001-cis](../../modules/MOD-001-cis/README.md) - owner canonical issue state
+- Context/evidence: [MOD-006-sync](../../modules/MOD-006-sync/README.md) - worker thực thi manual pull job
+- Canonical relation: [AF-001-backlog-manual-pull](../../../03-interactions/interaction-flows/AF-001-backlog-manual-pull/README.md) - flow đơn issue
+- Canonical relation: [AF-002-backlog-project-pull](../../../03-interactions/interaction-flows/AF-002-backlog-project-pull/README.md) - flow batch theo project
+- Context/evidence: [DF-001-backlog-to-cis-canonicalization](../../../05-data/data-flows/DF-001-backlog-to-cis-canonicalization/README.md) - data flow lõi
+
+
+## Relations
+
+Chưa có outbound relation canonical trong baseline hiện tại. Prose liên quan được giữ làm context hoặc evidence; chỉ materialize theo DEC-002.
 
 ## Evidence
 
@@ -81,3 +92,8 @@ Module integration inbound cho Backlog. Nó kéo dữ liệu từ Backlog, norma
 - `src/modules/Backlog/application/pullIssue.js`
 - `src/modules/Backlog/application/pullProject.js`
 - `src/modules/Backlog/application/runScheduledPullScan.js`
+
+## Validation Notes
+
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

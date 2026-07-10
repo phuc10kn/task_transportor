@@ -53,11 +53,11 @@ Module thực thi job nội bộ cho các side effect nặng hoặc cần retry.
 
 ## Related Entities
 
-- [MOD-002-backlog](../../modules/MOD-002-backlog/README.md) - enqueue manual pull jobs
-- [MOD-003-translation](../../modules/MOD-003-translation/README.md) - enqueue translate jobs
-- [MOD-007-jira](../../modules/MOD-007-jira/README.md) - enqueue outbound push jobs
-- [MB-005-sync-executes-not-owns](../../../02-boundaries/module-boundaries/MB-005-sync-executes-not-owns/README.md) - boundary quan trọng nhất
-- [SO-003-sync-execution-state](../../../04-state/state-owners/SO-003-sync-execution-state/README.md) - state owner tương ứng
+- Context/evidence: [MOD-002-backlog](../../modules/MOD-002-backlog/README.md) - enqueue manual pull jobs
+- Context/evidence: [MOD-003-translation](../../modules/MOD-003-translation/README.md) - enqueue translate jobs
+- Context/evidence: [MOD-007-jira](../../modules/MOD-007-jira/README.md) - enqueue outbound push jobs
+- Canonical relation: [MB-005-sync-executes-not-owns](../../../02-boundaries/module-boundaries/MB-005-sync-executes-not-owns/README.md) - boundary quan trọng nhất
+- Canonical relation: [SO-003-sync-execution-state](../../../04-state/state-owners/SO-003-sync-execution-state/README.md) - state owner tương ứng
 
 ## Relations
 

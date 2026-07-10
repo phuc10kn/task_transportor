@@ -27,3 +27,5 @@ Concern này định nghĩa data taxonomy chuẩn cho custom modular monolith, k
 - [DF-002-cis-to-translation-review](./data-flows/DF-002-cis-to-translation-review/README.md)
 - [DF-003-cis-to-jira-dry-run-preview](./data-flows/DF-003-cis-to-jira-dry-run-preview/README.md)
 - [DF-004-cis-to-jira-sync-write](./data-flows/DF-004-cis-to-jira-sync-write/README.md)
+- [DF-005-translation-reviewed-result-to-cis](./data-flows/DF-005-translation-reviewed-result-to-cis/README.md)
+- [DF-006-jira-sync-result-to-cis-audit](./data-flows/DF-006-jira-sync-result-to-cis-audit/README.md)

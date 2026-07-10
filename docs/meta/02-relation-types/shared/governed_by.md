@@ -13,15 +13,13 @@ Source bị chi phối bởi Target trong một context đã có valid triple ri
 
 ## allowed semantic
 
-Chỉ dùng cho legacy hoặc layer-specific case đã được chốt bằng valid triple.
+Chỉ dùng cho case có semantic governance độc lập đã được chốt bằng valid triple.
 
 Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ## examples
 
-```text
-Module --governed_by--> ModuleBoundary
-```
+Không có triple `Module --governed_by--> ModuleBoundary` active trong `task_transportor`; architecture dùng `ModuleBoundary --constrains--> Module`.
 
 ## non-examples
 
@@ -38,6 +36,4 @@ Không dùng cho business process governance mới; dùng `BusinessRule --govern
 
 ## valid usage (from entity types)
 
-```text
-Module --governed_by--> ModuleBoundary
-```
+Không có active valid triple trong contract hiện tại của `task_transportor`.

@@ -53,11 +53,11 @@ Module lõi của kiến trúc `System -> CIS -> System`. Đây là nơi giữ c
 
 ## Related Entities
 
-- [MOD-002-backlog](../../modules/MOD-002-backlog/README.md) - inbound source chính hiện tại
-- [MOD-003-translation](../../modules/MOD-003-translation/README.md) - apply reviewed translation vào canonical issue
-- [MOD-007-jira](../../modules/MOD-007-jira/README.md) - đọc snapshot để dry-run và sync outbound
-- [MB-001-cis-canonical-ownership](../../../02-boundaries/module-boundaries/MB-001-cis-canonical-ownership/README.md) - boundary owner write chính
-- [SO-001-canonical-issue-state](../../../04-state/state-owners/SO-001-canonical-issue-state/README.md) - state owner tương ứng
+- Context/evidence: [MOD-002-backlog](../../modules/MOD-002-backlog/README.md) - inbound source chính hiện tại
+- Context/evidence: [MOD-003-translation](../../modules/MOD-003-translation/README.md) - apply reviewed translation vào canonical issue
+- Context/evidence: [MOD-007-jira](../../modules/MOD-007-jira/README.md) - đọc snapshot để dry-run và sync outbound
+- Canonical relation: [MB-001-cis-canonical-ownership](../../../02-boundaries/module-boundaries/MB-001-cis-canonical-ownership/README.md) - boundary owner write chính
+- Canonical relation: [SO-001-canonical-issue-state](../../../04-state/state-owners/SO-001-canonical-issue-state/README.md) - state owner tương ứng
 
 ## Relations
 

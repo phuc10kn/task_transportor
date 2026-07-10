@@ -162,6 +162,7 @@ Mỗi phase Lite có section `Checklist hoàn thành phase`.
 - Nếu output hiển thị mojibake, phải đọc lại bằng UTF-8 trước khi diễn giải hoặc chỉnh file.
 - Khi thay đổi hành vi triển khai, cập nhật file liên quan trong `docs/app`.
 - Khi tạo/sửa entity type hoặc tạo entity instance mới, chạy Type Contract Gate: `npm run verify:entity-type-contract -- --type <canonical-entity-type-path>` trước khi sửa/tạo và `npm run verify:entity-type-contract -- --instance <docs/app-instance-readme-path>` sau khi instance tồn tại. Type legacy chưa có instance chỉ là debt; type đang sửa hoặc sắp có instance phải được chuẩn hóa trước.
+- Khi materialize canonical relation trong `docs/app`, đọc `docs/app/10-decisions/01-decision-making/01-decisions/DEC-002-app-graph-materialization-policy/README.md`; chỉ materialize relation có trace need, evidence, relation type, valid triple, slot và target instance rõ. Không tự convert prose, tạo dual/inverse edge hoặc dùng `affects` chỉ vì Scope có nhắc target.
 - Giữ rõ khác biệt giữa:
   - `webhook_events`: log raw event đầu vào.
   - `sync_jobs`: hàng đợi job nội bộ cho đầu vào/đầu ra.

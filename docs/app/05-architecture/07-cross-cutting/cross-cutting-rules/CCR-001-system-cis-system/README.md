@@ -1,17 +1,30 @@
 ---
+schema: entity-instance/v1
 id: CCR-001
 slug: system-cis-system
+title: System CIS System
 entity_type: CrossCuttingRule
 layer: 05-architecture
 concern: 07-cross-cutting
 status: active
+summary: Toàn bộ kiến trúc hiện tại tổ chức quanh mô hình `System -> CIS -> System`.
 theory_basis:
   - TH-HUBFLOW-01
   - TH-HUBFLOW-02
   - TH-HUBFLOW-03
+relations:
+  constrains:
+    - MOD-002
+    - MOD-001
+    - MOD-003
+    - MOD-007
+    - MOD-006
 ---
-
 # CCR-001 - System CIS System
+
+## Summary
+
+Toàn bộ kiến trúc hiện tại tổ chức quanh mô hình `System -> CIS -> System`.
 
 ## Meaning
 
@@ -19,12 +32,7 @@ Toàn bộ kiến trúc hiện tại tổ chức quanh mô hình `System -> CIS 
 
 ## Why this rule exists
 
-Rule này là “trục đọc” của cả repo. Nó trả lời tại sao:
-
-- inbound không đi thẳng sang target system khác;
-- canonicalization phải xảy ra trong app;
-- review và dry-run có chỗ đứng tự nhiên;
-- outbound sync phải đọc từ CIS chứ không đọc lại raw payload.
+Toàn bộ kiến trúc hiện tại tổ chức quanh mô hình `System -> CIS -> System`. Rule này giữ một invariant kiến trúc cần được review khi flow hoặc module liên quan thay đổi.
 
 ## Statement
 
@@ -36,23 +44,25 @@ Inbound đi vào CIS để canonicalize và review; outbound lấy dữ liệu t
 
 ## Design consequences
 
-- `Cis` là owner của canonical issue state.
-- `Backlog` và `Jira` là integration modules quanh core.
-- `Translation` là review path gắn với canonical state chứ không gắn trực tiếp với external payload.
-- `Sync` trở thành execution backbone chứ không là owner của business state.
+Thiết kế mới hoặc thay đổi phải tuân thủ Statement và Scope; rule không tự tạo ownership hoặc relation canonical mới.
 
 ## Review questions this rule forces
 
-- Flow mới này có đang bỏ qua CIS không?
-- State mới này là canonical state hay chỉ là queue/projection?
-- Integration mới này có đang tạo đường `System -> System` không?
+Thay đổi này có bypass Statement, làm mơ hồ owner/boundary, hoặc làm mất guardrail đã nêu không?
 
 ## Anti-patterns avoided
 
-- Đồng bộ thẳng Backlog sang Jira mà không qua canonical core.
-- Để external payload shape lan vào review và outbound flow.
-- Trộn source ownership với target transport ownership.
+Scope và Statement xác nhận `constrains` tới module đã nêu; chúng không tạo relation impact `affects`.
+
+## Relations
+
+Frontmatter ghi module bị rule ràng buộc. Reverse trace được derive; relation không nói rule sở hữu hoặc gây business impact lên module.
 
 ## Evidence
 
 - `docs/app/05-architecture/README.md`
+
+## Validation Notes
+
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

@@ -42,9 +42,14 @@ proposed -> active -> deprecated
 ## relation templates
 
 ```text
-Module -> ModuleBoundary (governed_by)
-Module -> InteractionFlow (participates_in)
 Module -> StateOwner (owns)
+```
+
+Flow participation và boundary constraint được quản trị từ source có fact chủ động:
+
+```text
+InteractionFlow -> Module (involves)
+ModuleBoundary -> Module (constrains)
 ```
 
 ## validation

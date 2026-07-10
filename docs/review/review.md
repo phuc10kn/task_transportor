@@ -14,20 +14,10 @@ Khi một finding được giải quyết, xóa nó khỏi file này. Decision, 
 - Standard agent là đường mặc định; workbench chỉ là support path local và hiện chưa active trong `task_transportor`.
 - `docs/meta/01-entity-types/` có 52 entity type definition cho layers `00` đến `05`; cả 52 có `relations_template`.
 - 17/52 entity type đã có explicit `schema` và `structure extends`; 35 type legacy đang kế thừa base schema theo [entity-type-definition.md](../meta/00-schemas/entity-type-definition.md). Type Contract Gate chặn legacy type khi type bị sửa hoặc có instance mới.
-- Outbound Jira safety slice đã materialize 12 instance theo `entity-instance/v1` và 11 canonical relation edge; phần còn lại của app graph vẫn đang ở prose/link.
-- `docs/app/10-decisions/` đã có decision unit `DEC-001`; finding cũ về việc chưa có decision unit không còn hiệu lực.
+- Toàn bộ 42 architecture instance active đã đạt `entity-instance/v1`, base/type section contract và `npm run verify:architecture-baseline`; core graph Flow/Module/ModuleBoundary/StateOwner/DataFlow/DeploymentUnit/CrossCuttingRule giữ 127 canonical relation edge đã được validate. `architecture:trace` query canonical YAML với reverse trace derived; mọi link `Related Entities` đã được phân loại và verifier kiểm tra.
+- `docs/app/10-decisions/` đã có decision unit `DEC-001` và `DEC-002`; finding cũ về việc chưa có decision unit không còn hiệu lực.
 
 ## Findings Còn Hiệu Lực
-
-### R1 - App Graph Mới Materialize Một Safety Slice
-
-Severity: High.
-
-`docs/meta/` đã quy định relation instance canonical qua `relations:` và relation chỉ hợp lệ khi có slot, relation type và valid triple. Outbound Jira safety slice hiện đã dùng contract này cho AF-006, AF-007, MB-006, bốn module và bốn state owner liên quan.
-
-Slice chứng minh được trace từ Jira dry-run/sync tới module participant, boundary và state owner. Ngoài phạm vi đó, graph app vẫn chủ yếu ở prose/link; tooling chưa thể query/trace toàn bộ architecture chỉ từ canonical YAML.
-
-Hướng tiếp theo cần chốt theo nhu cầu trace mới. Không tự động chuyển toàn bộ prose sang relation, không tạo dual/inverse edge, và không thêm Boundary-to-Flow relation nếu chưa có slot, direction và valid triple.
 
 ## Open Questions
 
@@ -39,13 +29,16 @@ Các cặp dưới đây cần được xem là fact độc lập hay inverse/mi
 | --- | --- |
 | Business composition | `Scenario --composes--> Process` / `Process --part_of--> Scenario` |
 | Domain composition | `Aggregate --contains--> DomainEntity` / `DomainEntity --member_of--> Aggregate` |
-| Architecture flow | `Module --participates_in--> InteractionFlow` / `InteractionFlow --involves--> Module` |
-| Architecture governance | `Module --governed_by--> ModuleBoundary` |
 | Domain usage | `ValueObject --used_by--> DomainEntity` và direction `uses` tương ứng |
 | Business direction | `Problem --motivates--> Goal` / `Goal --addresses--> Problem` |
 | Business measurement | `Goal --measured_by--> SuccessCriterion` / `SuccessCriterion --validates--> Goal` |
 
 Không đổi relation chỉ vì tên nghe đối xứng. Mỗi quyết định phải chốt fact gốc, query intent, canonical direction và valid triple cần thiết.
+
+### Architecture Direction Đã Chốt
+
+- `InteractionFlow --involves--> Module` là fact canonical cho flow participant; reverse trace được derive, không ghi `Module --participates_in--> InteractionFlow`.
+- `ModuleBoundary --constrains--> Module` là fact canonical cho boundary constraint; không ghi `Module --governed_by--> ModuleBoundary` cho cùng fact.
 
 ### Q2 - Requirement Model Có Cần Mở Rộng Không
 
@@ -67,6 +60,7 @@ Guide chưa có stable methodology-specific type pack hoặc interaction graph c
 - Root `Luồng vận hành chuẩn` đã tồn tại, route agent đã là Markdown link được kiểm tra; guide không còn finding active riêng.
 - Legacy entity type contract là debt có control: Type Contract Gate chặn type legacy khi type bị sửa hoặc khi tạo instance mới, nhưng không ép rewrite 35 type chưa dùng.
 - Workbench chưa active vì project chưa có local activation policy. Đây là trạng thái hiện hành, không phải một workflow thiếu trong guide.
+- Architecture graph đã có query CLI đọc canonical YAML, reverse trace derived và 127 edge đã validate. Mọi link trong `Related Entities` đã được phân loại thành canonical relation có direct edge hoặc context/evidence; không còn link nào làm relation ngầm.
 
 ## Quy Tắc Dùng Review
 

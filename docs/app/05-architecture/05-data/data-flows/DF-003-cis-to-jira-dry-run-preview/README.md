@@ -1,16 +1,22 @@
 ---
+schema: entity-instance/v1
 id: DF-003
 slug: cis-to-jira-dry-run-preview
+title: CIS To Jira Dry Run Preview
 entity_type: DataFlow
 layer: 05-architecture
 concern: 05-data
 status: active
+summary: Luồng dựng preview payload Jira từ canonical issue snapshot mà chưa ghi ra ngoài.
 theory_basis:
   - TH-SYNC-SAFE-02
   - TH-SYNC-SAFE-04
 ---
-
 # DF-003 - CIS To Jira Dry Run Preview
+
+## Summary
+
+Luồng dựng preview payload Jira từ canonical issue snapshot mà chưa ghi ra ngoài.
 
 ## Meaning
 
@@ -58,6 +64,24 @@ canonical issue snapshot
 - Làm lộ coupling outbound ở dạng reviewable thay vì hidden inside push job.
 - Giữ guardrail giữa canonical core và target system write path.
 
+
+
+## What changes and what does not
+
+Flow chỉ thay đổi hoặc truyền dữ liệu theo Data path và Transformation đã nêu; ownership không tự chuyển ngoài boundary được mô tả.
+
+## Read / write tiers involved
+
+Read/write đi qua owner API, orchestration hoặc worker path phù hợp; không dùng flow để hợp thức hóa cross-module write trực tiếp.
+
+## Anti-patterns avoided
+
+Không để external/raw payload trở thành canonical state, không bypass owner và không coi preview là outbound write.
+
+## Relations
+
+Dry-run preview không ghi StateOwner đích. Các state input ghi `shared_via` tới flow này; journal execution vẫn được trace ở `AF-006 --changes--> SO-003`.
+
 ## Evidence
 
 - `src/modules/Jira/application/runJiraDryRun.js`
@@ -66,6 +90,11 @@ canonical issue snapshot
 
 ## Related Entities
 
-- [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md) - consumer của snapshot
-- [MB-003-read-allowlist](../../../02-boundaries/module-boundaries/MB-003-read-allowlist/README.md) - read exception được dùng
-- [CCR-004-dry-run-before-jira-write](../../../07-cross-cutting/cross-cutting-rules/CCR-004-dry-run-before-jira-write/README.md) - guardrail cắt ngang
+- Context/evidence: [MOD-007-jira](../../../01-structure/modules/MOD-007-jira/README.md) - consumer của snapshot
+- Context/evidence: [MB-003-read-allowlist](../../../02-boundaries/module-boundaries/MB-003-read-allowlist/README.md) - read exception được dùng
+- Context/evidence: [CCR-004-dry-run-before-jira-write](../../../07-cross-cutting/cross-cutting-rules/CCR-004-dry-run-before-jira-write/README.md) - guardrail cắt ngang
+
+## Validation Notes
+
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

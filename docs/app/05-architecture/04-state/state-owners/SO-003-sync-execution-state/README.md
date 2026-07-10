@@ -43,9 +43,26 @@ Execution state phải tập trung để worker retry và audit có thể hoạt
 - `Jira`
 - admin operations
 
+
+## Why this state is central
+
+State job, retry, worker progress và journal do Sync sở hữu. Ownership phải rõ để consumer không ghi trực tiếp hoặc suy diễn shared ownership.
+
+## What belongs to this state
+
+State, lifecycle và record do Owner nêu trong Meaning/Write policy quản lý thuộc instance này.
+
+## What does not belong here
+
+Business state của module khác, transport detail và state không do Owner quản lý không thuộc instance này.
+
+## Architectural implications
+
+Consumer đọc hoặc yêu cầu thay đổi qua public API/owner path; runtime hoặc shared storage không làm thay đổi ownership.
+
 ## Relations
 
-- Không có outbound relation canonical. Ownership được ghi ở [MOD-006-sync](../../../01-structure/modules/MOD-006-sync/README.md) qua `owns: SO-003`.
+Chưa có outbound relation canonical trong baseline hiện tại. Prose liên quan được giữ làm context hoặc evidence; chỉ materialize theo DEC-002.
 
 ## Evidence
 
@@ -54,4 +71,5 @@ Execution state phải tập trung để worker retry và audit có thể hoạt
 
 ## Validation Notes
 
-- Execution state tách khỏi business state của module khác; không thêm inverse owner relation.
+- Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Không suy diễn relation canonical mới từ prose hiện có.

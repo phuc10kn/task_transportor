@@ -16,10 +16,8 @@ flowchart LR
   DU[DeploymentUnit]
   CCR[CrossCuttingRule]
 
-  M -->|governed_by| MB
   MB -->|constrains| M
   MB -->|constrains| SO
-  M -->|participates_in| AF
   AF -->|involves| M
   M -->|owns| SO
   SO -->|shared_via| DF
@@ -31,5 +29,6 @@ flowchart LR
 ## Ghi Chú
 
 - Diagram chỉ mô tả stable relation template của base.
+- Flow participation và boundary constraint dùng một canonical direction; reverse trace được derive, không ghi dual edge.
 - Variant khác = pack + interaction-map khác dưới layer tương ứng.
 - Triple list canonical của project thuộc `docs/meta/03-rules/05-architecture/valid-triples.md`.

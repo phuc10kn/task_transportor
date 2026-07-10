@@ -132,6 +132,7 @@ Một relation trong folder layer vẫn chỉ hợp lệ khi triple tương ứn
 
 | Relation | File |
 |----------|------|
+| `changes` | [05-architecture/changes.md](05-architecture/changes.md) |
 | `involves` | [05-architecture/involves.md](05-architecture/involves.md) |
 | `moves` | [05-architecture/moves.md](05-architecture/moves.md) |
 | `owns` | [05-architecture/owns.md](05-architecture/owns.md) |
