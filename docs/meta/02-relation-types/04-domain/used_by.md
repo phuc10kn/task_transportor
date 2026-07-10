@@ -4,11 +4,12 @@
 |-------|-------|
 | **name** | `used_by` |
 | **canonical direction** | Source --used_by--> Target |
-| **inverse** | `uses` |
+| **inverse** | `none` |
+| **inverse kind** | `none` |
 
 ## meaning
 
-Source liên hệ với Target theo semantic `used_by`.
+Source được Target sử dụng.
 
 ## allowed semantic
 
@@ -16,23 +17,21 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ## examples
 
-```text
-ValueObject --used_by--> DomainEntity
-```
+Không có active valid triple trong contract hiện tại của `task_transportor` cho ValueObject/DomainEntity.
+
+Domain usage ghi `DomainEntity --uses--> ValueObject`.
 
 ## non-examples
 
 ```text
-Target --used_by--> Source   (sai direction nếu inverse được định nghĩa)
-Free-text relation không qua Relation Type canonical
+ValueObject --used_by--> DomainEntity   (không còn active; cùng fact với uses)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không dùng `used_by` làm inverse canonical của `uses`.
+Không gắn `used_by` với product relation `uses` như paired inverse.
 
 ## valid usage (from entity types)
 
-```text
-ValueObject --used_by--> DomainEntity
-```
+Không có active valid usage trong domain model hiện tại.

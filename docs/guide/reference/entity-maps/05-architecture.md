@@ -4,9 +4,9 @@ Derived from: [overview.md](overview.md), [folder-structure.md](../folder-struct
 
 ## Câu hỏi
 
-Hệ thống được tổ chức bằng module, boundary, flow và state owner nào?
+System được tổ chức và boundary thế nào?
 
-## Concern lens (default)
+## Concern lens (pure/default)
 
 ```mermaid
 flowchart TB
@@ -20,16 +20,16 @@ flowchart TB
   A --> CrossCutting[Cross-cutting]
 ```
 
-Concern tree universal: [05-architecture pack](packs/universal/05-architecture/README.md).
+Pure source: [universal 05-architecture pack](packs/universal/05-architecture/README.md).
 
-## Variants
+Map này là concern lens thuần — không giả định monolith, modular monolith, microservices hay pattern khác. Project tự chọn entity type cụ thể trong từng concern; active contract và app truth nằm ở `docs/meta/` và `docs/app/`.
 
-Default map chỉ giữ concern lens. Khi style thay đổi type/relation, đọc variant view tương ứng rồi route sang source pack:
+## Variants (optional)
+
+Chỉ đọc khi project đã chọn style làm đổi type/relation. Variant không thay pure/default map:
 
 | Variant | Map |
 | --- | --- |
 | Modular monolith | [variants/modular-monolith/05-architecture/](variants/modular-monolith/05-architecture/README.md) |
 
-## Source pack
-
-Template reusable của modular monolith nằm ở [05-architecture guide pack](packs/variants/modular-monolith/05-architecture/README.md). Map này chỉ là concern lens mặc định; active contract và app-specific architecture truth vẫn nằm ở `docs/meta/` và `docs/app/` của project.
+Template reusable của modular monolith (nếu dùng): [packs/variants/modular-monolith/05-architecture/](packs/variants/modular-monolith/05-architecture/README.md).

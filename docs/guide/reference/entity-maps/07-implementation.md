@@ -4,27 +4,14 @@ Derived from: [overview.md](overview.md), [folder-structure.md](../folder-struct
 
 ## Câu hỏi
 
-Code/source tổ chức và implement mechanism thế nào?
+Code/source tổ chức và implement thế nào?
 
-## Concern lens (default)
+## Guide Boundary
 
-```mermaid
-flowchart TB
-  Imp[07-implementation]
-  Imp --> Organization
-  Imp --> Contracts
-  Imp --> Behavior
-  Imp --> DataHandling[Data Handling]
-  Imp --> ExternalBoundaries[External Boundaries]
-  Imp --> Evolution
-  Imp --> Automation
-  Imp --> CodingRules[Coding Rules]
-```
+Guide **không** giữ taxonomy hay entity type cho `07-implementation`.
 
-Concern definition và boundary: [universal pack 07-implementation](packs/universal/07-implementation/README.md).
+- Concern folder universal: [folder-structure.md § 07-implementation](../folder-structure.md#07-implementation).
+- Candidate type/relation local (nếu project có): decision local của project, không phải stable guide pack.
+- Implementation truth của app: `docs/app/07-implementation/`.
 
-## Stable Source Boundary
-
-Chưa có stable methodology-specific type pack, entity-map variant hoặc interaction graph cho `07-implementation`. Nội dung implementation có thể phụ thuộc architecture style, nhưng dependency đó chưa đủ để gọi layer này là entity-map variant.
-
-Project tự quản lý implementation type và relation trong local `docs/meta/`/`docs/app/`. Chỉ thêm stable source pack khi vocabulary và graph đã có reusable meaning được review độc lập.
+Không tạo universal type pack, methodology variant map hoặc interaction graph cho layer này trong guide cho đến khi vocabulary đã có reusable meaning được review độc lập và được chấp nhận vào guide một cách có chủ ý.

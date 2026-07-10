@@ -33,8 +33,6 @@ open -> accepted -> remediated
 ## relation templates
 
 ```text
-MaintainabilityItem -> SourceStructure (affects)
-MaintainabilityItem -> EvolutionPlan (resolved_by)
 MaintainabilityItem -> RiskRecord (increases)
 ```
 

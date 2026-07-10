@@ -4,7 +4,7 @@ Derived from: [overview.md](overview.md), [folder-structure.md](../folder-struct
 
 ## Câu hỏi
 
-Project đã chọn gì, tại sao, alternative nào bị loại?
+Vì sao project chọn hướng này?
 
 ## Concern lens (default)
 

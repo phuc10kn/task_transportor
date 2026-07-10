@@ -12,11 +12,20 @@ Combination hợp lệ: `Source --relation--> Target`
 | Metric | `measures` | Goal | 0..n |
 | Policy | `generates` | BusinessRule | 0..n |
 | Problem | `affects` | Stakeholder | 0..n |
-| Problem | `motivates` | Goal | 0..n |
-| Process | `part_of` | Scenario | 0..n |
 | Scenario | `composes` | Process | 0..n |
 | Stakeholder | `participates_in` | Process | 0..n |
-| SuccessCriterion | `validates` | Goal | 0..n |
+
+## Canonical direction (Q1)
+
+Một fact một chiều ghi. Reverse trace derived, không dual-write:
+
+| Fact | Canonical | Không ghi |
+| --- | --- | --- |
+| Scenario composition | `Scenario --composes--> Process` | `Process --part_of--> Scenario` |
+| Problem–Goal linkage | `Goal --addresses--> Problem` | `Problem --motivates--> Goal` |
+| Goal success bar | `Goal --measured_by--> SuccessCriterion` | `SuccessCriterion --validates--> Goal` |
+
+`Metric --measures--> Goal` và `Metric --input_to--> SuccessCriterion` là fact độc lập, không phải inverse của `measured_by`.
 
 ## validation
 

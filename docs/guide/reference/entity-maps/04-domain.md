@@ -4,9 +4,9 @@ Derived from: [overview.md](overview.md), [folder-structure.md](../folder-struct
 
 ## Câu hỏi
 
-Meaning, rule và lifecycle nội bộ của domain là gì?
+Meaning/domain rule nội bộ là gì?
 
-## Concern lens (default)
+## Concern lens (pure/default)
 
 ```mermaid
 flowchart TB
@@ -18,25 +18,16 @@ flowchart TB
   D --> LifecycleC[Lifecycle]
 ```
 
-Concern tree universal: [04-domain pack](packs/universal/04-domain/README.md).
+Pure source: [universal 04-domain pack](packs/universal/04-domain/README.md).
 
-## Variants
+Map này là concern lens thuần — không giả định DDD hay methodology khác. Type vocabulary phụ thuộc methodology thuộc variant pack; active contract thuộc `docs/meta/`.
 
-Default map chỉ giữ concern lens. Khi methodology thay đổi type/relation, đọc variant view tương ứng rồi route sang source pack:
+## Variants (optional)
+
+Chỉ đọc khi project đã chọn methodology làm đổi type/relation. Variant không thay pure/default map:
 
 | Variant | Map |
 | --- | --- |
 | DDD (tactical) | [variants/ddd/04-domain/](variants/ddd/04-domain/README.md) |
 
-## Example
-
-Template / định nghĩa type mẫu (không phải SoT của guide):
-
-- [DDD 04-domain pack](packs/variants/ddd/04-domain/README.md)
-
-## Cross-layer (điểm ra)
-
-```text
-DomainConcept --specializes--> GlossaryTerm
-Invariant --refined_from--> BusinessRule
-```
+Template reusable của DDD (nếu dùng): [packs/variants/ddd/04-domain/](packs/variants/ddd/04-domain/README.md).

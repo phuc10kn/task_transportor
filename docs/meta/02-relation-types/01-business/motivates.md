@@ -4,11 +4,12 @@
 |-------|-------|
 | **name** | `motivates` |
 | **canonical direction** | Source --motivates--> Target |
-| **inverse** | `addresses` |
+| **inverse** | `none` |
+| **inverse kind** | `none` |
 
 ## meaning
 
-Source liên hệ với Target theo semantic `motivates`.
+Source tạo động lực / lý do cho Target tồn tại.
 
 ## allowed semantic
 
@@ -16,23 +17,21 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ## examples
 
-```text
-Problem --motivates--> Goal
-```
+Không có active valid triple trong contract hiện tại của `task_transportor`.
+
+Linkage Problem–Goal mặc định ghi `Goal --addresses--> Problem`.
 
 ## non-examples
 
 ```text
-Target --motivates--> Source   (sai direction nếu inverse được định nghĩa)
-Free-text relation không qua Relation Type canonical
+Problem --motivates--> Goal   (không còn active cho cùng linkage với addresses)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không dùng `motivates` làm inverse canonical của `addresses`.
+Không dual-write chỉ để đọc từ phía Problem.
 
 ## valid usage (from entity types)
 
-```text
-Problem --motivates--> Goal
-```
+Không có active valid usage.

@@ -19,39 +19,29 @@ Khi một finding được giải quyết, xóa nó khỏi file này. Decision, 
 
 ## Open Questions
 
-### Q1 - Relation Mirror Và Canonical Direction
+Không còn open question active.
 
-Các cặp dưới đây cần được xem là fact độc lập hay inverse/mirror trước khi đổi vocabulary hoặc thêm rule:
+## Direction Đã Chốt
 
-| Nhóm | Relation đang cần chốt |
-| --- | --- |
-| Business composition | `Scenario --composes--> Process` / `Process --part_of--> Scenario` |
-| Domain composition | `Aggregate --contains--> DomainEntity` / `DomainEntity --member_of--> Aggregate` |
-| Domain usage | `ValueObject --used_by--> DomainEntity` và direction `uses` tương ứng |
-| Business direction | `Problem --motivates--> Goal` / `Goal --addresses--> Problem` |
-| Business measurement | `Goal --measured_by--> SuccessCriterion` / `SuccessCriterion --validates--> Goal` |
-
-Không đổi relation chỉ vì tên nghe đối xứng. Mỗi quyết định phải chốt fact gốc, query intent, canonical direction và valid triple cần thiết.
-
-### Architecture Direction Đã Chốt
+### Architecture
 
 - `InteractionFlow --involves--> Module` là fact canonical cho flow participant; reverse trace được derive, không ghi `Module --participates_in--> InteractionFlow`.
 - `ModuleBoundary --constrains--> Module` là fact canonical cho boundary constraint; không ghi `Module --governed_by--> ModuleBoundary` cho cùng fact.
 
-### Q2 - Requirement Model Có Cần Mở Rộng Không
+### Business / Domain (Q1)
 
-Contract hiện chỉ có `allowed_when_known` và `required_at_creation`. Đây là model active và đủ cho relation đã biết hoặc identity prerequisite khi tạo entity.
-
-Cần quyết định riêng nếu project thật sự cần lifecycle/release gate như `required_before_active`, `required_before_release` hoặc nhóm relation bắt buộc. Không tự thêm mode mới từ review này.
-
-### Q3 - Taxonomy `07-implementation`
-
-Guide chưa có stable methodology-specific type pack hoặc interaction graph cho `07-implementation`. Local proposal của project nằm trong decision local; guide chỉ nhận source mới khi vocabulary và graph đã có reusable meaning được review độc lập.
-
-Đây là boundary có chủ ý, không phải lý do để đưa candidate, migration hoặc lifecycle local trở lại guide.
+- `Scenario --composes--> Process` — không ghi `Process --part_of--> Scenario`.
+- `Aggregate --contains--> DomainEntity` — không ghi `DomainEntity --member_of--> Aggregate`.
+- `DomainEntity --uses--> ValueObject` — không ghi `ValueObject --used_by--> DomainEntity`.
+- `Goal --addresses--> Problem` — không ghi `Problem --motivates--> Goal` cho cùng linkage.
+- `Goal --measured_by--> SuccessCriterion` — không ghi `SuccessCriterion --validates--> Goal` cho cùng success-bar fact.
+- `Metric --measures--> Goal` và `Metric --input_to--> SuccessCriterion` là fact độc lập, không phải inverse của `measured_by`.
 
 ## Đã Đóng Hoặc Không Phải Finding Active
 
+- Q1 relation mirror: đã chốt canonical direction ở trên; meta triple/slot/relation type và DDD pack đã cập nhật theo một fact một chiều ghi.
+- Q3 taxonomy `07-implementation`: guide không giữ taxonomy/entity type cho layer này. Concern folder chỉ ở `folder-structure.md`; candidate type (nếu có) thuộc decision local; implementation truth thuộc `docs/app/07-implementation/`.
+- Q2 requirement model: tạm thời chỉ dùng `allowed_when_known` và `required_at_creation`. Không mở rộng lifecycle/release gate (`required_before_active`, `required_before_release`, …) cho đến khi có nhu cầu thật sự.
 - `implements` chỉ áp dụng cho product/UI realization theo concrete-to-abstract direction.
 - Ownership `04-domain` và `05-architecture` đã chốt: guide pack là reusable source, meta là contract active local, app là app truth; app không khai báo methodology runtime.
 - `P0-05` đã xác nhận template không còn application instance/relation cần migrate.

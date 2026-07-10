@@ -43,7 +43,8 @@ Guide giữ stable source pack; meta giữ contract active của project; app kh
 
 ## Ownership Nội Dung
 
-- Default/variant map chỉ giữ câu hỏi đọc, diagram, active graph/status và route sang source phù hợp.
+- Default map chỉ giữ câu hỏi đọc (theo layer-model), concern lens và route sang universal pack. Không nhúng type list, relation graph hay triple của `docs/meta` hoặc của một variant.
+- Variant map chỉ giữ reading view khi vocabulary phụ thuộc methodology/style; không thay default.
 - `folder-structure.md` giữ path layer/concern universal; pack giữ stable taxonomy, type template và relation/rule template.
 - `docs/meta/` giữ relation slot và valid triple canonical của project.
 - Không lặp concern table, type list hoặc triple table từ pack/meta vào map; map link tới owner thay vì chép lại.

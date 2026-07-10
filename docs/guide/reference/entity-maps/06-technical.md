@@ -4,7 +4,7 @@ Derived from: [overview.md](overview.md), [folder-structure.md](../folder-struct
 
 ## Câu hỏi
 
-Mechanism kỹ thuật nào được dùng (platform, store, API, config)?
+Mechanism kỹ thuật nào được chọn?
 
 ## Concern lens (default)
 

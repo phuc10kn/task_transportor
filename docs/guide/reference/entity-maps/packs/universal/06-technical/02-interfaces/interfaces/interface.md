@@ -33,7 +33,6 @@ draft -> active -> deprecated
 ## relation templates
 
 ```text
-Interface -> InteractionFlow (used_by)
 Interface -> SecurityMechanism (protected_by)
 ```
 

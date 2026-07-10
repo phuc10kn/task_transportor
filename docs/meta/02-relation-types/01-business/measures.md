@@ -4,11 +4,12 @@
 |-------|-------|
 | **name** | `measures` |
 | **canonical direction** | Source --measures--> Target |
-| **inverse** | `measured_by` |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
-Source liên hệ với Target theo semantic `measures`.
+Source là đại lượng đo định lượng gắn với Target.
 
 ## allowed semantic
 
@@ -23,13 +24,14 @@ Metric --measures--> Goal
 ## non-examples
 
 ```text
-Target --measures--> Source   (sai direction nếu inverse được định nghĩa)
-Free-text relation không qua Relation Type canonical
+Goal --measures--> Metric                    (sai canonical direction)
+Goal --measured_by--> SuccessCriterion       (fact khác; không phải inverse của measures)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không dùng `measures` làm inverse của `measured_by`.
+`Metric --measures--> Goal` độc lập với `Goal --measured_by--> SuccessCriterion`.
 
 ## valid usage (from entity types)
 

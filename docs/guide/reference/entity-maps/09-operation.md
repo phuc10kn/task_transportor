@@ -4,7 +4,7 @@ Derived from: [overview.md](overview.md), [folder-structure.md](../folder-struct
 
 ## Câu hỏi
 
-Hệ thống chạy, quan sát, duy trì và phục hồi thế nào?
+Runtime/ops/recovery vận hành ra sao?
 
 ## Concern lens (default)
 

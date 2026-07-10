@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `addresses` |
 | **canonical direction** | Source --addresses--> Target |
-| **inverse** | `motivates` |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
@@ -23,13 +24,15 @@ Goal --addresses--> Problem
 ## non-examples
 
 ```text
-Target --addresses--> Source   (sai direction nếu inverse được định nghĩa)
-Free-text relation không qua Relation Type canonical
+Problem --addresses--> Goal          (sai canonical direction)
+Problem --motivates--> Goal          (không ghi inverse canonical cho cùng linkage)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không dual-write `Problem --motivates--> Goal` cho cùng fact Problem–Goal linkage.
+Reverse trace từ Problem tới Goal được derive từ `Goal --addresses--> Problem`.
+Chỉ xem xét `motivates` như fact độc lập khi có evidence Problem P1 motivate Goal nhưng Goal address Problem P2 khác.
 
 ## valid usage (from entity types)
 

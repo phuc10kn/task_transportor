@@ -35,7 +35,6 @@ draft -> active -> superseded
 ```text
 AssuranceGate -> RiskRecord (mitigates)
 AssuranceGate -> ReleaseGate (feeds)
-AssuranceGate -> ModuleBoundary (protects)
 ```
 
 ## validation

@@ -33,9 +33,7 @@ project-defined lifecycle (see local docs/meta)
 ## relation templates
 
 ```text
-DataStore -> StateOwner (stores)
 DataStore -> RecoveryRunbook (recovered_by)
-DataStore -> DataAccessComponent (used_by)
 ```
 
 ## validation

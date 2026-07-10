@@ -4,11 +4,12 @@
 |-------|-------|
 | **name** | `used_by` |
 | **canonical direction** | Source --used_by--> Target |
-| **inverse** | `uses` |
+| **inverse** | `none` |
+| **inverse kind** | `none` |
 
 ## meaning
 
-Source liên hệ với Target theo semantic `used_by`.
+Source được Target sử dụng.
 
 ## allowed semantic
 
@@ -16,23 +17,20 @@ Chỉ dùng khi combination có trong [valid-triples](../valid-triples.md).
 
 ## examples
 
-```text
-ValueObject --used_by--> DomainEntity
-```
+Không có active valid triple trong DDD pack hiện tại.
+
+Domain usage ghi `DomainEntity --uses--> ValueObject`.
 
 ## non-examples
 
 ```text
-Target --used_by--> Source   (sai direction nếu inverse được định nghĩa)
-Free-text relation không qua Relation Type canonical
+ValueObject --used_by--> DomainEntity   (không còn active; cùng fact với uses)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không dùng `used_by` làm inverse canonical của `uses`.
 
 ## valid usage (from entity types)
 
-```text
-ValueObject --used_by--> DomainEntity
-```
+Không có active valid usage.

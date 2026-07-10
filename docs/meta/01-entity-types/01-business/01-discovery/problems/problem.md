@@ -57,8 +57,9 @@ Additional validation:
 
 | Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| motivates | `motivates` | Goal | allowed_when_known | 0..n |
 | affects | `affects` | Stakeholder | allowed_when_known | 0..n |
+
+Không có slot `motivates`. Linkage Problem–Goal ghi từ `Goal --addresses--> Problem`.
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 

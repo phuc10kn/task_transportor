@@ -4,11 +4,12 @@
 |-------|-------|
 | **name** | `composes` |
 | **canonical direction** | Source --composes--> Target |
-| **inverse** | `part_of` |
+| **inverse** | `none` |
+| **inverse kind** | `derived` |
 
 ## meaning
 
-Source liên hệ với Target theo semantic `composes`.
+Source kết hợp Target như thành phần trong một composition end-to-end.
 
 ## allowed semantic
 
@@ -23,13 +24,14 @@ Scenario --composes--> Process
 ## non-examples
 
 ```text
-Target --composes--> Source   (sai direction nếu inverse được định nghĩa)
-Free-text relation không qua Relation Type canonical
+Process --composes--> Scenario   (sai canonical direction)
+Process --part_of--> Scenario    (không ghi inverse canonical)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không dual-write `Process --part_of--> Scenario` cho cùng fact composition.
+Reverse trace từ Process tới Scenario được derive từ `Scenario --composes--> Process`.
 
 ## valid usage (from entity types)
 

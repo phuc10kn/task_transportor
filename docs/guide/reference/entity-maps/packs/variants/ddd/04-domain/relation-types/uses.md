@@ -9,23 +9,21 @@
 
 ## meaning
 
-Source (consumer) sử dụng Target (consumed capability hoặc value).
+Source (consumer) sử dụng Target (consumed value).
 
 ## allowed semantic
 
-Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
+Chỉ dùng khi combination có trong [valid-triples](../valid-triples.md).
 
 ## examples
 
 ```text
-UseCase --uses--> Capability
 DomainEntity --uses--> ValueObject
 ```
 
 ## non-examples
 
 ```text
-Capability --uses--> UseCase                 (sai canonical direction)
 ValueObject --uses--> DomainEntity           (sai canonical direction)
 ValueObject --used_by--> DomainEntity        (không ghi inverse canonical)
 ```
@@ -33,11 +31,9 @@ ValueObject --used_by--> DomainEntity        (không ghi inverse canonical)
 ## anti-patterns
 
 Không dual-write `ValueObject --used_by--> DomainEntity` cho cùng fact usage.
-Reverse trace từ ValueObject tới DomainEntity được derive từ `DomainEntity --uses--> ValueObject`.
 
 ## valid usage (from entity types)
 
 ```text
-UseCase --uses--> Capability
 DomainEntity --uses--> ValueObject
 ```

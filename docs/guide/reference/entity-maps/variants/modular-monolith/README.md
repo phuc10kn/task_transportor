@@ -16,8 +16,8 @@ Pack source: [../../packs/variants/modular-monolith/README.md](../../packs/varia
 
 ## Liên quan
 
-- Default maps: [../../05-architecture.md](../../05-architecture.md), [../../07-implementation.md](../../07-implementation.md)
+- Default map: [../../05-architecture.md](../../05-architecture.md)
 - Concern lens: [folder-structure.md](../../../folder-structure.md)
 - Index: [../../README.md](../../README.md)
 
-`07-implementation` không phải active layer map của variant này và hiện chưa có stable modular-monolith source pack cho layer.
+Guide không giữ taxonomy/entity type cho `07-implementation`; layer đó không thuộc stable scope của variant này.

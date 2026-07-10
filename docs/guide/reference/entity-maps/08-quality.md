@@ -4,7 +4,7 @@ Derived from: [overview.md](overview.md), [folder-structure.md](../folder-struct
 
 ## Câu hỏi
 
-Chất lượng được định nghĩa, kiểm tra và giữ bằng gì?
+Chất lượng được kiểm tra và giữ thế nào?
 
 ## Concern lens (default)
 

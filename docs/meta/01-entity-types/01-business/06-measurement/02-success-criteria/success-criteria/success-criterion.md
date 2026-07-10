@@ -52,9 +52,7 @@ Additional validation:
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
-| --- | --- | --- | --- | --- |
-| validates | `validates` | Goal | allowed_when_known | 0..n |
+Không có outbound slot active. Success bar của Goal ghi từ `Goal --measured_by--> SuccessCriterion`.
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 

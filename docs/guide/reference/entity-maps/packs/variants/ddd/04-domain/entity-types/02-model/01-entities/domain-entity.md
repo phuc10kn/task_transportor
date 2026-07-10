@@ -34,7 +34,9 @@ modeled → active → deprecated
 
 | Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
 | --- | --- | --- | --- | --- |
-| member_of | `member_of` | Aggregate | allowed_when_known | 0..n |
+| uses | `uses` | ValueObject | allowed_when_known | 0..n |
+
+Không có slot `member_of`. Aggregate membership ghi từ `Aggregate --contains--> DomainEntity`.
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 

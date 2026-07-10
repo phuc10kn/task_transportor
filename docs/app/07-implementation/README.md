@@ -1,6 +1,6 @@
 # 07 - Implementation
 
-`07-implementation/` mô tả cách Architecture và Technical Design được hiện thực thành source code. File này giữ implementation truth hiện tại; giải thích generic về implementation entity nằm ở `docs/guide/`.
+`07-implementation/` mô tả cách Architecture và Technical Design được hiện thực thành source code. File này giữ implementation truth hiện tại. Guide chỉ giữ concern folder universal ở `docs/guide/reference/folder-structure.md`; không giữ taxonomy/entity type cho layer này.
 
 ## Nguồn hướng dẫn
 

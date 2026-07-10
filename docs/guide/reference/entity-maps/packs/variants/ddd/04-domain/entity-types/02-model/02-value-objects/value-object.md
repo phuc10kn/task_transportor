@@ -32,9 +32,7 @@ modeled → active
 
 ## relations_template
 
-| Slot | Relation Type | Target Entity Type | Requirement Mode | Cardinality |
-| --- | --- | --- | --- | --- |
-| used_by | `used_by` | DomainEntity | allowed_when_known | 0..n |
+Không có outbound slot active. Domain usage ghi từ `DomainEntity --uses--> ValueObject`.
 
 Relation slot chỉ hợp lệ khi relation type tồn tại trong `docs/meta/02-relation-types/` và valid triple tương ứng tồn tại trong `docs/meta/03-rules/`.
 

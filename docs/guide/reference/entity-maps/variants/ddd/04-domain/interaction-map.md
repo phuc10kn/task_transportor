@@ -17,9 +17,8 @@ flowchart LR
   LC[Lifecycle]
 
   DC -->|models| DE
-  DE -->|member_of| AG
   AG -->|contains| DE
-  VO -->|used_by| DE
+  DE -->|uses| VO
   AG -->|enforces| INV
   INV -->|constrains| DE
   INV -->|constrains| VO
@@ -34,5 +33,5 @@ flowchart LR
 ## Ghi chú
 
 - Pack khác (không DDD) = variant khác; không sửa map này thành “mọi domain”.
-- Dual `contains` / `member_of` có thể còn mở — `docs/review/review.md`.
+- Membership và usage dùng một canonical direction; reverse trace derived, không dual-write `member_of` / `used_by`.
 - Triple list canonical thuộc [DDD valid triples](../../../packs/variants/ddd/04-domain/valid-triples.md).

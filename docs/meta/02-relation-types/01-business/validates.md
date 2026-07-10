@@ -4,7 +4,8 @@
 |-------|-------|
 | **name** | `validates` |
 | **canonical direction** | Source --validates--> Target |
-| **inverse** | _(none — symmetric or derive later)_ |
+| **inverse** | `none` |
+| **inverse kind** | `none` |
 
 ## meaning
 
@@ -16,23 +17,20 @@ Chỉ dùng khi combination có trong [03-rules/](../../03-rules/).
 
 ## examples
 
-```text
-SuccessCriterion --validates--> Goal
-```
+Không có active valid triple trong contract hiện tại của `task_transportor` cho Goal/SuccessCriterion.
+
+Success bar của Goal ghi `Goal --measured_by--> SuccessCriterion`.
 
 ## non-examples
 
 ```text
-Target --validates--> Source   (sai direction nếu inverse được định nghĩa)
-Free-text relation không qua Relation Type canonical
+SuccessCriterion --validates--> Goal   (không còn active; cùng fact với measured_by)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
+Không dùng `validates` làm inverse canonical của `measured_by` cho Goal↔SuccessCriterion.
 
 ## valid usage (from entity types)
 
-```text
-SuccessCriterion --validates--> Goal
-```
+Không có active valid usage trong business measurement graph hiện tại.

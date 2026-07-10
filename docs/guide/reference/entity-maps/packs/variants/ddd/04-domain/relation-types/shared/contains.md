@@ -1,15 +1,15 @@
-# constrains
+# contains
 
 | Field | Value |
 |-------|-------|
-| **name** | `constrains` |
-| **canonical direction** | Source --constrains--> Target |
+| **name** | `contains` |
+| **canonical direction** | Source --contains--> Target |
 | **inverse** | `none` |
 | **inverse kind** | `derived` |
 
 ## meaning
 
-Source giới hạn hoặc ràng buộc Target.
+Source bao gồm Target như một phần.
 
 ## allowed semantic
 
@@ -18,29 +18,23 @@ Chỉ dùng khi combination có trong [valid-triples](../../valid-triples.md).
 ## examples
 
 ```text
-BusinessConstraint --constrains--> Process
+Aggregate --contains--> DomainEntity
 ```
 
 ## non-examples
 
 ```text
-Target --constrains--> Source   (sai canonical direction)
-Free-text relation không qua Relation Type canonical
+DomainEntity --contains--> Aggregate           (sai canonical direction)
+DomainEntity --member_of--> Aggregate          (không ghi inverse canonical)
 ```
 
 ## anti-patterns
 
-Không dùng relation này nếu chưa có valid triple trong 03-rules/.
-Không dùng `constrains` với pseudo target như `layers/entities`, `_layer / entity_` hoặc target rộng không phải entity type canonical.
+Không dual-write `DomainEntity --member_of--> Aggregate` cho cùng fact membership.
+Reverse trace được derive từ `Aggregate --contains--> DomainEntity`.
 
 ## valid usage (from entity types)
 
 ```text
-BusinessConstraint --constrains--> Process
-NonFunctionalRequirement --constrains--> Feature
-ModuleBoundary --constrains--> Module
-ModuleBoundary --constrains--> StateOwner
-Invariant --constrains--> DomainEntity
-Invariant --constrains--> ValueObject
-AccessibilityRequirement --constrains--> Screen
+Aggregate --contains--> DomainEntity
 ```

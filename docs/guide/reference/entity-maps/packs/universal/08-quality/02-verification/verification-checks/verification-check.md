@@ -32,10 +32,7 @@ planned -> active -> replaced
 
 ## relation templates
 
-```text
-VerificationCheck -> CodingRule (checks)
-VerificationCheck -> PublicContract (verifies)
-```
+Không khai báo edge tới implementation type trong guide. Edge verify code-level contract/rule (nếu cần) thuộc contract local của project.
 
 ## validation
 

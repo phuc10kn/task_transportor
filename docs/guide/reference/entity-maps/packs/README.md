@@ -15,7 +15,7 @@
 
 | Pack | Class | Stable scope |
 | --- | --- | --- |
-| [Universal base](universal/README.md) | Universal base | Layer/concern `00` đến `10`; generic taxonomy hiện có ở `06`, `08`, `09`. |
+| [Universal base](universal/README.md) | Universal base | Layer/concern `00`–`06`, `08`–`10`; `07-implementation` không có pack taxonomy; generic taxonomy hiện có ở `06`, `08`, `09`. |
 | [DDD tactical base](variants/ddd/README.md) | Methodology base | DDD tactical cho `04-domain`. |
 | [Modular monolith base](variants/modular-monolith/README.md) | Methodology base | Stable architecture taxonomy cho `05-architecture`. |
 

@@ -32,9 +32,7 @@ planned -> active -> evolved
 
 ## relation templates
 
-```text
-ExecutionMechanism -> AutomationMechanism (invoked_by)
-```
+Không khai báo edge tới implementation type trong guide. Edge code-level (nếu cần) thuộc contract local của project.
 
 ## validation
 

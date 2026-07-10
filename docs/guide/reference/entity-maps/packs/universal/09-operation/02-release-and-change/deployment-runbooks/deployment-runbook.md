@@ -35,7 +35,6 @@ draft -> active -> superseded
 ```text
 DeploymentRunbook -> RuntimeEnvironment (deploys_to)
 DeploymentRunbook -> ReleaseGate (governed_by)
-DeploymentRunbook -> EvolutionPlan (rolls_out)
 ```
 
 ## validation
