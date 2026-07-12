@@ -4,6 +4,16 @@
     view: "dashboard",
     selectedIssueId: "",
     selectedProjectId: "",
+    selectedCisProjectId: "",
+    selectedBacklogProjectId: "",
+    backlogCreatedFrom: "",
+    backlogCreatedTo: "",
+    backlogLimit: 20,
+    backlogCandidates: [],
+    backlogCandidateMeta: null,
+    backlogActions: null,
+    backlogCandidateJobs: {},
+    backlogPollTimers: {},
     selectedJobsProjectId: "",
     selectedJournalProjectId: "",
     selectedMappingProjectId: "",
@@ -30,7 +40,8 @@
   const navItems = [
     ["dashboard", "Dashboard"],
     ["projects", "Project Config"],
-    ["issues", "Issues"],
+    ["issues", "CIS Issues"],
+    ["backlog_issues", "Backlog Issues"],
     ["translations", "Translations"],
     ["mappings", "Mappings"],
     ["anomalies", "Anomalies"],
@@ -237,7 +248,11 @@
         logout();
       }
       const error = body.error || {};
-      throw new Error(error.message || `Request failed: ${response.status}`);
+      const requestError = new Error(error.message || `Request failed: ${response.status}`);
+      requestError.code = error.code || "REQUEST_FAILED";
+      requestError.status = response.status;
+      requestError.details = error.details || {};
+      throw requestError;
     }
     return body.data;
   }
@@ -267,6 +282,8 @@
       .join("");
     $("#nav").querySelectorAll("button").forEach((button) => {
       button.addEventListener("click", () => {
+        Object.values(state.backlogPollTimers).forEach(window.clearTimeout);
+        state.backlogPollTimers = {};
         state.view = button.dataset.viewId;
         state.dryRun = null;
         state.issueEditorTranslationPopup = "";
@@ -310,6 +327,7 @@
       if (state.view === "dashboard") await renderDashboard();
       if (state.view === "projects") await renderProjects();
       if (state.view === "issues") await renderIssues();
+      if (state.view === "backlog_issues") await renderBacklogIssues();
       if (state.view === "issue_editor") await renderIssueEditor();
       if (state.view === "translations") await renderTranslations();
       if (state.view === "mappings") await renderMappings();
@@ -475,34 +493,6 @@
       </form>`;
   }
 
-  function projectPullPanel(project) {
-    if (!project) {
-      return "";
-    }
-
-    const readyBadges = [
-      badge(project.enabled ? "enabled" : "disabled"),
-      badge(project.sync_enabled ? "sync on" : "sync off"),
-      badge(project.manual_pull_enabled !== false ? "manual pull on" : "manual pull off"),
-    ].join("");
-
-    return `
-      <section class="action-panel">
-        <div class="action-panel-header">
-          <div>
-            <h3>Backlog -> CIS</h3>
-            <p class="muted">Kéo dữ liệu từ Backlog vào CIS cho project đang chọn.</p>
-          </div>
-          <div class="badge-row">${readyBadges}</div>
-        </div>
-        <div class="action-grid">
-          <button id="pullProjectButton" type="button" disabled>Pull whole project</button>
-          <label>Issue key<input id="pullIssueKey" value="${escapeHtml(project.backlog_issue_key_prefix || "")}-1"></label>
-          <button id="pullIssueButton" type="button">Pull one issue</button>
-        </div>
-        </section>`;
-  }
-
   function replaceSelectOptions(select, options, selectedValue) {
     select.innerHTML = strictSelectOptions(options, selectedValue);
   }
@@ -562,7 +552,6 @@
         <div class="panel">
           <div class="panel-header"><h2>${selected ? "Project config" : "New project"}</h2></div>
           <div class="panel-body">
-            ${projectPullPanel(selected)}
             ${projectForm(selected)}
           </div>
         </div>
@@ -581,19 +570,6 @@
     });
     bindProjectForm(selected);
     if (selected) {
-      $("#pullProjectButton").addEventListener("click", async () => {
-        if ($("#pullProjectButton").disabled) {
-          return;
-        }
-        await api(`/api/v1/projects/${selected.id}/backlog/pull`, { method: "POST" });
-        setToast("Project pull queued.");
-      });
-      $("#pullIssueButton").addEventListener("click", async () => {
-        const key = $("#pullIssueKey").value.trim();
-        const job = await api(`/api/v1/projects/${selected.id}/backlog/issues/${encodeURIComponent(key)}/pull`, { method: "POST" });
-        setToast(job.status === "success" ? "Issue pulled into CIS." : `Issue pull ${job.status}.`, job.status === "failed");
-        await renderProjects();
-      });
       $("#projectMappingTargetSystem").addEventListener("change", (event) => {
         state.projectMappingTargetSystem = event.target.value;
       });
@@ -645,19 +621,176 @@
     });
   }
 
+  function todayDate() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  async function loadBacklogCandidates() {
+    const qs = new URLSearchParams({
+      created_from: state.backlogCreatedFrom,
+      created_to: state.backlogCreatedTo,
+      limit: String(state.backlogLimit),
+    });
+    const result = await api(`/api/v1/projects/${state.selectedBacklogProjectId}/backlog/issues/candidates?${qs}`);
+    state.backlogCandidates = result.candidates || [];
+    state.backlogCandidateMeta = result.meta || null;
+    state.backlogActions = result.actions || state.backlogActions;
+  }
+
+  function pollBacklogCandidate(key, jobId, startedAt = Date.now()) {
+    if (state.backlogPollTimers[key]) return;
+    const tick = async () => {
+      delete state.backlogPollTimers[key];
+      if (state.view !== "backlog_issues") return;
+      try {
+        const job = await api(`/api/v1/sync-jobs/${encodeURIComponent(jobId)}`);
+        state.backlogCandidateJobs[key] = job;
+        if (["success", "failed", "cancelled"].includes(job.status)) {
+          if (job.status === "success") {
+            await loadBacklogCandidates();
+            delete state.backlogCandidateJobs[key];
+          } else {
+            delete state.backlogCandidateJobs[key];
+            setToast(`Sync to CIS ${job.status}.`, true);
+          }
+          await renderBacklogIssues();
+          return;
+        }
+        if (Date.now() - startedAt >= 60000) {
+          delete state.backlogCandidateJobs[key];
+          setToast("Polling stopped after 60 seconds. Retry will reuse the active job.", false, "warning");
+          await renderBacklogIssues();
+          return;
+        }
+        state.backlogPollTimers[key] = window.setTimeout(tick, 2000);
+      } catch (error) {
+        delete state.backlogCandidateJobs[key];
+        setToast(error.message, true);
+        await renderBacklogIssues();
+      }
+    };
+    state.backlogPollTimers[key] = window.setTimeout(tick, 2000);
+  }
+
+  async function renderBacklogIssues() {
+    $("#activeTitle").textContent = "Backlog Issues";
+    const projects = await api("/api/v1/projects");
+    if (!state.selectedBacklogProjectId && projects[0]) state.selectedBacklogProjectId = String(projects[0].id);
+    if (!state.backlogCreatedFrom) state.backlogCreatedFrom = todayDate();
+    if (!state.backlogCreatedTo) state.backlogCreatedTo = todayDate();
+    const selected = projects.find((project) => String(project.id) === String(state.selectedBacklogProjectId)) || null;
+    state.backlogActions = selected
+      ? (await api(`/api/v1/projects/${selected.id}/backlog/issues/action-readiness`)).actions
+      : null;
+    const actions = state.backlogActions || {};
+    const pullOne = actions.pull_one || {};
+    const pullProject = actions.pull_project || {};
+    const syncAction = actions.sync_to_cis || {};
+    const meta = state.backlogCandidateMeta;
+
+    content.innerHTML = `
+      <section class="panel">
+        <div class="panel-header"><h2>Backlog issue candidates</h2></div>
+        <div class="panel-body grid">
+          <form id="backlogCandidateForm" class="action-grid">
+            <label>Project *<select name="project_id" required>${projects.map((project) => `<option value="${project.id}" ${String(project.id) === String(state.selectedBacklogProjectId) ? "selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}</select></label>
+            <label>Created from *<input name="created_from" type="date" required value="${escapeHtml(state.backlogCreatedFrom)}"></label>
+            <label>Created to *<input name="created_to" type="date" required value="${escapeHtml(state.backlogCreatedTo)}"></label>
+            <label>Display *<input name="limit" type="number" min="1" max="100" required value="${escapeHtml(state.backlogLimit)}"></label>
+            <button type="submit" ${selected ? "" : "disabled"}>Find issues</button>
+          </form>
+          ${selected ? `
+            <section class="action-panel">
+              <div class="action-panel-header"><div><h3>Backlog → CIS</h3><p class="muted">${escapeHtml(pullProject.execution_mode || "disabled")} · ${escapeHtml((pullProject.disabled_reasons || []).join(", ") || "ready")}</p></div></div>
+              <div class="action-grid">
+                <button id="pullProjectButton" type="button" ${pullProject.enabled ? "" : "disabled"}>Pull project</button>
+                <label>Issue key<input id="pullIssueKey" value="${escapeHtml(selected.backlog_issue_key_prefix || "")}-1"></label>
+                <button id="pullIssueButton" type="button" ${pullOne.enabled ? "" : "disabled"}>Pull one issue</button>
+              </div>
+            </section>` : ""}
+          ${meta ? `<p class="muted">Scanned ${meta.source_rows_scanned}; excluded ${meta.excluded_existing_cis_count}; showing ${meta.returned_count}/${meta.requested_limit}. Stop: ${escapeHtml(meta.stop_reason)}${meta.provider_error_code ? ` (${escapeHtml(meta.provider_error_code)})` : ""}.</p>` : ""}
+        </div>
+        ${table(["Backlog", "Summary", "Status", "Created", "Updated", ""], state.backlogCandidates.map((candidate) => {
+          const job = state.backlogCandidateJobs[candidate.backlog_issue_key];
+          return `<tr>
+            <td>${escapeHtml(candidate.backlog_issue_key)}</td>
+            <td>${escapeHtml(candidate.summary)}</td>
+            <td>${badge(candidate.status)}</td>
+            <td>${displayDate(candidate.created_at_source)}</td>
+            <td>${displayDate(candidate.updated_at_source)}</td>
+            <td><button type="button" data-sync-candidate="${escapeHtml(candidate.backlog_issue_key)}" ${!syncAction.enabled || job ? "disabled" : ""}>${job ? escapeHtml(job.status) : "Sync to CIS"}</button></td>
+          </tr>`;
+        }), "No candidates")}
+      </section>`;
+
+    const form = $("#backlogCandidateForm");
+    form.project_id.addEventListener("change", async () => {
+      state.selectedBacklogProjectId = form.project_id.value;
+      state.backlogCandidates = [];
+      state.backlogCandidateMeta = null;
+      await renderBacklogIssues();
+    });
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      state.selectedBacklogProjectId = form.project_id.value;
+      state.backlogCreatedFrom = form.created_from.value;
+      state.backlogCreatedTo = form.created_to.value;
+      state.backlogLimit = Number(form.limit.value);
+      try { await loadBacklogCandidates(); await renderBacklogIssues(); }
+      catch (error) { setToast(error.message, true); }
+    });
+    const pullProjectButton = $("#pullProjectButton");
+    if (pullProjectButton) pullProjectButton.addEventListener("click", async () => {
+      try {
+        const result = await api(`/api/v1/projects/${selected.id}/backlog/pull`, { method: "POST" });
+        setToast(`Project pull queued ${result.enqueued} issues.${pullProject.consumer_ready ? "" : " Waiting for a consumer."}`, false, pullProject.consumer_ready ? undefined : "warning");
+      } catch (error) { setToast(error.message, true); }
+    });
+    const pullIssueButton = $("#pullIssueButton");
+    if (pullIssueButton) pullIssueButton.addEventListener("click", async () => {
+      try {
+        const job = await api(`/api/v1/projects/${selected.id}/backlog/issues/${encodeURIComponent($("#pullIssueKey").value.trim())}/pull`, { method: "POST" });
+        setToast(job.status === "success" ? "Issue pulled into CIS." : `Issue pull ${job.status}.`, job.status === "failed", job.status === "pending" ? "warning" : undefined);
+      } catch (error) { setToast(error.message, true); }
+    });
+    content.querySelectorAll("[data-sync-candidate]").forEach((button) => button.addEventListener("click", async () => {
+      const key = button.dataset.syncCandidate;
+      button.disabled = true;
+      try {
+        const result = await api(`/api/v1/projects/${selected.id}/backlog/issues/${encodeURIComponent(key)}/sync-to-cis`, { method: "POST" });
+        if (result.outcome === "already_in_cis") {
+          await loadBacklogCandidates();
+          await renderBacklogIssues();
+          return;
+        }
+        state.backlogCandidateJobs[key] = result.job;
+        await renderBacklogIssues();
+        pollBacklogCandidate(key, result.job.id);
+      } catch (error) { button.disabled = false; setToast(error.message, true); }
+    }));
+  }
+
   async function renderIssues() {
-    $("#activeTitle").textContent = "Issues";
+    $("#activeTitle").textContent = "CIS Issues";
     const projects = await api("/api/v1/projects");
     const projectOptions = [`<option value="">All projects</option>`]
-      .concat(projects.map((project) => `<option value="${project.id}" ${String(project.id) === String(state.selectedProjectId) ? "selected" : ""}>${escapeHtml(project.name)}</option>`));
+      .concat(projects.map((project) => `<option value="${project.id}" ${String(project.id) === String(state.selectedCisProjectId) ? "selected" : ""}>${escapeHtml(project.name)}</option>`));
     const qs = new URLSearchParams();
-    if (state.selectedProjectId) qs.set("project_id", state.selectedProjectId);
+    if (state.selectedCisProjectId) qs.set("project_id", state.selectedCisProjectId);
     const issues = await api(`/api/v1/issues?${qs.toString()}`);
     content.innerHTML = `
       <section class="panel">
         <div class="panel-header">
           <h2>Issue list</h2>
           <div class="toolbar"><label>Project<select id="issueProjectFilter">${projectOptions.join("")}</select></label></div>
+        </div>
+        <div class="panel-body">
+          <form id="createCisIssueForm" class="action-grid">
+            <label>Project *<select name="project_id" required>${projectOptions.join("")}</select></label>
+            <label>Summary *<input name="summary" required></label>
+            <label>Description<input name="description"></label>
+            <button type="submit">Create CIS issue</button>
+          </form>
         </div>
         ${table(["Backlog", "Project", "Status", "Summary", "Review", "Anomaly", ""], issues.map((issue) => `
           <tr>
@@ -671,8 +804,31 @@
           </tr>`), "No issues")}
       </section>`;
     $("#issueProjectFilter").addEventListener("change", (event) => {
-      state.selectedProjectId = event.target.value;
+      state.selectedCisProjectId = event.target.value;
       renderIssues();
+    });
+    const createForm = $("#createCisIssueForm");
+    createForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!createForm.project_id.value) {
+        setToast("Choose a project before creating a CIS issue.", true);
+        return;
+      }
+      try {
+        const result = await api("/api/v1/issues", {
+          method: "POST",
+          body: {
+            project_id: Number(createForm.project_id.value),
+            summary: createForm.summary.value,
+            description: createForm.description.value,
+          },
+        });
+        state.selectedIssueId = result.issue.id;
+        state.issueEditorDirty = false;
+        state.view = "issue_editor";
+        renderNav();
+        await render();
+      } catch (error) { setToast(error.message, true); }
     });
     content.querySelectorAll("[data-issue-id]").forEach((button) => {
       button.addEventListener("click", async () => {
@@ -906,6 +1062,26 @@
           ${smallTable("Sync readiness", ["Field", "Value"], [
             `<tr><td>Canonical hash</td><td><code>${escapeHtml(editor.sync && editor.sync.canonical_hash || "")}</code></td></tr>`,
           ], "No sync data")}
+        </div>
+      </div>`;
+  }
+
+  function issueEditorIdentityPanel(editor) {
+    const issue = editor.issue;
+    const disabled = state.issueEditorDirty ? "disabled" : "";
+    return `
+      <div class="panel">
+        <div class="panel-header"><h2>External identities</h2>${state.issueEditorDirty ? badge("save canonical first") : ""}</div>
+        <div class="panel-body">
+          <form id="externalIdentityForm" class="grid">
+            <label>Backlog issue
+              <input name="backlog_issue_key" value="${escapeHtml(issue.backlog_issue_key || "")}" ${issue.backlog_issue_key || state.issueEditorDirty ? "disabled" : ""}>
+            </label>
+            <label>Jira task
+              <input name="jira_issue_key" value="${escapeHtml(issue.jira_issue_key || "")}" ${issue.jira_issue_key || state.issueEditorDirty ? "disabled" : ""}>
+            </label>
+            <button type="submit" ${disabled || (issue.backlog_issue_key && issue.jira_issue_key) ? "disabled" : ""}>Verify and link</button>
+          </form>
         </div>
       </div>`;
   }
@@ -1179,6 +1355,10 @@
     content.querySelectorAll("[data-editor-reject-translation], [data-editor-retranslate], [data-editor-request-translation]").forEach((button) => {
       button.disabled = state.issueEditorDirty || Boolean(state.issueEditorTranslating);
     });
+    const identityForm = $("#externalIdentityForm");
+    if (identityForm && state.issueEditorDirty) {
+      identityForm.querySelectorAll("input, button").forEach((field) => { field.disabled = true; });
+    }
     content.querySelectorAll("[data-editor-save-translation]").forEach((button) => {
       const id = button.dataset.editorSaveTranslation;
       const text = content.querySelector(`[data-editor-translation-text="${selectorValue(id)}"]`);
@@ -1224,6 +1404,7 @@
         <div class="grid issue-editor-side">
             ${issueEditorBacklogSyncPanel(editor)}
             ${issueEditorSyncPanel(editor)}
+            ${issueEditorIdentityPanel(editor)}
             ${issueEditorOverview(editor)}
             <div class="panel"><div class="panel-body">${issueEditorHistory(history)}</div></div>
         </div>
@@ -1259,6 +1440,35 @@
         setToast(error.message, true);
       }
     });
+    const identityForm = $("#externalIdentityForm");
+    if (identityForm) {
+      identityForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (state.issueEditorDirty) {
+          setToast("Save canonical changes before linking identities.", true);
+          return;
+        }
+        const body = {};
+        if (identityForm.backlog_issue_key && identityForm.backlog_issue_key.value.trim()) body.backlog_issue_key = identityForm.backlog_issue_key.value.trim();
+        if (identityForm.jira_issue_key && identityForm.jira_issue_key.value.trim()) body.jira_issue_key = identityForm.jira_issue_key.value.trim();
+        try {
+          await api(`/api/v1/issues/${issueId}/external-identities`, { method: "POST", body });
+          state.dryRun = null;
+          state.issueEditorJiraDryRun = null;
+          state.issueEditorJiraSyncPopup = "";
+          setToast("External identity verified and linked.");
+          await renderIssueEditor();
+        } catch (error) {
+          state.dryRun = null;
+          state.issueEditorJiraDryRun = null;
+          state.issueEditorJiraSyncPopup = "";
+          setToast(error.message, true);
+          if (["EXTERNAL_LINK_ALREADY_ASSIGNED", "EXTERNAL_LINK_DUPLICATE", "EXTERNAL_LINK_CONFLICT", "EXTERNAL_IDENTITY_DATA_CONFLICT"].includes(error.code)) {
+            await renderIssueEditor();
+          }
+        }
+      });
+    }
     const openTranslateButton = $("#openTranslatePopupButton");
     if (openTranslateButton) {
       openTranslateButton.addEventListener("click", async () => {

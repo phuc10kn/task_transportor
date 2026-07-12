@@ -5,12 +5,14 @@ const { requestJiraSync } = require("./application/requestJiraSync");
 const { evaluateJiraSyncReadiness, runJiraDryRun } = require("./application/runJiraDryRun");
 const { sanitizeJiraMappingValues } = require("./application/sanitizeJiraMappingValues");
 const { isRealJiraUserMappingEntry } = require("./support/realJiraUser");
+const { lookupJiraIssueIdentity } = require("./application/lookupJiraIssueIdentity");
 
 module.exports = {
   evaluateJiraSyncReadiness,
   handlePushCommentJob,
   handlePushIssueJob,
   isRealJiraUserMappingEntry,
+  lookupJiraIssueIdentity,
   pullJiraMappingValues,
   requestJiraSync,
   runJiraDryRun,

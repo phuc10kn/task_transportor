@@ -3,6 +3,9 @@ const { applyReviewedCommentTranslation } = require("./application/applyReviewed
 const { applyReviewedIssueTranslation } = require("./application/applyReviewedIssueTranslation");
 const { buildCanonicalSyncSnapshot } = require("./application/buildCanonicalSyncSnapshot");
 const { createIssue } = require("./application/createIssue");
+const { createManualIssue } = require("./application/createManualIssue");
+const { claimJiraIdentityForSync } = require("./application/claimJiraIdentityForSync");
+const { prepareJiraSyncJob } = require("./application/prepareJiraSyncJob");
 const { createTranslationQueueItem } = require("./application/createTranslationQueueItem");
 const { forceApproveIssue } = require("./application/forceApproveIssue");
 const { getAttachmentById } = require("./application/getAttachmentById");
@@ -11,10 +14,13 @@ const { getIssueEditor } = require("./application/getIssueEditor");
 const { getIssueTranslationTargets } = require("./application/getIssueTranslationTargets");
 const { getIssueById } = require("./application/getIssueById");
 const { getIssueByBacklogKey } = require("./application/getIssueByBacklogKey");
+const { getIssuesByBacklogKeys } = require("./application/getIssuesByBacklogKeys");
+const { getIssueByJiraKey } = require("./application/getIssueByJiraKey");
 const { listIssueHistory } = require("./application/listIssueHistory");
 const { listIssueWorklogs } = require("./application/listIssueWorklogs");
 const { listIssueChildren } = require("./application/listIssueChildren");
 const { listIssues } = require("./application/listIssues");
+const { linkExternalIdentities } = require("./application/linkExternalIdentities");
 const { markCommentJiraSynced } = require("./application/markCommentJiraSynced");
 const { markCommentJiraSyncFailed } = require("./application/markCommentJiraSyncFailed");
 const { markDuplicateIssue } = require("./application/markDuplicateIssue");
@@ -35,6 +41,9 @@ module.exports = {
   applyReviewedIssueTranslation,
   buildCanonicalSyncSnapshot,
   createIssue,
+  createManualIssue,
+  claimJiraIdentityForSync,
+  prepareJiraSyncJob,
   createTranslationQueueItem,
   forceApproveIssue,
   getAttachmentById,
@@ -43,10 +52,13 @@ module.exports = {
   getIssueTranslationTargets,
   getIssueById,
   getIssueByBacklogKey,
+  getIssuesByBacklogKeys,
+  getIssueByJiraKey,
   listIssueHistory,
   listIssueWorklogs,
   listIssueChildren,
   listIssues,
+  linkExternalIdentities,
   markCommentJiraSynced,
   markCommentJiraSyncFailed,
   markDuplicateIssue,

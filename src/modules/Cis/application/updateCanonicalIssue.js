@@ -154,6 +154,9 @@ function updateCanonicalIssue({ config, issueId, payload, executedBy, correlatio
       status: 404,
     });
   }
+  if (SyncApi.hasActiveIssueJob({ config, issueId: issue.id, jobType: "push_issue" })) {
+    throw new AppError({ code: "ISSUE_SYNC_IN_PROGRESS", message: "Issue cannot be edited while Jira sync is pending or running.", status: 409 });
+  }
 
   const patchFields = validatePatchPayload(payload || {});
   const revisions = repository.listRevisions(issue.id);

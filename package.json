@@ -26,6 +26,7 @@
     "verify:admin-ui-acceptance": "node scripts/verify/admin-ui-acceptance.js",
     "verify:issue-editor-api": "node scripts/verify/issue-editor-api.js",
     "verify:issue-editor-dryrun-sync": "node scripts/verify/issue-editor-dryrun-sync.js",
+    "verify:system-issues": "node scripts/verify/system-issues.js",
     "verify:docs": "node scripts/verify/docs-navigation.js",
     "verify:entity-type-contract": "node scripts/verify/entity-type-contract.js",
     "verify:architecture-baseline": "node scripts/verify/architecture-clean-baseline.js",
@@ -42,7 +43,7 @@
     "verify:phase05": "npm run verify:mapping-anomaly-dryrun",
     "verify:phase06": "npm run verify:jira-outbound",
     "verify:phase07": "npm run verify:admin-ui-acceptance",
-    "test": "npm run verify:phase00 && npm run verify:phase01 && npm run verify:phase02 && npm run verify:phase03 && npm run verify:phase04 && npm run verify:phase05 && npm run verify:phase06 && npm run verify:phase07 && npm run verify:docs && npm run verify:entity-type-contract && npm run verify:architecture-baseline && npm run verify:architecture-trace"
+    "test": "npm run verify:phase00 && npm run verify:phase01 && npm run verify:phase02 && npm run verify:phase03 && npm run verify:phase04 && npm run verify:phase05 && npm run verify:phase06 && npm run verify:phase07 && npm run verify:system-issues && npm run verify:docs && npm run verify:entity-type-contract && npm run verify:architecture-baseline && npm run verify:architecture-trace"
   },
   "keywords": [],
   "author": "",

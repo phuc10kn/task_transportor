@@ -50,12 +50,16 @@ API contract:
 - Error response dùng `error.code`, `error.message`, `error.details`, `error.correlation_id`.
 - Auth dùng Bearer JWT với `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`.
 - Endpoint group hiện đang mount: dashboard, projects, issues/CIS, Backlog pull/attachments, sync jobs/journal, translation queue, mapping, anomaly, Jira dry-run/sync.
+- CIS API có `POST /api/v1/issues` và `POST /api/v1/issues/:issueId/external-identities`.
+- Backlog API có action-readiness, candidate GET theo created range và per-row `sync-to-cis`; browse path không ghi database.
 - Webhook endpoint không là contract Lite hiện tại khi code chưa mount.
 
 Technical guardrail:
 
 - Backlog manual/project pull đi qua job/audit path.
 - Pull one issue được phép run ngay để Admin UI nhận kết quả.
+- Candidate Sync to CIS chỉ enqueue khi project/manual-pull/sync/worker gate đều sẵn sàng và atomically reuse active manual-pull job theo project + canonical Backlog key.
+- Manual create/link dùng `BEGIN IMMEDIATE` và ghi owner state + journal bằng cùng SQLite connection.
 - Jira outbound phải đi qua dry-run trước sync thật.
 - Sync thật bị chặn bởi missing mapping, blocking anomaly, Jira config lỗi, sync state không hợp lệ và dry-run stale.
 - Attachment download failure không block issue ingest/sync issue v1, nhưng có status lỗi và retry riêng.

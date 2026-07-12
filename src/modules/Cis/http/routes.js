@@ -7,8 +7,10 @@ function createCisRouter({ authenticate }) {
 
   router.use(authenticate);
   router.get("/issues", IssuesController.list);
+  router.post("/issues", IssuesController.create);
   router.get("/issues/:issueId/editor", IssuesController.editor);
   router.patch("/issues/:issueId", IssuesController.updateCanonical);
+  router.post("/issues/:issueId/external-identities", IssuesController.linkExternalIdentities);
   router.post("/issues/:issueId/translations/:queueId/translate", IssuesController.translateQueueItem);
   router.post("/issues/:issueId/translations/translate", IssuesController.translate);
   router.get("/issues/:issueId/history", IssuesController.history);

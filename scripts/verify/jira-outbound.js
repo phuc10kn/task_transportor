@@ -404,7 +404,7 @@ function seedRequiredMappings(config, project) {
   createApprovedMapping(config, project.id, "priority", "Normal", "normal", "Medium");
 }
 
-function requestJiraSyncAfterDryRun(config, issueId) {
+async function requestJiraSyncAfterDryRun(config, issueId) {
   const dryRun = JiraApi.runJiraDryRun({
     config,
     issueId,
@@ -535,7 +535,7 @@ async function verifyUpdateWithoutDuplicate() {
   seedRequiredMappings(config, project);
   const ready = createReadyIssue(config, project, { include_comment: false });
 
-  const firstJob = requestJiraSyncAfterDryRun(config, ready.issue.id);
+  const firstJob = await requestJiraSyncAfterDryRun(config, ready.issue.id);
   assert.equal(firstJob.job_type, "push_issue");
   const firstResult = await SyncApi.runWorkerOnce({ config, workerId: "jira-outbound-update" });
   assert.equal(firstResult.job.status, "success");
@@ -544,7 +544,7 @@ async function verifyUpdateWithoutDuplicate() {
   assert.ok(afterFirst.jira_issue_key);
   assert.equal(readFakeState(config).issues.length, 1);
 
-  const secondJob = requestJiraSyncAfterDryRun(config, ready.issue.id);
+  const secondJob = await requestJiraSyncAfterDryRun(config, ready.issue.id);
   assert.equal(secondJob.job_type, "push_issue");
   const secondResult = await SyncApi.runWorkerOnce({ config, workerId: "jira-outbound-update" });
   assert.equal(secondResult.job.status, "success");
@@ -575,7 +575,8 @@ async function verifyLinkExistingTrace() {
     ],
   });
 
-  requestJiraSyncAfterDryRun(config, ready.issue.id);
+  await requestJiraSyncAfterDryRun(config, ready.issue.id);
+  assert.equal(CisApi.getIssueById({ config, issueId: ready.issue.id }).jira_issue_key, "DMP-77");
   const result = await SyncApi.runWorkerOnce({ config, workerId: "jira-outbound-link" });
   assert.equal(result.job.status, "success");
 
@@ -610,15 +611,17 @@ async function verifyTraceConflict() {
     ],
   });
 
-  const job = requestJiraSyncAfterDryRun(config, ready.issue.id);
-  const result = await SyncApi.runWorkerOnce({ config, workerId: "jira-outbound-conflict" });
-  assert.equal(result.job.id, job.id);
-  assert.equal(result.job.status, "failed");
+  await assert.rejects(
+    () => requestJiraSyncAfterDryRun(config, ready.issue.id),
+    (error) => error.code === "JIRA_TRACE_CONFLICT"
+  );
 
   const saved = CisApi.getIssueById({ config, issueId: ready.issue.id });
   assert.equal(saved.status, "conflict");
   assert.ok(getAnomalies(config, ready.issue.id).some((row) => row.anomaly_type === "unusual_field_change"));
-  assert.ok(listJournal(config, job.id).some((entry) => entry.action === "jira_trace_conflict"));
+  const conflictJournal = SyncApi.listJournal({ config, filters: { issue_id: ready.issue.id } });
+  assert.ok(conflictJournal.some((entry) => entry.action === "jira_trace_conflict" && entry.sync_job_id === null));
+  assert.equal(SyncApi.listJobs({ config, filters: { project_id: project.id } }).filter((item) => item.job_type === "push_issue").length, 0);
 }
 
 async function verifyMissingCredentialFailure() {
@@ -676,7 +679,7 @@ async function verifyRetryPolicies() {
     },
   });
 
-  const job429 = requestJiraSyncAfterDryRun(config429, ready429.issue.id);
+  const job429 = await requestJiraSyncAfterDryRun(config429, ready429.issue.id);
   const result429 = await SyncApi.runWorkerOnce({ config: config429, workerId: "jira-outbound-429" });
   assert.equal(result429.job.id, job429.id);
   assert.equal(result429.job.status, "pending");
@@ -698,7 +701,7 @@ async function verifyRetryPolicies() {
       ],
     },
   });
-  requestJiraSyncAfterDryRun(config5xx, ready5xx.issue.id);
+  await requestJiraSyncAfterDryRun(config5xx, ready5xx.issue.id);
   const result5xx = await SyncApi.runWorkerOnce({ config: config5xx, workerId: "jira-outbound-5xx" });
   assert.equal(result5xx.job.status, "pending");
 
@@ -716,7 +719,7 @@ async function verifyRetryPolicies() {
       ],
     },
   });
-  requestJiraSyncAfterDryRun(configTimeout, readyTimeout.issue.id);
+  await requestJiraSyncAfterDryRun(configTimeout, readyTimeout.issue.id);
   const resultTimeout = await SyncApi.runWorkerOnce({ config: configTimeout, workerId: "jira-outbound-timeout" });
   assert.equal(resultTimeout.job.status, "pending");
 
@@ -735,7 +738,7 @@ async function verifyRetryPolicies() {
       ],
     },
   });
-  requestJiraSyncAfterDryRun(config4xx, ready4xx.issue.id);
+  await requestJiraSyncAfterDryRun(config4xx, ready4xx.issue.id);
   const result4xx = await SyncApi.runWorkerOnce({ config: config4xx, workerId: "jira-outbound-4xx" });
   assert.equal(result4xx.job.status, "failed");
 }

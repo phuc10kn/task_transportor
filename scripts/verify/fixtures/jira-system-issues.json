@@ -1,0 +1,17 @@
+{
+  "issueCounter": 20,
+  "commentCounter": 1,
+  "issues": [
+    {
+      "id": "10019",
+      "key": "WEC-1",
+      "projectKey": "WEC",
+      "summary": "Existing Jira task",
+      "description": "Identity lookup fixture",
+      "labels": [],
+      "status": "To Do",
+      "comments": []
+    }
+  ],
+  "failures": {}
+}

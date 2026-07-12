@@ -10,7 +10,10 @@ const { recoverStaleJobs } = require("./application/recoverStaleJobs");
 const { retryJob } = require("./application/retryJob");
 const { runJobNow } = require("./application/runJobNow");
 const { runWorkerOnce } = require("./application/runWorkerOnce");
-const { writeJournal } = require("./application/writeJournal");
+const { writeJournal, writeJournalInTransaction } = require("./application/writeJournal");
+const { hasActiveIssueJob, hasActiveIssueJobInTransaction } = require("./application/hasActiveIssueJob");
+const { enqueueManualPullIfNoneActive } = require("./application/enqueueManualPullIfNoneActive");
+const { enqueueIssueJobIfNoneActive, enqueueIssueJobIfNoneActiveInTransaction } = require("./application/enqueueIssueJobIfNoneActive");
 const {
   getHandler,
   listHandlerTypes,
@@ -22,8 +25,13 @@ module.exports = {
   cancelTranslateJobsForQueueIds,
   createWorker,
   enqueueJob,
+  enqueueIssueJobIfNoneActive,
+  enqueueIssueJobIfNoneActiveInTransaction,
+  enqueueManualPullIfNoneActive,
   getHandler,
   getJob,
+  hasActiveIssueJob,
+  hasActiveIssueJobInTransaction,
   linkJobIssue,
   listHandlerTypes,
   listJobs,
@@ -34,4 +42,5 @@ module.exports = {
   runJobNow,
   runWorkerOnce,
   writeJournal,
+  writeJournalInTransaction,
 };

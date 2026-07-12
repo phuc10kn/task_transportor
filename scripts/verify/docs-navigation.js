@@ -7,6 +7,7 @@ const documentationRoots = [
   path.join(repositoryRoot, "docs", "AGENT_SKILLS"),
   path.join(repositoryRoot, "docs", "workbench"),
   path.join(repositoryRoot, "docs", "review"),
+  path.join(repositoryRoot, "docs", "plans"),
 ];
 
 const markdownLinkPattern = /(?<!!)\[[^\]]*\]\((?:<([^>]+)>|([^\s)]+))(?:\s+[^)]*)?\)/g;

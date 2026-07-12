@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 
 const { createConnection } = require("../../../infrastructure/database/connection");
-const { runInTransaction } = require("../../../infrastructure/database/transaction");
+const { runImmediateTransaction, runInTransaction } = require("../../../infrastructure/database/transaction");
 const { SYNC_JOB_STATUSES } = require("../../../shared/stateConstants");
 const { insertJournal } = require("./SyncJournalRepository");
 const { backoffMinutesForAttempt } = require("../support/backoff");
@@ -110,6 +110,51 @@ function syncJobSelectSql(where = "") {
           ${where}`;
 }
 
+function findActiveIssueJobInDb(db, issueId, jobType) {
+  return rowToJob(db
+    .prepare(
+      `SELECT * FROM sync_jobs
+       WHERE issue_id = ? AND job_type = ? AND status IN ('pending', 'running')
+       ORDER BY created_at ASC LIMIT 1`
+    )
+    .get(issueId, jobType));
+}
+
+function insertJobInDb(db, input) {
+  const id = input.id || crypto.randomUUID();
+  db.prepare(
+    `INSERT INTO sync_jobs (
+      id, project_id, issue_id, comment_id, attachment_id,
+      direction_from, direction_to, job_type, payload_json,
+      dedupe_key, priority, max_attempts, run_after
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))`
+  ).run(
+    id,
+    input.project_id,
+    input.issue_id || null,
+    input.comment_id || null,
+    input.attachment_id || null,
+    input.direction_from,
+    input.direction_to,
+    input.job_type,
+    stringifyJson(input.payload_json),
+    input.dedupe_key || null,
+    input.priority === undefined ? 100 : input.priority,
+    input.max_attempts || 3,
+    input.run_after || null
+  );
+  const job = db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(id);
+  insertJournal(db, jobJournalInput(job, {
+    action: "job_enqueued",
+    status: "pending",
+    trigger: input.trigger || "manual",
+    message: "Job enqueued.",
+    executed_by: input.executed_by || null,
+    correlation_id: input.correlation_id || null,
+  }));
+  return rowToJob(job);
+}
+
 function createSyncJobRepository({ config }) {
   function withDb(callback) {
     const db = createConnection({ config });
@@ -132,55 +177,40 @@ function createSyncJobRepository({ config }) {
             }
           }
 
-          const id = input.id || crypto.randomUUID();
-          db
-            .prepare(
-              `INSERT INTO sync_jobs (
-                id,
-                project_id,
-                issue_id,
-                comment_id,
-                attachment_id,
-                direction_from,
-                direction_to,
-                job_type,
-                payload_json,
-                dedupe_key,
-                priority,
-                max_attempts,
-                run_after
-              )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))`
-            )
-            .run(
-              id,
-              input.project_id,
-              input.issue_id || null,
-              input.comment_id || null,
-              input.attachment_id || null,
-              input.direction_from,
-              input.direction_to,
-              input.job_type,
-              stringifyJson(input.payload_json),
-              input.dedupe_key || null,
-              input.priority === undefined ? 100 : input.priority,
-              input.max_attempts || 3,
-              input.run_after || null
-            );
-
-          const job = db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(id);
-          insertJournal(db, jobJournalInput(job, {
-            action: "job_enqueued",
-            status: "pending",
-            trigger: input.trigger || "manual",
-            message: "Job enqueued.",
-            executed_by: input.executed_by || null,
-            correlation_id: input.correlation_id || null,
-          }));
-
-          return rowToJob(job);
+          return insertJobInDb(db, input);
         })
       );
+    },
+
+    findActiveIssueJob(issueId, jobType) {
+      return withDb((db) => findActiveIssueJobInDb(db, issueId, jobType));
+    },
+
+    enqueueManualPullIfNoneActive(input) {
+      return withDb((db) => runImmediateTransaction(db, () => {
+        const key = String(input.payload_json && input.payload_json.backlog_issue_key || "").trim().toUpperCase();
+        const existing = db.prepare(
+          `SELECT * FROM sync_jobs
+           WHERE project_id = ?
+             AND job_type = 'manual_pull'
+             AND direction_from = 'backlog'
+             AND direction_to = 'cis'
+             AND status IN ('pending', 'running')
+             AND UPPER(TRIM(json_extract(payload_json, '$.backlog_issue_key'))) = ?
+           ORDER BY created_at ASC LIMIT 1`
+        ).get(input.project_id, key);
+        return existing ? rowToJob(existing) : insertJobInDb(db, input);
+      }));
+    },
+
+    enqueueIssueJobIfNoneActive(input) {
+      return withDb((db) => runImmediateTransaction(db, () => {
+        const existing = findActiveIssueJobInDb(db, input.issue_id, input.job_type);
+        if (existing) {
+          return { job: existing, reused: true };
+        }
+        return { job: insertJobInDb(db, input), reused: false };
+      }));
     },
 
     list(filters = {}) {
@@ -625,5 +655,7 @@ function createSyncJobRepository({ config }) {
 
 module.exports = {
   createSyncJobRepository,
+  findActiveIssueJobInDb,
+  insertJobInDb,
   rowToJob,
 };

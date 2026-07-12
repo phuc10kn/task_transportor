@@ -20,6 +20,8 @@ UI tối thiểu phải hỗ trợ:
 - Project config cho Backlog/Jira credential, sync policy, translation config và enable/disable.
 - Dashboard hiển thị pending review, missing mapping, failed job và open anomaly.
 - Pull one issue và resync từ Backlog.
+- Màn Backlog Issues riêng theo project, bắt buộc created-from/created-to/limit, hiển thị candidate chưa có CIS và Sync to CIS theo từng hàng.
+- Màn CIS Issues có form tạo issue thủ công; Issue Editor cho link Backlog issue/Jira task khi field còn trống.
 - Issue Editor hiển thị source snapshot, canonical CIS data, Jira target preview và sync state.
 - Translation modal/action cho summary/description: translate, retranslate, edit, approve + save, reject.
 - Mapping review/approval trước outbound.
@@ -56,6 +58,7 @@ Chỉ mục nhanh:
 - UI không được làm AI translation giống authority cuối; người review/admin giữ quyết định cuối.
 - UI không cho sync thật khi dry-run/pre-check fail.
 - UI phải lộ rõ lý do block: missing mapping, anomaly, stale dry-run, config lỗi, credential lỗi.
+- Pull one, Pull project và Sync to CIS dùng readiness/execution mode riêng; UI không coi HTTP 202 là issue đã tạo và poll job tới terminal/timeout.
 - Layer này đang dùng Admin UI làm touchpoint chính của Lite; nếu sau này có CLI hoặc API operator touchpoint, vẫn route về `03-interface`.
 - Source component tree và validation implementation detail thuộc `07-implementation/`.
 

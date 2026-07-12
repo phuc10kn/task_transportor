@@ -1,7 +1,8 @@
 const { AppError } = require("../../../http/errors/AppError");
 const CisApi = require("../../Cis/CisApi");
+const AnomalyApi = require("../../Anomaly/AnomalyApi");
 const SyncApi = require("../../Sync/SyncApi");
-const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
+const { createJiraClient } = require("../infrastructure/JiraClient");
 const { evaluateDryRunFreshness, evaluateJiraSyncReadiness } = require("./runJiraDryRun");
 const { jiraUserField } = require("../support/jiraDryRunPayload");
 
@@ -100,8 +101,65 @@ function buildPayloadOverride(basePayload, jiraFields) {
   return payload;
 }
 
-function requestJiraSync({ config, issueId, executedBy, correlationId, jiraFields }) {
-  const repository = createJiraSyncRepository({ config });
+async function resolveTargetAtRequest({ config, readiness, executedBy, correlationId }) {
+  const client = createJiraClient({ config, project: readiness.project });
+  if (readiness.issue.jira_issue_key) {
+    try {
+      const linked = await client.getIssue(readiness.issue.jira_issue_key);
+      const linkedProject = linked.fields && linked.fields.project && linked.fields.project.key;
+      if (linkedProject && String(linkedProject).toUpperCase() !== String(readiness.project.jira_project_key || "").toUpperCase()) {
+        throw new AppError({ code: "EXTERNAL_ISSUE_PROJECT_MISMATCH", message: "Linked Jira issue belongs to another project.", status: 422 });
+      }
+      return { action: "update", verifiedTraceKey: linked.key };
+    } catch (error) {
+      if (["JIRA_RESOURCE_NOT_FOUND", "JIRA_ISSUE_NOT_FOUND"].includes(error.code)) {
+        error.code = "JIRA_LINKED_ISSUE_NOT_FOUND";
+        error.retryable = false;
+      }
+      throw error;
+    }
+  }
+  const matches = await client.searchIssuesByTrace({ backlogIssueKey: readiness.issue.backlog_issue_key, issueId: readiness.issue.id });
+  if (matches.length === 0) return { action: "create", verifiedTraceKey: null };
+  if (matches.length === 1) {
+    const owner = CisApi.getIssueByJiraKey({ config, projectId: readiness.project.id, jiraIssueKey: matches[0].key });
+    if (owner && owner.id !== readiness.issue.id) {
+      throw new AppError({ code: "EXTERNAL_LINK_DUPLICATE", message: "Jira trace target belongs to another CIS issue.", status: 409 });
+    }
+    return { action: "update", verifiedTraceKey: String(matches[0].key).trim().toUpperCase() };
+  }
+  CisApi.markIssueConflict({ config, issueId: readiness.issue.id });
+  AnomalyApi.createAnomaly({
+    config,
+    input: {
+      project_id: readiness.project.id,
+      issue_id: readiness.issue.id,
+      anomaly_type: "unusual_field_change",
+      severity: "critical",
+      details_json: { reason: "jira_trace_conflict", jira_matches: matches.map((match) => match.key) },
+    },
+  });
+  SyncApi.writeJournal({
+    config,
+    input: {
+      project_id: readiness.project.id,
+      issue_id: readiness.issue.id,
+      direction_from: "cis",
+      direction_to: "jira",
+      job_type: "push_issue",
+      action: "jira_trace_conflict",
+      status: "failed",
+      trigger: "manual",
+      message: "Multiple Jira issues matched the CIS trace.",
+      details_json: { jira_matches: matches.map((match) => match.key) },
+      executed_by: executedBy || null,
+      correlation_id: correlationId || null,
+    },
+  });
+  throw new AppError({ code: "JIRA_TRACE_CONFLICT", message: "Multiple Jira issues matched the CIS trace.", status: 409 });
+}
+
+async function requestJiraSync({ config, issueId, executedBy, correlationId, jiraFields }) {
   const readiness = evaluateJiraSyncReadiness({ config, issueId });
 
   if (!readiness.can_sync) {
@@ -133,84 +191,32 @@ function requestJiraSync({ config, issueId, executedBy, correlationId, jiraField
     throw buildStaleDryRunError(readiness, freshness);
   }
 
-  const activeJob = repository.findActiveIssueSyncJob(readiness.issue.id);
-  if (activeJob) {
-    return activeJob;
-  }
-
   const normalizedJiraFields = normalizeJiraFields(jiraFields || {});
   const hasJiraFieldOverrides = Object.keys(normalizedJiraFields).length > 0;
   const jiraPayloadOverride = hasJiraFieldOverrides
     ? buildPayloadOverride(readiness.payload, normalizedJiraFields)
     : null;
-
-  if (hasJiraFieldOverrides) {
-    CisApi.saveJiraDraftFields({
-      config,
-      issueId: readiness.issue.id,
-      input: normalizedJiraFields,
-    });
-    SyncApi.writeJournal({
-      config,
-      input: {
-        project_id: readiness.project.id,
-        issue_id: readiness.issue.id,
-        direction_from: "cis",
-        direction_to: "jira",
-        job_type: "push_issue",
-        action: "jira_draft_saved",
-        status: "success",
-        trigger: "manual",
-        message: "Jira draft fields saved before sync.",
-        details_json: {
-          fields: Object.keys(normalizedJiraFields),
-          canonical_hash: readiness.canonical_hash,
-        },
-        executed_by: executedBy || null,
-        correlation_id: correlationId || null,
-      },
-    });
+  const activeJob = SyncApi.hasActiveIssueJob({ config, issueId: readiness.issue.id, jobType: "push_issue" });
+  if (activeJob) {
+    const sameHash = activeJob.payload_json && activeJob.payload_json.canonical_hash === readiness.canonical_hash;
+    const sameOverride = JSON.stringify(activeJob.payload_json && activeJob.payload_json.jira_payload_override || null) === JSON.stringify(jiraPayloadOverride || null);
+    if (sameHash && sameOverride) return activeJob;
+    throw new AppError({ code: "JIRA_SYNC_STALE", message: "Active Jira sync job is incompatible with this request.", status: 409 });
   }
+  const target = await resolveTargetAtRequest({ config, readiness, executedBy, correlationId });
 
-  const job = SyncApi.enqueueJob({
+  const prepared = CisApi.prepareJiraSyncJob({
     config,
-    input: {
-      project_id: readiness.project.id,
-      issue_id: readiness.issue.id,
-      direction_from: "cis",
-      direction_to: "jira",
-      job_type: "push_issue",
-      payload_json: {
-        requested_by: executedBy || null,
-        canonical_hash: readiness.canonical_hash,
-        jira_payload_override: jiraPayloadOverride,
-      },
-      priority: 40,
-      trigger: "manual",
-      executed_by: executedBy || null,
-      correlation_id: correlationId || null,
-    },
+    issueId: readiness.issue.id,
+    expectedHash: readiness.canonical_hash,
+    jiraFields: normalizedJiraFields,
+    jiraPayloadOverride,
+    targetAction: target.action,
+    verifiedTraceKey: target.verifiedTraceKey,
+    executedBy,
+    correlationId,
   });
-
-  SyncApi.writeJournal({
-    config,
-    input: {
-      sync_job_id: job.id,
-      project_id: readiness.project.id,
-      issue_id: readiness.issue.id,
-      direction_from: "cis",
-      direction_to: "jira",
-      job_type: "push_issue",
-      action: "jira_sync_requested",
-      status: "pending",
-      trigger: "manual",
-      message: "Jira sync job requested.",
-      executed_by: executedBy || null,
-      correlation_id: correlationId || null,
-    },
-  });
-
-  return job;
+  return prepared.job;
 }
 
 module.exports = {

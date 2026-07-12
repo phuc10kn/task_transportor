@@ -33,6 +33,8 @@ Module implementation pattern:
 Implementation flow theo code hiện tại:
 
 - Backlog inbound: Backlog pull tạo/execute `manual_pull` job, normalize payload, upsert vào CIS, tải attachment theo policy và ghi journal.
+- Backlog candidate browse dùng `BacklogApi.listIssueCandidates`, batch read qua `CisApi`, không persist; per-row action dùng `SyncApi.enqueueManualPullIfNoneActive` rồi worker chạy shared handler.
+- CIS manual create và external identity link là owner actions; Backlog/Jira chỉ expose public remote lookup trả canonical provider key/project identity.
 - Translation: Issue Editor có route dịch trực tiếp cho summary/description, vẫn lưu `translation_queue`; approve + save apply reviewed text vào canonical CIS branch.
 - Mapping/anomaly: Jira dry-run dùng approved mapping qua CIS và tạo/đọc anomaly để quyết định `can_sync`.
 - Jira outbound: dry-run chạy qua API và ghi journal; sync thật enqueue `push_issue`, worker gọi Jira client khi gate pass.
@@ -49,6 +51,7 @@ Implementation verification hiện có:
 
 - `npm run verify:phase00` đến `npm run verify:phase07` map với các phase Lite đã triển khai.
 - `npm run verify:issue-editor` gom verify API và dry-run/sync của Issue Editor.
+- `npm run verify:system-issues` kiểm tra candidate browse/readiness, manual create, identity scope và candidate sync.
 - `npm test` chạy toàn bộ verify phase00-07.
 - Khi sửa Translation AI, kiểm tra module Translation không tự gọi `fetch`, `child_process`, `spawn`, `spawnSync`.
 

@@ -28,6 +28,7 @@ Domain concepts/entities chính:
 
 - `Project`: đơn vị cấu hình vận hành, gắn nguồn Backlog, đích Jira, policy translation/mapping/sync và trạng thái bật/tắt sync.
 - `Issue`: đối tượng vận hành trung tâm trong CIS; nối source snapshot, canonical data, translation, mapping, anomaly, sync job và journal.
+- `External identity`: Backlog key và Jira key canonical do provider trả về; uniqueness xét riêng từng system column trong phạm vi `project_id`.
 - `Comment`: trao đổi đi kèm issue; cần translation/review trước outbound khi policy yêu cầu.
 - `Attachment`: file/metadata gắn với issue/comment; download và outbound sync có lifecycle riêng.
 - `Translation`: reviewed text chỉ có giá trị downstream sau approve/manual edit.
@@ -53,6 +54,7 @@ Domain invariants/gates:
 - Comment cần dịch không sync outbound khi reviewed translation chưa sẵn sàng.
 - Mapping gap block outbound tới khi có approval; decision accepted rõ mới được thay đổi rule này.
 - Attachment failure được xử lý riêng, trừ khi project sau này đánh dấu attachment là required.
+- Backlog/Jira identity chỉ được gán khi field đang trống, external issue tồn tại/đúng integration project và key chưa thuộc CIS issue khác cùng project; cùng text ở hai system column không phải duplicate.
 
 ## Folder Structure
 

@@ -72,8 +72,13 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 
 - `docs/app/05-architecture/01-structure/README.md`
 - `docs/app/05-architecture/02-boundaries/README.md`
+- `src/modules/Cis/CisApi.js`
+- `src/modules/Backlog/BacklogApi.js`
+- `src/modules/Jira/JiraApi.js`
+- `src/modules/Sync/SyncApi.js`
 
 ## Validation Notes
 
 - Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Evidence public surface đã được refresh cho CIS/Backlog/Jira/Sync capabilities mới.
 - Không suy diễn relation canonical mới từ prose hiện có.

@@ -17,6 +17,8 @@ Lite được coi là đạt ở mức product khi:
 
 - Backlog manual pull tạo inbound job `backlog -> cis`.
 - Project pull enqueue candidate issue, không sync Jira trực tiếp.
+- Candidate browse theo created range không tạo database write, loại Backlog key đã thuộc CIS cùng project và over-fetch tới limit/source bound.
+- Manual CIS issue có revision đầu tiên + journal; external identity verify tồn tại/project và duplicate theo `project_id + đúng system column`.
 - CIS lưu raw/source snapshot, canonical issue, comments, attachments metadata, job và journal.
 - Translation option tạo draft Nhật -> Việt và có human review/edit/approve/reject.
 - Mapping required có approve path.
@@ -48,6 +50,7 @@ Verification command:
 - `npm run verify:phase06`: Jira outbound.
 - `npm run verify:phase07`: Admin UI acceptance.
 - `npm run verify:issue-editor`: Issue Editor API và dry-run/sync.
+- `npm run verify:system-issues`: Backlog Issues, manual CIS issue và external identity linking.
 - `npm test`: toàn bộ phase00-07.
 
 Manual acceptance Lite còn sống:

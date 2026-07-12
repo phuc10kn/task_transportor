@@ -35,8 +35,20 @@ async function handleManualPullJob(job, { config }) {
   const client = createBacklogClient({ config, project });
 
   try {
-    const [issue, comments, attachments] = await Promise.all([
+    const [backlogProject, issue] = await Promise.all([
+      client.getProject(project.backlog_project_key),
       client.getIssue(backlogIssueKey),
+    ]);
+
+    if (Number(issue.projectId) !== Number(backlogProject.id)) {
+      throw new AppError({
+        code: "BACKLOG_ROUTING_MISMATCH",
+        message: "Backlog issue belongs to a different project.",
+        status: 422,
+      });
+    }
+
+    const [comments, attachments] = await Promise.all([
       client.getIssueComments(backlogIssueKey),
       client.getIssueAttachments(backlogIssueKey),
     ]);
@@ -127,7 +139,9 @@ async function handleManualPullJob(job, { config }) {
       translate_jobs: 0,
     };
   } catch (error) {
-    error.retryable = retryableFromError(error);
+    if (error.retryable === undefined) {
+      error.retryable = retryableFromError(error);
+    }
     throw error;
   }
 }

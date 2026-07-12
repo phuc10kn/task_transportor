@@ -4,13 +4,21 @@ const { pullIssue, pullIssueNow } = require("./application/pullIssue");
 const { pullProject } = require("./application/pullProject");
 const { retryAttachmentDownload } = require("./application/retryAttachmentDownload");
 const { runScheduledPullScan } = require("./application/runScheduledPullScan");
+const { lookupBacklogIssueIdentity } = require("./application/lookupBacklogIssueIdentity");
+const { getIssueActionReadiness } = require("./application/getIssueActionReadiness");
+const { listIssueCandidates } = require("./application/listIssueCandidates");
+const { syncCandidateToCis } = require("./application/syncCandidateToCis");
 
 module.exports = {
   handleManualPullJob,
+  getIssueActionReadiness,
+  listIssueCandidates,
+  lookupBacklogIssueIdentity,
   pullBacklogMappingValues,
   pullIssue,
   pullIssueNow,
   pullProject,
   retryAttachmentDownload,
   runScheduledPullScan,
+  syncCandidateToCis,
 };

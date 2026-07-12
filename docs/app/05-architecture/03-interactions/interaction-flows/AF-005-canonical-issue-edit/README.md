@@ -29,11 +29,11 @@ Luồng admin mở issue editor và chỉnh canonical issue state trực tiếp 
 
 ## Trigger
 
-Admin gọi editor endpoint hoặc patch issue endpoint.
+Admin tạo CIS issue thủ công, mở editor, patch canonical field hoặc link external identity còn trống.
 
 ## Path
 
-`Admin -> Cis HTTP -> CisApi.getIssueEditor(...) / CisApi.updateCanonicalIssue(...) -> add revision -> update sync-related flags`
+`Admin -> Cis HTTP -> CisApi.createManualIssue(...) / getIssueEditor(...) / updateCanonicalIssue(...) / linkExternalIdentities(...) -> owner transaction + revision/journal`
 
 ## Outcome
 
@@ -66,9 +66,12 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 
 - `src/modules/Cis/application/getIssueEditor.js`
 - `src/modules/Cis/application/updateCanonicalIssue.js`
+- `src/modules/Cis/application/createManualIssue.js`
+- `src/modules/Cis/application/linkExternalIdentities.js`
 - `src/modules/Cis/http/routes.js`
 
 ## Validation Notes
 
 - Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Evidence đã được refresh cho manual create và verified immutable external identity owner actions.
 - Không suy diễn relation canonical mới từ prose hiện có.

@@ -8,10 +8,14 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-function requestJson(url) {
+function retryAfterSeconds(value) {
+  const seconds = Number(value);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+}
+
+function requestJson(url, { timeoutMs = 10000, notFoundCode = "BACKLOG_API_ERROR" } = {}) {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, (res) => {
+    const request = https.get(url, (res) => {
         let body = "";
 
         res.setEncoding("utf8");
@@ -20,14 +24,25 @@ function requestJson(url) {
         });
         res.on("end", () => {
           if (res.statusCode >= 400) {
-            reject(new AppError({
-              code: res.statusCode >= 500 ? "BACKLOG_SERVER_ERROR" : "BACKLOG_API_ERROR",
+            const code = res.statusCode === 404
+              ? notFoundCode
+              : res.statusCode === 429
+                ? "BACKLOG_RATE_LIMITED"
+                : res.statusCode === 401 || res.statusCode === 403
+                  ? "BACKLOG_AUTH_FAILED"
+                  : res.statusCode >= 500 ? "BACKLOG_SERVER_ERROR" : "BACKLOG_API_ERROR";
+            const error = new AppError({
+              code,
               message: `Backlog API failed with ${res.statusCode}.`,
-              status: res.statusCode >= 500 ? 502 : 422,
+              status: res.statusCode === 429 ? 429 : res.statusCode >= 500 ? 502 : 422,
               details: {
                 backlog_status_code: res.statusCode,
               },
-            }));
+            });
+            error.statusCode = res.statusCode;
+            error.retryable = res.statusCode === 429 || res.statusCode >= 500;
+            error.retryAfterSeconds = retryAfterSeconds(res.headers["retry-after"]);
+            reject(error);
             return;
           }
 
@@ -37,8 +52,19 @@ function requestJson(url) {
             reject(error);
           }
         });
-      })
-      .on("error", reject);
+      });
+    request.setTimeout(Math.max(1, timeoutMs), () => {
+      const error = new AppError({ code: "BACKLOG_REQUEST_TIMEOUT", message: "Backlog API request timed out.", status: 504 });
+      error.retryable = true;
+      request.destroy(error);
+    });
+    request.on("error", (error) => {
+      if (error instanceof AppError) return reject(error);
+      const network = new AppError({ code: "BACKLOG_NETWORK_ERROR", message: "Backlog API network request failed.", status: 502 });
+      network.retryable = true;
+      network.cause = error;
+      reject(network);
+    });
   });
 }
 
@@ -116,8 +142,8 @@ class BacklogClient {
     return url;
   }
 
-  async getIssue(backlogIssueKey) {
-    return requestJson(this.buildUrl(`/api/v2/issues/${encodeURIComponent(backlogIssueKey)}`));
+  async getIssue(backlogIssueKey, options) {
+    return requestJson(this.buildUrl(`/api/v2/issues/${encodeURIComponent(backlogIssueKey)}`), { ...options, notFoundCode: "BACKLOG_ISSUE_NOT_FOUND" });
   }
 
   async getIssueComments(backlogIssueKey) {
@@ -136,12 +162,12 @@ class BacklogClient {
     );
   }
 
-  async getProject(projectIdOrKey) {
-    return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}`));
+  async getProject(projectIdOrKey, options) {
+    return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}`), { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" });
   }
 
-  async listIssues(params = {}) {
-    return requestJson(this.buildUrl("/api/v2/issues", params));
+  async listIssues(params = {}, options) {
+    return requestJson(this.buildUrl("/api/v2/issues", params), options);
   }
 
   async pullMappingValues() {
@@ -173,7 +199,8 @@ class FixtureBacklogClient {
 
   issueByKey(backlogIssueKey) {
     const issues = this.fixture.issues || [this.fixture.issue].filter(Boolean);
-    const issue = issues.find((item) => item.issueKey === backlogIssueKey || item.key === backlogIssueKey);
+    const token = String(backlogIssueKey);
+    const issue = issues.find((item) => item.issueKey === token || item.key === token || String(item.id) === token);
 
     if (!issue) {
       throw new AppError({
@@ -183,7 +210,11 @@ class FixtureBacklogClient {
       });
     }
 
-    return issue;
+    return {
+      ...issue,
+      projectId: issue.projectId || this.fixture.projectId || 1,
+      projectKey: issue.projectKey || this.fixture.projectKey || null,
+    };
   }
 
   async getIssue(backlogIssueKey) {
@@ -235,8 +266,18 @@ class FixtureBacklogClient {
     };
   }
 
-  async listIssues() {
-    return this.fixture.issueCandidates || this.fixture.issues || [this.fixture.issue].filter(Boolean);
+  async listIssues(params = {}) {
+    let issues = [...(this.fixture.issueCandidates || this.fixture.issues || [this.fixture.issue].filter(Boolean))]
+      .map((issue) => ({ ...issue, projectId: issue.projectId || this.fixture.projectId || 1 }));
+    const projectIds = params["projectId[]"] === undefined ? [] : [params["projectId[]"]].flat().map(Number);
+    if (projectIds.length > 0) issues = issues.filter((issue) => projectIds.includes(Number(issue.projectId || this.fixture.projectId || 1)));
+    if (params.createdSince) issues = issues.filter((issue) => String(issue.created || "").slice(0, 10) >= params.createdSince);
+    if (params.createdUntil) issues = issues.filter((issue) => String(issue.created || "").slice(0, 10) <= params.createdUntil);
+    if (params.sort === "created") issues.sort((a, b) => String(a.created || "").localeCompare(String(b.created || "")));
+    if (params.order === "desc") issues.reverse();
+    const offset = Number(params.offset || 0);
+    const count = Number(params.count || 20);
+    return issues.slice(offset, offset + count);
   }
 
   async pullMappingValues() {
