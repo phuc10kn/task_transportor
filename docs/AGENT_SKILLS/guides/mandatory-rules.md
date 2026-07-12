@@ -35,18 +35,20 @@ Không đưa app truth vào `docs/guide`, `docs/meta`, `docs/theories` hoặc `d
 
 Không copy full theory vào app docs. App docs chỉ reference stable theory ID hoặc derived rule cần thiết.
 
-## Rule 5 - Workbench Is Inactive
+## Rule 5 - Workbench Follows Local Activation
 
-`docs/workbench` hiện chưa được đi vào hoạt động.
+`docs/workbench` chỉ dùng khi local activation decision còn hiệu lực. Với `task_transportor`, DEC-003 đã kích hoạt scope `cis/`.
 
-Chưa có workbench-support agent active. Standard agent không được chuyển task docs thường vào workbench.
+Agent:
 
-Agent không được:
+- được tạo/triage Workbench draft theo policy local và skill `workbench-intake`;
+- phải gán human owner role ngay khi tạo item;
+- không dùng Workbench như source of truth;
+- không tự promote canonical;
+- không tạo entity/relation chỉ vì item tồn tại;
+- không bypass `sync-product-change = blocked`.
 
-- ghi candidate thật vào workbench;
-- promote từ workbench;
-- dùng workbench như source of truth;
-- lấy workbench làm nơi chứa note chưa rõ home.
+Known-home local gap dùng `NOTE-*`, không tạo Workbench item không cần thiết.
 
 ## Rule 6 - Guide Packs Are Reusable Only
 

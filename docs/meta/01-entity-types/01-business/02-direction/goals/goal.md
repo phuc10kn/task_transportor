@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `02-direction` |
 | **folder** | `goals/` |
-| **ID pattern** | `GOAL-{NNN}-{slug}` |
+| **ID pattern** | `GOAL-{NNN}` |
+| **Instance folder pattern** | `GOAL-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

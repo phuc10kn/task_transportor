@@ -29,6 +29,7 @@ Task Progress:
 - [ ] Nếu target là schema-managed unit, unit có schema canonical.
 - [ ] Nếu target là schema-managed unit, frontmatter có required fields.
 - [ ] Nếu target là schema-managed unit, không có field tự phát ngoài schema.
+- [ ] (Optional local) `verify:entity-instance` có thể cover structural frontmatter/sections; skill này vẫn kiểm semantic/boundary.
 
 Lưu ý: schema gate không áp dụng máy móc cho mọi Markdown file. README layer, guide workflow, guide reference, checklist agent và prose guide chỉ cần validate theo placement/boundary/link liên quan, trừ khi file đó tự khai báo hoặc được meta quy định là schema-managed unit.
 
@@ -56,6 +57,7 @@ Lưu ý: schema gate không áp dụng máy móc cho mọi Markdown file. README
 - [ ] Frontmatter `relations` dùng đúng slot shape.
 - [ ] Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`.
 - [ ] Broad premise như Assumption/ContextConstraint không có outbound relation tới mọi entity.
+- [ ] (Optional local) `verify:relations` cover structural slot/triple/target; vẫn phải review trace need và evidence.
 
 ### Boundary
 

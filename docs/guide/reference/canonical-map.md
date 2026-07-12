@@ -6,7 +6,7 @@ File này trả lời source of truth nằm ở đâu. Nó không định nghĩa
 docs/guide/reference/folder-structure.md
 ```
 
-`docs/app/` là application instance space: giữ truth cụ thể của một ứng dụng, không phải taxonomy của documentation system. Entity analysis map: [entity-maps/](entity-maps/README.md).
+`docs/app/` là application instance space: giữ truth cụ thể của một ứng dụng, không phải taxonomy của documentation system. Concern chi tiết trong một layer đọc từ layer README hoặc `folder-structure.md`; canonical-map chỉ route tới layer/home, không shortcut concern đã materialize của một project. Entity analysis map: [entity-maps/](entity-maps/README.md).
 
 | Cần biết | Đọc |
 | --- | --- |
@@ -16,16 +16,13 @@ docs/guide/reference/folder-structure.md
 | Quality gate / acceptance (app) | `docs/app/08-quality/README.md` |
 | Decisions còn hiệu lực (app) | `docs/app/10-decisions/README.md` |
 | Architecture app-specific | `docs/app/05-architecture/README.md` |
-| Module structure (app) | `docs/app/05-architecture/01-structure/README.md` |
-| Module boundary (app) | `docs/app/05-architecture/02-boundaries/README.md` |
-| Workflow architecture (app) | `docs/app/05-architecture/03-interactions/README.md` |
 | Schema / entity / relation / convention rule | `docs/meta/` |
 | Universal concern / generic taxonomy | `docs/guide/reference/entity-maps/packs/universal/` |
 | Entity instance schema | `docs/meta/00-schemas/entity-instance.md` |
 | Unit structure template | `docs/guide/unit-structure/` |
 | Theory reasoning | `docs/theories/` |
 | Reusable architecture taxonomy | `docs/guide/reference/entity-maps/packs/variants/` |
-| Local workspace (nếu project kích hoạt) | `docs/workbench/README.md` và [use-workbench.md](../workflows/use-workbench.md) |
+| Local workspace (nếu project kích hoạt) | `docs/workbench/README.md`, [workbench-model.md](../concepts/workbench-model.md), [use-workbench.md](../workflows/use-workbench.md) |
 | Agent operations | `docs/AGENT_SKILLS/` |
 
 Nếu hai nguồn mâu thuẫn:

@@ -10,7 +10,7 @@ Thư mục này là nền tảng tài liệu native dùng để tổ chức know
 - `meta/` chứa entity types, relation types, convention và validation rule.
 - `guide/` là manual hướng dẫn cách đọc, viết, trace và evolve hệ docs.
 - `AGENT_SKILLS/` chứa hướng dẫn cho agent khi đọc, tạo, review hoặc refine tài liệu.
-- `workbench/` là khu vực dự kiến cho modeling candidate, nhưng hiện **chưa được đi vào hoạt động**.
+- `workbench/` là temporary knowledge workspace; scope active hiện tại là `cis/` theo DEC-003.
 
 ## Trạng thái hiện tại
 
@@ -36,8 +36,8 @@ Nếu câu hỏi là app hiện tại áp dụng theory như thế nào, đọc 
 
 Nếu câu hỏi là format, status, relation hoặc validation, đọc tiếp `meta/`.
 
-## Workbench Chưa Operational
+## Workbench
 
-`docs/workbench/` tồn tại để giữ chỗ cho luồng chuyển ý tưởng/code observation thành candidate entity và relation của CIS.
+`docs/workbench/cis/` đã được kích hoạt bởi [DEC-003](app/10-decisions/01-decision-making/01-decisions/DEC-003-workbench-activation-policy/README.md) cho undetermined-placement.
 
-Không dùng folder này làm source of truth hoặc nơi lưu candidate thật cho tới khi `docs/guide/` có harness quản lý rõ ràng.
+Không dùng Workbench như source of truth. Guide: [workbench-model.md](guide/concepts/workbench-model.md), [use-workbench.md](guide/workflows/use-workbench.md).

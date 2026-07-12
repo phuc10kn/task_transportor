@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `05-specification` |
 | **folder** | `functional-requirements/` |
-| **ID pattern** | `FR-{NNN}-{slug}` |
+| **ID pattern** | `FR-{NNN}` |
+| **Instance folder pattern** | `FR-{NNN}-{slug}` |
 
 ## meaning
 

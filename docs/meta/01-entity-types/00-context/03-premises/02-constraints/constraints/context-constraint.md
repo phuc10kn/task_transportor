@@ -6,7 +6,8 @@
 | **layer** | `00-context` |
 | **concern** | `03-premises` |
 | **folder** | `constraints/` |
-| **ID pattern** | `CON-{NNN}-{slug}` |
+| **ID pattern** | `CON-{NNN}` |
+| **Instance folder pattern** | `CON-{NNN}-{slug}` |
 
 ## meaning
 

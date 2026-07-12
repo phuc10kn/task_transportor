@@ -120,7 +120,7 @@ docs/app/<cùng-path>/[<entity-type-folder>/]<ID-slug>/README.md
 Mỗi file Entity Type định nghĩa:
 
 ```text
-name, layer, concern, folder, ID pattern
+name, layer, concern, folder, ID pattern, Instance folder pattern
 meaning, instance criteria
 required fields, optional fields
 lifecycle

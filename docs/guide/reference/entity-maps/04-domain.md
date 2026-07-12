@@ -31,3 +31,7 @@ Chỉ đọc khi project đã chọn methodology làm đổi type/relation. Vari
 | DDD (tactical) | [variants/ddd/04-domain/](variants/ddd/04-domain/README.md) |
 
 Template reusable của DDD (nếu dùng): [packs/variants/ddd/04-domain/](packs/variants/ddd/04-domain/README.md).
+
+## Status
+
+Default map chỉ là concern lens. Type set/graph DDD nằm ở variant pack khi project chọn DDD; contract active thuộc `docs/meta/`.

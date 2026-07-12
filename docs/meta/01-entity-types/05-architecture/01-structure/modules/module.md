@@ -6,7 +6,8 @@
 | **layer** | `05-architecture` |
 | **concern** | `01-structure` |
 | **folder** | `modules/` |
-| **ID pattern** | `MOD-{NNN}-{slug}` |
+| **ID pattern** | `MOD-{NNN}` |
+| **Instance folder pattern** | `MOD-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

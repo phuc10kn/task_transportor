@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `03-rules` |
 | **folder** | `invariants/` |
-| **ID pattern** | `INV-{NNN}-{slug}` |
+| **ID pattern** | `INV-{NNN}` |
+| **Instance folder pattern** | `INV-{NNN}-{slug}` |
 
 ## meaning
 

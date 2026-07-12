@@ -6,7 +6,8 @@
 | **layer** | `00-context` |
 | **concern** | `05-ecosystem` |
 | **folder** | `external-systems/` |
-| **ID pattern** | `EXT-{NNN}-{slug}` |
+| **ID pattern** | `EXT-{NNN}` |
+| **Instance folder pattern** | `EXT-{NNN}-{slug}` |
 
 ## meaning
 

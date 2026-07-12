@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `03-behavior` |
 | **folder** | `use-cases/` |
-| **ID pattern** | `UC-{NNN}-{slug}` |
+| **ID pattern** | `UC-{NNN}` |
+| **Instance folder pattern** | `UC-{NNN}-{slug}` |
 
 ## meaning
 

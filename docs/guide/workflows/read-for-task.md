@@ -29,9 +29,11 @@ Sau workflow đọc, phải kết luận được:
 - layer/concern/entity type liên quan nếu task chạm `docs/app`;
 - schema/unit structure cần dùng nếu task tạo hoặc sửa knowledge unit;
 - relation hoặc valid triple cần kiểm tra nếu task có impact;
-- workflow tiếp theo cần dùng: `write-docs`, `trace-impact` hoặc `slim-layer-readme`.
+- workflow tiếp theo cần dùng: `sync-product-change`, `write-docs`, `trace-impact`, `validate-after-change`, `slim-layer-readme` hoặc `use-workbench`.
 
-Nếu chưa kết luận được các điểm trên, dừng ở `docs/guide/reference/canonical-map.md` và `docs/guide/reference/folder-structure.md` trước khi sửa file.
+Chọn `sync-product-change` khi task bắt đầu từ code, incident hoặc product behavior change. Task prose không đổi behavior đi thẳng `write-docs`.
+
+Nếu chưa xác định được canonical home sau khi đọc `docs/guide/reference/canonical-map.md` và `docs/guide/reference/folder-structure.md`, và project đã kích hoạt Workbench, chuyển [use-workbench.md](use-workbench.md). Nếu Workbench chưa active, dừng theo policy local; không tự tạo knowledge unit.
 
 ## Khi nào đọc guide
 

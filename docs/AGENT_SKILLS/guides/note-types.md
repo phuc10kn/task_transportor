@@ -56,9 +56,10 @@ Cần xem xét theory trước khi chốt.
 
 | Tình huống | Note |
 | --- | --- |
-| Thiếu thông tin | `NOTE-OPEN` |
+| Thiếu thông tin trong unit đã có home | `NOTE-OPEN` |
 | Đề xuất chưa chốt | `NOTE-CANDIDATE` |
 | Mâu thuẫn | `NOTE-CONFLICT` |
 | Thiếu evidence | `NOTE-EVIDENCE` |
 | Cần quyết định | `NOTE-DECISION` |
 | Cần review theory | `NOTE-THEORY` |
+| Candidate độc lập chưa rõ home | Workbench item khi project đã kích hoạt |

@@ -98,9 +98,9 @@ Lite hiện ưu tiên:
 
 ## Checklist
 
-Before applying this pattern:
+Trước khi áp dụng pattern:
 
-- Confirm Central Sync Hub context statement is still current.
-- Keep context-specific rules in the layer README or canonical app entity.
-- Move generic relation/layer explanation to guide links.
-- Do not delete app-specific Lite scope.
+- Xác nhận statement context (ví dụ Central Sync Hub) vẫn còn đúng hiện trạng.
+- Giữ rule riêng của layer trong layer README hoặc entity app canonical.
+- Chuyển giải thích layer/relation generic sang link guide.
+- Không xóa app-specific Lite/scope của project khi slim.

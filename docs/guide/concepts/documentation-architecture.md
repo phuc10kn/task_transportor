@@ -44,3 +44,12 @@ Layer README
 Các đoạn giải thích generic như `Layer -> Concern -> Entity Type -> Entity Instance` nên sống ở `docs/guide`, không copy trong từng layer.
 
 Chỉ canonical schema/rule/convention mới sống ở `docs/meta`.
+
+## Đọc tiếp (concepts)
+
+- Layer / concern: [layer-model.md](layer-model.md)
+- Entity type / instance: [entity-model.md](entity-model.md)
+- Relation doctrine (1 fact = 1 direction): [relation-model.md](relation-model.md)
+- Theory / decision: [theory-and-decision-model.md](theory-and-decision-model.md)
+- Validation / lifecycle: [validation-and-lifecycle.md](validation-and-lifecycle.md)
+- Workbench temporary knowledge: [workbench-model.md](workbench-model.md)

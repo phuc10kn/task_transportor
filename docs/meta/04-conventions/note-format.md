@@ -17,3 +17,5 @@ Khi Meta hoặc knowledge chưa chốt:
 ```
 
 Candidate **không** được coi là canonical.
+
+`NOTE-*` dùng cho gap trong unit đã có canonical home. Candidate độc lập chưa rõ home dùng Workbench khi project đã kích hoạt; xem [use-workbench.md](../../guide/workflows/use-workbench.md).

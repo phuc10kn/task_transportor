@@ -5,6 +5,7 @@
 - Theo dõi reverse lookup theo `frontmatter` và `derived inverse`.
 - Ưu tiên `repository search`/`index`/`tooling` trước khi tạo relation ngược.
 - Chỉ tạo inverse riêng khi có semantic độc lập và nhu cầu query first-class.
+- Doctrine: **1 fact = 1 canonical direction** — [relation-model.md](../concepts/relation-model.md). Khi materialize relation trong `docs/app/`, tuân policy local của project (ví dụ [DEC-002](../../app/10-decisions/01-decision-making/01-decisions/DEC-002-app-graph-materialization-policy/README.md)).
 
 ## Mục tiêu trace
 
@@ -69,3 +70,13 @@ Nếu relation thực sự cần:
 2. thiếu relation type -> cập nhật docs/meta/02-relation-types/;
 3. thiếu valid triple -> cập nhật docs/meta/03-rules/;
 4. sau đó mới gán metadata vào entity instance relations.
+
+## Ví dụ
+
+Portable: [relation-trace.md](../examples/relation-trace.md).
+
+## Handoff
+
+Sau khi có kết luận `valid path` / `accepted gap` / `rejected relation` / `invalid relation`, chạy [validate-after-change.md](validate-after-change.md) trước review/merge.
+
+Khi project có tooling local, có thể dùng `verify:relations -- --instance <path>` làm **evidence structural** cho hop đã ghi; lệnh này không thay Relation Validation Gate (đặc biệt bước trace need / evidence).

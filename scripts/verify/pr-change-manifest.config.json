@@ -1,0 +1,47 @@
+{
+  "manifest_version": 1,
+  "marker": "PR-CHANGE-MANIFEST",
+  "max_body_bytes": 262144,
+  "trigger_prefixes": [
+    "src/",
+    "public/admin/",
+    "scripts/",
+    "routes/",
+    "docs/app/"
+  ],
+  "trigger_files": [
+    "package.json",
+    "package-lock.json"
+  ],
+  "exclude_prefixes": [
+    "backlog2jira/"
+  ],
+  "code_prefixes": [
+    "src/",
+    "public/admin/",
+    "scripts/",
+    "routes/"
+  ],
+  "code_files": [
+    "package.json",
+    "package-lock.json"
+  ],
+  "docs_app_prefix": "docs/app/",
+  "allowed_stages": [
+    "proposed",
+    "implemented",
+    "drift-investigation",
+    "not-applicable"
+  ],
+  "allowed_sync_verdicts": [
+    "ready_for_write",
+    "skip",
+    "not-applicable"
+  ],
+  "allowed_test_results": [
+    "pass",
+    "not-run",
+    "not-required",
+    "fail"
+  ]
+}

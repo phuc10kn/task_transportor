@@ -23,8 +23,12 @@ Task Progress:
 - [ ] Draft file theo schema, không tự thêm field ngoài schema
 - [ ] Nếu có relation, chỉ dùng slot đã có trong entity type relations_template
 - [ ] Không dùng pseudo target như `entities`, `layers/entities`, `_any Entity_` hoặc `_layer / entity_`
-- [ ] Validate relation bằng docs/guide/workflows/trace-impact.md và meta-validate
 - [ ] Chạy Type Contract Gate với `--instance` sau khi draft instance tồn tại
+- [ ] (Optional local) `npm run verify:entity-instance -- --instance <path>`
+- [ ] (Optional local) `npm run verify:relations -- --instance <path>` nếu có `relations:`
+- [ ] (Optional local) `npm run verify:references -- --instance <path>` nếu có basis fields
+- [ ] Emit write-docs result full form (xem Output); map Drafted/Validation sang Classification/Changes/Relations/Evidence
+- [ ] Validate semantic/boundary/evidence bằng docs/guide/workflows/trace-impact.md và meta-validate; rồi validate-after-change
 ```
 
 ## Path Chuẩn
@@ -50,25 +54,52 @@ Không copy placeholder path thành file thật. Khi tạo entity, lấy layer/c
 
 ## Output
 
+Skill này là specialization của [write-docs](../../guide/workflows/write-docs.md) cho entity instance mới. Emit **full form** `write-docs result` (không short form). Map field nội bộ sang full form như sau.
+
 ```md
-## doc-create-entity result
+## write-docs result
 
-### Drafted
-- Path:
-- ID:
-- Entity type:
-- Layer/concern:
+### Classification
+- Task:
+- Canonical home: <docs/app/.../README.md>
+- Unit type: entity instance
+- Schema / template used: docs/meta/00-schemas/entity-instance.md + docs/guide/unit-structure/entity/README.md
+- Existing file reused: no
+- New unit (if any): <path> + reason
 
-### Validation
-- Schema:
-- Entity type:
-- Type contract:
-- Relations:
-- Open questions:
+### Changes
+- Paths:
+- App truth changed: yes
+- Meta contract changed: no (trừ khi task đồng thời sửa meta — ngoài skill này)
+- Theory / decision changed: no/yes + path
 
-### Suggested next
-meta-validate / theory-review / none
+### Relations
+- Added: <slot> -> <target> | none
+- Intentionally not added: + reason
+- Rejected: + reason
+
+### Evidence / decisions
+- Sync result referenced: yes/no + verdict
+- Sources:
+- Decision/theory basis:
+- Open conflicts / questions:
+  - Schema / entity type / type contract notes (nếu còn mở)
+
+### Handoff
+- trace-impact: yes/no + reason
+- validate-after-change: required
+- Next: trace-impact | validate-after-change | workbench-intake | clarification
 ```
+
+Alias nội bộ (optional log trước khi emit full form):
+
+| Field cũ `doc-create-entity result` | Full form |
+| --- | --- |
+| Drafted.Path / ID / Entity type / Layer | Classification + Changes.Paths |
+| Validation.* | Evidence / decisions.Open conflicts; Relations |
+| Suggested next | Handoff.Next |
+
+Suggested next mặc định: `trace-impact` nếu có relation hoặc impact cross-layer; luôn kèm `validate-after-change`.
 
 ## Guardrails
 
@@ -77,9 +108,10 @@ meta-validate / theory-review / none
 - Không ghi relation nếu entity type chưa có slot tương ứng.
 - Không tạo outbound relation từ Assumption hoặc ContextConstraint tới mọi entity.
 - Chỉ tạo relation tới Assumption/ContextConstraint khi entity bị ảnh hưởng có slot cụ thể và valid triple cụ thể.
-- Không tạo workbench item vì workbench chưa hoạt động.
+- Không tạo workbench item chỉ vì tiện; chỉ khi undetermined-placement và DEC-003/policy cho phép.
 - Nếu chưa chắc relation, reject relation khỏi entity draft; không ghi relation nghi ngờ.
 - Không tạo instance cho entity type legacy; chuẩn hóa type trước theo Type Contract Gate.
+- Nếu chưa có canonical home, dừng tạo entity và chuyển `workbench-intake`.
 
 ## References
 

@@ -30,9 +30,9 @@ Layer này giữ <loại app knowledge> của <Project Name>.
 
 Ví dụ:
 
-- scope/rule/behavior/state hiện hành;
-- Lite/MVP boundary nếu layer liên quan product;
-- module/state/flow hiện hành nếu layer liên quan architecture;
+- scope/rule/behavior/state hiện hành của layer;
+- product delivery boundary hiện hành nếu layer liên quan product;
+- structure/boundary/interaction hiện hành nếu layer liên quan architecture;
 - quality/operation gate nếu layer liên quan quality/operation.
 
 ## Routing Nhanh

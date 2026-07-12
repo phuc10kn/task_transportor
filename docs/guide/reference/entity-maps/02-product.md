@@ -22,3 +22,7 @@ flowchart TB
 Pure source: [universal 02-product pack](packs/universal/02-product/README.md).
 
 Map này chỉ giữ concern lens. Entity type, relation slot và valid triple active thuộc `docs/meta/` của project.
+
+## Status
+
+Chưa có default canonical entity type set hoặc interaction graph trong guide cho layer này. Type/graph active thuộc `docs/meta/` của project.

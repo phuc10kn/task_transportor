@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `06-acceptance` |
 | **folder** | `acceptance-criteria/` |
-| **ID pattern** | `AC-{NNN}-{slug}` |
+| **ID pattern** | `AC-{NNN}` |
+| **Instance folder pattern** | `AC-{NNN}-{slug}` |
 
 ## meaning
 

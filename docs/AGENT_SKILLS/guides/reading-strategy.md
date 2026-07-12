@@ -9,8 +9,10 @@ Luôn bắt đầu bằng [Luồng vận hành chuẩn](../../guide/README.md#lu
 Nếu task cụ thể, đọc thêm workflow liên quan:
 
 - `docs/guide/workflows/read-for-task.md`;
+- `docs/guide/workflows/sync-product-change.md` khi task từ code/incident/product behavior;
 - `docs/guide/workflows/write-docs.md`;
 - `docs/guide/workflows/trace-impact.md`;
+- `docs/guide/workflows/validate-after-change.md`;
 - `docs/guide/workflows/slim-layer-readme.md`;
 
 ## Level 1 - Task Docs
@@ -73,4 +75,4 @@ Chỉ đọc `docs/guide/reference/entity-maps/packs/` khi cần reusable taxono
 
 ## Workbench
 
-`docs/workbench` chưa được đi vào hoạt động. Không dùng workbench trong workflow thật.
+Khi project đã kích hoạt Workbench và canonical home chưa rõ, đọc `docs/workbench/README.md` + policy local, rồi dùng [use-workbench.md](../../guide/workflows/use-workbench.md) / `workbench-intake`. Không dùng Workbench như canonical truth.

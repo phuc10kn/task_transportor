@@ -6,7 +6,8 @@
 | **layer** | `00-context` |
 | **concern** | `01-overview` |
 | **folder** | `applications/` |
-| **ID pattern** | `APP-{NNN}-{slug}` |
+| **ID pattern** | `APP-{NNN}` |
+| **Instance folder pattern** | `APP-{NNN}-{slug}` |
 
 ## meaning
 

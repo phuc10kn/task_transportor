@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `04-composition` |
 | **folder** | `forms/` |
-| **ID pattern** | `FORM-{NNN}-{slug}` |
+| **ID pattern** | `FORM-{NNN}` |
+| **Instance folder pattern** | `FORM-{NNN}-{slug}` |
 
 ## meaning
 

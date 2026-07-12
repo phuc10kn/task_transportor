@@ -106,7 +106,13 @@ entity_type_definition:
 ## validation
 ```
 
-`folder` chỉ ghi registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `business-rules/`. App placement kết hợp layer/concern universal từ `docs/guide/reference/folder-structure.md` với entity type folder đã được project chốt trong meta; ví dụ `docs/app/01-business/05-governance/01-business-rules/business-rules/` chỉ hợp lệ khi local registry quy định như vậy.
+`folder` chỉ ghi registry folder của entity type trong `docs/meta/01-entity-types/`, ví dụ `business-rules/`. App placement kết hợp layer/concern universal từ `docs/guide/reference/folder-structure.md` với entity type folder đã được project chốt trong meta.
+
+Ví dụ (chỉ khi local registry quy định cấu trúc đó): `docs/app/01-business/05-governance/01-business-rules/business-rules/`.
+
+## structure extends
+
+Khi schema yêu cầu `## structure extends`, dùng cùng file entity-type này: khai báo Base schema và Required/Optional sections theo [structure-extends.md](../../../meta/00-schemas/structure-extends.md). Không có unit template riêng ngoài entity-type.
 
 `relations_template` định nghĩa slot relation mà entity instance của type này được phép điền. Không có slot thì instance không được ghi relation đó.
 

@@ -61,6 +61,14 @@ function anchorsFor(markdown) {
       continue;
     }
 
+    for (const explicitId of line.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)) {
+      anchors.add(explicitId[1].toLocaleLowerCase());
+    }
+
+    for (const explicitName of line.matchAll(/\bname\s*=\s*["']([^"']+)["']/gi)) {
+      anchors.add(explicitName[1].toLocaleLowerCase());
+    }
+
     const match = line.match(/^\s{0,3}#{1,6}\s+(.+?)(?:\s+#+)?\s*$/);
     if (!match) {
       continue;

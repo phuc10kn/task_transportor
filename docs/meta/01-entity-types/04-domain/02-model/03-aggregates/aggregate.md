@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `02-model` |
 | **folder** | `aggregates/` |
-| **ID pattern** | `AGG-{NNN}-{slug}` |
+| **ID pattern** | `AGG-{NNN}` |
+| **Instance folder pattern** | `AGG-{NNN}-{slug}` |
 
 ## meaning
 

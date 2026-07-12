@@ -6,7 +6,8 @@
 | **layer** | `00-context` |
 | **concern** | `04-language` |
 | **folder** | `glossary-terms/` |
-| **ID pattern** | `GLO-{NNN}-{slug}` |
+| **ID pattern** | `GLO-{NNN}` |
+| **Instance folder pattern** | `GLO-{NNN}-{slug}` |
 
 ## meaning
 

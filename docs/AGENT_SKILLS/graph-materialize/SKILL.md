@@ -19,7 +19,9 @@ Task Progress:
 - [ ] Chọn vertical slice nhỏ nhất đủ trả lời query
 - [ ] Ghi một canonical direction cho mỗi fact; ghi rõ edge cố ý không thêm
 - [ ] Nâng instance chạm scope theo entity-instance/v1
-- [ ] Chạy meta-validate, trace-impact, verify docs và verify entity-type-contract
+- [ ] Chạy meta-validate (semantic/boundary/evidence) + trace-impact
+- [ ] (Optional local) verify:entity-type-contract, verify:entity-instance, verify:relations, verify:references theo path đã đổi
+- [ ] Chạy verify docs nếu đụng guide links
 ```
 
 ## Trace Contract

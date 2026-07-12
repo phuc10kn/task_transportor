@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `04-behavior` |
 | **folder** | `scenarios/` |
-| **ID pattern** | `SCN-{NNN}-{slug}` |
+| **ID pattern** | `SCN-{NNN}` |
+| **Instance folder pattern** | `SCN-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

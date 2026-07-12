@@ -19,7 +19,7 @@ docs/guide/reference/entity-maps/packs/
 -> reusable taxonomy/template, không phải app truth
 
 docs/workbench/
--> workspace hỗ trợ dự kiến, hiện chưa được đi vào hoạt động
+-> temporary knowledge workspace; CIS scope active theo DEC-003
 
 docs/AGENT_SKILLS/
 -> agent checklist/skill, không thay guide/meta
@@ -46,7 +46,7 @@ Sau đó chọn skill phù hợp:
 | `docs/app` | knowledge cụ thể của CIS | generic theory/docs-system explanation |
 | `docs/theories` | principle/reasoning reusable | implementation detail của CIS |
 | `docs/guide/reference/entity-maps/packs` | reusable taxonomy/template | source of truth cụ thể khi `docs/app` đã có |
-| `docs/workbench` | status inactive và template dự kiến | source of truth, app truth, meta rule, harness đang hoạt động |
+| `docs/workbench` | temporary knowledge staging khi local decision active | source of truth, app truth, meta rule đang có hiệu lực |
 | `docs/AGENT_SKILLS` | agent checklist | human-facing full manual |
 
 ## Canonical Priority

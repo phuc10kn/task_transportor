@@ -47,11 +47,9 @@ Layer này không giữ:
 
 ## Entity Type Rule
 
-Project tự định nghĩa entity type cụ thể bên trong từng concern, ví dụ:
+Project tự định nghĩa entity type cụ thể bên trong từng concern. Ví dụ folder trung tính (không giả định một architecture style):
 
-- `01-structure/modules/`
-- `01-structure/services/`
-- `01-structure/agents/`
-- `03-interactions/request-flows/`
-- `04-state/state-owners/`
-- `07-cross-cutting/security-rules/`
+- `01-structure/<unit-folder>/` — ví dụ `services/`, `agents/`, hoặc `modules/` nếu project chọn modular style;
+- `03-interactions/<flow-folder>/` — ví dụ `request-flows/`;
+- `04-state/<state-folder>/` — ví dụ ownership/state units của project;
+- `07-cross-cutting/<rule-folder>/` — ví dụ `security-rules/`.

@@ -56,7 +56,7 @@ relation_review:
 ## Rule
 
 - Relation canonical phải dùng slot đã có trong `relations_template` của entity type.
-- Relation canonical phải có relation type trong `02-relation-types/`.
-- Relation canonical phải có valid triple trong `03-rules/`.
+- Relation canonical phải có relation type trong `docs/meta/02-relation-types/`.
+- Relation canonical phải có valid triple trong `docs/meta/03-rules/`.
 - Không mirror inverse nếu inverse chưa được định nghĩa.
 - Relation không có slot hoặc thiếu meta rule bị reject; không ghi vào entity instance.

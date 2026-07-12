@@ -27,7 +27,7 @@ docs/guide/reference/folder-structure.md
 | Universal concern / generic entity-type taxonomy | `docs/guide/reference/entity-maps/packs/universal/` |
 | Reusable reasoning foundation | `docs/theories/` |
 | Reusable taxonomy / template phụ thuộc methodology | `docs/guide/reference/entity-maps/packs/variants/` |
-| Local workspace (nếu project kích hoạt) | `docs/workbench/README.md`, sau đó đọc [use-workbench.md](../workflows/use-workbench.md) |
+| Local workspace (nếu project kích hoạt) | `docs/workbench/README.md`, [workbench-model.md](../concepts/workbench-model.md), rồi [use-workbench.md](../workflows/use-workbench.md) |
 | Cách dùng docs system | `docs/guide/` |
 | Agent checklist / skill | `docs/AGENT_SKILLS/` |
 

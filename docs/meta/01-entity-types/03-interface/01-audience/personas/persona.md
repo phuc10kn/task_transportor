@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `01-audience` |
 | **folder** | `personas/` |
-| **ID pattern** | `PER-{NNN}-{slug}` |
+| **ID pattern** | `PER-{NNN}` |
+| **Instance folder pattern** | `PER-{NNN}-{slug}` |
 
 ## meaning
 

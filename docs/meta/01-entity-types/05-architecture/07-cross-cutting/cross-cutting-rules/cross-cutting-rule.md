@@ -6,7 +6,8 @@
 | **layer** | `05-architecture` |
 | **concern** | `07-cross-cutting` |
 | **folder** | `cross-cutting-rules/` |
-| **ID pattern** | `CCR-{NNN}-{slug}` |
+| **ID pattern** | `CCR-{NNN}` |
+| **Instance folder pattern** | `CCR-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

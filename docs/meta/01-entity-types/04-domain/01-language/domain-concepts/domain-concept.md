@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `01-language` |
 | **folder** | `domain-concepts/` |
-| **ID pattern** | `DC-{NNN}-{slug}` |
+| **ID pattern** | `DC-{NNN}` |
+| **Instance folder pattern** | `DC-{NNN}-{slug}` |
 
 ## meaning
 

@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `05-governance` |
 | **folder** | `business-constraints/` |
-| **ID pattern** | `BCON-{NNN}-{slug}` |
+| **ID pattern** | `BCON-{NNN}` |
+| **Instance folder pattern** | `BCON-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `06-measurement` |
 | **folder** | `success-criteria/` |
-| **ID pattern** | `SC-{NNN}-{slug}` |
+| **ID pattern** | `SC-{NNN}` |
+| **Instance folder pattern** | `SC-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

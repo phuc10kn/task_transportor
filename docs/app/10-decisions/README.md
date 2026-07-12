@@ -46,6 +46,7 @@
 | 6 theory core là active set hiện tại | accepted | `TH-MODULAR`, `TH-HUBFLOW`, `TH-CANON`, `TH-AI-GOV`, `TH-SYNC-SAFE`, `TH-OPS-TRACE` dùng cho toàn app. |
 | [Guide stable base boundary (`DEC-001`)](01-decision-making/01-decisions/DEC-001-guide-pack-materialization/README.md) | accepted | Guide chỉ giữ stable base xuyên dự án; `docs/meta/` giữ contract active, `docs/app/` giữ app truth cùng migration/provenance local. |
 | [App graph materialization policy (`DEC-002`)](01-decision-making/01-decisions/DEC-002-app-graph-materialization-policy/README.md) | accepted | App relation chỉ materialize theo trace need, evidence và meta contract local. |
+| [Workbench activation policy (`DEC-003`)](01-decision-making/01-decisions/DEC-003-workbench-activation-policy/README.md) | accepted | Kích hoạt `docs/workbench/cis/` cho undetermined-placement với owner/TTL/handoff; không phải canonical SoT. |
 | Theory source hiện hành nằm trong `docs/theories` | accepted | Không dùng tài liệu import hoặc ghi chú trung gian làm execution source. |
 | Documentation governance thuộc `docs/meta` | accepted | Ownership/update/checklist rule của docs là meta-governance, không phải business rule của Central Sync Hub. |
 

@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `05-interaction` |
 | **folder** | `ui-states/` |
-| **ID pattern** | `UIST-{NNN}-{slug}` |
+| **ID pattern** | `UIST-{NNN}` |
+| **Instance folder pattern** | `UIST-{NNN}-{slug}` |
 
 ## meaning
 

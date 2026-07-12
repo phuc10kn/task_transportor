@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `02-experience` |
 | **folder** | `journeys/` |
-| **ID pattern** | `JNY-{NNN}-{slug}` |
+| **ID pattern** | `JNY-{NNN}` |
+| **Instance folder pattern** | `JNY-{NNN}-{slug}` |
 
 ## meaning
 

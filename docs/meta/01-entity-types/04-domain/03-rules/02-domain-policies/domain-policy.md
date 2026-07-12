@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `03-rules` |
 | **folder** | `domain-policies/` |
-| **ID pattern** | `DPOL-{NNN}-{slug}` |
+| **ID pattern** | `DPOL-{NNN}` |
+| **Instance folder pattern** | `DPOL-{NNN}-{slug}` |
 
 ## meaning
 

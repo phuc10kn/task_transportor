@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `06-measurement` |
 | **folder** | `metrics/` |
-| **ID pattern** | `METRIC-{NNN}-{slug}` |
+| **ID pattern** | `METRIC-{NNN}` |
+| **Instance folder pattern** | `METRIC-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

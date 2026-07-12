@@ -33,3 +33,7 @@ Chỉ đọc khi project đã chọn style làm đổi type/relation. Variant kh
 | Modular monolith | [variants/modular-monolith/05-architecture/](variants/modular-monolith/05-architecture/README.md) |
 
 Template reusable của modular monolith (nếu dùng): [packs/variants/modular-monolith/05-architecture/](packs/variants/modular-monolith/05-architecture/README.md).
+
+## Status
+
+Default map chỉ là concern lens. Type set/graph methodology nằm ở variant pack khi project chọn style; contract active thuộc `docs/meta/`.

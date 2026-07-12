@@ -23,9 +23,12 @@ Mỗi file phải bắt đầu bằng title và bảng field:
 | **layer** | `01-business` |
 | **concern** | `04-behavior` |
 | **folder** | `processes/` |
-| **ID pattern** | `PROC-{NNN}-{slug}` |
+| **ID pattern** | `PROC-{NNN}` |
+| **Instance folder pattern** | `PROC-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 ```
+
+`ID pattern` là giá trị frontmatter `id`. `Instance folder pattern` là tên folder instance (`id` + `-` + `slug`). Xem [id-conventions.md](../04-conventions/id-conventions.md).
 
 `schema` bắt buộc cho file mới hoặc file được sửa sau khi contract này có hiệu lực. File legacy không có field này được hiểu là kế thừa base schema.
 

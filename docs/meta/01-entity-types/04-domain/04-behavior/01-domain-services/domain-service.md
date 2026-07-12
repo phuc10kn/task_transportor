@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `04-behavior` |
 | **folder** | `domain-services/` |
-| **ID pattern** | `DSVC-{NNN}-{slug}` |
+| **ID pattern** | `DSVC-{NNN}` |
+| **Instance folder pattern** | `DSVC-{NNN}-{slug}` |
 
 ## meaning
 

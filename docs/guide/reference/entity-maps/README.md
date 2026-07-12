@@ -10,13 +10,19 @@ Universal layer + concern baseline: [folder-structure.md](../folder-structure.md
 entity-maps/
 ├── overview.md
 ├── 00-context.md … 10-decisions.md   ← default map theo layer
-└── variants/
-    ├── ddd/04-domain/
-    └── modular-monolith/
-        └── 05-architecture/
-packs/
-└── universal/ và variants/         reusable source packs
+├── variants/                         ← reading overlay (view)
+│   ├── ddd/04-domain/
+│   └── modular-monolith/
+│       └── 05-architecture/
+└── packs/                            ← stable reusable source
+    ├── universal/
+    └── variants/
+        ├── ddd/
+        └── modular-monolith/
 ```
+
+`variants/<name>/<layer>/` là reading view (câu hỏi/status/graph).  
+`packs/variants/<name>/` là source template reusable. Không nhầm view với source.
 
 ## Rule: khi nào là Variant
 

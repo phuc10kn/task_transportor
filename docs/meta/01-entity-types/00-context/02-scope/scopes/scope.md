@@ -6,7 +6,8 @@
 | **layer** | `00-context` |
 | **concern** | `02-scope` |
 | **folder** | `scopes/` |
-| **ID pattern** | `SCOPE-{NNN}-{slug}` |
+| **ID pattern** | `SCOPE-{NNN}` |
+| **Instance folder pattern** | `SCOPE-{NNN}-{slug}` |
 
 ## meaning
 

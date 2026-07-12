@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `04-behavior` |
 | **folder** | `domain-events/` |
-| **ID pattern** | `DEVT-{NNN}-{slug}` |
+| **ID pattern** | `DEVT-{NNN}` |
+| **Instance folder pattern** | `DEVT-{NNN}-{slug}` |
 
 ## meaning
 

@@ -19,7 +19,7 @@ Base không giữ project decision, runtime truth, entity instance, migration hi
 - [04-domain](04-domain/README.md)
 - [05-architecture](05-architecture/README.md)
 - [06-technical](06-technical/README.md)
-- `07-implementation` — không có universal pack; concern folder chỉ ở [folder-structure.md](../../folder-structure.md#07-implementation)
+- `07-implementation` — không có universal pack; concern folder chỉ ở [folder-structure.md](../../../folder-structure.md#07-implementation)
 - [08-quality](08-quality/README.md)
 - [09-operation](09-operation/README.md)
 - [10-decisions](10-decisions/README.md)

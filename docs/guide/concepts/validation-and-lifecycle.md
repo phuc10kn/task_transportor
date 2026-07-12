@@ -39,4 +39,4 @@ Status vocabulary và lifecycle canonical thuộc project local:
 docs/meta/04-conventions/status-vocabulary.md
 ```
 
-Guide không định nghĩa temporary-record lifecycle. Nếu chưa có canonical home, dừng thay đổi và làm theo policy local của project.
+Guide không định nghĩa temporary-record status/TTL local. Nếu chưa có canonical home, dùng [use-workbench.md](../workflows/use-workbench.md) khi project đã kích hoạt; xem [workbench-model.md](workbench-model.md).

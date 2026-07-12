@@ -43,3 +43,5 @@ Không thêm số cho collection ngang hàng (theory slugs, entity instances).
 {PREFIX}-{NNN}-{slug}/
 └── README.md
 ```
+
+`{PREFIX}-{NNN}` là frontmatter `id`; `{slug}` là frontmatter `slug`. Folder = `id` + `-` + `slug`. Xem [id-conventions.md](id-conventions.md).

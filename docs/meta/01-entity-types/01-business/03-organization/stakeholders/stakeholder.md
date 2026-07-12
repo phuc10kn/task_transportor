@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `03-organization` |
 | **folder** | `stakeholders/` |
-| **ID pattern** | `STK-{NNN}-{slug}` |
+| **ID pattern** | `STK-{NNN}` |
+| **Instance folder pattern** | `STK-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

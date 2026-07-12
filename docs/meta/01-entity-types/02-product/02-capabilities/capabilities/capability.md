@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `02-capabilities` |
 | **folder** | `capabilities/` |
-| **ID pattern** | `CAP-{NNN}-{slug}` |
+| **ID pattern** | `CAP-{NNN}` |
+| **Instance folder pattern** | `CAP-{NNN}-{slug}` |
 
 ## meaning
 

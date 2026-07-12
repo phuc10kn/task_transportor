@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `05-interaction` |
 | **folder** | `interactions/` |
-| **ID pattern** | `INT-{NNN}-{slug}` |
+| **ID pattern** | `INT-{NNN}` |
+| **Instance folder pattern** | `INT-{NNN}-{slug}` |
 
 ## meaning
 

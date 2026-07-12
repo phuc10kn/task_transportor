@@ -6,7 +6,8 @@
 | **layer** | `05-architecture` |
 | **concern** | `06-deployment` |
 | **folder** | `deployment-units/` |
-| **ID pattern** | `DU-{NNN}-{slug}` |
+| **ID pattern** | `DU-{NNN}` |
+| **Instance folder pattern** | `DU-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

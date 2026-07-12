@@ -6,7 +6,8 @@
 | **layer** | `00-context` |
 | **concern** | `06-environment` |
 | **folder** | `environments/` |
-| **ID pattern** | `ENV-{NNN}-{slug}` |
+| **ID pattern** | `ENV-{NNN}` |
+| **Instance folder pattern** | `ENV-{NNN}-{slug}` |
 
 ## meaning
 

@@ -106,4 +106,4 @@ Relation mới chỉ được thêm theo DEC-002 khi phần trace tương ứng 
 
 - Rebuild instance tại canonical path hiện hữu; không tạo `old/` hoặc `new/` truth song song.
 - Prose/code cũ được giữ như evidence hoặc context trong instance đã chuẩn hóa; Git history giữ trạng thái trước baseline.
-- Không dùng `docs/workbench/` cho baseline này vì workbench chưa active.
+- Không dùng `docs/workbench/` cho baseline này; Workbench CIS active theo DEC-003 nhưng không phải architecture SoT.

@@ -6,7 +6,8 @@
 | **layer** | `05-architecture` |
 | **concern** | `02-boundaries` |
 | **folder** | `module-boundaries/` |
-| **ID pattern** | `MB-{NNN}-{slug}` |
+| **ID pattern** | `MB-{NNN}` |
+| **Instance folder pattern** | `MB-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

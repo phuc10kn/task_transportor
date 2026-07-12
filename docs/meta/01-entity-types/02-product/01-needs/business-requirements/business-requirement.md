@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `01-needs` |
 | **folder** | `business-requirements/` |
-| **ID pattern** | `BR-{NNN}-{slug}` |
+| **ID pattern** | `BR-{NNN}` |
+| **Instance folder pattern** | `BR-{NNN}-{slug}` |
 
 ## meaning
 

@@ -6,7 +6,8 @@
 | **layer** | `00-context` |
 | **concern** | `03-premises` |
 | **folder** | `assumptions/` |
-| **ID pattern** | `ASM-{NNN}-{slug}` |
+| **ID pattern** | `ASM-{NNN}` |
+| **Instance folder pattern** | `ASM-{NNN}-{slug}` |
 
 ## meaning
 

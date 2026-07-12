@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `06-quality` |
 | **folder** | `accessibility/` |
-| **ID pattern** | `A11Y-{NNN}-{slug}` |
+| **ID pattern** | `A11Y-{NNN}` |
+| **Instance folder pattern** | `A11Y-{NNN}-{slug}` |
 
 ## meaning
 

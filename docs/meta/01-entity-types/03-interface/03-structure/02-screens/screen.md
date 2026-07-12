@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `03-structure` |
 | **folder** | `screens/` |
-| **ID pattern** | `SCR-{NNN}-{slug}` |
+| **ID pattern** | `SCR-{NNN}` |
+| **Instance folder pattern** | `SCR-{NNN}-{slug}` |
 
 ## meaning
 

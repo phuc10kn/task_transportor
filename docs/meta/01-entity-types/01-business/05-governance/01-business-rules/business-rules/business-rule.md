@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `05-governance` |
 | **folder** | `business-rules/` |
-| **ID pattern** | `BRULE-{NNN}-{slug}` |
+| **ID pattern** | `BRULE-{NNN}` |
+| **Instance folder pattern** | `BRULE-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

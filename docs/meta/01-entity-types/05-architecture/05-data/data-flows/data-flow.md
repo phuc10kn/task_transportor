@@ -6,7 +6,8 @@
 | **layer** | `05-architecture` |
 | **concern** | `05-data` |
 | **folder** | `data-flows/` |
-| **ID pattern** | `DF-{NNN}-{slug}` |
+| **ID pattern** | `DF-{NNN}` |
+| **Instance folder pattern** | `DF-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

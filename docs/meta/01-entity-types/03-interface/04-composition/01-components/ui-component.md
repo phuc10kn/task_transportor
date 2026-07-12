@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `04-composition` |
 | **folder** | `components/` |
-| **ID pattern** | `CMP-{NNN}-{slug}` |
+| **ID pattern** | `CMP-{NNN}` |
+| **Instance folder pattern** | `CMP-{NNN}-{slug}` |
 
 ## meaning
 

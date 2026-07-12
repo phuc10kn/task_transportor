@@ -62,7 +62,34 @@ Structure chuẩn của layer này được giải thích ở `docs/guide/refere
 
 README này không lặp lại lý do tồn tại của từng concern; nó chỉ giữ business truth, workflow và rule còn hiệu lực của Central Sync Hub.
 
-Chỉ mục nhanh:
+## Entity Index (Slice 1 + Slice 2 + Slice 3)
+
+| ID | Type | Path |
+| --- | --- | --- |
+| `PROB-001` | Problem | [`01-discovery/problems/PROB-001-manual-cross-system-sync-risk/`](./01-discovery/problems/PROB-001-manual-cross-system-sync-risk/) |
+| `GOAL-001` | Goal | [`02-direction/goals/GOAL-001-controlled-traceable-delivery/`](./02-direction/goals/GOAL-001-controlled-traceable-delivery/) |
+| `STK-001` | Stakeholder | [`03-organization/stakeholders/STK-001-admin-operator/`](./03-organization/stakeholders/STK-001-admin-operator/) |
+| `PROC-002` | Process | [`04-behavior/01-processes/processes/PROC-002-pull-backlog-issue/`](./04-behavior/01-processes/processes/PROC-002-pull-backlog-issue/) |
+| `PROC-003` | Process | [`04-behavior/01-processes/processes/PROC-003-pull-backlog-project/`](./04-behavior/01-processes/processes/PROC-003-pull-backlog-project/) |
+| `PROC-004` | Process | [`04-behavior/01-processes/processes/PROC-004-review-translation/`](./04-behavior/01-processes/processes/PROC-004-review-translation/) |
+| `PROC-005` | Process | [`04-behavior/01-processes/processes/PROC-005-review-canonical-issue/`](./04-behavior/01-processes/processes/PROC-005-review-canonical-issue/) |
+| `PROC-006` | Process | [`04-behavior/01-processes/processes/PROC-006-approve-required-mapping/`](./04-behavior/01-processes/processes/PROC-006-approve-required-mapping/) |
+| `PROC-007` | Process | [`04-behavior/01-processes/processes/PROC-007-resolve-blocking-anomaly/`](./04-behavior/01-processes/processes/PROC-007-resolve-blocking-anomaly/) |
+| `PROC-008` | Process | [`04-behavior/01-processes/processes/PROC-008-review-jira-dry-run/`](./04-behavior/01-processes/processes/PROC-008-review-jira-dry-run/) |
+| `PROC-009` | Process | [`04-behavior/01-processes/processes/PROC-009-publish-issue-to-jira/`](./04-behavior/01-processes/processes/PROC-009-publish-issue-to-jira/) |
+| `PROC-010` | Process | [`04-behavior/01-processes/processes/PROC-010-recover-failed-job/`](./04-behavior/01-processes/processes/PROC-010-recover-failed-job/) |
+| `PROC-011` | Process | [`04-behavior/01-processes/processes/PROC-011-recover-attachment-download/`](./04-behavior/01-processes/processes/PROC-011-recover-attachment-download/) |
+| `SCN-001` | Scenario | [`04-behavior/02-scenarios/scenarios/SCN-001-controlled-lite-issue-delivery/`](./04-behavior/02-scenarios/scenarios/SCN-001-controlled-lite-issue-delivery/) |
+| `BRULE-001` | BusinessRule | [`05-governance/01-business-rules/business-rules/BRULE-001-route-through-cis/`](./05-governance/01-business-rules/business-rules/BRULE-001-route-through-cis/) |
+| `BRULE-002` | BusinessRule | [`05-governance/01-business-rules/business-rules/BRULE-002-human-translation-authority/`](./05-governance/01-business-rules/business-rules/BRULE-002-human-translation-authority/) |
+| `BRULE-003` | BusinessRule | [`05-governance/01-business-rules/business-rules/BRULE-003-approved-mapping-required/`](./05-governance/01-business-rules/business-rules/BRULE-003-approved-mapping-required/) |
+| `BRULE-004` | BusinessRule | [`05-governance/01-business-rules/business-rules/BRULE-004-critical-anomaly-blocks-publish/`](./05-governance/01-business-rules/business-rules/BRULE-004-critical-anomaly-blocks-publish/) |
+| `BRULE-005` | BusinessRule | [`05-governance/01-business-rules/business-rules/BRULE-005-fresh-dry-run-before-publish/`](./05-governance/01-business-rules/business-rules/BRULE-005-fresh-dry-run-before-publish/) |
+| `BRULE-006` | BusinessRule | [`05-governance/01-business-rules/business-rules/BRULE-006-intentional-failed-job-retry/`](./05-governance/01-business-rules/business-rules/BRULE-006-intentional-failed-job-retry/) |
+| `BRULE-007` | BusinessRule | [`05-governance/01-business-rules/business-rules/BRULE-007-isolated-attachment-recovery/`](./05-governance/01-business-rules/business-rules/BRULE-007-isolated-attachment-recovery/) |
+| `SC-001` | SuccessCriterion | [`06-measurement/02-success-criteria/success-criteria/SC-001-controlled-lite-delivery/`](./06-measurement/02-success-criteria/success-criteria/SC-001-controlled-lite-delivery/) |
+
+Chỉ mục nhanh concern:
 
 - `01-discovery/`
 - `02-direction/`

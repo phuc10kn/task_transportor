@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `02-experience` |
 | **folder** | `user-flows/` |
-| **ID pattern** | `FLOW-{NNN}-{slug}` |
+| **ID pattern** | `FLOW-{NNN}` |
+| **Instance folder pattern** | `FLOW-{NNN}-{slug}` |
 
 ## meaning
 

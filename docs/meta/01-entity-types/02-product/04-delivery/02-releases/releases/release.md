@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `04-delivery` |
 | **folder** | `releases/` |
-| **ID pattern** | `REL-{NNN}-{slug}` |
+| **ID pattern** | `REL-{NNN}` |
+| **Instance folder pattern** | `REL-{NNN}-{slug}` |
 
 ## meaning
 

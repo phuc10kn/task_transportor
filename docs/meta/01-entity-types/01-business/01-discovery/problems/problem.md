@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `01-discovery` |
 | **folder** | `problems/` |
-| **ID pattern** | `PROB-{NNN}-{slug}` |
+| **ID pattern** | `PROB-{NNN}` |
+| **Instance folder pattern** | `PROB-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

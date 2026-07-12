@@ -6,7 +6,8 @@
 | **layer** | `05-architecture` |
 | **concern** | `04-state` |
 | **folder** | `state-owners/` |
-| **ID pattern** | `SO-{NNN}-{slug}` |
+| **ID pattern** | `SO-{NNN}` |
+| **Instance folder pattern** | `SO-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

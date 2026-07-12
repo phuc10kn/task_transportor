@@ -6,7 +6,8 @@
 | **layer** | `05-architecture` |
 | **concern** | `03-interactions` |
 | **folder** | `interaction-flows/` |
-| **ID pattern** | `AF-{NNN}-{slug}` |
+| **ID pattern** | `AF-{NNN}` |
+| **Instance folder pattern** | `AF-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

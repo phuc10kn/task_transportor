@@ -56,7 +56,7 @@ Context chỉ reference theory bằng ID và ý nghĩa trong app. Không copy re
 ## Rule Riêng Hiện Tại
 
 - Context giữ invariant `System -> CIS -> System`, vai trò Backlog/CIS/Jira và scope nền của Lite.
-- Context không là nơi gom knowledge chưa biết đặt ở đâu; nếu chưa hấp thụ được vào canonical docs, dùng `NOTE-OPEN` hoặc giữ ngoài docs cho tới khi đủ promote.
+- Context không là nơi gom knowledge chưa biết đặt ở đâu; nếu chưa hấp thụ được vào canonical docs và DEC-003 còn hiệu lực, dùng Workbench CIS theo [use-workbench.md](../../guide/workflows/use-workbench.md). Known-home local gap dùng `NOTE-OPEN`/`NOTE-EVIDENCE`.
 
 ## Cách Đọc Nhanh
 

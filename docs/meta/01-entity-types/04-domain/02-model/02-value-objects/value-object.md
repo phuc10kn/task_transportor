@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `02-model` |
 | **folder** | `value-objects/` |
-| **ID pattern** | `VO-{NNN}-{slug}` |
+| **ID pattern** | `VO-{NNN}` |
+| **Instance folder pattern** | `VO-{NNN}-{slug}` |
 
 ## meaning
 

@@ -1,0 +1,99 @@
+name: Verify PR change manifest
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  verify-pr-change-manifest:
+    name: Verify PR change manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Collect PR body and changed files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = context.payload.pull_request.body || '';
+            fs.writeFileSync('pr-body.md', body, 'utf8');
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                per_page: 100,
+              }
+            );
+
+            const payload = files.map((file) => ({
+              filename: file.filename,
+              previous_filename: file.previous_filename || null,
+              status: file.status,
+            }));
+            fs.writeFileSync('pr-changed-files.json', JSON.stringify(payload, null, 2), 'utf8');
+            core.info(`Collected ${payload.length} changed files.`);
+
+      - name: Validate PR change manifest
+        id: validate
+        run: |
+          set +e
+          node scripts/verify/pr-change-manifest.js \
+            --body-file pr-body.md \
+            --files-file pr-changed-files.json \
+            --json > pr-manifest-result.json
+          status=$?
+          set -e
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          cat pr-manifest-result.json
+          if [ "$status" -eq 2 ]; then
+            echo "Validator usage/config error."
+            exit 2
+          fi
+          if [ "$status" -eq 1 ]; then
+            echo "PR change manifest violations found."
+            exit 1
+          fi
+
+      - name: Write job summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+          let result = { verdict: 'unknown', matchedPaths: [], violations: [] };
+          try {
+            result = JSON.parse(fs.readFileSync('pr-manifest-result.json', 'utf8'));
+          } catch (_) {
+            // keep defaults
+          }
+          const lines = [
+            '# PR change manifest',
+            '',
+            `- Verdict: **${result.verdict}**`,
+            `- Matched paths: ${(result.matchedPaths || []).join(', ') || '(none)'}`,
+            '',
+          ];
+          if ((result.violations || []).length) {
+            lines.push('## Violations');
+            for (const item of result.violations) {
+              lines.push(`- \`${item.id}\`: ${item.message}`);
+            }
+          } else {
+            lines.push('No violations.');
+          }
+          fs.appendFileSync(summaryPath, lines.join('\n') + '\n');
+          NODE

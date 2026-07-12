@@ -11,7 +11,7 @@ relation_type_definition:
   name: governs
   canonical_direction: Source --governs--> Target
   inverse: none
-  inverse_kind: derived
+  # Markdown field: "inverse kind" (derived | paired | none) — không dùng inverse_kind
   meaning: Source đặt rule, policy, standard hoặc governing pattern mà Target phải tuân thủ.
   allowed_semantic:
     - Source có authority hoặc rule ảnh hưởng trực tiếp tới Target.
@@ -26,6 +26,8 @@ relation_type_definition:
       relation: governs
       target: Process
 ```
+
+YAML ở trên chỉ là review shape. File definition Markdown bắt buộc có field bảng `inverse kind` (`derived` | `paired` | `none`) — không dùng tên `inverse_kind`.
 
 ## Markdown Definition Skeleton
 

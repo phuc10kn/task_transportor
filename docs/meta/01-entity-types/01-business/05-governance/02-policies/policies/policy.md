@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `05-governance` |
 | **folder** | `policies/` |
-| **ID pattern** | `POL-{NNN}-{slug}` |
+| **ID pattern** | `POL-{NNN}` |
+| **Instance folder pattern** | `POL-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

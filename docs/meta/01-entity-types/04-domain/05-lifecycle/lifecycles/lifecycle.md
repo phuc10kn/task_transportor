@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `05-lifecycle` |
 | **folder** | `lifecycles/` |
-| **ID pattern** | `LC-{NNN}-{slug}` |
+| **ID pattern** | `LC-{NNN}` |
+| **Instance folder pattern** | `LC-{NNN}-{slug}` |
 
 ## meaning
 

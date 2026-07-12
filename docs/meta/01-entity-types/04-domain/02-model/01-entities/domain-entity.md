@@ -6,7 +6,8 @@
 | **layer** | `04-domain` |
 | **concern** | `02-model` |
 | **folder** | `entities/` |
-| **ID pattern** | `ENT-{NNN}-{slug}` |
+| **ID pattern** | `ENT-{NNN}` |
+| **Instance folder pattern** | `ENT-{NNN}-{slug}` |
 
 ## meaning
 

@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `04-delivery` |
 | **folder** | `features/` |
-| **ID pattern** | `FE-{NNN}-{slug}` |
+| **ID pattern** | `FE-{NNN}` |
+| **Instance folder pattern** | `FE-{NNN}-{slug}` |
 
 ## meaning
 

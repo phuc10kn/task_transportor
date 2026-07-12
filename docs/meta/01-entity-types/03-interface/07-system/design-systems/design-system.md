@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `07-system` |
 | **folder** | `design-systems/` |
-| **ID pattern** | `DS-{NNN}-{slug}` |
+| **ID pattern** | `DS-{NNN}` |
+| **Instance folder pattern** | `DS-{NNN}-{slug}` |
 
 ## meaning
 

@@ -68,7 +68,7 @@ Canonical relation rule vẫn thuộc `docs/meta`.
 8. Không xóa app truth hoặc rule riêng của layer.
 ```
 
-## Thứ Tự Migrate Đề Xuất
+## Thứ tự slim đề xuất
 
 Không slim toàn bộ layer cùng lúc nếu chưa có review giữa các bước.
 
@@ -151,3 +151,15 @@ Layer này giữ bối cảnh nền của <Project Name>.
 - Cách đọc theo task: docs/guide/workflows/read-for-task.md
 - Context-specific rules: ...
 ```
+
+## Ví dụ local (optional)
+
+Luồng slim bắt buộc chỉ dùng workflow này và [layer-readme-template.md](../reference/layer-readme-template.md).
+
+Nếu project có ví dụ before/after local (không portable), xem `docs/guide/examples/` — với `task_transportor`: [slim-context-readme.md](../examples/slim-context-readme.md). Không copy nguyên app truth của ví dụ sang project khác.
+
+## Handoff
+
+Đây là maintenance side branch, không thay `write-docs`/`trace-impact` cho mọi task.
+
+Sau khi slim xong (checklist pass), chạy [validate-after-change.md](validate-after-change.md) trước review/merge.

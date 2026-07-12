@@ -13,6 +13,7 @@ description: Navigate docs/app documentation by task using docs/guide operating 
 Task Progress:
 - [ ] Đọc [Luồng vận hành chuẩn](../../guide/README.md#luồng-vận-hành-chuẩn)
 - [ ] Đọc docs/guide/workflows/read-for-task.md
+- [ ] Nếu task từ code/incident/product behavior, đọc docs/guide/workflows/sync-product-change.md
 - [ ] Xác định canonical home bằng docs/guide/reference/canonical-map.md
 - [ ] Nếu task chạm docs/app, đọc docs/app/README.md
 - [ ] Chọn layer/concern bằng docs/guide/reference/folder-structure.md; lấy entity type từ docs/meta hoặc cấu trúc local đã được project chốt
@@ -43,15 +44,16 @@ Task Progress:
 Yes/No - [lý do]
 
 ### Suggested next
-doc-create-entity / meta-validate / theory-find / theory-review / none
+sync-product-change / write-docs / use-workbench / doc-create-entity / meta-validate / theory-find / theory-review / none
 ```
 
 ## Guardrails
 
 - Không đọc mọi layer cho task nhỏ.
 - Không dùng `docs/guide/reference/entity-maps/packs/` như app truth; đây là reusable source để materialize có chủ đích.
-- Không dùng `docs/workbench` vì workbench chưa hoạt động.
+- Khi canonical home chưa rõ và Workbench active, route `use-workbench` / `workbench-intake`; không dùng Workbench như SoT.
 - Không tự đoán placement khi universal layer/concern hoặc local entity type chưa rõ.
+- Không bỏ qua `sync-product-change` khi task đổi product behavior hoặc phát hiện code/docs drift.
 
 ## References
 

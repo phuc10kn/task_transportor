@@ -6,7 +6,8 @@
 | **layer** | `02-product` |
 | **concern** | `05-specification` |
 | **folder** | `non-functional-requirements/` |
-| **ID pattern** | `NFR-{NNN}-{slug}` |
+| **ID pattern** | `NFR-{NNN}` |
+| **Instance folder pattern** | `NFR-{NNN}-{slug}` |
 
 ## meaning
 

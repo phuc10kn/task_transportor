@@ -16,7 +16,7 @@ Folder này chỉ giúp người viết và AI có skeleton dùng ngay, thay vì
 | --- | --- |
 | [entity](entity/README.md) | Tạo entity instance trong `docs/app/**/<ID-slug>/README.md`. |
 | [entity-type](entity-type/README.md) | Tạo hoặc sửa entity type definition. |
-| [entity-relations](entity-relations/README.md) | Ghi relation block và open relation question cho entity. |
+| [entity-relations](entity-relations/README.md) | Ghi relation block cho entity. |
 | [relation-type](relation-type/README.md) | Tạo hoặc sửa relation type definition. |
 | [valid-triple](valid-triple/README.md) | Tạo hoặc sửa valid triple rule. |
 | [theory](theory/README.md) | Tạo hoặc sửa theory package trong `docs/theories/`. |

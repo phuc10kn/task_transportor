@@ -6,7 +6,8 @@
 | **layer** | `01-business` |
 | **concern** | `04-behavior` |
 | **folder** | `processes/` |
-| **ID pattern** | `PROC-{NNN}-{slug}` |
+| **ID pattern** | `PROC-{NNN}` |
+| **Instance folder pattern** | `PROC-{NNN}-{slug}` |
 | **schema** | `entity-instance/v1` |
 
 ## meaning

@@ -6,7 +6,8 @@
 | **layer** | `03-interface` |
 | **concern** | `03-structure` |
 | **folder** | `01-navigation/` |
-| **ID pattern** | `NAV-{NNN}-{slug}` |
+| **ID pattern** | `NAV-{NNN}` |
+| **Instance folder pattern** | `NAV-{NNN}-{slug}` |
 
 ## meaning
 
