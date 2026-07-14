@@ -1,8 +1,12 @@
 const { approveTranslation } = require("./application/approveTranslation");
 const { buildStandardTranslationInput } = require("./application/buildStandardTranslationInput");
 const { collectTranslationContext } = require("./application/collectTranslationContext");
+const { createTranslationGlossaryConcept } = require("./application/createTranslationGlossaryConcept");
+const { deleteTranslationGlossaryConcept } = require("./application/deleteTranslationGlossaryConcept");
 const { getTranslationQueueItem } = require("./application/getTranslationQueueItem");
 const { handleTranslateJob } = require("./application/handleTranslateJob");
+const { enqueueIssueTranslations } = require("./application/enqueueIssueTranslations");
+const { listTranslationGlossary } = require("./application/listTranslationGlossary");
 const { listTranslationQueue } = require("./application/listTranslationQueue");
 const { manualEditTranslation } = require("./application/manualEditTranslation");
 const { rejectTranslation } = require("./application/rejectTranslation");
@@ -10,13 +14,18 @@ const { requestIssueTranslations } = require("./application/requestIssueTranslat
 const { retranslateTranslation } = require("./application/retranslateTranslation");
 const { syncIssueTranslationState } = require("./application/syncIssueTranslationState");
 const { translateIssueTranslationNow } = require("./application/translateIssueTranslationNow");
+const { updateTranslationGlossaryConcept } = require("./application/updateTranslationGlossaryConcept");
 
 module.exports = {
   approveTranslation,
   buildStandardTranslationInput,
   collectTranslationContext,
+  createTranslationGlossaryConcept,
+  deleteTranslationGlossaryConcept,
+  enqueueIssueTranslations,
   getTranslationQueueItem,
   handleTranslateJob,
+  listTranslationGlossary,
   listTranslationQueue,
   manualEditTranslation,
   rejectTranslation,
@@ -24,4 +33,5 @@ module.exports = {
   retranslateTranslation,
   syncIssueTranslationState,
   translateIssueTranslationNow,
+  updateTranslationGlossaryConcept,
 };

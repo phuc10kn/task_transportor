@@ -25,6 +25,7 @@
 | Một service Express + worker nội bộ | accepted | Chưa tách worker process riêng trong Lite. |
 | Translation dùng AI nhưng human review giữ quyền quyết định | accepted | AI là draft/assistant, không là authority cuối. |
 | Translation config canonical dùng `translation_ai_*` | accepted | Field legacy chỉ là tương thích migration. |
+| Translation Glossary thuộc Translation và dùng hai bảng normalized | accepted | Project Config không còn glossary; concept hỗ trợ số ngôn ngữ động, mỗi language có variants và đúng một canonical, không thêm cột theo ngôn ngữ. |
 | Dry-run Jira trước sync thật | accepted | Không ghi Jira nếu pre-check/dry-run chưa pass. |
 | Mapping required cần approval | accepted | Missing mapping chặn sync thật. |
 | Medium/Full plan không tự động thành scope Lite | accepted | Chỉ là future scope/provenance nếu chưa có decision mới. |

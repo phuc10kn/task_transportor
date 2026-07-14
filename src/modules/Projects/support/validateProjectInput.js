@@ -38,7 +38,6 @@ const ALLOWED_FIELDS = [
   "translation_command_profile",
   "source_language",
   "target_language",
-  "translation_glossary_json",
   "auto_translate",
   "require_translation_review",
   "require_mapping_approval",
@@ -116,53 +115,54 @@ function normalizePullFilter(value) {
   };
 }
 
-function normalizeTranslationGlossary(value) {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (value === null || value === "") {
-    return [];
-  }
-
-  if (!Array.isArray(value)) {
+function normalizeMappingDirectory(values, fieldName, mappingType) {
+  if (!Array.isArray(values)) {
     throw new AppError({
       code: "VALIDATION_ERROR",
-      message: "translation_glossary_json must be an array.",
+      message: `${fieldName}.${mappingType} must be an array.`,
       status: 422,
+      details: { field: fieldName, mapping_type: mappingType },
     });
   }
 
-  return value.map((entry, index) => {
-    if (!isPlainObject(entry)) {
+  const byId = new Map();
+  for (const entry of values) {
+    const rawId = entry && entry.id;
+    const idText = rawId === undefined || rawId === null ? "" : String(rawId).trim();
+    const numericId = Number(idText);
+    const id = /^\d+$/.test(idText) && Number.isSafeInteger(numericId) && numericId > 0
+      ? numericId
+      : idText;
+    const name = String(entry && entry.name || "").trim();
+    const rawValue = entry && entry.value;
+    const value = rawValue === undefined || rawValue === null ? name : String(rawValue).trim();
+    if (!idText || !name || !value) {
       throw new AppError({
         code: "VALIDATION_ERROR",
-        message: "Each translation glossary entry must be an object.",
+        message: `${fieldName}.${mappingType} entries require id, value and name.`,
         status: 422,
-        details: { index },
+        details: { field: fieldName, mapping_type: mappingType },
       });
     }
 
-    const source = String(entry.source || "").trim();
-    const target = String(entry.target || "").trim();
-    const notes = entry.notes === undefined || entry.notes === null
-      ? undefined
-      : String(entry.notes).trim();
+    const displayOrder = Number(entry.display_order);
+    byId.set(id, {
+      id,
+      value,
+      name,
+      ...(String(entry && entry.email || "").trim() ? { email: String(entry.email).trim() } : {}),
+      ...(mappingType === "status_directory" && Number.isSafeInteger(displayOrder) && displayOrder >= 0
+        ? { display_order: displayOrder }
+        : {}),
+    });
+  }
 
-    if (!source || !target) {
-      throw new AppError({
-        code: "VALIDATION_ERROR",
-        message: "Each translation glossary entry must include source and target.",
-        status: 422,
-        details: { index },
-      });
+  return [...byId.values()].sort((left, right) => {
+    if (mappingType === "status_directory") {
+      const order = (left.display_order ?? Number.MAX_SAFE_INTEGER) - (right.display_order ?? Number.MAX_SAFE_INTEGER);
+      if (order) return order;
     }
-
-    return {
-      source,
-      target,
-      ...(notes ? { notes } : {}),
-    };
+    return left.name.localeCompare(right.name) || String(left.id).localeCompare(String(right.id));
   });
 }
 
@@ -184,6 +184,11 @@ function normalizeMappingValues(value, fieldName) {
   }
 
   return Object.entries(value).reduce((normalized, [mappingType, values]) => {
+    if (mappingType.endsWith("_directory")) {
+      normalized[mappingType] = normalizeMappingDirectory(values, fieldName, mappingType);
+      return normalized;
+    }
+
     if (mappingType.endsWith("_labels")) {
       if (!isPlainObject(values)) {
         throw new AppError({
@@ -296,6 +301,15 @@ function normalizeProjectInput(input, { partial = false } = {}) {
 
   const credentialAliasedInput = applyCredentialAliases(input);
 
+  if (Object.prototype.hasOwnProperty.call(credentialAliasedInput, "translation_glossary_json")) {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "translation_glossary_json is no longer accepted; use Translation Glossary.",
+      status: 422,
+      details: { field: "translation_glossary_json" },
+    });
+  }
+
   assertNoSecretFields(credentialAliasedInput);
   assertEnvNames(credentialAliasedInput);
 
@@ -337,6 +351,22 @@ function normalizeProjectInput(input, { partial = false } = {}) {
     }
   }
 
+  for (const field of ["source_language", "target_language"]) {
+    if (Object.prototype.hasOwnProperty.call(merged, field)) {
+      normalized[field] = String(merged[field] === null || merged[field] === undefined ? "" : merged[field])
+        .trim()
+        .toLowerCase();
+      if (!normalized[field]) {
+        throw new AppError({
+          code: "VALIDATION_ERROR",
+          message: `${field} is required.`,
+          status: 422,
+          details: { field },
+        });
+      }
+    }
+  }
+
   for (const field of [
     "enabled",
     "sync_enabled",
@@ -359,10 +389,6 @@ function normalizeProjectInput(input, { partial = false } = {}) {
 
   if (Object.prototype.hasOwnProperty.call(merged, "scheduled_pull_filter_json")) {
     normalized.scheduled_pull_filter_json = normalizePullFilter(merged.scheduled_pull_filter_json);
-  }
-
-  if (Object.prototype.hasOwnProperty.call(merged, "translation_glossary_json")) {
-    normalized.translation_glossary_json = normalizeTranslationGlossary(merged.translation_glossary_json);
   }
 
   for (const field of ["cis_mapping_values_json", "backlog_mapping_values_json", "jira_mapping_values_json"]) {

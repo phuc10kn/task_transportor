@@ -9,8 +9,18 @@ function projectsApi() {
   return require("../../Projects/ProjectsApi");
 }
 
+function translationApi() {
+  return require("../../Translation/TranslationApi");
+}
+
 function retryableFromError(error) {
-  if (error.statusCode === 429 || error.statusCode >= 500) {
+  const status = Number(error.statusCode || error.status || 0);
+  const code = String(error.code || "").toUpperCase();
+  if (code.startsWith("SQLITE_BUSY") || code.startsWith("SQLITE_LOCKED")) {
+    return true;
+  }
+
+  if (status === 429 || status >= 500) {
     return true;
   }
 
@@ -82,6 +92,24 @@ async function handleManualPullJob(job, { config }) {
       issueId: result.issue.id,
     });
 
+    const translationRequested = job.payload_json && job.payload_json.with_translation === true;
+    const translationResult = translationRequested
+      ? await translationApi().enqueueIssueTranslations({
+        config,
+        issueId: result.issue.id,
+        parentSyncJobId: job.id,
+        requestedBy: job.payload_json.requested_by || null,
+        requestCorrelationId: job.payload_json.request_correlation_id || null,
+        trigger: "manual",
+      })
+      : {
+        created_items: [],
+        reused_items: [],
+        jobs: [],
+        reused_jobs: [],
+        queue_items: [],
+      };
+
     const attachmentDownloads = [];
     for (const attachment of result.attachments) {
       const download = await downloadAttachmentToCis({
@@ -120,10 +148,15 @@ async function handleManualPullJob(job, { config }) {
           comments: result.comments.length,
           attachments: result.attachments.length,
           attachment_downloads: attachmentDownloads,
-          created_translation_items: 0,
-          translate_jobs: 0,
+          created_translation_items: translationResult.created_items.length,
+          reused_translation_items: translationResult.reused_items.length,
+          translate_jobs: translationResult.jobs.length,
+          reused_translate_jobs: translationResult.reused_jobs.length,
+          translation_queue_ids: translationResult.queue_items.map((item) => item.id),
         },
         attempt_count: job.attempt_count,
+        executed_by: job.payload_json.requested_by || null,
+        correlation_id: job.payload_json.request_correlation_id || null,
       },
     });
 
@@ -135,8 +168,11 @@ async function handleManualPullJob(job, { config }) {
       comments: result.comments.length,
       attachments: result.attachments.length,
       attachment_downloads: attachmentDownloads,
-      created_translation_items: 0,
-      translate_jobs: 0,
+      created_translation_items: translationResult.created_items.length,
+      reused_translation_items: translationResult.reused_items.length,
+      translate_jobs: translationResult.jobs.length,
+      reused_translate_jobs: translationResult.reused_jobs.length,
+      translation_queue_ids: translationResult.queue_items.map((item) => item.id),
     };
   } catch (error) {
     if (error.retryable === undefined) {

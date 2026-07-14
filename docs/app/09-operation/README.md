@@ -40,9 +40,12 @@ Worker operation:
 Operator flow Lite:
 
 - Backlog inbound vận hành chính là `Pull one issue` và resync từ Backlog.
-- Backlog Issues cho phép browse không lưu DB và Sync to CIS từng candidate. Per-row Sync chỉ bật khi `WORKER_ENABLED=true`; khi worker tắt, operator dùng Pull one inline hoặc bật/chạy consumer phù hợp.
+- Mappings là nơi duy nhất operator chạy Pull Backlog fields hoặc Pull Jira fields; giữ cả mảng text legacy cho Mapping và directory provider ID đã refresh, không tự sửa JSON để thay text bằng ID. Trước khi dùng Status/người được gán ở Backlog Issues lần đầu hoặc khi Backlog thay đổi, operator chạy `Pull Backlog fields` trong Mappings. Backlog Issues chỉ browse không lưu DB khi operator bấm `Find issues`, theo ngày tạo và Status/Not closed/người được gán từ snapshot đó, rồi dùng ID để query Backlog và Sync to CIS từng candidate. Per-row Sync chỉ bật khi `WORKER_ENABLED=true`; khi worker tắt, operator dùng Pull one inline hoặc bật/chạy consumer phù hợp.
 - HTTP 202 của candidate chỉ nghĩa là queued; theo dõi trạng thái tại row/Sync Jobs, không coi là ingest đã hoàn thành.
+- `Sync to CIS + Translate` cũng trả HTTP 202 cho parent queued; sau terminal success, chờ child `translate` worker rồi review Translation Queue. Nếu nhận `BACKLOG_SYNC_RUNNING_WITHOUT_TRANSLATION`, theo dõi job evidence và dùng Issue Editor > Translate sau khi parent thành công.
+- Khi retry parent sau lỗi SQLite/Sync transient, worker quét lại pending current-source queue item; không tạo job translate thứ hai theo cùng `translation_queue_id`. Provider failure chỉ retry child translate job.
 - Translation review vận hành trong Issue Editor modal và Translation Queue.
+- Operator mở Translation Glossary, chọn Project rồi thêm/sửa/xóa concept, language và variant; chọn canonical cho từng language. Thay đổi chỉ áp dụng cho pending translation execution tiếp theo, không tự retranslate draft đã tạo. Khi API lỗi dùng Retry hoặc giữ form để sửa payload.
 - Mapping/anomaly xử lý trước Jira sync thật.
 - Jira outbound luôn đi qua dry-run rồi mới sync thật.
 - Attachment download failure xử lý bằng retry riêng, không mặc định làm fail toàn issue flow.

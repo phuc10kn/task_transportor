@@ -1,5 +1,13 @@
 const { createTranslationContextRepository } = require("../infrastructure/TranslationContextRepository");
+const { createTranslationGlossaryRepository } = require("../infrastructure/TranslationGlossaryRepository");
 const { detectTextSignals } = require("../support/detectTextSignals");
+
+function normalizeLanguage(value, fallback) {
+  const normalized = String(value === null || value === undefined ? "" : value)
+    .trim()
+    .toLowerCase();
+  return normalized || fallback;
+}
 
 function truncate(value, maxLength) {
   const text = String(value || "");
@@ -20,26 +28,66 @@ function buildPreservationRules(signals) {
   };
 }
 
-function selectGlossary(glossary, sourceText, revision) {
-  const terms = Array.isArray(glossary) ? glossary : [];
-  if (terms.length <= 20) {
-    return terms;
+function prepareGlossaryForContext(glossary, sourceText, limit = 40) {
+  const haystack = String(sourceText || "").toLowerCase();
+  if (!haystack) {
+    return [];
   }
 
-  const haystack = [
-    String(sourceText || ""),
-    revision && revision.summary ? revision.summary : "",
-    revision && revision.description ? revision.description : "",
-  ]
-    .join("\n")
-    .toLowerCase();
-
-  const matched = terms.filter((entry) => haystack.includes(String(entry.source || "").toLowerCase()));
-  if (matched.length > 0) {
-    return matched.slice(0, 20);
+  const candidates = [];
+  for (const entry of Array.isArray(glossary) ? glossary : []) {
+    const sourceKey = String(entry && (entry.source_term_match_key || entry.source) || "").trim().toLowerCase();
+    if (!sourceKey) {
+      continue;
+    }
+    let offset = haystack.indexOf(sourceKey);
+    while (offset >= 0) {
+      candidates.push({ entry, sourceKey, offset });
+      offset = haystack.indexOf(sourceKey, offset + sourceKey.length);
+    }
   }
 
-  return terms.slice(0, 20);
+  const selected = [];
+  let cursor = 0;
+  while (cursor < haystack.length) {
+    const matches = candidates
+      .filter((candidate) => candidate.offset >= cursor)
+      .sort((left, right) => left.offset - right.offset
+        || right.sourceKey.length - left.sourceKey.length
+        || String(left.entry.concept_key || "").localeCompare(String(right.entry.concept_key || ""))
+        || Number(left.entry.concept_id || 0) - Number(right.entry.concept_id || 0));
+    if (matches.length === 0) {
+      cursor += 1;
+      continue;
+    }
+    selected.push(matches[0]);
+    cursor = matches[0].offset + matches[0].sourceKey.length;
+  }
+
+  const unique = new Map();
+  for (const candidate of selected) {
+    const entry = candidate.entry;
+    const key = `${entry.concept_id || entry.concept_key || entry.source}\u0000${entry.target_language || ""}`;
+    const current = unique.get(key);
+    if (!current || candidate.sourceKey.length > current.sourceKey.length || candidate.offset < current.offset) {
+      unique.set(key, candidate);
+    }
+  }
+
+  return [...unique.values()]
+    .sort((left, right) => right.sourceKey.length - left.sourceKey.length
+      || left.offset - right.offset
+      || String(left.entry.group_key || "").localeCompare(String(right.entry.group_key || ""))
+      || String(left.entry.concept_key || "").localeCompare(String(right.entry.concept_key || ""))
+      || Number(left.entry.concept_id || 0) - Number(right.entry.concept_id || 0))
+    .slice(0, limit)
+    .map(({ entry }) => ({
+      source: entry.source,
+      target: entry.target,
+      notes: entry.notes,
+      group_key: entry.group_key,
+      concept_key: entry.concept_key,
+    }));
 }
 
 function collectTranslationContext({ config, item }) {
@@ -67,6 +115,14 @@ function collectTranslationContext({ config, item }) {
   const signals = detectTextSignals(item.source_text);
   const revision = bundle.revision || null;
   const project = bundle.project || null;
+  const sourceLanguage = normalizeLanguage(
+    item.source_language || (project && project.source_language),
+    "ja"
+  );
+  const targetLanguage = normalizeLanguage(
+    item.target_language || (project && project.target_language),
+    "vi"
+  );
   const neighborComments = item.comment_id
     ? repository.listNeighborComments(item.issue_id, item.comment_id, { before: 3, after: 1 })
     : [];
@@ -79,10 +135,13 @@ function collectTranslationContext({ config, item }) {
       target_type: entry.target_type,
       review_status: entry.review_status,
     }));
-  const glossary = selectGlossary(
-    project && Array.isArray(project.translation_glossary_json) ? project.translation_glossary_json : [],
-    item.source_text,
-    revision
+  const glossary = prepareGlossaryForContext(
+    createTranslationGlossaryRepository({ config }).listRuntimeTerms({
+      projectId: item.project_id,
+      sourceLanguage,
+      targetLanguage,
+    }),
+    item.source_text
   );
 
   const contextPolicy = item.target_type === "comment" && signals.is_mixed_language
@@ -111,8 +170,8 @@ function collectTranslationContext({ config, item }) {
           (project && project.translation_ai_model) ||
           (project && project.translation_model) ||
           null,
-        source_language: item.source_language || (project && project.source_language) || "ja",
-        target_language: item.target_language || (project && project.target_language) || "vi",
+        source_language: sourceLanguage,
+        target_language: targetLanguage,
       },
       issue_context: {
         status: bundle.issue.status || null,
@@ -140,4 +199,5 @@ function collectTranslationContext({ config, item }) {
 
 module.exports = {
   collectTranslationContext,
+  prepareGlossaryForContext,
 };

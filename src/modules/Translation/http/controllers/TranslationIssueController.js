@@ -3,12 +3,13 @@ const { success } = require("../../../../http/response/envelope");
 
 async function translateIssue(req, res, next) {
   try {
-    success(res, await TranslationApi.requestIssueTranslations({
+    const result = await TranslationApi.requestIssueTranslations({
       config: req.app.locals.config,
       issueId: req.params.issueId,
       executedBy: req.user && req.user.id,
       correlationId: req.correlationId,
-    }));
+    });
+    success(res, result, result.execution_status === "completed" ? 200 : 202);
   } catch (error) {
     next(error);
   }
@@ -16,13 +17,14 @@ async function translateIssue(req, res, next) {
 
 async function translateQueueItem(req, res, next) {
   try {
-    success(res, await TranslationApi.translateIssueTranslationNow({
+    const result = await TranslationApi.translateIssueTranslationNow({
       config: req.app.locals.config,
       issueId: req.params.issueId,
       queueId: Number(req.params.queueId),
       executedBy: req.user && req.user.id,
       correlationId: req.correlationId,
-    }));
+    });
+    success(res, result, result.execution_status === "completed" ? 200 : 202);
   } catch (error) {
     next(error);
   }

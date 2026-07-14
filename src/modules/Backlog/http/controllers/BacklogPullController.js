@@ -17,14 +17,25 @@ async function candidates(req, res, next) {
   } catch (error) { next(error); }
 }
 
+async function candidateFilterOptions(req, res, next) {
+  try {
+    success(res, await BacklogApi.listIssueCandidateFilterOptions({
+      config: req.app.locals.config,
+      projectId: req.params.projectId,
+    }));
+  } catch (error) { next(error); }
+}
+
 async function syncCandidateToCis(req, res, next) {
   try {
+    const hasTranslationFlag = req.body && Object.prototype.hasOwnProperty.call(req.body, "with_translation");
     const result = await BacklogApi.syncCandidateToCis({
       config: req.app.locals.config,
       projectId: req.params.projectId,
       backlogIssueKey: req.params.backlogIssueKey,
       executedBy: req.user && req.user.id,
       correlationId: req.correlationId,
+      withTranslation: hasTranslationFlag ? req.body.with_translation : undefined,
     });
     success(res, result, result.outcome === "queued" ? 202 : 200);
   } catch (error) { next(error); }
@@ -76,6 +87,7 @@ async function pullMappingValues(req, res, next) {
 
 module.exports = {
   actionReadiness,
+  candidateFilterOptions,
   candidates,
   pullMappingValues,
   pullIssue,

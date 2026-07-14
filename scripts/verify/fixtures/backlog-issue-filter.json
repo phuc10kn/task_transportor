@@ -1,0 +1,78 @@
+{
+  "issues": [
+    {
+      "id": 1001,
+      "issueKey": "WEC-1",
+      "projectKey": "WEC",
+      "summary": "Login screen fails",
+      "description": "The login screen shows an error after submit.",
+      "issueType": { "id": 1, "name": "Bug" },
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 2, "name": "High" },
+      "assignee": { "id": 10, "name": "Tanaka", "mailAddress": "tanaka@example.test" },
+      "created": "2026-06-29T01:00:00Z",
+      "updated": "2026-06-30T01:00:00Z"
+    },
+    {
+      "id": 1002,
+      "issueKey": "WEC-2",
+      "projectKey": "WEC",
+      "summary": "Export button is disabled",
+      "description": "The export button remains disabled for admins.",
+      "issueType": { "id": 2, "name": "Task" },
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 3, "name": "Normal" },
+      "created": "2026-06-29T02:00:00Z",
+      "updated": "2026-06-30T02:00:00Z"
+    },
+    {
+      "id": 1003,
+      "issueKey": "WEC-3",
+      "projectKey": "WEC",
+      "summary": "Archived issue for filter verification",
+      "description": "This issue verifies status and assignee filtering.",
+      "issueType": { "id": 2, "name": "Task" },
+      "status": { "id": 2, "name": "Closed" },
+      "priority": { "id": 3, "name": "Normal" },
+      "assignee": { "id": 11, "name": "Suzuki", "mailAddress": "suzuki@example.test" },
+      "created": "2026-06-30T01:00:00Z",
+      "updated": "2026-06-30T02:00:00Z"
+    }
+  ],
+  "commentsByIssue": {
+    "WEC-1": [
+      {
+        "id": 501,
+        "content": "Please check the login API response.",
+        "createdUser": { "id": 10, "name": "Tanaka", "mailAddress": "tanaka@example.test" },
+        "created": "2026-06-30T01:05:00Z"
+      }
+    ],
+    "WEC-2": [],
+    "WEC-3": []
+  },
+  "attachmentsByIssue": {
+    "WEC-1": [
+      {
+        "id": 701,
+        "name": "login-error.png",
+        "mimeType": "image/png",
+        "size": 12345,
+        "created": "2026-06-30T01:06:00Z"
+      }
+    ],
+    "WEC-2": [],
+    "WEC-3": []
+  },
+  "attachmentDownloads": {
+    "701": {
+      "content": "fake image bytes for login-error.png",
+      "contentType": "image/png"
+    },
+    "702": {
+      "fail": true,
+      "message": "Fixture download failure",
+      "statusCode": 500
+    }
+  }
+}

@@ -13,11 +13,27 @@ function labelMap(values, mappingType) {
   return labels && typeof labels === "object" && !Array.isArray(labels) ? labels : {};
 }
 
+function directoryValues(values) {
+  return Array.isArray(values)
+    ? values.filter((value) => value && typeof value === "object" && !Array.isArray(value))
+    : [];
+}
+
 function sanitizeJiraMappingValues({ mappingValues, isRealJiraUserMappingEntry }) {
   const source = mappingValues || {};
   const sanitized = {};
 
   for (const [mappingType, values] of Object.entries(source)) {
+    if (mappingType.endsWith("_directory")) {
+      sanitized[mappingType] = mappingType === "user_directory"
+        ? directoryValues(values).filter((user) => isRealJiraUserMappingEntry({
+          value: user.value || user.id,
+          label: user.name || user.value || user.id,
+        }))
+        : directoryValues(values);
+      continue;
+    }
+
     if (mappingType === "user") {
       const labels = labelMap(source, "user");
       const userValues = uniqueValues(values).filter((value) =>

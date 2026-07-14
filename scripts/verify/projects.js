@@ -143,10 +143,6 @@ async function main() {
         jira_email: "sync-admin@example.test",
         jira_api_token: "jira-secret-token",
         translation_ai_provider: "codex_exec",
-        translation_glossary_json: [
-          { source: "予約", target: "đặt chỗ" },
-          { source: "管理画面", target: "màn hình quản trị" },
-        ],
         manual_pull_enabled: true,
         scheduled_pull_enabled: true,
         scheduled_pull_interval_minutes: 10,
@@ -157,10 +153,7 @@ async function main() {
     assert.equal(created.body.data.translation_ai_provider, "codex_exec");
     assert.equal(created.body.data.translation_ai_transport, "process_exec");
     assert.equal(created.body.data.translation_ai_model, null);
-    assert.deepEqual(created.body.data.translation_glossary_json, [
-      { source: "予約", target: "đặt chỗ" },
-      { source: "管理画面", target: "màn hình quản trị" },
-    ]);
+    assert.equal(Object.prototype.hasOwnProperty.call(created.body.data, "translation_glossary_json"), false);
     assert.equal(created.body.data.manual_pull_enabled, true);
     assert.equal(created.body.data.scheduled_pull_enabled, true);
     assert.equal(created.body.data.scheduled_pull_interval_minutes, 10);
@@ -173,6 +166,19 @@ async function main() {
       include_attachments: "metadata_only",
       page_size: 100,
     });
+
+    const legacyGlossary = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/projects",
+      token,
+      body: {
+        name: "Legacy Glossary Rejected",
+        translation_glossary_json: [{ source: "予約", target: "đặt chỗ" }],
+      },
+    });
+    assert.equal(legacyGlossary.status, 422);
+    assert.equal(legacyGlossary.body.error.code, "VALIDATION_ERROR");
+    assert.equal(legacyGlossary.body.error.details.field, "translation_glossary_json");
 
     const invalidTransport = await requestJson(server, {
       method: "POST",

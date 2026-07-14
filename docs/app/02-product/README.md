@@ -23,8 +23,9 @@ Lite in scope:
 - Admin login và project config tối thiểu.
 - Backlog manual pull một issue vào CIS.
 - Backlog project pull enqueue nhiều issue vào CIS.
-- Backlog Issues browser theo project + khoảng ngày tạo, loại issue đã có trong CIS và chỉ giữ kết quả trong memory của Admin UI.
+- Backlog Issues browser theo project + khoảng ngày tạo, Status/Not closed/người được gán tùy chọn từ snapshot cấu hình Backlog của project; chỉ query candidate sau action của Admin, loại issue đã có trong CIS và chỉ giữ kết quả trong memory của Admin UI.
 - Sync từng Backlog candidate vào CIS qua shared manual-pull job; không đi thẳng Jira.
+- Sync từng Backlog candidate kèm Translation Queue qua action explicit `Sync to CIS + Translate`; chỉ tạo queue cho Backlog `summary`/`description`, AI chạy bất đồng bộ và vẫn cần human review.
 - Tạo CIS issue thủ công và link immutable Backlog/Jira identity đã verify theo project.
 - Scheduled pull optional sau khi manual/project pull ổn định.
 - CIS lưu raw/source snapshot, canonical issue data, comments, attachments metadata, sync job và journal.
@@ -32,9 +33,11 @@ Lite in scope:
 - Human review cho translation/comment cần duyệt.
 - Mapping approval cho field/status/user/project mapping cần thiết.
 - Anomaly tối thiểu cho routing, mapping, translation, sync failure và content change.
+- Translation Glossary Lite theo Project với concept key, group mặc định `default`, note và nhiều term/variant theo từng language; mỗi language có đúng một canonical term để dịch; hỗ trợ tìm kiếm, thêm/sửa/xem/xóa.
 - Jira dry-run bắt buộc trước sync thật.
 - CIS -> Jira create/update issue/comment khi pre-check pass.
 - Admin UI tối thiểu cho dashboard, project config, issue editor, translation, mapping, anomaly, jobs và journal.
+- Translation Glossary là màn riêng; Translation Queue vẫn là màn review độc lập.
 - Admin UI tách CIS Issues và Backlog Issues; control Pull one/Pull project nằm ở Backlog Issues.
 
 Lite out of scope nếu chưa có decision mới:

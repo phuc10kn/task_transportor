@@ -101,6 +101,34 @@ function requestBuffer(url) {
   });
 }
 
+function backlogDirectory(rows, { valueFor, nameFor, includeDisplayOrder = false } = {}) {
+  return (rows || [])
+    .map((row) => {
+      const item = row || {};
+      return {
+        id: Number(item.id),
+        value: String((valueFor || ((entry) => entry.name))(item) || "").trim(),
+        name: String((nameFor || ((entry) => entry.name))(item) || "").trim(),
+        ...(String(item.mailAddress || "").trim() ? { email: String(item.mailAddress).trim() } : {}),
+        ...(includeDisplayOrder && Number.isSafeInteger(Number(item.displayOrder))
+          ? { display_order: Number(item.displayOrder) }
+          : {}),
+      };
+    })
+    .filter((item) => Number.isSafeInteger(item.id) && item.id > 0 && item.value && item.name);
+}
+
+function statusDirectory(rows) {
+  return backlogDirectory(rows, { includeDisplayOrder: true });
+}
+
+function userDirectory(rows) {
+  return backlogDirectory(rows, {
+    valueFor: (item) => item.mailAddress || item.userId || item.name,
+    nameFor: (item) => item.name || item.userId || item.mailAddress,
+  });
+}
+
 class BacklogClient {
   constructor({ project }) {
     this.project = project;
@@ -166,6 +194,14 @@ class BacklogClient {
     return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}`), { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" });
   }
 
+  async getProjectStatuses(projectIdOrKey, options) {
+    return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}/statuses`), { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" });
+  }
+
+  async getProjectUsers(projectIdOrKey, options) {
+    return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}/users`), { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" });
+  }
+
   async listIssues(params = {}, options) {
     return requestJson(this.buildUrl("/api/v2/issues", params), options);
   }
@@ -182,11 +218,16 @@ class BacklogClient {
 
     return {
       issue_type: (issueTypes || []).map((item) => item.name).filter(Boolean),
+      issue_type_directory: backlogDirectory(issueTypes),
       status: (statuses || []).map((item) => item.name).filter(Boolean),
+      status_directory: statusDirectory(statuses),
       priority: (priorities || []).map((item) => item.name).filter(Boolean),
+      priority_directory: backlogDirectory(priorities),
       user: (users || []).map((item) => item.mailAddress || item.userId || item.name).filter(Boolean),
+      user_directory: userDirectory(users),
       cis_user_emails: (users || []).map((item) => item.mailAddress).filter(Boolean),
       component: (categories || []).map((item) => item.name).filter(Boolean),
+      component_directory: backlogDirectory(categories),
     };
   }
 }
@@ -271,6 +312,10 @@ class FixtureBacklogClient {
       .map((issue) => ({ ...issue, projectId: issue.projectId || this.fixture.projectId || 1 }));
     const projectIds = params["projectId[]"] === undefined ? [] : [params["projectId[]"]].flat().map(Number);
     if (projectIds.length > 0) issues = issues.filter((issue) => projectIds.includes(Number(issue.projectId || this.fixture.projectId || 1)));
+    const statusIds = params["statusId[]"] === undefined ? [] : [params["statusId[]"]].flat().map(Number);
+    if (statusIds.length > 0) issues = issues.filter((issue) => statusIds.includes(Number(issue.status && issue.status.id)));
+    const assigneeIds = params["assigneeId[]"] === undefined ? [] : [params["assigneeId[]"]].flat().map(Number);
+    if (assigneeIds.length > 0) issues = issues.filter((issue) => assigneeIds.includes(Number(issue.assignee && issue.assignee.id)));
     if (params.createdSince) issues = issues.filter((issue) => String(issue.created || "").slice(0, 10) >= params.createdSince);
     if (params.createdUntil) issues = issues.filter((issue) => String(issue.created || "").slice(0, 10) <= params.createdUntil);
     if (params.sort === "created") issues.sort((a, b) => String(a.created || "").localeCompare(String(b.created || "")));
@@ -280,19 +325,61 @@ class FixtureBacklogClient {
     return issues.slice(offset, offset + count);
   }
 
-  async pullMappingValues() {
-    if (this.fixture.mappingValues) {
-      return this.fixture.mappingValues;
-    }
+  async getProjectStatuses() {
+    if (this.fixture.statuses) return this.fixture.statuses;
 
     const issues = this.fixture.issueCandidates || this.fixture.issues || [this.fixture.issue].filter(Boolean);
+    const statuses = new Map();
+    for (const issue of issues) {
+      const status = issue.status;
+      if (status && status.id !== undefined && status.name) statuses.set(Number(status.id), { ...status });
+    }
+    return [...statuses.values()];
+  }
+
+  async getProjectUsers() {
+    if (this.fixture.users) return this.fixture.users;
+
+    const issues = this.fixture.issueCandidates || this.fixture.issues || [this.fixture.issue].filter(Boolean);
+    const users = new Map();
+    for (const issue of issues) {
+      const user = issue.assignee;
+      if (user && user.id !== undefined) users.set(Number(user.id), { ...user });
+    }
+    return [...users.values()];
+  }
+
+  async pullMappingValues() {
+    const issues = this.fixture.issueCandidates || this.fixture.issues || [this.fixture.issue].filter(Boolean);
+    const [statuses, users] = await Promise.all([this.getProjectStatuses(), this.getProjectUsers()]);
+    const issueTypes = issues.map((issue) => issue.issueType).filter(Boolean);
+    const priorities = issues.map((issue) => issue.priority).filter(Boolean);
+    const categories = issues.flatMap((issue) => issue.category || issue.categories || [])
+      .filter((category) => category && typeof category === "object");
+
+    if (this.fixture.mappingValues) {
+      return {
+        ...this.fixture.mappingValues,
+        issue_type_directory: this.fixture.mappingValues.issue_type_directory || backlogDirectory(issueTypes),
+        status_directory: this.fixture.mappingValues.status_directory || statusDirectory(statuses),
+        priority_directory: this.fixture.mappingValues.priority_directory || backlogDirectory(priorities),
+        user_directory: this.fixture.mappingValues.user_directory || userDirectory(users),
+        component_directory: this.fixture.mappingValues.component_directory || backlogDirectory(categories),
+      };
+    }
+
     const values = {
       issue_type: [],
+      issue_type_directory: backlogDirectory(issueTypes),
       status: [],
+      status_directory: statusDirectory(statuses),
       priority: [],
+      priority_directory: backlogDirectory(priorities),
       user: [],
+      user_directory: userDirectory(users),
       cis_user_emails: [],
       component: [],
+      component_directory: backlogDirectory(categories),
     };
     const add = (key, value) => {
       const text = value === null || value === undefined ? "" : String(value).trim();
@@ -301,12 +388,15 @@ class FixtureBacklogClient {
       }
     };
 
+    for (const status of statuses) add("status", status.name);
+    for (const user of users) {
+      add("user", user.mailAddress || user.userId || user.name);
+      add("cis_user_emails", user.mailAddress);
+    }
+
     for (const issue of issues) {
       add("issue_type", issue.issueType && issue.issueType.name || issue.issue_type);
-      add("status", issue.status && issue.status.name || issue.status_name);
       add("priority", issue.priority && issue.priority.name || issue.priority);
-      add("user", issue.assignee && (issue.assignee.mailAddress || issue.assignee.userId || issue.assignee.name) || issue.assignee);
-      add("cis_user_emails", issue.assignee && issue.assignee.mailAddress);
       for (const category of issue.category || issue.categories || []) {
         add("component", category.name || category);
       }

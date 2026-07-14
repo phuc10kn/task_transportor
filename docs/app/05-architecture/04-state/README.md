@@ -26,3 +26,4 @@ Concern này định nghĩa taxonomy state chuẩn cho custom modular monolith.
 - [SO-004-project-integration-state](./state-owners/SO-004-project-integration-state/README.md)
 - [SO-005-mapping-approval-state](./state-owners/SO-005-mapping-approval-state/README.md)
 - [SO-006-anomaly-resolution-state](./state-owners/SO-006-anomaly-resolution-state/README.md)
+- [SO-007-translation-glossary-state](./state-owners/SO-007-translation-glossary-state/README.md)

@@ -33,6 +33,20 @@ textarea {
   font: inherit;
 }
 
+select[multiple] {
+  min-height: 112px;
+}
+
+.field-help {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.checkbox-field input[type="checkbox"] {
+  margin-right: 6px;
+}
+
 input[type="checkbox"] {
   width: 18px;
   min-height: 18px;
@@ -49,6 +63,13 @@ button {
   cursor: pointer;
   min-height: 38px;
   padding: 8px 13px;
+}
+
+.action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 10rem;
 }
 
 button:hover {
@@ -547,6 +568,49 @@ nav button:hover {
   min-width: 170px;
 }
 
+.glossary-term-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.glossary-language-section {
+  border: 1px solid var(--border, #d7dfdd);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.glossary-language-section:first-child {
+  margin-top: 0;
+}
+
+.glossary-language-header,
+.canonical-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.glossary-language-header {
+  justify-content: space-between;
+}
+
+.glossary-term-row:first-child {
+  margin-top: 0;
+}
+
+.glossary-view {
+  display: grid;
+  gap: 10px;
+}
+
+.glossary-view p {
+  margin: 0;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -720,6 +784,10 @@ pre {
   .check-grid,
   .action-grid,
   .source-value-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .glossary-term-row {
     grid-template-columns: 1fr;
   }
 

@@ -6,7 +6,7 @@ const { createTranslationRepository } = require("../infrastructure/TranslationRe
 
 function retranslateTranslation({ config, queueId, executedBy, correlationId }) {
   const repository = createTranslationRepository({ config });
-  let item = repository.resetForRetranslate(queueId);
+  let item = repository.findById(queueId);
 
   if (!item) {
     throw new AppError({
@@ -16,15 +16,7 @@ function retranslateTranslation({ config, queueId, executedBy, correlationId }) 
     });
   }
 
-  item = refreshTranslationAiConfigForQueueItem({ config, repository, item });
-  syncIssueTranslationState({
-    config,
-    repository,
-    issueId: item.issue_id,
-    correlationId,
-  });
-
-  const job = SyncApi.enqueueJob({
+  const enqueueResult = SyncApi.enqueueTranslateJobIfNoneActive({
     config,
     input: {
       project_id: item.project_id,
@@ -35,6 +27,9 @@ function retranslateTranslation({ config, queueId, executedBy, correlationId }) 
       job_type: "translate",
       payload_json: {
         translation_queue_id: item.id,
+        parent_sync_job_id: null,
+        requested_by: executedBy || null,
+        request_correlation_id: correlationId || null,
         mode: "retranslate",
       },
       priority: 50,
@@ -43,6 +38,40 @@ function retranslateTranslation({ config, queueId, executedBy, correlationId }) 
       correlation_id: correlationId,
     },
   });
+
+  if (enqueueResult.reused) {
+    SyncApi.writeJournal({
+      config,
+      input: {
+        sync_job_id: enqueueResult.job.id,
+        project_id: item.project_id,
+        issue_id: item.issue_id,
+        comment_id: item.comment_id,
+        direction_from: "cis",
+        direction_to: "cis",
+        job_type: "translate",
+        action: "translation_retranslate_reused",
+        status: enqueueResult.job.status,
+        trigger: "manual",
+        message: "Active translation job reused.",
+        details_json: { translation_queue_id: item.id, reused: true },
+        executed_by: executedBy,
+        correlation_id: correlationId,
+      },
+    });
+    return { item, job: enqueueResult.job, reused: true };
+  }
+
+  item = repository.resetForRetranslate(queueId);
+  item = refreshTranslationAiConfigForQueueItem({ config, repository, item });
+  syncIssueTranslationState({
+    config,
+    repository,
+    issueId: item.issue_id,
+    correlationId,
+  });
+
+  const job = enqueueResult.job;
 
   SyncApi.writeJournal({
     config,

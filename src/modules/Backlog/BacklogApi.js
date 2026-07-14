@@ -7,12 +7,14 @@ const { runScheduledPullScan } = require("./application/runScheduledPullScan");
 const { lookupBacklogIssueIdentity } = require("./application/lookupBacklogIssueIdentity");
 const { getIssueActionReadiness } = require("./application/getIssueActionReadiness");
 const { listIssueCandidates } = require("./application/listIssueCandidates");
+const { listIssueCandidateFilterOptions } = require("./application/listIssueCandidateFilterOptions");
 const { syncCandidateToCis } = require("./application/syncCandidateToCis");
 
 module.exports = {
   handleManualPullJob,
   getIssueActionReadiness,
   listIssueCandidates,
+  listIssueCandidateFilterOptions,
   lookupBacklogIssueIdentity,
   pullBacklogMappingValues,
   pullIssue,

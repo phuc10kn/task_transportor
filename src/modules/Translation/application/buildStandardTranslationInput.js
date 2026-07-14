@@ -21,7 +21,7 @@ function buildInstructions(contextBundle) {
   }
 
   if (contextBundle && contextBundle.glossary && contextBundle.glossary.length > 0) {
-    instructions.push("Prefer the project glossary when a glossary term matches.");
+    instructions.push("When a glossary entry matches the source text, use exactly its target canonical term. Do not choose a source synonym's target variant or invent another term.");
   }
 
   if (contextBundle && contextBundle.translation_memory && contextBundle.translation_memory.length > 0) {

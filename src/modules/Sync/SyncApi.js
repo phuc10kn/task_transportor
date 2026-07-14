@@ -13,6 +13,7 @@ const { runWorkerOnce } = require("./application/runWorkerOnce");
 const { writeJournal, writeJournalInTransaction } = require("./application/writeJournal");
 const { hasActiveIssueJob, hasActiveIssueJobInTransaction } = require("./application/hasActiveIssueJob");
 const { enqueueManualPullIfNoneActive } = require("./application/enqueueManualPullIfNoneActive");
+const { enqueueTranslateJobIfNoneActive } = require("./application/enqueueTranslateJobIfNoneActive");
 const { enqueueIssueJobIfNoneActive, enqueueIssueJobIfNoneActiveInTransaction } = require("./application/enqueueIssueJobIfNoneActive");
 const {
   getHandler,
@@ -28,6 +29,7 @@ module.exports = {
   enqueueIssueJobIfNoneActive,
   enqueueIssueJobIfNoneActiveInTransaction,
   enqueueManualPullIfNoneActive,
+  enqueueTranslateJobIfNoneActive,
   getHandler,
   getJob,
   hasActiveIssueJob,

@@ -366,6 +366,11 @@ async function verifyPhase05() {
           "Automation for Jira": "Automation for Jira",
           "Người dùng cũ": "Người dùng cũ",
         },
+        user_directory: [
+          { id: "jira-account-1", value: "jira-account-1", name: "Jira Account One" },
+          { id: "jira-email-account", value: "jira-user@example.test", name: "Jira Email User", email: "jira-user@example.test" },
+          { id: "slack-account", value: "Slack", name: "Slack" },
+        ],
       },
     });
     const syncedFromJira = await ProjectsApi.syncCisMappingValuesFromTarget({
@@ -379,6 +384,11 @@ async function verifyPhase05() {
     assert.ok(!syncedFromJira.cis_mapping_values_json.user.includes("Atlas for Jira Cloud"));
     assert.ok(!syncedFromJira.cis_mapping_values_json.user.includes("Automation for Jira"));
     assert.ok(!syncedFromJira.cis_mapping_values_json.user.includes("Người dùng cũ"));
+    assert.deepEqual(syncedFromJira.jira_mapping_values_json.user_directory, [
+      { id: "jira-account-1", value: "jira-account-1", name: "Jira Account One" },
+      { id: "jira-email-account", value: "jira-user@example.test", name: "Jira Email User", email: "jira-user@example.test" },
+    ]);
+    assert.equal(syncedFromJira.cis_mapping_values_json.user_directory, undefined);
     assert.ok(syncedFromJira.warnings.some((warning) => warning.mapping_type === "user"));
 
     const unreviewed = createIssueWithRevision(config, project, {

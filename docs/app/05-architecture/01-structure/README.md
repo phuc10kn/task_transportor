@@ -24,7 +24,7 @@ Concern này định nghĩa khung structure chuẩn cho custom modular monolith,
 
 - [MOD-001-cis](./modules/MOD-001-cis/README.md) - lõi canonical issue state của hệ thống
 - [MOD-002-backlog](./modules/MOD-002-backlog/README.md) - inbound từ Backlog vào CIS
-- [MOD-003-translation](./modules/MOD-003-translation/README.md) - translation queue, AI draft, review
+- [MOD-003-translation](./modules/MOD-003-translation/README.md) - translation queue, AI draft, review và glossary
 - [MOD-004-mapping](./modules/MOD-004-mapping/README.md) - mapping rules và approval
 - [MOD-005-anomaly](./modules/MOD-005-anomaly/README.md) - anomaly log và blocking checks
 - [MOD-006-sync](./modules/MOD-006-sync/README.md) - queue, worker, retry, journal

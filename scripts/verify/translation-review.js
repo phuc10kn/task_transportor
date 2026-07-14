@@ -9,6 +9,7 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
+const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { makeTempConfig } = require("./helpers/tempConfig");
 const { requestJson, withServer } = require("./helpers/http");
@@ -33,7 +34,7 @@ function setupConfig(name, mode, overrides = {}) {
 }
 
 function createProject(config, suffix = "TRAN") {
-  return ProjectsApi.createProject({
+  const project = ProjectsApi.createProject({
     config,
     input: {
       name: `Translation Verify ${suffix}`,
@@ -47,13 +48,36 @@ function createProject(config, suffix = "TRAN") {
       translation_ai_provider: "codex_exec",
       source_language: "ja",
       target_language: "vi",
-      translation_glossary_json: [
-        { source: "\u78ba\u8a8d", target: "xac nhan" },
-        { source: "\u7ba1\u7406\u753b\u9762", target: "man hinh quan tri" },
-      ],
       auto_translate: true,
     },
   });
+
+  TranslationApi.createTranslationGlossaryConcept({
+    config,
+    projectId: project.id,
+    input: {
+      group_key: "default",
+      concept_key: "confirm",
+      terms: [
+        { language_code: "ja", term: "\u78ba\u8a8d", is_canonical: true },
+        { language_code: "vi", term: "xac nhan", is_canonical: true },
+      ],
+    },
+  });
+  TranslationApi.createTranslationGlossaryConcept({
+    config,
+    projectId: project.id,
+    input: {
+      group_key: "default",
+      concept_key: "admin-screen",
+      terms: [
+        { language_code: "ja", term: "\u7ba1\u7406\u753b\u9762", is_canonical: true },
+        { language_code: "vi", term: "man hinh quan tri", is_canonical: true },
+      ],
+    },
+  });
+
+  return project;
 }
 
 function createIssueWithTranslations(config, count = 1, overrides = {}) {
@@ -145,7 +169,7 @@ async function verifySuccessAndReviewApi() {
 
   const { issue, items, project } = createIssueWithTranslations(config, 2);
   const collected = TranslationApi.collectTranslationContext({ config, item: items[0] });
-  assert.equal(collected.context_bundle.glossary.length, 2);
+  assert.equal(collected.context_bundle.glossary.length, 1);
   assert.equal(collected.context_bundle.translation_memory.length, 0);
   assert.equal(collected.context_bundle.issue_keys.backlog_issue_key, issue.backlog_issue_key);
 
@@ -156,7 +180,7 @@ async function verifySuccessAndReviewApi() {
     context_bundle: collected.context_bundle,
   });
   assert.equal(standardInput.source_text, items[0].source_text);
-  assert.equal(standardInput.context_bundle.glossary[0].target, "xac nhan");
+  assert.ok(standardInput.context_bundle.glossary.some((entry) => entry.target === "xac nhan"));
 
   enqueueTranslate(config, items[0]);
   enqueueTranslate(config, items[1]);
@@ -174,7 +198,7 @@ async function verifySuccessAndReviewApi() {
 
   const firstJournal = getTranslationJournal(config, issue.id)[0];
   assert.equal(firstJournal.details_json.context_policy, "default_translation");
-  assert.equal(firstJournal.details_json.glossary_count, 2);
+  assert.equal(firstJournal.details_json.glossary_count, 1);
   assert.equal(firstJournal.details_json.translation_memory_count, 0);
   assert.equal(firstJournal.details_json.neighbor_comments_count, 0);
   assert.equal(firstJournal.details_json.signals.contains_japanese, true);
@@ -285,6 +309,89 @@ async function verifyProviderFailure(mode, expectedErrorCode) {
 
   const item = getTranslation(config, items[0].id);
   assert.equal(item.provider_error, expectedErrorCode);
+}
+
+async function verifyManualEntryPointGate() {
+  const config = setupConfig("translation-entry-gate", "success");
+  AuthApi.bootstrapAdmin({
+    config,
+    email: "translation-entry-gate@example.test",
+    password: "verify-password",
+  });
+  const { issue, items } = createIssueWithTranslations(config, 1);
+  const active = enqueueTranslate(config, items[0]);
+  const locked = createSyncJobRepository({ config }).lockById({
+    jobId: active.id,
+    workerId: "translation-entry-gate-lock",
+  });
+  assert.equal(locked.status, "running");
+
+  const app = createApp({ config });
+  await withServer(app, async (server) => {
+    const login = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/auth/login",
+      body: {
+        email: "translation-entry-gate@example.test",
+        password: "verify-password",
+      },
+    });
+    const token = login.body.data.token;
+    const issueTranslate = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/translations/issues/${issue.id}/translate`,
+      token,
+    });
+    assert.equal(issueTranslate.status, 202);
+    assert.equal(issueTranslate.body.data.execution_status, "partial_queued");
+    assert.ok(issueTranslate.body.data.queued_job_ids.includes(active.id));
+
+    const retranslate = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/translation-queue/${items[0].id}/retranslate`,
+      token,
+    });
+    assert.equal(retranslate.status, 202);
+    assert.equal(retranslate.body.data.reused, true);
+    assert.equal(retranslate.body.data.job.id, active.id);
+    assert.equal(retranslate.body.data.item.review_status, "pending");
+  });
+
+  const db = createConnection({ config });
+  assert.equal(db.prepare(
+    "SELECT COUNT(*) AS total FROM sync_jobs WHERE job_type = 'translate' AND status IN ('pending', 'running') AND json_extract(payload_json, '$.translation_queue_id') = ?"
+  ).get(items[0].id).total, 1);
+  db.close();
+}
+
+async function verifyDirectFailureFeedback() {
+  const config = setupConfig("translation-direct-failure", "invalid-json");
+  AuthApi.bootstrapAdmin({
+    config,
+    email: "translation-direct-failure@example.test",
+    password: "verify-password",
+  });
+  const { issue } = createIssueWithTranslations(config, 1);
+  const app = createApp({ config });
+  await withServer(app, async (server) => {
+    const login = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/auth/login",
+      body: {
+        email: "translation-direct-failure@example.test",
+        password: "verify-password",
+      },
+    });
+    const response = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/translations/issues/${issue.id}/translate`,
+      token: login.body.data.token,
+    });
+    assert.equal(response.status, 502);
+    assert.equal(response.body.error.code, "TRANSLATION_JOB_FAILED");
+    assert.ok(response.body.error.details.job_id);
+    assert.equal(response.body.error.details.status, "failed");
+  });
 }
 
 async function verifyLowConfidenceAnomaly() {
@@ -503,6 +610,8 @@ async function verifyStaleQueueUsesCurrentProjectAiConfig() {
 
 async function main() {
   await verifySuccessAndReviewApi();
+  await verifyManualEntryPointGate();
+  await verifyDirectFailureFeedback();
   await verifyProviderFailure("timeout", "CODEX_EXEC_TIMEOUT");
   await verifyProviderFailure("invalid-json", "CODEX_EXEC_PARSE_ERROR");
   await verifyLowConfidenceAnomaly();

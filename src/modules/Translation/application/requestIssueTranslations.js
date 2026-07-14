@@ -1,7 +1,8 @@
-const { translateQueueItemNow } = require("./translateQueueItemNow");
+const { AppError } = require("../../../http/errors/AppError");
 const CisApi = require("../../Cis/CisApi");
+const SyncApi = require("../../Sync/SyncApi");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
-const { syncIssueTranslationState } = require("./syncIssueTranslationState");
+const { enqueueIssueTranslations } = require("./enqueueIssueTranslations");
 
 function normalizeSource(value) {
   return String(value === null || value === undefined ? "" : value).trim();
@@ -92,94 +93,75 @@ function decorateTranslations(items, targets) {
   ];
 }
 
-function shouldTranslate(item) {
-  return !["approved", "edited"].includes(item.review_status) && !item.ai_draft;
-}
-
 async function requestIssueTranslations({ config, issueId, executedBy, correlationId }) {
   const repository = createTranslationRepository({ config });
   const bundle = CisApi.getIssueTranslationTargets({ config, issueId });
-  const issue = bundle.issue;
-  const targets = bundle.targets;
-  const existingItems = bundle.translations;
-  const items = issueTranslationItems(existingItems);
-  const decoratedItems = decorateTranslations(items, targets);
-  const created = [];
-
-  for (const target of targets) {
-    const currentSource = normalizeSource(target.value);
-    const existing = decoratedItems.find((item) =>
-      item.target_field === target.field &&
-      (
-        normalizeSource(item.source_text_original) === currentSource ||
-        (
-          ["approved", "edited"].includes(item.review_status) &&
-          normalizeSource(item.reviewed_text || item.ai_draft) === currentSource
-        )
-      )
-    );
-    if (existing) {
+  const queued = await enqueueIssueTranslations({
+    config,
+    issueId,
+    requestedBy: executedBy || null,
+    requestCorrelationId: correlationId || null,
+    includeRejected: true,
+    executionMode: "manual_immediate",
+    trigger: "manual",
+  });
+  const translated = [];
+  const queuedJobs = [];
+  for (const job of queued.jobs) {
+    if (job.status === "running") {
+      queuedJobs.push(job);
       continue;
     }
 
-    const item = CisApi.createTranslationQueueItem({
+    const execution = await SyncApi.runJobNow({
       config,
-      input: {
-        project_id: issue.project_id,
-        issue_id: issue.id,
-        target_type: "issue",
-        target_field: target.field,
-        source_text: String(target.value),
-      },
+      jobId: job.id,
+      workerId: `issue-editor-${process.pid}`,
     });
-    created.push({ ...item, target_field: target.field, field: target.field });
-    items.push(item);
-    decoratedItems.push({
-      ...item,
-      target_field: target.field,
-      source_text_original: item.source_text,
-      current_source_text: item.source_text,
-      is_source_stale: false,
-    });
+    if (!execution.processed || !execution.job || ["pending", "running"].includes(execution.job.status)) {
+      queuedJobs.push(execution.job || job);
+      continue;
+    }
+    if (execution.job.status === "failed") {
+      const failure = execution.error || {};
+      const error = new AppError({
+        code: "TRANSLATION_JOB_FAILED",
+        message: failure.message || execution.job.last_error || "Translation job failed.",
+        status: failure.status || 502,
+        details: {
+          job_id: execution.job.id,
+          status: execution.job.status,
+          retryable: Boolean(failure.retryable),
+        },
+      });
+      error.retryable = Boolean(failure.retryable);
+      throw error;
+    }
+
+    const item = repository.findById(job.payload_json.translation_queue_id);
+    if (item) {
+      translated.push({
+        translation_queue_id: item.id,
+        review_status: item.review_status,
+        provider: item.provider,
+        confidence: item.confidence,
+      });
+    }
   }
 
-  if (created.length > 0) {
-    syncIssueTranslationState({
-      config,
-      repository,
-      issueId: issue.id,
-      correlationId,
-    });
-  }
-
-  const translated = [];
-  for (const item of decoratedItems
-    .filter((item) => normalizeSource(item.current_source_text))
-    .filter((item) => !item.is_source_stale)
-    .filter(shouldTranslate)) {
-    translated.push(await translateQueueItemNow({
-      config,
-      queueId: item.id,
-      executedBy: executedBy || null,
-      correlationId: correlationId || null,
-      trigger: "manual",
-    }));
-  }
-
-  syncIssueTranslationState({
-    config,
-    repository,
-    issueId: issue.id,
-    correlationId,
-  });
-
-  const refreshed = CisApi.getIssueTranslationTargets({ config, issueId: issue.id });
+  const refreshed = CisApi.getIssueTranslationTargets({ config, issueId });
+  const executionStatus = queuedJobs.length === 0
+    ? "completed"
+    : translated.length > 0 ? "partial_queued" : "queued";
   return {
-    issue_id: issue.id,
-    created_items: created,
-    queued_jobs: [],
+    issue_id: bundle.issue.id,
+    created_items: queued.created_items,
+    reused_items: queued.reused_items,
+    queued_jobs: queuedJobs,
+    queued_job_ids: queuedJobs.filter(Boolean).map((job) => job.id),
+    execution_status: executionStatus,
     translated_items: translated,
-    translations: decorateTranslations(refreshed.translations, targets),
+    translations: decorateTranslations(refreshed.translations, refreshed.targets),
   };
 }
 

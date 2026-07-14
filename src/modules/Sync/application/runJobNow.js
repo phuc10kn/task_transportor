@@ -24,12 +24,19 @@ async function runLockedJob({ config, job, repository }) {
       job: repository.markSuccess(job.id, { handler_result: result }),
     };
   } catch (error) {
+    const failedJob = repository.markFailed(job.id, error, {
+      retryable: Boolean(error.retryable),
+      retryAfterSeconds: error.retryAfterSeconds || error.retry_after_seconds || null,
+    });
     return {
       processed: true,
-      job: repository.markFailed(job.id, error, {
+      job: failedJob,
+      error: {
+        code: error.code || "SYNC_JOB_FAILED",
+        message: error.message || "Sync job failed.",
+        status: error.status || error.statusCode || 500,
         retryable: Boolean(error.retryable),
-        retryAfterSeconds: error.retryAfterSeconds || error.retry_after_seconds || null,
-      }),
+      },
     };
   }
 }

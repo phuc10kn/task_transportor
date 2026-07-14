@@ -16,11 +16,13 @@
 Lite được coi là đạt ở mức product khi:
 
 - Backlog manual pull tạo inbound job `backlog -> cis`.
+- Candidate `Sync to CIS + Translate` tạo parent `manual_pull`, đúng queue `summary`/`description`, child `translate` jobs bất đồng bộ và giữ parent/child journal trace; retry/re-click không tạo active job trùng.
 - Project pull enqueue candidate issue, không sync Jira trực tiếp.
-- Candidate browse theo created range không tạo database write, loại Backlog key đã thuộc CIS cùng project và over-fetch tới limit/source bound.
+- Pull mapping values giữ các mảng text legacy cho Mapping/dry-run và đồng thời materialize directory provider ID cho toàn catalog; Jira user directory giữ được `accountId` nhưng CIS mapping vẫn chỉ nhận text. Candidate browse chỉ chạy sau action Admin; `filter-options` chỉ đọc Status/người được gán snapshot đã lưu trong project config, còn browse dùng ID snapshot để query Backlog theo created range cùng Status/Not closed/người được gán tùy chọn. Luồng không tạo database write, loại Backlog key đã thuộc CIS cùng project và over-fetch tới limit/source bound.
 - Manual CIS issue có revision đầu tiên + journal; external identity verify tồn tại/project và duplicate theo `project_id + đúng system column`.
 - CIS lưu raw/source snapshot, canonical issue, comments, attachments metadata, job và journal.
 - Translation option tạo draft Nhật -> Việt và có human review/edit/approve/reject.
+- Translation Glossary kiểm tra migration fresh/upgrade/atomic failure, CRUD/error contract, runtime source variants/target canonical, non-overlap preprocessing (chỉ term xuất hiện trong source text, tối đa 40 entry) và Admin UI lazy-load/filter/modal/error/retry/delete/variant.
 - Mapping required có approve path.
 - Dry-run Jira trả payload, validation, warning và `can_sync`.
 - Sync thật không gọi Jira nếu pre-check fail.
@@ -51,6 +53,7 @@ Verification command:
 - `npm run verify:phase07`: Admin UI acceptance.
 - `npm run verify:issue-editor`: Issue Editor API và dry-run/sync.
 - `npm run verify:system-issues`: Backlog Issues, manual CIS issue và external identity linking.
+- `npm run verify:translation-review`: Translation queue, worker gate, direct manual entry point và human review.
 - `npm test`: toàn bộ phase00-07.
 
 Manual acceptance Lite còn sống:
@@ -59,6 +62,7 @@ Manual acceptance Lite còn sống:
 - Admin trigger `Pull one issue` và resync issue từ Backlog.
 - Issue Editor hiển thị canonical CIS, source Backlog/CIS/Jira và trạng thái issue.
 - Translation modal translate/retranslate, edit text, `Approve + save`, reject được.
+- Checklist glossary: Project-scoped CRUD, mỗi language đúng một canonical và không normalized duplicate, concept thiếu pair không vào runtime context, không còn legacy Project JSON và Translation Queue vẫn pass.
 - Jira sync modal tự chạy dry-run, hiển thị `can_sync`, warning và payload preview.
 - Sync Jira thật chỉ chạy sau khi dry-run hợp lệ.
 - Dashboard hiển thị pending review, missing mapping, failed job và open anomaly.

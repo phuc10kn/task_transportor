@@ -7,7 +7,9 @@ function createPrompt(request) {
     "Translate the standardized CIS translation request.",
     "Return only JSON with translated_text, confidence, warnings, and preserved_blocks.",
     "Do not include markdown fences or commentary.",
-    "Respect all preservation instructions and the project glossary.",
+    "Respect every mandatory request instruction.",
+    "Mandatory request instructions:",
+    ...(Array.isArray(request.instructions) ? request.instructions.map((instruction) => `- ${instruction}`) : []),
     "",
     JSON.stringify({
       source_language: request.source_language,

@@ -1,5 +1,7 @@
 # Coordinator Điều Phối Plan
 
+> Bắt buộc đọc và tuân thủ [structure-rules.md](./structure-rules.md) trước khi điều phối.
+
 ## Mục đích
 
 Prompt này dùng để điều phối một plan đã có qua nhiều phase hoặc nhiều lượt làm việc.
@@ -63,6 +65,7 @@ Không dùng file này khi:
 Trước khi kết luận current phase, phải đọc:
 
 - toàn bộ plan;
+- `structure-rules.md` và cây file thực tế;
 - `Kết quả thực hiện` của các phase liên quan;
 - `## Quy ước điều phối`;
 - phase id và target files/artifacts của phase liên quan.
@@ -89,7 +92,7 @@ Không được mở phase sau nếu:
 
 ### 3. Handoff và blocked note
 
-Điều phối chỉ được ghi vào đúng các vị trí canonical sau:
+Điều phối chỉ được ghi trong `<plan-dir>/02-coordination.md` tại đúng các vị trí canonical sau:
 
 - `## Quy ước điều phối > ### Handoff hiện tại`
 - `## Quy ước điều phối > ### Trạng thái blocked`
@@ -140,6 +143,7 @@ Phải quay về `planner.md` nếu:
 - phase thiếu target files/artifacts;
 - phase thiếu `Kết quả thực hiện`;
 - thiếu `## Quy ước điều phối` hoặc sai vị trí canonical;
+- cây plan không đúng `structure-rules.md`;
 - dependency chưa chốt;
 - acceptance còn mơ hồ;
 - source of truth chưa tách vai rõ.
@@ -166,11 +170,21 @@ Chỉ chuyển sang `executor.md` khi:
 - không còn blocker điều phối;
 - plan đủ cấu trúc để execution log và handoff không bị thất lạc.
 
+## Thông báo bắt buộc trước khi điều phối
+
+Sau khi đọc toàn bộ plan và xác định trạng thái hiện tại nhưng trước khi ghi handoff, blocked state hoặc mở phase, phải in một dòng trong `commentary`:
+
+```text
+Đang dùng coordinator.md — current phase <phase-id> — lý do: cần xác định dependency, blocked state hoặc handoff.
+```
+
+Nếu sau khi đọc plan phát hiện phải quay lại planner, dòng thông báo phải nêu `planner.md` thay vì `coordinator.md`.
+
 ## Prompt mẫu
 
 ```text
 Bạn sẽ điều phối plan tại:
-<plan-file>
+<plan-dir>
 
 Task hiện tại:
 <mô tả task hoặc trạng thái>
@@ -185,7 +199,7 @@ Yêu cầu bắt buộc:
    - phase blocked;
    - phase chưa được mở.
 4. Kiểm tra dependency: phase sau chỉ mở khi phase trước đã pass acceptance thật.
-5. Chỉ được ghi handoff note hoặc blocked note vào đúng vị trí canonical.
+5. Chỉ được ghi handoff note hoặc blocked note trong `02-coordination.md` đúng vị trí canonical.
 6. Handoff hiện tại phải overwrite snapshot cũ.
 7. Accepted gap chỉ ghi vào `### Accepted gaps`.
 8. Không tick checklist và không đánh dấu pass thay cho thực thi.
@@ -204,6 +218,7 @@ Yêu cầu bắt buộc:
 ## Checklist tự review điều phối
 
 - [ ] Current phase được chọn theo dependency thật.
+- [ ] Cây plan đúng `structure-rules.md`.
 - [ ] Không mở phase sau khi phase trước chưa pass.
 - [ ] Phase được chọn bằng phase id ổn định.
 - [ ] Chỉ dùng vị trí canonical cho handoff, blocked note và accepted gap.
@@ -224,7 +239,7 @@ Không điều phối theo các kiểu sau:
 ## Mẫu báo cáo cuối
 
 ```text
-Đã điều phối plan tại <plan-file>.
+Đã điều phối plan tại <plan-dir>.
 
 Current phase:
 - ...

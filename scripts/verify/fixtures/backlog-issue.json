@@ -9,6 +9,7 @@
       "issueType": { "id": 1, "name": "Bug" },
       "status": { "id": 1, "name": "Open" },
       "priority": { "id": 2, "name": "High" },
+      "category": [{ "id": 20, "name": "Frontend" }],
       "assignee": { "id": 10, "name": "Tanaka", "mailAddress": "tanaka@example.test" },
       "created": "2026-06-29T01:00:00Z",
       "updated": "2026-06-30T01:00:00Z"

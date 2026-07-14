@@ -18,6 +18,11 @@ function mergeMappingValues(existing, pulled) {
       continue;
     }
 
+    if (mappingType.endsWith("_directory")) {
+      merged[mappingType] = values || [];
+      continue;
+    }
+
     merged[mappingType] = uniqueValues([
       ...(merged[mappingType] || []),
       ...values,

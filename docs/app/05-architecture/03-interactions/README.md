@@ -28,3 +28,5 @@ Concern này định nghĩa các loại flow chuẩn cho custom modular monolith
 - [AF-005-canonical-issue-edit](./interaction-flows/AF-005-canonical-issue-edit/README.md)
 - [AF-006-jira-dry-run](./interaction-flows/AF-006-jira-dry-run/README.md)
 - [AF-007-cis-to-jira-sync](./interaction-flows/AF-007-cis-to-jira-sync/README.md)
+
+Candidate `Sync to CIS + Translate` là nhánh explicit của inbound `AF-001`: parent `manual_pull` ingest vào CIS, sau đó `TranslationApi` materialize current-source queue và `SyncApi` enqueue child `translate` jobs. HTTP không gọi AI; worker giữ execution, retry và journal trace parent/child.

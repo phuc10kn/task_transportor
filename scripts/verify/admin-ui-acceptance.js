@@ -346,13 +346,37 @@ async function verifyPhase07() {
     assert.match(js.body, /pullMappingValuesForSystem/);
     assert.match(js.body, /syncCisMappingValuesButton/);
     assert.match(js.body, /renderIssueEditor/);
+    assert.match(js.body, /\["translation_glossary", "Translation Glossary"\]/);
+    assert.match(js.body, /renderTranslationGlossary/);
+    assert.match(js.body, /translation-glossary/);
+    assert.match(js.body, /addGlossaryConceptButton/);
+    assert.match(js.body, /data-delete-glossary/);
+    assert.match(js.body, /retryGlossaryButton/);
+    assert.match(js.body, /glossary-language-section/);
+    assert.match(js.body, /data-canonical/);
+    assert.match(js.body, /Canonical/);
+    assert.match(js.body, /data-add-glossary-variant/);
+    assert.match(js.body, /addGlossaryLanguageButton/);
+    assert.match(js.body, /modal-backdrop/);
+    assert.doesNotMatch(js.body, /translation_glossary_json/);
     assert.match(js.body, /\["issues", "CIS Issues"\]/);
     assert.match(js.body, /\["backlog_issues", "Backlog Issues"\]/);
     assert.match(js.body, /renderBacklogIssues/);
     assert.match(js.body, /action-readiness/);
+    assert.match(js.body, /filter-options/);
+    assert.match(js.body, /not_closed/);
+    assert.match(js.body, /backlogStatusIds/);
+    assert.match(js.body, /backlogAssigneeIds/);
+    assert.doesNotMatch(js.body, /refreshBacklogFiltersButton/);
     assert.match(js.body, /createCisIssueForm/);
     assert.match(js.body, /externalIdentityForm/);
     assert.match(js.body, /Sync to CIS/);
+    assert.match(js.body, /Sync to CIS \+ Translate/);
+    assert.match(js.body, /with_translation: true/);
+    assert.match(js.body, /BACKLOG_SYNC_RUNNING_WITHOUT_TRANSLATION/);
+    assert.match(js.body, /execution_status/);
+    assert.match(js.body, /Translation job queued/);
+    assert.match(js.body, /Retranslate job already active; reused/);
     assert.doesNotMatch(js.body, /function projectPullPanel/);
     assert.match(js.body, /issueEditorSyncPanel/);
     assert.match(js.body, /issueEditorBacklogSyncPanel/);
@@ -454,6 +478,11 @@ async function verifyPhase07() {
     });
     assert.equal(pulledBacklogValues.status, 200);
     assert.ok(pulledBacklogValues.body.data.backlog_mapping_values_json.user.includes("tanaka@example.test"));
+    assert.ok(pulledBacklogValues.body.data.backlog_mapping_values_json.issue_type_directory.some((item) => item.value === "Bug"));
+    assert.ok(pulledBacklogValues.body.data.backlog_mapping_values_json.status_directory.some((status) => status.name === "Open"));
+    assert.ok(pulledBacklogValues.body.data.backlog_mapping_values_json.priority_directory.some((item) => item.value === "High"));
+    assert.ok(pulledBacklogValues.body.data.backlog_mapping_values_json.user_directory.some((user) => user.name === "Tanaka"));
+    assert.ok(pulledBacklogValues.body.data.backlog_mapping_values_json.component_directory.some((item) => item.value === "Frontend"));
     assert.deepEqual(pulledBacklogValues.body.data.project.cis_mapping_values_json.user, ["seed-user@example.test"]);
 
     const pulledJiraValues = await requestJson(server, {
@@ -465,6 +494,11 @@ async function verifyPhase07() {
     assert.ok(pulledJiraValues.body.data.jira_mapping_values_json.component.includes("Frontend"));
     assert.ok(pulledJiraValues.body.data.jira_mapping_values_json.user.includes("fake-jira-user@example.test"));
     assert.ok(!pulledJiraValues.body.data.jira_mapping_values_json.user.includes("fake-jira-account-1"));
+    assert.ok(pulledJiraValues.body.data.jira_mapping_values_json.issue_type_directory.some((item) => item.value === "Bug"));
+    assert.ok(pulledJiraValues.body.data.jira_mapping_values_json.status_directory.some((item) => item.value === "To Do"));
+    assert.ok(pulledJiraValues.body.data.jira_mapping_values_json.priority_directory.some((item) => item.value === "High"));
+    assert.ok(pulledJiraValues.body.data.jira_mapping_values_json.user_directory.some((item) => item.value === "fake-jira-user@example.test"));
+    assert.ok(pulledJiraValues.body.data.jira_mapping_values_json.component_directory.some((item) => item.value === "Frontend"));
     assert.deepEqual(pulledJiraValues.body.data.project.cis_mapping_values_json.issue_type, ["bug", "task"]);
     assert.deepEqual(pulledJiraValues.body.data.project.cis_mapping_values_json.user, ["seed-user@example.test"]);
 

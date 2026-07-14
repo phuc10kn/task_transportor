@@ -8,6 +8,13 @@ function parseJson(value, fallback) {
   return JSON.parse(value);
 }
 
+function normalizeLanguage(value, fallback) {
+  const normalized = String(value === null || value === undefined ? "" : value)
+    .trim()
+    .toLowerCase();
+  return normalized || fallback;
+}
+
 function rowToProjectProfile(row) {
   if (!row) {
     return null;
@@ -29,7 +36,8 @@ function rowToProjectProfile(row) {
     cis_mapping_values_json: parseJson(row.cis_mapping_values_json, {}),
     backlog_mapping_values_json: parseJson(row.backlog_mapping_values_json, {}),
     jira_mapping_values_json: parseJson(row.jira_mapping_values_json, {}),
-    translation_glossary_json: parseJson(row.translation_glossary_json, []),
+    source_language: normalizeLanguage(row.source_language, "ja"),
+    target_language: normalizeLanguage(row.target_language, "vi"),
   };
 }
 

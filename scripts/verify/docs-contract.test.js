@@ -571,7 +571,7 @@ test("architecture layer pilot has no violations", () => {
   assert.equal(entity.verdict, "passed");
   assert.equal(relations.verdict, "passed");
   assert.equal(references.verdict, "passed");
-  assert.equal(entity.summary.checked, 42);
+  assert.equal(entity.summary.checked, 43);
 });
 
 test("docs contract context loads registries", () => {

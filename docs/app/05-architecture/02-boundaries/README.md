@@ -40,3 +40,4 @@ Nội dung cleanup cũ không còn là task list sống, nhưng giữ lại các
 - `Sync` được điều phối job/retry/journal, nhưng business outcome vẫn thuộc owner module.
 - `Jira` outbound không được bỏ qua dry-run, readiness gate, stale preview guard và journal.
 - `Translation` được sở hữu prompt/parse/review/audit, nhưng AI transport/client/protocol thuộc `src/infrastructure/ai`.
+- Candidate orchestration gọi `TranslationApi.enqueueIssueTranslations` qua public boundary; Translation chỉ expose queue/review capability, còn `SyncApi` sở hữu translate job, lock, retry và journal execution.

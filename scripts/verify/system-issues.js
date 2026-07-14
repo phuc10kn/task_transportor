@@ -10,6 +10,7 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
+const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
 
@@ -41,7 +42,7 @@ async function main() {
   const config = makeTempConfig("system-issues", {
     ADMIN_EMAIL: "system-issues@example.test",
     ADMIN_PASSWORD: "verify-password",
-    BACKLOG_FAKE_FIXTURE_PATH: path.join(__dirname, "fixtures", "backlog-issue.json"),
+    BACKLOG_FAKE_FIXTURE_PATH: path.join(__dirname, "fixtures", "backlog-issue-filter.json"),
     JIRA_FAKE_MODE: "1",
     JIRA_FAKE_SEED_PATH: path.join(__dirname, "fixtures", "jira-system-issues.json"),
     WORKER_ENABLED: "true",
@@ -64,6 +65,16 @@ async function main() {
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_TOKEN",
       translation_provider: "codex_exec",
+      backlog_mapping_values_json: {
+        status_directory: [
+          { id: 1, name: "Open", display_order: 1 },
+          { id: 2, name: "Closed", display_order: 2 },
+        ],
+        user_directory: [
+          { id: 10, name: "Tanaka" },
+          { id: 11, name: "Suzuki" },
+        ],
+      },
     },
   });
   const secondProject = ProjectsApi.createProject({
@@ -95,6 +106,20 @@ async function main() {
     const token = login.body.data.token;
     const call = (options) => requestJson(server, { token, ...options });
 
+    const legacyFilterOptions = await call({ pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/filter-options` });
+    assert.equal(legacyFilterOptions.status, 200);
+    assert.deepEqual(legacyFilterOptions.body.data.statuses, []);
+    assert.deepEqual(legacyFilterOptions.body.data.assignees, []);
+    const refreshedLegacyFilters = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${secondProject.id}/backlog/mapping-values/pull`,
+    });
+    assert.equal(refreshedLegacyFilters.status, 200);
+    const refreshedFilterOptions = await call({ pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/filter-options` });
+    assert.equal(refreshedFilterOptions.status, 200);
+    assert.deepEqual(refreshedFilterOptions.body.data.statuses.map((status) => status.id).sort(), [1, 2]);
+    assert.deepEqual(refreshedFilterOptions.body.data.assignees.map((assignee) => assignee.id).sort(), [10, 11]);
+
     const readiness = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/action-readiness` });
     assert.equal(readiness.status, 200);
     assert.equal(readiness.body.data.actions.pull_one.execution_mode, "inline");
@@ -109,14 +134,35 @@ async function main() {
     assert.equal(workerOff.body.data.actions.sync_to_cis.consumer_ready, false);
     config.worker.enabled = true;
 
-    const beforeBrowse = ["issues", "issue_revisions", "sync_jobs", "sync_journal", "webhook_events", "pull_state"]
+    const beforeReadOnlyBacklogCalls = ["issues", "issue_revisions", "sync_jobs", "sync_journal", "webhook_events", "pull_state"]
       .map((table) => [table, tableCount(config, table)]);
+    const filterOptions = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/filter-options` });
+    assert.equal(filterOptions.status, 200);
+    assert.deepEqual(filterOptions.body.data.statuses.map((status) => status.name), ["Open", "Closed"]);
+    assert.deepEqual(filterOptions.body.data.assignees.map((assignee) => assignee.name), ["Suzuki", "Tanaka"]);
+    for (const [table, count] of beforeReadOnlyBacklogCalls) assert.equal(tableCount(config, table), count, `filter options mutated ${table}`);
+
     const browse = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-06-29&created_to=2026-06-29&limit=2` });
     assert.equal(browse.status, 200);
     assert.deepEqual(browse.body.data.candidates.map((item) => item.backlog_issue_key), ["WEC-1", "WEC-2"]);
-    for (const [table, count] of beforeBrowse) assert.equal(tableCount(config, table), count, `browse mutated ${table}`);
+    assert.deepEqual(browse.body.data.candidates[0].assignee, { id: 10, name: "Tanaka" });
+    for (const [table, count] of beforeReadOnlyBacklogCalls) assert.equal(tableCount(config, table), count, `browse mutated ${table}`);
+    const notClosedBrowse = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-06-29&created_to=2026-06-29&limit=2&not_closed=true` });
+    assert.equal(notClosedBrowse.status, 200);
+    assert.deepEqual(notClosedBrowse.body.data.candidates.map((item) => item.backlog_issue_key), ["WEC-1", "WEC-2"]);
+    assert.equal(notClosedBrowse.body.data.filters.not_closed, true);
+    const filteredBrowse = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-06-30&created_to=2026-06-30&limit=2&status_id=2&assignee_id=11` });
+    assert.equal(filteredBrowse.status, 200);
+    assert.deepEqual(filteredBrowse.body.data.candidates.map((item) => item.backlog_issue_key), ["WEC-3"]);
+    assert.deepEqual(filteredBrowse.body.data.filters.status_ids, [2]);
+    assert.deepEqual(filteredBrowse.body.data.filters.assignee_ids, [11]);
     const invalidDate = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-02-31&created_to=2026-03-01&limit=2` });
     assert.equal(invalidDate.status, 422);
+    const invalidAssignee = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-06-29&created_to=2026-06-29&limit=2&assignee_id=zero` });
+    assert.equal(invalidAssignee.status, 422);
+    const combinedStatusFilter = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-06-29&created_to=2026-06-29&limit=2&not_closed=true&status_id=1` });
+    assert.equal(combinedStatusFilter.status, 200);
+    assert.deepEqual(combinedStatusFilter.body.data.candidates.map((item) => item.backlog_issue_key), ["WEC-1", "WEC-2"]);
 
     const issueCountBeforeRollback = tableCount(config, "issues");
     assert.throws(() => CisApi.createManualIssue({ config, input: { project_id: project.id, summary: "Rollback create" }, executedBy: 999999 }));
@@ -173,6 +219,100 @@ async function main() {
     const worked = await SyncApi.runWorkerOnce({ config, workerId: "system-issues-worker" });
     assert.equal(worked.job.status, "success");
     assert.ok(CisApi.getIssueByBacklogKey({ config, projectId: project.id, backlogIssueKey: "WEC-2" }));
+
+    const invalidTranslationFlag = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-3/sync-to-cis`,
+      body: { with_translation: "true" },
+    });
+    assert.equal(invalidTranslationFlag.status, 422);
+    assert.equal(invalidTranslationFlag.body.error.code, "VALIDATION_ERROR");
+
+    const legacyBeforePromotion = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-3/sync-to-cis`,
+    });
+    assert.equal(legacyBeforePromotion.status, 202);
+    const promoted = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-3/sync-to-cis`,
+      body: { with_translation: true },
+    });
+    assert.equal(promoted.status, 202);
+    assert.equal(promoted.body.data.job.id, legacyBeforePromotion.body.data.job.id);
+    assert.equal(promoted.body.data.promoted, true);
+    assert.equal(promoted.body.data.job.payload_json.with_translation, true);
+
+    const translatedParent = await SyncApi.runWorkerOnce({ config, workerId: "system-issues-translation-parent" });
+    assert.equal(translatedParent.job.id, promoted.body.data.job.id);
+    assert.equal(translatedParent.job.status, "success");
+    const translatedIssue = CisApi.getIssueByBacklogKey({ config, projectId: project.id, backlogIssueKey: "WEC-3" });
+    assert.ok(translatedIssue);
+    const translationDb = createConnection({ config });
+    const translationItems = translationDb
+      .prepare("SELECT * FROM translation_queue WHERE issue_id = ? ORDER BY target_field")
+      .all(translatedIssue.id);
+    assert.deepEqual(translationItems.map((item) => item.target_field), ["description", "summary"]);
+    assert.equal(translationDb.prepare(
+      "SELECT COUNT(*) AS total FROM sync_jobs WHERE job_type = 'translate' AND status IN ('pending', 'running') AND json_extract(payload_json, '$.parent_sync_job_id') = ?"
+    ).get(promoted.body.data.job.id).total, 2);
+    assert.equal(translationDb.prepare(
+      "SELECT COUNT(*) AS total FROM sync_jobs WHERE job_type = 'translate' AND status IN ('pending', 'running') AND json_extract(payload_json, '$.translation_queue_id') IN (?, ?)"
+    ).get(translationItems[0].id, translationItems[1].id).total, 2);
+    translationDb.close();
+
+    const runningLegacy = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/WEC-2/sync-to-cis`,
+    });
+    const runningJob = createSyncJobRepository({ config }).lockById({
+      jobId: runningLegacy.body.data.job.id,
+      workerId: "system-issues-running",
+    });
+    assert.equal(runningJob.status, "running");
+    const runningConflict = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/WEC-2/sync-to-cis`,
+      body: { with_translation: true },
+    });
+    assert.equal(runningConflict.status, 409);
+    assert.equal(runningConflict.body.error.code, "BACKLOG_SYNC_RUNNING_WITHOUT_TRANSLATION");
+    assert.equal(runningConflict.body.error.details.job_id, runningJob.id);
+    assert.equal(runningConflict.body.error.details.status, "running");
+    createSyncJobRepository({ config }).markFailed(runningJob.id, new Error("verification cleanup"), { retryable: false });
+
+    const transientRequest = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/WEC-2/sync-to-cis`,
+      body: { with_translation: true },
+    });
+    const transientJobId = transientRequest.body.data.job.id;
+    const originalTranslateEnqueue = SyncApi.enqueueTranslateJobIfNoneActive;
+    SyncApi.enqueueTranslateJobIfNoneActive = () => {
+      const error = new Error("database is busy");
+      error.code = "SQLITE_BUSY";
+      throw error;
+    };
+    try {
+      const transientRun = await SyncApi.runJobNow({ config, jobId: transientJobId, workerId: "system-issues-transient" });
+      assert.equal(transientRun.job.status, "pending");
+      assert.equal(transientRun.error.code, "SQLITE_BUSY");
+      assert.equal(transientRun.error.retryable, true);
+    } finally {
+      SyncApi.enqueueTranslateJobIfNoneActive = originalTranslateEnqueue;
+    }
+    const transientDb = createConnection({ config });
+    transientDb.prepare("UPDATE sync_jobs SET run_after = datetime('now') WHERE id = ?").run(transientJobId);
+    transientDb.close();
+    const recoveredTransient = await SyncApi.runJobNow({ config, jobId: transientJobId, workerId: "system-issues-transient-retry" });
+    assert.equal(recoveredTransient.job.status, "success");
+
+    const duplicateTranslation = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-3/sync-to-cis`,
+      body: { with_translation: true },
+    });
+    assert.equal(duplicateTranslation.body.data.outcome, "already_in_cis");
 
     const guardedIssue = CisApi.createManualIssue({ config, input: { project_id: project.id, summary: "Push guard" } }).issue;
     const pushInput = {

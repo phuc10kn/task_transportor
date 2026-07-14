@@ -20,6 +20,11 @@ function replaceMappingValues(existing, pulled) {
       continue;
     }
 
+    if (mappingType.endsWith("_directory")) {
+      updated[mappingType] = Array.isArray(values) ? values : [];
+      continue;
+    }
+
     if (mappingType.endsWith("_labels")) {
       updated[mappingType] = values && typeof values === "object" && !Array.isArray(values)
         ? { ...values }

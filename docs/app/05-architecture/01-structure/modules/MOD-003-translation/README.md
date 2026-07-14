@@ -18,6 +18,7 @@ theory_basis:
 relations:
   owns:
     - SO-002
+    - SO-007
 ---
 # MOD-003 - Translation
 
@@ -32,6 +33,7 @@ Module review-oriented cho dịch thuật. Nó sở hữu translation queue life
 ## Responsibility
 
 - Tạo và quản lý `translation_queue`.
+- Sở hữu glossary concept với canonical/variant terms theo Project và cung cấp runtime lookup.
 - Thu thập context dịch và gọi adapter trung tính.
 - Quản lý approve, reject, retranslate, manual edit.
 - Đồng bộ translation review state về issue summary.
@@ -58,6 +60,7 @@ Module review-oriented cho dịch thuật. Nó sở hữu translation queue life
 - Context/evidence: [MOD-006-sync](../../modules/MOD-006-sync/README.md) - thực thi translate job
 - Canonical relation: [MB-004-translation-ai-separation](../../../02-boundaries/module-boundaries/MB-004-translation-ai-separation/README.md) - boundary riêng cho AI
 - Canonical relation: [SO-002-translation-review-state](../../../04-state/state-owners/SO-002-translation-review-state/README.md) - state owner tương ứng
+- Canonical relation: [SO-007-translation-glossary-state](../../../04-state/state-owners/SO-007-translation-glossary-state/README.md) - glossary state owner tương ứng
 
 
 ## Relations
@@ -70,6 +73,8 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 - `src/modules/Translation/application/requestIssueTranslations.js`
 - `src/modules/Translation/application/approveTranslation.js`
 - `src/modules/Translation/infrastructure/TranslationAdapter.js`
+- `src/modules/Translation/infrastructure/TranslationGlossaryRepository.js`
+- `src/modules/Translation/http/routes.js`
 
 ## Validation Notes
 

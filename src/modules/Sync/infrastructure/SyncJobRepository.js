@@ -199,7 +199,85 @@ function createSyncJobRepository({ config }) {
              AND UPPER(TRIM(json_extract(payload_json, '$.backlog_issue_key'))) = ?
            ORDER BY created_at ASC LIMIT 1`
         ).get(input.project_id, key);
-        return existing ? rowToJob(existing) : insertJobInDb(db, input);
+
+        if (!existing) {
+          return {
+            job: insertJobInDb(db, input),
+            reused: false,
+            promoted: false,
+            running_without_translation: false,
+          };
+        }
+
+        const currentPayload = parseJson(existing.payload_json, {});
+        const wantsTranslation = input.payload_json && input.payload_json.with_translation === true;
+        const hasTranslation = currentPayload.with_translation === true;
+
+        if (wantsTranslation && !hasTranslation && existing.status === "pending") {
+          const promotedPayload = {
+            ...currentPayload,
+            with_translation: true,
+            requested_by: input.payload_json.requested_by || null,
+            request_correlation_id: input.payload_json.request_correlation_id || null,
+          };
+          db.prepare(
+            `UPDATE sync_jobs
+             SET payload_json = ?, updated_at = datetime('now')
+             WHERE id = ? AND status = 'pending'`
+          ).run(stringifyJson(promotedPayload), existing.id);
+          const promotedJob = db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(existing.id);
+          insertJournal(db, jobJournalInput(promotedJob, {
+            action: "manual_pull_translation_promoted",
+            status: "pending",
+            trigger: input.trigger || "manual",
+            message: "Manual pull was promoted to request translation.",
+            details_json: {
+              with_translation: true,
+              requested_by: promotedPayload.requested_by,
+              request_correlation_id: promotedPayload.request_correlation_id,
+            },
+            executed_by: input.executed_by || null,
+            correlation_id: input.correlation_id || null,
+          }));
+          return {
+            job: rowToJob(promotedJob),
+            reused: true,
+            promoted: true,
+            running_without_translation: false,
+          };
+        }
+
+        return {
+          job: rowToJob(existing),
+          reused: true,
+          promoted: false,
+          running_without_translation: Boolean(wantsTranslation && !hasTranslation && existing.status === "running"),
+        };
+      }));
+    },
+
+    enqueueTranslateJobIfNoneActive(input) {
+      return withDb((db) => runImmediateTransaction(db, () => {
+        const queueId = Number(input.payload_json && input.payload_json.translation_queue_id);
+        const existing = db.prepare(
+          `SELECT * FROM sync_jobs
+           WHERE job_type = 'translate'
+             AND status IN ('pending', 'running')
+             AND json_extract(payload_json, '$.translation_queue_id') = ?
+           ORDER BY created_at ASC LIMIT 1`
+        ).get(queueId);
+
+        if (existing) {
+          return {
+            job: rowToJob(existing),
+            reused: true,
+          };
+        }
+
+        return {
+          job: insertJobInDb(db, input),
+          reused: false,
+        };
       }));
     },
 

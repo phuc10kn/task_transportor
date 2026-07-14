@@ -27,7 +27,6 @@ const PROJECT_COLUMNS = [
   "translation_command_profile",
   "source_language",
   "target_language",
-  "translation_glossary_json",
   "auto_translate",
   "require_translation_review",
   "require_mapping_approval",
@@ -73,10 +72,6 @@ function serializeValue(column, value) {
     return JSON.stringify(value || {});
   }
 
-  if (column === "translation_glossary_json") {
-    return JSON.stringify(value || PROJECT_DEFAULTS.translation_glossary_json);
-  }
-
   return value;
 }
 
@@ -109,7 +104,6 @@ function rowToProject(row) {
     cis_mapping_values_json: JSON.parse(row.cis_mapping_values_json || "{}"),
     backlog_mapping_values_json: JSON.parse(row.backlog_mapping_values_json || "{}"),
     jira_mapping_values_json: JSON.parse(row.jira_mapping_values_json || "{}"),
-    translation_glossary_json: JSON.parse(row.translation_glossary_json || "[]"),
   };
 }
 

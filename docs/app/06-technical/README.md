@@ -39,7 +39,7 @@ Translation AI config:
 
 Persistence/schema:
 
-- Bảng lõi gồm `admin_users`, `projects`, `issues`, `issue_revisions`, `issue_comments`, `issue_attachments`, `issue_worklogs`, `translation_queue`, `mapping_rules`, `anomaly_log`, `sync_jobs`, `sync_journal`, `pull_state`, `webhook_events`.
+- Bảng lõi gồm `admin_users`, `projects`, `issues`, `issue_revisions`, `issue_comments`, `issue_attachments`, `issue_worklogs`, `translation_queue`, `translation_glossary_concepts`, `translation_glossary_terms`, `mapping_rules`, `anomaly_log`, `sync_jobs`, `sync_journal`, `pull_state`, `webhook_events`.
 - `issues.fields_json` là field-level source tracking với các nhánh `backlog`, `cis`, `jira`.
 - Nhánh `fields_json.<field>.cis` là canonical branch vận hành cho Issue Editor và Jira outbound.
 - `webhook_events` đã có schema nhưng webhook route chưa là đường Lite chính.
@@ -51,7 +51,8 @@ API contract:
 - Auth dùng Bearer JWT với `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`.
 - Endpoint group hiện đang mount: dashboard, projects, issues/CIS, Backlog pull/attachments, sync jobs/journal, translation queue, mapping, anomaly, Jira dry-run/sync.
 - CIS API có `POST /api/v1/issues` và `POST /api/v1/issues/:issueId/external-identities`.
-- Backlog API có action-readiness, candidate GET theo created range và per-row `sync-to-cis`; browse path không ghi database.
+- Candidate sync dùng `POST /api/v1/projects/:projectId/backlog/issues/:backlogIssueKey/sync-to-cis`; body `{ "with_translation": true }` giữ parent `manual_pull` payload, còn active translate job được guard atomically theo `translation_queue_id`. Parent/child trace dùng `requested_by`, `request_correlation_id` và `parent_sync_job_id`; SQLite busy/locked và Sync transient giữ `retryable` để parent retry.
+- Pull mapping values của Backlog/Jira giữ contract text cũ (`issue_type`, `status`, `priority`, `user`, `component`, `user_labels`) và bổ sung sibling `*_directory` `{ id, value, name, email?, display_order? }`; Jira user tách `accountId` ở `id` khỏi email/text legacy ở `value`. Directory không được copy sang CIS mapping values. Mappings là touchpoint duy nhất gọi pull/refresh snapshot. Backlog API CIS có action-readiness, `filter-options` và candidate GET theo created range cùng Status/`not_closed`/người được gán tùy chọn; `filter-options` chỉ đọc `status_directory`/`user_directory` đã lưu trong cấu hình project, nên mở màn không gọi Backlog. Candidate chỉ chạy sau `Find issues` và dùng ID snapshot để query Backlog. Khi cùng có `status_id` và `not_closed`, module lấy giao hai tập Status. Tất cả route public đều scope theo project và browse path không ghi database. Chỉ `BacklogClient` gọi endpoint `/api/v2/*` của Backlog.
 - Webhook endpoint không là contract Lite hiện tại khi code chưa mount.
 
 Technical guardrail:
@@ -59,6 +60,14 @@ Technical guardrail:
 - Backlog manual/project pull đi qua job/audit path.
 - Pull one issue được phép run ngay để Admin UI nhận kết quả.
 - Candidate Sync to CIS chỉ enqueue khi project/manual-pull/sync/worker gate đều sẵn sàng và atomically reuse active manual-pull job theo project + canonical Backlog key.
+- Candidate Sync + Translate chỉ tạo queue current-source `summary`/`description`; worker `manual_pull` enqueue child `translate`, không gọi AI trong HTTP. Worker và các manual Translation entry point dùng cùng active-job gate theo `translation_queue_id`.
+
+### Translation Glossary
+
+- Migration `015_translation_glossary_tables.sql` tạo hai bảng normalized, backfill `projects.translation_glossary_json` theo Project rồi loại bỏ cột legacy; migration `016_translation_glossary_term_variants.sql` rebuild terms atomic để thêm generated `term_match_key` và `is_canonical`.
+- `translation_glossary_concepts` có unique `(project_id, group_key, concept_key)`; `translation_glossary_terms` cho phép variants với unique `(glossary_concept_id, language_code, term_match_key)`, partial unique canonical/language, collision trigger theo Project/language và cascade theo concept.
+- API project-scoped: `GET/POST /api/v1/projects/:projectId/translation-glossary`, `PATCH/DELETE /api/v1/projects/:projectId/translation-glossary/concepts/:conceptId`; POST/PATCH nhận full aggregate, language lowercase, mỗi language đúng một canonical, normalized duplicate là `422`, race conflict là `409`; `term_match_key` chỉ là field nội bộ.
+- Runtime chỉ materialize concept đủ source/target pair tại execution time; preprocessing quét `source_text`, chọn span không chồng lấn trên source variants, chỉ đưa target canonical xuất hiện vào context và giới hạn 40 entry; không có JSON fallback hoặc dual-write.
 - Manual create/link dùng `BEGIN IMMEDIATE` và ghi owner state + journal bằng cùng SQLite connection.
 - Jira outbound phải đi qua dry-run trước sync thật.
 - Sync thật bị chặn bởi missing mapping, blocking anomaly, Jira config lỗi, sync state không hợp lệ và dry-run stale.

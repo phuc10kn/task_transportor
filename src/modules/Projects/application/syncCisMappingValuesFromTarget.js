@@ -23,7 +23,7 @@ function normalizeMappingValues(pulled) {
   const normalized = {};
 
   for (const [mappingType, values] of Object.entries(pulled || {})) {
-    if (mappingType === "cis_user_emails") {
+    if (mappingType === "cis_user_emails" || mappingType.endsWith("_directory")) {
       continue;
     }
 
@@ -46,13 +46,13 @@ function sameValues(left, right) {
 
 function hasMappingValues(mappingValues) {
   return Object.entries(mappingValues || {})
-    .filter(([mappingType]) => !mappingType.endsWith("_labels"))
+    .filter(([mappingType]) => !mappingType.endsWith("_labels") && !mappingType.endsWith("_directory"))
     .some(([, values]) => uniqueValues(values).length > 0);
 }
 
 function replacementWarnings(existingCisValues, nextCisValues) {
   return Object.entries(nextCisValues)
-    .filter(([mappingType]) => !mappingType.endsWith("_labels"))
+    .filter(([mappingType]) => !mappingType.endsWith("_labels") && !mappingType.endsWith("_directory"))
     .filter(([mappingType, values]) => {
       const current = uniqueValues(existingCisValues && existingCisValues[mappingType]);
       return current.length > 0 && !sameValues(current, values);
@@ -131,12 +131,14 @@ async function syncCisMappingValuesFromTarget({ config, projectId, targetSystem 
       targetSystem: normalizedTarget,
     });
   const nextValues = normalizeMappingValues(pulled);
+  const directories = Object.fromEntries(Object.entries(pulled || {})
+    .filter(([mappingType]) => mappingType.endsWith("_directory")));
   const warnings = replacementWarnings(project.cis_mapping_values_json || {}, nextValues);
   const updatedProject = updateProject({
     config,
     projectId,
     input: {
-      [systemField]: nextValues,
+      [systemField]: { ...configuredValues, ...nextValues, ...directories },
       cis_mapping_values_json: nextValues,
     },
   });

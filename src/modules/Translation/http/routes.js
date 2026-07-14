@@ -1,12 +1,23 @@
 const express = require("express");
 
 const TranslationIssueController = require("./controllers/TranslationIssueController");
+const TranslationGlossaryController = require("./controllers/TranslationGlossaryController");
 const TranslationQueueController = require("./controllers/TranslationQueueController");
 
 function createTranslationRouter({ authenticate }) {
   const router = express.Router();
 
   router.use(authenticate);
+  router.get("/projects/:projectId/translation-glossary", TranslationGlossaryController.list);
+  router.post("/projects/:projectId/translation-glossary/concepts", TranslationGlossaryController.create);
+  router.patch(
+    "/projects/:projectId/translation-glossary/concepts/:conceptId",
+    TranslationGlossaryController.update
+  );
+  router.delete(
+    "/projects/:projectId/translation-glossary/concepts/:conceptId",
+    TranslationGlossaryController.remove
+  );
   router.post("/translations/issues/:issueId/translate", TranslationIssueController.translateIssue);
   router.post(
     "/translations/issues/:issueId/items/:queueId/translate",

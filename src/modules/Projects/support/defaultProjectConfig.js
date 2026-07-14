@@ -15,7 +15,6 @@ const PROJECT_DEFAULTS = {
   translation_model: DEFAULT_TRANSLATION_AI_MODEL,
   source_language: "ja",
   target_language: "vi",
-  translation_glossary_json: [],
   auto_translate: false,
   require_translation_review: false,
   require_mapping_approval: true,

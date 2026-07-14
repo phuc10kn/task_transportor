@@ -30,6 +30,7 @@ Module giữ project profile và integration config. Nó là nơi user bật t�
 - CRUD project.
 - Enable hoặc disable sync.
 - Giữ config tích hợp và reference env keys.
+- Giữ Project identity/language config; không sở hữu translation glossary state.
 - Trigger sync mapping values cho project.
 
 ## Key properties
@@ -46,6 +47,7 @@ Module giữ project profile và integration config. Nó là nơi user bật t�
 - Project config không nằm rải rác trong module integration.
 - Enable/disable sync phải do owner `Projects` quyết định.
 - Env binding là part của project integration state, không phải concern của Dashboard.
+- Glossary normalized thuộc `Translation`; Project Config không nhận hoặc serialize glossary legacy.
 
 ## Related Entities
 

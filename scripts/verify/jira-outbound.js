@@ -100,15 +100,15 @@ function withMockJiraServer(callback) {
     const pathname = new URL(req.url, "http://127.0.0.1").pathname;
 
     if (pathname === "/rest/api/3/project/DMP/statuses") {
-      send([{ name: "Task", statuses: [{ name: "To Do" }] }]);
+      send([{ id: "10001", name: "Task", statuses: [{ id: "3", name: "To Do" }] }]);
       return;
     }
     if (pathname === "/rest/api/3/priority") {
-      send([{ name: "Medium" }]);
+      send([{ id: "10002", name: "Medium" }]);
       return;
     }
     if (pathname === "/rest/api/3/project/DMP/components") {
-      send([]);
+      send([{ id: "10003", name: "Frontend" }]);
       return;
     }
     if (pathname === "/rest/api/3/user/assignable/search") {
@@ -190,6 +190,19 @@ async function verifyJiraMappingUserPullKeepsHiddenUsers() {
     assert.equal(values.user_labels["multi-project-account-id"], "Hidden Multi User");
     assert.equal(values.user_labels["role-account-id"], "Role User");
     assert.deepEqual(values.cis_user_emails, ["email-user@example.test"]);
+    assert.deepEqual(values.issue_type_directory, [{ id: "10001", value: "Task", name: "Task" }]);
+    assert.deepEqual(values.status_directory, [{ id: "3", value: "To Do", name: "To Do" }]);
+    assert.deepEqual(values.priority_directory, [{ id: "10002", value: "Medium", name: "Medium" }]);
+    assert.deepEqual(values.component_directory, [{ id: "10003", value: "Frontend", name: "Frontend" }]);
+    assert.deepEqual(values.user_directory.find((user) => user.id === "email-account-id"), {
+      id: "email-account-id",
+      value: "email-user@example.test",
+      name: "Email User",
+      email: "email-user@example.test",
+    });
+    assert.ok(values.user_directory.some((user) => user.id === "multi-project-account-id"));
+    assert.ok(values.user_directory.some((user) => user.id === "role-account-id"));
+    assert.ok(!values.user_directory.some((user) => user.id === "slack-account-id"));
   });
 }
 

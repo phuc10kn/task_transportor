@@ -9,13 +9,24 @@
     backlogCreatedFrom: "",
     backlogCreatedTo: "",
     backlogLimit: 20,
+    backlogNotClosed: false,
+    backlogStatusIds: [],
+    backlogAssigneeIds: [],
+    backlogFilterOptions: null,
+    backlogFilterOptionsProjectId: "",
+    backlogFilterOptionsError: "",
     backlogCandidates: [],
     backlogCandidateMeta: null,
     backlogActions: null,
     backlogCandidateJobs: {},
+    backlogCandidateActions: {},
     backlogPollTimers: {},
     selectedJobsProjectId: "",
     selectedJournalProjectId: "",
+    selectedGlossaryProjectId: "",
+    glossaryGroup: "",
+    glossaryQuery: "",
+    glossaryModal: null,
     selectedMappingProjectId: "",
     issueEditorDirty: false,
     mappingSourceSystem: "backlog",
@@ -43,6 +54,7 @@
     ["issues", "CIS Issues"],
     ["backlog_issues", "Backlog Issues"],
     ["translations", "Translations"],
+    ["translation_glossary", "Translation Glossary"],
     ["mappings", "Mappings"],
     ["anomalies", "Anomalies"],
     ["jobs", "Sync Jobs"],
@@ -330,6 +342,7 @@
       if (state.view === "backlog_issues") await renderBacklogIssues();
       if (state.view === "issue_editor") await renderIssueEditor();
       if (state.view === "translations") await renderTranslations();
+      if (state.view === "translation_glossary") await renderTranslationGlossary();
       if (state.view === "mappings") await renderMappings();
       if (state.view === "anomalies") await renderAnomalies();
       if (state.view === "jobs") await renderJobs();
@@ -631,10 +644,20 @@
       created_to: state.backlogCreatedTo,
       limit: String(state.backlogLimit),
     });
+    if (state.backlogNotClosed) qs.set("not_closed", "true");
+    state.backlogStatusIds.forEach((id) => qs.append("status_id", id));
+    state.backlogAssigneeIds.forEach((id) => qs.append("assignee_id", id));
     const result = await api(`/api/v1/projects/${state.selectedBacklogProjectId}/backlog/issues/candidates?${qs}`);
     state.backlogCandidates = result.candidates || [];
     state.backlogCandidateMeta = result.meta || null;
     state.backlogActions = result.actions || state.backlogActions;
+  }
+
+  async function loadBacklogFilterOptions(projectId) {
+    const result = await api(`/api/v1/projects/${projectId}/backlog/issues/filter-options`);
+    state.backlogFilterOptions = result;
+    state.backlogFilterOptionsProjectId = String(projectId);
+    state.backlogFilterOptionsError = "";
   }
 
   function pollBacklogCandidate(key, jobId, startedAt = Date.now()) {
@@ -647,11 +670,20 @@
         state.backlogCandidateJobs[key] = job;
         if (["success", "failed", "cancelled"].includes(job.status)) {
           if (job.status === "success") {
+            const action = state.backlogCandidateActions[key];
             await loadBacklogCandidates();
             delete state.backlogCandidateJobs[key];
+            delete state.backlogCandidateActions[key];
+            if (action === "sync_translate") {
+              setToast("CIS sync completed. Review Translation Queue for available drafts.");
+            } else if (action === "sync_without_translation") {
+              setToast("CIS sync completed without translation. Use Issue Editor > Translate.", false, "warning");
+            }
           } else {
             delete state.backlogCandidateJobs[key];
-            setToast(`Sync to CIS ${job.status}.`, true);
+            const action = state.backlogCandidateActions[key];
+            delete state.backlogCandidateActions[key];
+            setToast(`${action === "sync_translate" ? "Sync to CIS + Translate" : "Sync to CIS"} ${job.status}.`, true);
           }
           await renderBacklogIssues();
           return;
@@ -682,11 +714,24 @@
     state.backlogActions = selected
       ? (await api(`/api/v1/projects/${selected.id}/backlog/issues/action-readiness`)).actions
       : null;
+    if (selected && state.backlogFilterOptionsProjectId !== String(selected.id)) {
+      try {
+        await loadBacklogFilterOptions(selected.id);
+      } catch (error) {
+        state.backlogFilterOptions = null;
+        state.backlogFilterOptionsProjectId = String(selected.id);
+        state.backlogFilterOptionsError = error.message;
+      }
+    }
     const actions = state.backlogActions || {};
     const pullOne = actions.pull_one || {};
     const pullProject = actions.pull_project || {};
     const syncAction = actions.sync_to_cis || {};
     const meta = state.backlogCandidateMeta;
+    const filterOptions = state.backlogFilterOptions || { statuses: [], assignees: [] };
+    const selectedStatusIds = new Set(state.backlogStatusIds.map(String));
+    const selectedAssigneeIds = new Set(state.backlogAssigneeIds.map(String));
+    const filterOptionsDisabled = state.backlogFilterOptionsError ? "disabled" : "";
 
     content.innerHTML = `
       <section class="panel">
@@ -696,9 +741,13 @@
             <label>Project *<select name="project_id" required>${projects.map((project) => `<option value="${project.id}" ${String(project.id) === String(state.selectedBacklogProjectId) ? "selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}</select></label>
             <label>Created from *<input name="created_from" type="date" required value="${escapeHtml(state.backlogCreatedFrom)}"></label>
             <label>Created to *<input name="created_to" type="date" required value="${escapeHtml(state.backlogCreatedTo)}"></label>
+            <label class="checkbox-field">Not closed<input name="not_closed" type="checkbox" ${state.backlogNotClosed ? "checked" : ""}><span class="field-help">Uses saved Status; excludes Closed.</span></label>
+            <label>Status<select name="status_id" multiple size="4" ${filterOptionsDisabled}>${filterOptions.statuses.map((status) => `<option value="${escapeHtml(status.id)}" ${selectedStatusIds.has(String(status.id)) ? "selected" : ""}>${escapeHtml(status.name)}</option>`).join("")}</select><span class="field-help">No selection = all statuses${filterOptions.statuses.length ? "" : ". Pull Backlog fields in Mappings."}</span></label>
+            <label>Assignee<select name="assignee_id" multiple size="4" ${filterOptionsDisabled}>${filterOptions.assignees.map((assignee) => `<option value="${escapeHtml(assignee.id)}" ${selectedAssigneeIds.has(String(assignee.id)) ? "selected" : ""}>${escapeHtml(assignee.name)}</option>`).join("")}</select><span class="field-help">No selection = all assignees${filterOptions.assignees.length ? "" : ". Pull Backlog fields in Mappings."}</span></label>
             <label>Display *<input name="limit" type="number" min="1" max="100" required value="${escapeHtml(state.backlogLimit)}"></label>
             <button type="submit" ${selected ? "" : "disabled"}>Find issues</button>
           </form>
+          ${state.backlogFilterOptionsError ? `<p class="muted">Status and assignee filters are unavailable: ${escapeHtml(state.backlogFilterOptionsError)}.</p>` : ""}
           ${selected ? `
             <section class="action-panel">
               <div class="action-panel-header"><div><h3>Backlog → CIS</h3><p class="muted">${escapeHtml(pullProject.execution_mode || "disabled")} · ${escapeHtml((pullProject.disabled_reasons || []).join(", ") || "ready")}</p></div></div>
@@ -710,15 +759,20 @@
             </section>` : ""}
           ${meta ? `<p class="muted">Scanned ${meta.source_rows_scanned}; excluded ${meta.excluded_existing_cis_count}; showing ${meta.returned_count}/${meta.requested_limit}. Stop: ${escapeHtml(meta.stop_reason)}${meta.provider_error_code ? ` (${escapeHtml(meta.provider_error_code)})` : ""}.</p>` : ""}
         </div>
-        ${table(["Backlog", "Summary", "Status", "Created", "Updated", ""], state.backlogCandidates.map((candidate) => {
+        ${table(["Backlog", "Summary", "Status", "Assignee", "Created", "Updated", ""], state.backlogCandidates.map((candidate) => {
           const job = state.backlogCandidateJobs[candidate.backlog_issue_key];
+          const jobLabel = job ? escapeHtml(job.status) : "";
           return `<tr>
             <td>${escapeHtml(candidate.backlog_issue_key)}</td>
             <td>${escapeHtml(candidate.summary)}</td>
             <td>${badge(candidate.status)}</td>
+            <td>${escapeHtml(candidate.assignee && candidate.assignee.name || "Unassigned")}</td>
             <td>${displayDate(candidate.created_at_source)}</td>
             <td>${displayDate(candidate.updated_at_source)}</td>
-            <td><button type="button" data-sync-candidate="${escapeHtml(candidate.backlog_issue_key)}" ${!syncAction.enabled || job ? "disabled" : ""}>${job ? escapeHtml(job.status) : "Sync to CIS"}</button></td>
+            <td class="action-stack">
+              <button type="button" data-sync-candidate="${escapeHtml(candidate.backlog_issue_key)}" data-sync-with-translation="0" ${!syncAction.enabled || job ? "disabled" : ""}>${job ? jobLabel : "Sync to CIS"}</button>
+              <button type="button" data-sync-candidate="${escapeHtml(candidate.backlog_issue_key)}" data-sync-with-translation="1" ${!syncAction.enabled || job ? "disabled" : ""}>${job ? jobLabel : "Sync to CIS + Translate"}</button>
+            </td>
           </tr>`;
         }), "No candidates")}
       </section>`;
@@ -728,6 +782,12 @@
       state.selectedBacklogProjectId = form.project_id.value;
       state.backlogCandidates = [];
       state.backlogCandidateMeta = null;
+      state.backlogNotClosed = false;
+      state.backlogStatusIds = [];
+      state.backlogAssigneeIds = [];
+      state.backlogFilterOptions = null;
+      state.backlogFilterOptionsProjectId = "";
+      state.backlogFilterOptionsError = "";
       await renderBacklogIssues();
     });
     form.addEventListener("submit", async (event) => {
@@ -736,6 +796,9 @@
       state.backlogCreatedFrom = form.created_from.value;
       state.backlogCreatedTo = form.created_to.value;
       state.backlogLimit = Number(form.limit.value);
+      state.backlogNotClosed = form.not_closed.checked;
+      state.backlogStatusIds = [...form.status_id.selectedOptions].map((option) => option.value);
+      state.backlogAssigneeIds = [...form.assignee_id.selectedOptions].map((option) => option.value);
       try { await loadBacklogCandidates(); await renderBacklogIssues(); }
       catch (error) { setToast(error.message, true); }
     });
@@ -755,18 +818,36 @@
     });
     content.querySelectorAll("[data-sync-candidate]").forEach((button) => button.addEventListener("click", async () => {
       const key = button.dataset.syncCandidate;
+      const withTranslation = button.dataset.syncWithTranslation === "1";
       button.disabled = true;
       try {
-        const result = await api(`/api/v1/projects/${selected.id}/backlog/issues/${encodeURIComponent(key)}/sync-to-cis`, { method: "POST" });
+        const result = await api(`/api/v1/projects/${selected.id}/backlog/issues/${encodeURIComponent(key)}/sync-to-cis`, {
+          method: "POST",
+          ...(withTranslation ? { body: { with_translation: true } } : {}),
+        });
         if (result.outcome === "already_in_cis") {
           await loadBacklogCandidates();
           await renderBacklogIssues();
           return;
         }
+        state.backlogCandidateActions[key] = withTranslation ? "sync_translate" : "sync";
         state.backlogCandidateJobs[key] = result.job;
         await renderBacklogIssues();
         pollBacklogCandidate(key, result.job.id);
-      } catch (error) { button.disabled = false; setToast(error.message, true); }
+      } catch (error) {
+        if (error.code === "BACKLOG_SYNC_RUNNING_WITHOUT_TRANSLATION" && error.details && error.details.job_id) {
+          state.backlogCandidateActions[key] = "sync_without_translation";
+          state.backlogCandidateJobs[key] = {
+            id: error.details.job_id,
+            status: error.details.status || "running",
+          };
+          await renderBacklogIssues();
+          pollBacklogCandidate(key, error.details.job_id);
+          return;
+        }
+        button.disabled = false;
+        setToast(error.message, true);
+      }
     }));
   }
 
@@ -1633,7 +1714,9 @@
       try {
         const result = await api(`/api/v1/translations/issues/${issueId}/translate`, { method: "POST" });
         state.issueEditorTranslationPopup = "translate";
-        setToast(`Translation drafts created: ${(result.translated_items || []).length}`);
+        setToast(result.execution_status === "completed"
+          ? "Translation drafts created."
+          : "Translation job queued. Draft will be available after the worker runs.", false, result.execution_status === "completed" ? undefined : "warning");
         state.issueEditorTranslating = "";
         await renderIssueEditor();
       } catch (error) {
@@ -1697,10 +1780,14 @@
       try {
         if (button.dataset.editorSourceStale === "1") {
           const result = await api(`/api/v1/translations/issues/${issueId}/translate`, { method: "POST" });
-          setToast(`Translation drafts created: ${(result.translated_items || []).length}`);
+          setToast(result.execution_status === "completed"
+            ? "Translation drafts created."
+            : "Translation job queued. Draft will be available after the worker runs.", false, result.execution_status === "completed" ? undefined : "warning");
         } else {
-          await api(`/api/v1/translations/issues/${issueId}/items/${button.dataset.editorRetranslate}/translate`, { method: "POST" });
-          setToast("Translation draft created.");
+          const result = await api(`/api/v1/translations/issues/${issueId}/items/${button.dataset.editorRetranslate}/translate`, { method: "POST" });
+          setToast(result.execution_status === "completed"
+            ? "Translation draft created."
+            : "Translation job queued. Draft will be available after the worker runs.", false, result.execution_status === "completed" ? undefined : "warning");
         }
         state.issueEditorTranslating = "";
         await renderIssueEditor();
@@ -1773,10 +1860,192 @@
       renderTranslations();
     }));
     content.querySelectorAll("[data-retranslate]").forEach((button) => button.addEventListener("click", async () => {
-      await api(`/api/v1/translation-queue/${button.dataset.retranslate}/retranslate`, { method: "POST" });
-      setToast("Retranslate job queued.");
+      const result = await api(`/api/v1/translation-queue/${button.dataset.retranslate}/retranslate`, { method: "POST" });
+      setToast(result.reused ? "Retranslate job already active; reused." : "Retranslate job queued.");
       renderTranslations();
     }));
+  }
+
+  function glossaryTermRows(terms, languageIndex) {
+    const rows = terms && terms.length ? terms : [{ language_code: "", term: "", is_canonical: true }];
+    return rows.map((term) => `
+      <div class="glossary-term-row" data-glossary-term-row>
+        <label>Term
+          <input name="term" value="${escapeHtml(term.term || "")}" placeholder="Term or variant" required>
+        </label>
+        <label class="canonical-choice"><input type="radio" name="canonical-${languageIndex}" data-canonical ${term.is_canonical ? "checked" : ""}> Canonical</label>
+        <button class="ghost-button" type="button" data-remove-glossary-term>Remove</button>
+      </div>`).join("");
+  }
+
+  function glossaryLanguageSections(terms) {
+    const grouped = new Map();
+    for (const term of terms && terms.length ? terms : [{ language_code: "ja", term: "", is_canonical: true }, { language_code: "vi", term: "", is_canonical: true }]) {
+      const language = String(term.language_code || "").trim().toLowerCase();
+      if (!grouped.has(language)) grouped.set(language, []);
+      grouped.get(language).push(term);
+    }
+    return [...grouped.entries()].map(([language, languageTerms], languageIndex) => `
+      <fieldset class="glossary-language-section" data-glossary-language>
+        <legend>Language</legend>
+        <div class="glossary-language-header"><input name="language_code" value="${escapeHtml(language)}" placeholder="ja" required><button class="ghost-button" type="button" data-remove-glossary-language>Remove language</button></div>
+        <div data-glossary-term-list>${glossaryTermRows(languageTerms, languageIndex)}</div>
+        <button class="ghost-button" type="button" data-add-glossary-variant>Add variant</button>
+      </fieldset>`).join("");
+  }
+
+  function renderGlossaryModal() {
+    const modal = state.glossaryModal;
+    if (!modal) return;
+    const concept = modal.concept || {};
+    const isView = modal.mode === "view";
+    content.insertAdjacentHTML("beforeend", `
+      <div class="modal-backdrop" data-glossary-close="1">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-label="${modal.mode === "edit" ? "Edit" : "Add"} translation glossary concept">
+          <div class="modal-header">
+            <h2>${modal.mode === "edit" ? "Edit" : "Add"} glossary concept</h2>
+            <button class="ghost-button" type="button" data-glossary-close="1">Close</button>
+          </div>
+          ${isView ? `<div class="glossary-view"><p><strong>Group:</strong> ${escapeHtml(concept.group_key || "default")}</p><p><strong>Concept key:</strong> ${escapeHtml(concept.concept_key || "")}</p><p><strong>Note:</strong> ${escapeHtml(concept.note || "-")}</p><div class="form-block"><h3>Terms</h3>${(concept.terms || []).map((term) => `<p><strong>${escapeHtml(term.language_code)}</strong>: ${escapeHtml(term.term)}${term.is_canonical ? "(Canonical)" : ""}</p>`).join("")}</div></div>` : `
+          <form id="translationGlossaryForm" class="project-form">
+            ${modal.error ? `<p class="form-message" role="alert">${escapeHtml(modal.error)}</p>` : ""}
+            <div class="editor-field-grid"><label>Group<input name="group_key" value="${escapeHtml(concept.group_key || "default")}" required></label><label>Concept key<input name="concept_key" value="${escapeHtml(concept.concept_key || "")}" required></label></div>
+            <label>Note<textarea name="note" placeholder="Optional note">${escapeHtml(concept.note || "")}</textarea></label>
+            <div class="form-block"><div class="form-block-header"><h3>Terms by language</h3><button class="ghost-button" type="button" id="addGlossaryLanguageButton">Add language</button></div><div id="glossaryTermsEditor">${glossaryLanguageSections(concept.terms)}</div></div>
+            <p id="glossaryFormMessage" class="form-message" role="alert"></p>
+            <div class="actions"><button type="submit">Save</button><button class="ghost-button" type="button" data-glossary-close="1">Cancel</button></div>
+          </form>`}
+        </div>
+      </div>`);
+
+    const close = () => {
+      state.glossaryModal = null;
+      renderTranslationGlossary();
+    };
+    content.querySelectorAll("[data-glossary-close]").forEach((button) => button.addEventListener("click", (event) => {
+      if (event.target === event.currentTarget || event.currentTarget.tagName === "BUTTON") close();
+    }));
+    if (isView) return;
+    const termsEditor = $("#glossaryTermsEditor");
+    $("#addGlossaryLanguageButton").addEventListener("click", () => {
+      const languageIndex = termsEditor.querySelectorAll("[data-glossary-language]").length;
+      termsEditor.insertAdjacentHTML("beforeend", glossaryLanguageSections([{ language_code: "", term: "", is_canonical: true }]).replaceAll("canonical-0", `canonical-${languageIndex}`));
+      refreshGlossaryRemoveButtons();
+    });
+    function refreshGlossaryRemoveButtons() {
+      termsEditor.querySelectorAll("[data-add-glossary-variant]").forEach((button) => {
+        button.onclick = () => {
+          const section = button.closest("[data-glossary-language]");
+          const languageIndex = Array.from(termsEditor.querySelectorAll("[data-glossary-language]")).indexOf(section);
+          section.querySelector("[data-glossary-term-list]").insertAdjacentHTML("beforeend", glossaryTermRows([{ term: "", is_canonical: false }], languageIndex));
+          refreshGlossaryRemoveButtons();
+        };
+      });
+      termsEditor.querySelectorAll("[data-remove-glossary-term]").forEach((button) => {
+        button.onclick = () => { button.closest("[data-glossary-term-row]").remove(); refreshGlossaryRemoveButtons(); };
+      });
+      termsEditor.querySelectorAll("[data-remove-glossary-language]").forEach((button) => {
+        button.onclick = () => { button.closest("[data-glossary-language]").remove(); refreshGlossaryRemoveButtons(); };
+      });
+    }
+    refreshGlossaryRemoveButtons();
+    $("#translationGlossaryForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const terms = Array.from(termsEditor.querySelectorAll("[data-glossary-language]")).flatMap((section) => {
+        const languageCode = section.querySelector("[name=language_code]").value;
+        return Array.from(section.querySelectorAll("[data-glossary-term-row]")).map((row) => ({
+          language_code: languageCode,
+          term: row.querySelector("[name=term]").value,
+          is_canonical: row.querySelector("[data-canonical]").checked,
+        }));
+      });
+      const payload = {
+        group_key: form.group_key.value,
+        concept_key: form.concept_key.value,
+        note: form.note.value,
+        terms,
+      };
+      const message = $("#glossaryFormMessage");
+      message.textContent = "Saving...";
+      form.querySelector("button[type=submit]").disabled = true;
+      try {
+        const projectId = state.selectedGlossaryProjectId;
+        const path = modal.mode === "edit"
+          ? `/api/v1/projects/${projectId}/translation-glossary/concepts/${modal.concept.id}`
+          : `/api/v1/projects/${projectId}/translation-glossary/concepts`;
+        await api(path, { method: modal.mode === "edit" ? "PATCH" : "POST", body: payload });
+        state.glossaryModal = null;
+        setToast(modal.mode === "edit" ? "Glossary concept updated." : "Glossary concept created.");
+        await renderTranslationGlossary();
+      } catch (error) {
+        message.textContent = error.message;
+        form.querySelector("button[type=submit]").disabled = false;
+      }
+    });
+  }
+
+  async function renderTranslationGlossary() {
+    $("#activeTitle").textContent = "Translation Glossary";
+    let projects;
+    try {
+      projects = await api("/api/v1/projects");
+      const selected = projects.find((project) => String(project.id) === String(state.selectedGlossaryProjectId)) || projects[0] || null;
+      state.selectedGlossaryProjectId = selected ? String(selected.id) : "";
+      if (!selected) {
+        content.innerHTML = `<section class="panel"><div class="empty">No projects available.</div></section>`;
+        return;
+      }
+      const result = await api(`/api/v1/projects/${selected.id}/translation-glossary`);
+      const concepts = result.concepts || [];
+      const groups = Array.from(new Set(concepts.map((concept) => concept.group_key))).sort();
+      const query = state.glossaryQuery.trim().toLowerCase();
+      const group = state.glossaryGroup;
+      const filtered = concepts.filter((concept) => {
+        if (group && concept.group_key !== group) return false;
+        if (!query) return true;
+        return [concept.group_key, concept.concept_key, concept.note, ...(concept.terms || []).map((term) => term.term)]
+          .some((value) => String(value || "").toLowerCase().includes(query));
+      });
+      content.innerHTML = `
+        <section class="panel">
+          <div class="panel-header"><h2>Glossary concepts</h2><button type="button" id="addGlossaryConceptButton">Add concept</button></div>
+          <div class="panel-body">
+            <div class="toolbar glossary-toolbar">
+              <label>Project<select id="glossaryProjectFilter">${projects.map((project) => `<option value="${project.id}" ${String(project.id) === state.selectedGlossaryProjectId ? "selected" : ""}>${escapeHtml(project.name)}</option>`).join("")}</select></label>
+              <label>Group<select id="glossaryGroupFilter"><option value="">All groups</option>${groups.map((value) => `<option value="${escapeHtml(value)}" ${value === group ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
+              <label>Search<input id="glossarySearch" value="${escapeHtml(state.glossaryQuery)}" placeholder="Concept, term or note"></label>
+            </div>
+          </div>
+          ${table(["Group", "Concept key", "Languages", "Note", "Actions"], filtered.map((concept) => `
+            <tr>
+              <td>${escapeHtml(concept.group_key)}</td>
+              <td><strong>${escapeHtml(concept.concept_key)}</strong></td>
+              <td>${(concept.terms || []).map((term) => `${escapeHtml(term.language_code)}: ${escapeHtml(term.term)}${term.is_canonical ? "(Canonical)" : ""}`).join("<br>")}</td>
+              <td>${escapeHtml(concept.note || "-")}</td>
+              <td class="actions"><button class="link-button" type="button" data-view-glossary="${concept.id}">View</button><button class="link-button" type="button" data-edit-glossary="${concept.id}">Edit</button><button class="link-button" type="button" data-delete-glossary="${concept.id}">Delete</button></td>
+            </tr>`), "No glossary concepts for this Project")}
+        </section>`;
+      $("#glossaryProjectFilter").addEventListener("change", (event) => { state.selectedGlossaryProjectId = event.target.value; state.glossaryGroup = ""; renderTranslationGlossary(); });
+      $("#glossaryGroupFilter").addEventListener("change", (event) => { state.glossaryGroup = event.target.value; renderTranslationGlossary(); });
+      $("#glossarySearch").addEventListener("change", (event) => { state.glossaryQuery = event.target.value; renderTranslationGlossary(); });
+      $("#addGlossaryConceptButton").addEventListener("click", () => { state.glossaryModal = { mode: "create", concept: null }; renderGlossaryModal(); });
+      const byId = (id) => concepts.find((concept) => String(concept.id) === String(id));
+      content.querySelectorAll("[data-view-glossary]").forEach((button) => button.addEventListener("click", () => { state.glossaryModal = { mode: "view", concept: byId(button.dataset.viewGlossary) }; renderGlossaryModal(); }));
+      content.querySelectorAll("[data-edit-glossary]").forEach((button) => button.addEventListener("click", () => { state.glossaryModal = { mode: "edit", concept: byId(button.dataset.editGlossary) }; renderGlossaryModal(); }));
+      content.querySelectorAll("[data-delete-glossary]").forEach((button) => button.addEventListener("click", async () => {
+        if (!window.confirm("Delete this glossary concept?")) return;
+        try {
+          await api(`/api/v1/projects/${state.selectedGlossaryProjectId}/translation-glossary/concepts/${button.dataset.deleteGlossary}`, { method: "DELETE" });
+          setToast("Glossary concept deleted.");
+          renderTranslationGlossary();
+        } catch (error) { setToast(error.message, true); }
+      }));
+      if (state.glossaryModal) renderGlossaryModal();
+    } catch (error) {
+      content.innerHTML = `<section class="panel"><div class="empty"><p>${escapeHtml(error.message)}</p><button type="button" id="retryGlossaryButton">Retry</button></div></section>`;
+      $("#retryGlossaryButton").addEventListener("click", renderTranslationGlossary);
+    }
   }
 
   function mappingDraftKey(row) {

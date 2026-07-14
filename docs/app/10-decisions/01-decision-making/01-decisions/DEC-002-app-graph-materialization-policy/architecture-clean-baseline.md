@@ -4,14 +4,14 @@
 
 ## Scope
 
-Baseline bao phủ 42 instance hiện có thuộc 7 entity type đã promote:
+Baseline bao phủ 43 instance hiện có thuộc 7 entity type đã promote:
 
 | Entity type | Instance IDs |
 | --- | --- |
 | Module | `MOD-001` đến `MOD-010` |
 | ModuleBoundary | `MB-001` đến `MB-006` |
 | InteractionFlow | `AF-001` đến `AF-007` |
-| StateOwner | `SO-001` đến `SO-006` |
+| StateOwner | `SO-001` đến `SO-007` |
 | DataFlow | `DF-001` đến `DF-006` |
 | DeploymentUnit | `DU-001` |
 | CrossCuttingRule | `CCR-001` đến `CCR-006` |
@@ -20,17 +20,17 @@ Baseline bao phủ 42 instance hiện có thuộc 7 entity type đã promote:
 
 - Mỗi instance trong scope có `schema: entity-instance/v1` và đủ field base: `id`, `slug`, `title`, `entity_type`, `layer`, `concern`, `status`, `summary`.
 - Mỗi instance có `## Summary`, `## Meaning`, `## Relations`, `## Validation Notes` cùng section do entity type yêu cầu.
-- Verifier chặn thiếu/thừa instance ngoài đúng 42 ID trong Scope.
+- Verifier chặn thiếu/thừa instance ngoài đúng 43 ID trong Scope.
 - Mọi edge canonical trong frontmatter pass entity type relation slot, valid triple và target instance type.
-- Verifier chặn thiếu/thừa relation ngoài đúng 127 edge trong Core Relation Baseline.
+- Verifier chặn thiếu/thừa relation ngoài đúng 128 edge trong Core Relation Baseline.
 - Mỗi Markdown link trong `Related Entities` được phân loại `Canonical relation` hoặc `Context/evidence`; nhãn canonical phải có direct edge incident trong frontmatter, direction vẫn theo source YAML và prose không tự thành edge.
-- Core graph giữ đúng 127 edge đã được materialize; baseline không tự thêm edge khác.
+- Core graph giữ đúng 128 edge đã được materialize; baseline không tự thêm edge khác.
 - `npm run verify:architecture-baseline` pass.
 - `npm run verify:architecture-trace` pass.
 
 ## Core Relation Baseline
 
-Core graph có 127 edge: 37 edge từ InteractionFlow, 20 edge từ ModuleBoundary, 6 ownership edge từ Module, 15 edge từ DataFlow/StateOwner, 10 edge từ DeploymentUnit và 39 edge từ CrossCuttingRule.
+Core graph có 128 edge: 37 edge từ InteractionFlow, 20 edge từ ModuleBoundary, 7 ownership edge từ Module, 15 edge từ DataFlow/StateOwner, 10 edge từ DeploymentUnit và 39 edge từ CrossCuttingRule.
 
 ### InteractionFlow
 
@@ -63,6 +63,7 @@ Core graph có 127 edge: 37 edge từ InteractionFlow, 20 edge từ ModuleBounda
 | --- | --- |
 | MOD-001 | SO-001 |
 | MOD-003 | SO-002 |
+| MOD-003 | SO-007 |
 | MOD-004 | SO-005 |
 | MOD-005 | SO-006 |
 | MOD-006 | SO-003 |

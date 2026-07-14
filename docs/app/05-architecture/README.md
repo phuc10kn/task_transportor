@@ -58,9 +58,9 @@ Workflow architecture chính:
 
 Policy local: [DEC-002 App Graph Materialization Policy](../10-decisions/01-decision-making/01-decisions/DEC-002-app-graph-materialization-policy/README.md).
 
-Toàn bộ 42 architecture instance active đã được chuẩn hóa về `entity-instance/v1`, đủ base/type section contract và được kiểm tra bởi `npm run verify:architecture-baseline`.
+Toàn bộ 43 architecture instance active đã được chuẩn hóa về `entity-instance/v1`, đủ base/type section contract và được kiểm tra bởi `npm run verify:architecture-baseline`.
 
-Core graph cho Flow, Module, ModuleBoundary, StateOwner, DataFlow, DeploymentUnit và CrossCuttingRule đã materialize 127 canonical edge:
+Core graph cho Flow, Module, ModuleBoundary, StateOwner, DataFlow, DeploymentUnit và CrossCuttingRule đã materialize 128 canonical edge:
 
 - Mỗi InteractionFlow ghi module participant bằng `involves` và StateOwner mà một execution path có thể thay đổi bằng `changes`.
 - ModuleBoundary ghi module/state owner bị ràng buộc bằng `constrains`; reverse trace được derive.
