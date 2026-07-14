@@ -346,6 +346,14 @@ async function verifyPhase07() {
     assert.match(js.body, /pullMappingValuesForSystem/);
     assert.match(js.body, /syncCisMappingValuesButton/);
     assert.match(js.body, /renderIssueEditor/);
+    assert.match(js.body, /\["issues", "CIS Issues"\]/);
+    assert.match(js.body, /\["backlog_issues", "Backlog Issues"\]/);
+    assert.match(js.body, /renderBacklogIssues/);
+    assert.match(js.body, /action-readiness/);
+    assert.match(js.body, /createCisIssueForm/);
+    assert.match(js.body, /externalIdentityForm/);
+    assert.match(js.body, /Sync to CIS/);
+    assert.doesNotMatch(js.body, /function projectPullPanel/);
     assert.match(js.body, /issueEditorSyncPanel/);
     assert.match(js.body, /issueEditorBacklogSyncPanel/);
     assert.match(js.body, /resyncBacklogButton/);

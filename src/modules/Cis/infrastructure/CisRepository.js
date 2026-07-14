@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 
 const { createConnection } = require("../../../infrastructure/database/connection");
-const { runInTransaction } = require("../../../infrastructure/database/transaction");
+const { runImmediateTransaction, runInTransaction } = require("../../../infrastructure/database/transaction");
 const { ISSUE_STATUSES } = require("../../../shared/stateConstants");
 const {
   DEFAULT_TRANSLATION_AI_PROVIDER,
@@ -135,8 +135,11 @@ function revisionFieldsJson(existingFieldsJson, input) {
   return materializeCisFields(fields);
 }
 
-function createCisRepository({ config }) {
+function createCisRepository({ config, db: providedDb = null }) {
   function withDb(callback) {
+    if (providedDb) {
+      return callback(providedDb);
+    }
     const db = createConnection({ config });
 
     try {
@@ -381,11 +384,23 @@ function createCisRepository({ config }) {
     },
 
     upsertBacklogIssue(normalized) {
+      normalized = {
+        ...normalized,
+        backlog_issue_key: String(normalized.backlog_issue_key || "").trim().toUpperCase(),
+      };
       return withDb((db) =>
-        runInTransaction(db, () => {
+        runImmediateTransaction(db, () => {
           const existing = db
-            .prepare("SELECT * FROM issues WHERE project_id = ? AND backlog_issue_key = ?")
+            .prepare("SELECT * FROM issues WHERE project_id = ? AND UPPER(TRIM(backlog_issue_key)) = ?")
             .get(normalized.project_id, normalized.backlog_issue_key);
+
+          if (existing && (existing.sync_status || existing.status) === ISSUE_STATUSES.SYNCING) {
+            const error = new Error("Issue is currently syncing to Jira.");
+            error.code = "ISSUE_SYNC_IN_PROGRESS";
+            error.status = 409;
+            error.retryable = true;
+            throw error;
+          }
 
           let issue;
           let createdIssue = false;
@@ -634,9 +649,65 @@ function createCisRepository({ config }) {
     getIssueByBacklogKey(projectId, backlogIssueKey) {
       return withDb((db) => rowToIssue(
         db
-          .prepare("SELECT * FROM issues WHERE project_id = ? AND backlog_issue_key = ?")
-          .get(projectId, backlogIssueKey)
+          .prepare("SELECT * FROM issues WHERE project_id = ? AND UPPER(TRIM(backlog_issue_key)) = ?")
+          .get(projectId, String(backlogIssueKey || "").trim().toUpperCase())
       ));
+    },
+
+    getIssuesByBacklogKeys(projectId, backlogIssueKeys) {
+      const keys = [...new Set((backlogIssueKeys || []).map((key) => String(key || "").trim().toUpperCase()).filter(Boolean))];
+      if (keys.length === 0) {
+        return [];
+      }
+      return withDb((db) => db.prepare(
+        `SELECT * FROM issues
+         WHERE project_id = ? AND UPPER(TRIM(backlog_issue_key)) IN (${keys.map(() => "?").join(", ")})`
+      ).all(projectId, ...keys).map(rowToIssue));
+    },
+
+    getIssuesByJiraKey(projectId, jiraIssueKey) {
+      return withDb((db) => db.prepare(
+        "SELECT * FROM issues WHERE project_id = ? AND UPPER(TRIM(jira_issue_key)) = ?"
+      ).all(projectId, String(jiraIssueKey || "").trim().toUpperCase()).map(rowToIssue));
+    },
+
+    createManualIssueRow(input) {
+      return withDb((db) => {
+        const id = input.id || crypto.randomUUID();
+        const fieldsJson = materializeCisFields(input.fields_json || {});
+        db.prepare(
+          `INSERT INTO issues (id, project_id, source_system, sync_status, current_revision, fields_json)
+           VALUES (?, ?, 'manual', ?, 1, ?)`
+        ).run(id, input.project_id, ISSUE_STATUSES.INGESTED, JSON.stringify(fieldsJson));
+        db.prepare(
+          `INSERT INTO issue_revisions (
+            issue_id, revision, source_system, summary, description,
+            issue_type, priority, assignee, fields_json, attachments_json
+          ) VALUES (?, 1, 'manual', ?, ?, ?, ?, ?, ?, '[]')`
+        ).run(
+          id,
+          input.summary,
+          input.description || null,
+          input.issue_type || null,
+          input.priority || null,
+          input.assignee || null,
+          JSON.stringify(fieldsJson)
+        );
+        return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(id));
+      });
+    },
+
+    linkExternalIdentityRows(issueId, input) {
+      return withDb((db) => {
+        db.prepare(
+          `UPDATE issues
+           SET backlog_issue_key = COALESCE(?, backlog_issue_key),
+               jira_issue_key = COALESCE(?, jira_issue_key),
+               updated_at = datetime('now')
+           WHERE id = ?`
+        ).run(input.backlog_issue_key || null, input.jira_issue_key || null, issueId);
+        return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+      });
     },
 
     getIssueById(issueId) {
@@ -729,9 +800,28 @@ function createCisRepository({ config }) {
       );
     },
 
+    saveJiraDraftFieldsInTransaction(issueId, input) {
+      return withDb((db) => {
+        const existing = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+        if (!existing) return null;
+        const fieldsJson = mergeSourceFields(existing.fields_json, {
+          summary: input.summary ? { jira: input.summary } : undefined,
+          description: input.description ? { jira: input.description } : undefined,
+          issue_type: input.issue_type ? { jira: input.issue_type } : undefined,
+          priority: input.priority ? { jira: input.priority } : undefined,
+          status: input.status ? { jira: input.status } : undefined,
+          assignee: input.assignee ? { jira: input.assignee } : undefined,
+          due_date: input.due_date ? { jira: input.due_date } : undefined,
+        }, "jira");
+        db.prepare("UPDATE issues SET fields_json = ?, updated_at = datetime('now') WHERE id = ?")
+          .run(JSON.stringify(fieldsJson), issueId);
+        return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
+      });
+    },
+
     saveJiraSyncResult(issueId, input) {
       return withDb((db) =>
-        runInTransaction(db, () => {
+        runImmediateTransaction(db, () => {
           const existing = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
           if (!existing) {
             return null;
@@ -748,7 +838,7 @@ function createCisRepository({ config }) {
             reporter: input.reporter ? { jira: input.reporter } : undefined,
           }, "jira");
 
-          db
+          const updateResult = db
             .prepare(
               `UPDATE issues
                SET jira_issue_key = ?,
@@ -757,14 +847,22 @@ function createCisRepository({ config }) {
                    jira_updated_at = datetime('now'),
                    fields_json = ?,
                    updated_at = datetime('now')
-               WHERE id = ?`
+               WHERE id = ?
+                 AND ((? IS NULL AND jira_issue_key IS NULL)
+                   OR UPPER(TRIM(jira_issue_key)) = UPPER(TRIM(?)))`
             )
             .run(
               input.jira_issue_key,
               input.issue_status || "synced",
               JSON.stringify(fieldsJson),
-              issueId
+              issueId,
+              input.expected_jira_issue_key || null,
+              input.expected_jira_issue_key || null
             );
+
+          if (updateResult.changes !== 1) {
+            return null;
+          }
 
           return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId));
         })

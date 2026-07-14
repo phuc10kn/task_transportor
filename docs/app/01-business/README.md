@@ -49,7 +49,9 @@ Business rules còn hiệu lực:
 Workflow Lite còn sống:
 
 - Admin login -> project config -> project sync control.
+- Admin mở Backlog Issues theo một project, nhập khoảng ngày tạo bắt buộc và số lượng; CIS chỉ hiển thị candidate chưa có trong cùng project, không lưu kết quả browse.
 - Backlog one-issue ingest -> CIS review entry; project ingest -> candidate queue; không sync thẳng Jira.
+- Admin có thể tạo CIS issue thủ công và gán Backlog/Jira identity còn trống sau khi hệ thống external xác nhận tồn tại, đúng project và chưa thuộc CIS issue khác trong cùng project.
 - Translation review -> AI draft -> human approve/manual edit/reject.
 - Mapping/anomaly handling -> approve/edit/hold mapping và resolve/ignore/keep open anomaly trước outbound.
 - Issue preparation -> canonical edit làm stale preview cũ nếu dữ liệu đổi.

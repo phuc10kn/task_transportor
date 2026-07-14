@@ -31,7 +31,7 @@ Luồng batch pull theo project để enqueue nhiều manual pull job từ Backl
 
 ## Trigger
 
-Admin gọi route pull project.
+Admin gọi route Pull project từ màn Backlog Issues cho project đang chọn.
 
 ## Path
 
@@ -73,4 +73,5 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 ## Validation Notes
 
 - Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Evidence UI trigger đã được refresh sau khi control chuyển sang Backlog Issues.
 - Không suy diễn relation canonical mới từ prose hiện có.

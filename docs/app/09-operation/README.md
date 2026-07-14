@@ -40,6 +40,8 @@ Worker operation:
 Operator flow Lite:
 
 - Backlog inbound vận hành chính là `Pull one issue` và resync từ Backlog.
+- Backlog Issues cho phép browse không lưu DB và Sync to CIS từng candidate. Per-row Sync chỉ bật khi `WORKER_ENABLED=true`; khi worker tắt, operator dùng Pull one inline hoặc bật/chạy consumer phù hợp.
+- HTTP 202 của candidate chỉ nghĩa là queued; theo dõi trạng thái tại row/Sync Jobs, không coi là ingest đã hoàn thành.
 - Translation review vận hành trong Issue Editor modal và Translation Queue.
 - Mapping/anomaly xử lý trước Jira sync thật.
 - Jira outbound luôn đi qua dry-run rồi mới sync thật.

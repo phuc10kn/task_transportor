@@ -37,11 +37,11 @@ Luồng admin kéo một issue Backlog đơn lẻ vào hệ thống. Flow này l
 
 ## Trigger
 
-Admin gọi route pull issue theo project và backlog issue key.
+Admin gọi route Pull one hoặc Sync to CIS trên một Backlog candidate theo project và issue key.
 
 ## Path
 
-`Admin -> Backlog HTTP -> BacklogApi -> SyncApi.enqueueJob(manual_pull) hoặc pull now -> BacklogClient -> normalizer -> CisApi.upsertBacklogIssue(...)`
+`Admin -> Backlog HTTP -> BacklogApi -> SyncApi enqueue/reuse manual_pull hoặc pull now -> BacklogClient -> normalizer -> CisApi.upsertBacklogIssue(...)`
 
 ## Why the path is shaped this way
 
@@ -78,8 +78,10 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 
 - `src/modules/Backlog/application/pullIssue.js`
 - `src/modules/Backlog/application/handleManualPullJob.js`
+- `src/modules/Backlog/application/syncCandidateToCis.js`
 
 ## Validation Notes
 
 - Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
+- Evidence đã được refresh cho per-row candidate enqueue/reuse shared manual-pull flow.
 - Không suy diễn relation canonical mới từ prose hiện có.

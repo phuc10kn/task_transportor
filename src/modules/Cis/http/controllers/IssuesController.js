@@ -23,6 +23,33 @@ function list(req, res, next) {
   }
 }
 
+function create(req, res, next) {
+  try {
+    success(res, CisApi.createManualIssue({
+      config: req.app.locals.config,
+      input: req.body || {},
+      executedBy: req.user && req.user.id,
+      correlationId: req.correlationId,
+    }), 201);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function linkExternalIdentities(req, res, next) {
+  try {
+    success(res, await CisApi.linkExternalIdentities({
+      config: req.app.locals.config,
+      issueId: req.params.issueId,
+      input: req.body || {},
+      executedBy: req.user && req.user.id,
+      correlationId: req.correlationId,
+    }));
+  } catch (error) {
+    next(error);
+  }
+}
+
 function show(req, res, next) {
   try {
     success(res, CisApi.getIssueDetail({
@@ -148,10 +175,12 @@ function markDuplicate(req, res, next) {
 
 module.exports = {
   attachments,
+  create,
   editor,
   forceApprove,
   history,
   list,
+  linkExternalIdentities,
   markDuplicate,
   show,
   translate,

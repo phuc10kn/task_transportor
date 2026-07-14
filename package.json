@@ -26,6 +26,7 @@
     "verify:admin-ui-acceptance": "node scripts/verify/admin-ui-acceptance.js",
     "verify:issue-editor-api": "node scripts/verify/issue-editor-api.js",
     "verify:issue-editor-dryrun-sync": "node scripts/verify/issue-editor-dryrun-sync.js",
+    "verify:system-issues": "node scripts/verify/system-issues.js",
     "verify:docs": "node scripts/verify/docs-navigation.js",
     "verify:workbench": "node scripts/verify/workbench.js",
     "verify:workbench:test": "node --test scripts/verify/workbench.test.js",

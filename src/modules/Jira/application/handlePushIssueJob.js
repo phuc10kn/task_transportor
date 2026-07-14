@@ -34,6 +34,15 @@ function conflictError(matches) {
   return error;
 }
 
+function traceChangedError(matches) {
+  const error = new Error("Jira trace state changed before create.");
+  error.code = "JIRA_TRACE_STATE_CHANGED";
+  error.status = 409;
+  error.details = { jira_matches: matches.map((match) => match.key) };
+  error.retryable = false;
+  return error;
+}
+
 async function resolveTargetIssueKey(client, bundle) {
   if (bundle.issue.jira_issue_key) {
     try {
@@ -43,9 +52,11 @@ async function resolveTargetIssueKey(client, bundle) {
         jira_issue_key: issue.key,
       };
     } catch (error) {
-      if (error.code !== "JIRA_RESOURCE_NOT_FOUND" && error.code !== "JIRA_ISSUE_NOT_FOUND") {
-        throw error;
+      if (error.code === "JIRA_RESOURCE_NOT_FOUND" || error.code === "JIRA_ISSUE_NOT_FOUND") {
+        error.code = "JIRA_LINKED_ISSUE_NOT_FOUND";
+        error.retryable = false;
       }
+      throw error;
     }
   }
 
@@ -120,6 +131,14 @@ async function handlePushIssueJob(job, { config }) {
     throw error;
   }
 
+  if (job.payload_json && job.payload_json.canonical_hash && job.payload_json.canonical_hash !== readiness.canonical_hash) {
+    const error = new Error("Canonical issue changed after Jira sync was requested.");
+    error.code = "JIRA_SYNC_STALE";
+    error.status = 409;
+    error.retryable = false;
+    throw error;
+  }
+
   const previousStatus = readiness.issue.status;
   CisApi.markIssueSyncStatus({
     config,
@@ -136,12 +155,27 @@ async function handlePushIssueJob(job, { config }) {
       project: readiness.project,
     });
     const resolution = await resolveTargetIssueKey(client, readiness);
+    if (job.payload_json && job.payload_json.target_action) {
+      const actualAction = resolution.action === "create" ? "create" : "update";
+      if (actualAction !== job.payload_json.target_action) {
+        throw traceChangedError(resolution.matches || (resolution.jira_issue_key ? [{ key: resolution.jira_issue_key }] : []));
+      }
+    }
     const jiraPayload = await payloadWithResolvedUsers(client, payload);
     let jiraIssueKey = resolution.jira_issue_key;
     if (resolution.action === "create") {
+      const latestMatches = await client.searchIssuesByTrace({
+        backlogIssueKey: readiness.issue.backlog_issue_key,
+        issueId: readiness.issue.id,
+      });
+      if (latestMatches.length > 1) throw conflictError(latestMatches);
+      if (latestMatches.length === 1) throw traceChangedError(latestMatches);
       const created = await client.createIssue(jiraPayload);
       jiraIssueKey = created.key;
     } else {
+      if (resolution.action === "link_update") {
+        CisApi.claimJiraIdentityForSync({ config, issueId: readiness.issue.id, jiraIssueKey, syncJobId: job.id });
+      }
       await client.updateIssue(jiraIssueKey, jiraPayload);
     }
 
@@ -153,6 +187,7 @@ async function handlePushIssueJob(job, { config }) {
       config,
       issueId: readiness.issue.id,
       input: {
+      expected_jira_issue_key: resolution.action === "create" ? null : resolution.jira_issue_key,
       jira_issue_key: jiraIssueKey,
       issue_status: "synced",
       summary: payload.fields.summary,

@@ -41,11 +41,11 @@ Admin yêu cầu sync hoặc worker tiếp tục thực thi push job đã enqueu
 
 ## Path
 
-`Admin or worker -> JiraApi.requestJiraSync(...) -> SyncApi.enqueueJob(push_issue) -> JiraApi.handlePushIssueJob(...) -> JiraClient -> CisApi.saveJiraSyncResult(...) -> SyncApi.writeJournal(...)`
+`Admin -> JiraApi.requestJiraSync(...) -> resolve linked/trace target -> CisApi.prepareJiraSyncJob(H0/H1, optional trace link, H2, atomic enqueue+journal) -> worker -> JiraApi.handlePushIssueJob(...) -> final trace/hash recheck -> JiraClient -> CisApi.saveJiraSyncResult(CAS) -> SyncApi journal`
 
 ## Outcome
 
-Jira được cập nhật từ canonical snapshot, còn hệ thống nội bộ giữ audit trail và sync result.
+Jira chỉ được cập nhật khi dry-run hash, target provenance và worker hash còn hợp lệ; trace identity/job và sync result được bảo vệ bằng transaction/CAS, còn hệ thống nội bộ giữ audit trail.
 
 ## Related Entities
 
@@ -77,8 +77,11 @@ Không bypass owner state, không thực hiện side effect ngoài guardrail tư
 
 - `src/modules/Jira/application/requestJiraSync.js`
 - `src/modules/Jira/application/handlePushIssueJob.js`
+- `src/modules/Cis/application/prepareJiraSyncJob.js`
+- `src/modules/Cis/application/claimJiraIdentityForSync.js`
 - `docs/app/05-architecture/03-interactions/interaction-flows/AF-007-cis-to-jira-sync/README.md`
 
 ## Validation Notes
 
 - Không ghi inverse `participates_in`; reverse trace được suy ra từ relation `involves` của flow này.
+- Evidence đã được refresh cho request-path trace cardinality, H0/H1/H2, atomic active-job enqueue và worker CAS guard; không thêm relation canonical mới.

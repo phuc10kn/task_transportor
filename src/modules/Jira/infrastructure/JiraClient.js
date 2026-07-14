@@ -237,6 +237,9 @@ class FakeJiraClient {
     const container = this.getStore();
     const traceLabel = buildTraceLabel(backlogIssueKey);
     const matches = (container.state.issues || []).filter((issue) => {
+      if (issue.projectKey && String(issue.projectKey).toUpperCase() !== String(this.project.jira_project_key || "").toUpperCase()) {
+        return false;
+      }
       const labels = Array.isArray(issue.labels) ? issue.labels : [];
       const description = String(issue.description || "");
       const summary = String(issue.summary || "");
@@ -261,7 +264,8 @@ class FakeJiraClient {
   getIssue(issueKey) {
     this.maybeFail("getIssue");
     const container = this.getStore();
-    const issue = (container.state.issues || []).find((item) => item.key === issueKey);
+    const token = String(issueKey);
+    const issue = (container.state.issues || []).find((item) => item.key === token || String(item.id) === token);
     if (!issue) {
       throw jiraError("JIRA_ISSUE_NOT_FOUND", `No Jira issue found with key '${issueKey}'.`, 404);
     }
@@ -274,6 +278,7 @@ class FakeJiraClient {
         description: issue.description || null,
         labels: issue.labels || [],
         status: issue.status ? { name: issue.status } : null,
+        project: { key: issue.projectKey || this.project.jira_project_key },
       },
     };
   }
@@ -532,7 +537,7 @@ class JiraClient {
   async getIssue(issueKey) {
     const response = await this.request("GET", `/rest/api/3/issue/${encodeURIComponent(issueKey)}`, {
       query: {
-        fields: "summary,description,labels,status",
+        fields: "summary,description,labels,status,project",
       },
     });
     return response.body;

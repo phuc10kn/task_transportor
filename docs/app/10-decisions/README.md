@@ -17,6 +17,8 @@
 | Dùng mô hình `System -> CIS -> System` | accepted | Không sync point-to-point Backlog -> Jira trực tiếp. |
 | Lite ưu tiên `Backlog -> CIS` và `CIS -> Jira` | accepted | Jira -> CIS đầy đủ để Medium/phase sau. |
 | Manual pull/project pull là inbound chính của Lite | accepted | Webhook không bắt buộc trong Lite. |
+| Backlog candidate browse là read-only | accepted | Filter/result không lưu DB; issue chỉ vào CIS sau action Sync to CIS riêng. |
+| External identity unique theo project và system column | accepted | Backlog chỉ so backlog key, Jira chỉ so Jira key; canonical key lấy từ provider API. |
 | Scheduled pull là optional | accepted | Chỉ bật sau khi manual/project pull ổn định. |
 | Admin UI là bắt buộc | accepted | Operator phải review, approve, retry và xử lý anomaly bằng UI. |
 | SQLite là database MVP/Lite | accepted | Phù hợp server nội bộ và workload nhỏ. |

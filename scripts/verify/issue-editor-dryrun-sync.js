@@ -15,6 +15,7 @@ function setupConfig() {
   const config = makeTempConfig("issue-editor-dryrun-sync", {
     ADMIN_EMAIL: "issue-editor-dryrun@example.test",
     ADMIN_PASSWORD: "verify-password",
+    JIRA_FAKE_MODE: "1",
   });
 
   ensureStorage(config.storage);
