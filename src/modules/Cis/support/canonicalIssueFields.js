@@ -48,10 +48,28 @@ const DEFAULT_CATALOGS = Object.freeze({
   assignee: [],
 });
 
+function mappingKey(field) {
+  return field === "assignee" ? "user" : field;
+}
+
+function catalogWithLabels(values, config, key) {
+  if (key !== "user" || !config || typeof config.user_labels !== "object" || Array.isArray(config.user_labels)) {
+    return values;
+  }
+
+  return values.map((item) => {
+    const value = typeof item === "string" ? item : item && (item.value || item.id);
+    const label = config.user_labels[value] || (item && (item.label || item.name));
+    return value && label ? { value, label } : item;
+  });
+}
+
 function pickCatalog(project, field) {
-  const cisValues = project && project.cis_mapping_values_json && project.cis_mapping_values_json[field];
+  const key = mappingKey(field);
+  const cisConfig = project && project.cis_mapping_values_json;
+  const cisValues = cisConfig && cisConfig[key];
   if (Array.isArray(cisValues) && cisValues.length > 0) {
-    return cisValues;
+    return catalogWithLabels(cisValues, cisConfig, key);
   }
 
   const defaults = DEFAULT_CATALOGS[field] || [];
@@ -60,8 +78,8 @@ function pickCatalog(project, field) {
   }
 
   for (const source of [project && project.backlog_mapping_values_json, project && project.jira_mapping_values_json]) {
-    if (source && Array.isArray(source[field]) && source[field].length > 0) {
-      return source[field];
+    if (source && Array.isArray(source[key]) && source[key].length > 0) {
+      return catalogWithLabels(source[key], source, key);
     }
   }
 
@@ -69,9 +87,11 @@ function pickCatalog(project, field) {
 }
 
 function pickSystemCatalog(project, system, field) {
-  const values = project && project[`${system}_mapping_values_json`] && project[`${system}_mapping_values_json`][field];
+  const key = mappingKey(field);
+  const config = project && project[`${system}_mapping_values_json`];
+  const values = config && config[key];
   if (Array.isArray(values) && values.length > 0) {
-    return values;
+    return catalogWithLabels(values, config, key);
   }
 
   return [];

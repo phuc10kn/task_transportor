@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { login, mockAuth, project } from "./support/phase-fixtures";
 
-test("Backlog actions keep independent readiness, job evidence and row context", async ({ page }) => {
+test("Backlog actions disable project pull and keep independent row context", async ({ page }) => {
   await mockAuth(page);
   let candidateCalls = 0;
   let projectPullCalls = 0;
@@ -19,20 +19,17 @@ test("Backlog actions keep independent readiness, job evidence and row context",
   await page.route("**/api/v1/sync-jobs/job-sync", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: "job-sync", status: "success", issue_id: "cis-1" } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/candidates**", (route) => { candidateCalls += 1; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [{ backlog_issue_key: "BLG-1", summary: "Candidate", status: "Open", assignee: null, created_at_source: "2026-07-15T00:00:00Z", updated_at_source: "2026-07-15T00:00:00Z" }], filters: { created_from: "2026-07-15", created_to: "2026-07-15", limit: 20, status_ids: [], assignee_ids: [], not_closed: false }, meta: { requested_limit: 20, returned_count: 1, source_rows_scanned: 1, excluded_existing_cis_count: 0, pages_scanned: 1, source_exhausted: true, scan_limit_reached: false, deadline_reached: false, stop_reason: "source_exhausted", provider_error_code: null } } }) }); });
   await login(page, "/backlog-issues?project_id=1");
-  await expect(page.getByRole("button", { name: "Pull project" })).toBeEnabled();
-  await page.getByRole("button", { name: "Pull project" }).click();
-  await expect(page.getByText("Enqueued 2 items")).toBeVisible();
-  await expect(page.getByText("consumer ready")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pull project" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Pull project" })).toHaveAttribute("title", "Temporarily disabled during UI replatforming.");
   await page.getByRole("button", { name: "Pull one" }).click();
   await expect(page.getByLabel("Pull one issue key")).toHaveValue("BLG-1");
   await expect(page.getByText("Job job-one: success")).toBeVisible();
-  await page.getByRole("button", { name: "Pull project" }).click();
-  await expect(page.getByText("Enqueued 0 items")).toBeVisible();
   await page.getByRole("button", { name: "Find issues" }).click();
   await expect(page.getByRole("cell", { name: "BLG-1" })).toBeVisible();
   await page.getByRole("button", { name: "Sync to CIS", exact: true }).click();
   await expect(page.getByText("Job job-sync: success")).toBeVisible();
   expect(candidateCalls).toBeGreaterThanOrEqual(2);
+  expect(projectPullCalls).toBe(0);
 });
 
 test("Backlog candidate actions isolate rows and explain existing sync without translation", async ({ page }) => {

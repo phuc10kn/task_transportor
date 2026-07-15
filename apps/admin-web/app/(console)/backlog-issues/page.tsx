@@ -123,7 +123,6 @@ export default function BacklogIssuesPage() {
   const [actionError, setActionError] = useState("");
   const [pullOneKey, setPullOneKey] = useState("");
   const [pullOneState, setPullOneState] = useState<SyncJob | null>(null);
-  const [pullProjectState, setPullProjectState] = useState<{ enqueued: number; jobs: SyncJob[] } | null>(null);
   const pollTimers = useRef<Record<string, number>>({});
   const actionGeneration = useRef(0);
   const lastSubmittedQuery = useRef("");
@@ -239,24 +238,6 @@ export default function BacklogIssuesPage() {
     await tick();
   }, []);
 
-  async function pullProject() {
-    if (!selectedProject || !readiness?.actions.pull_project?.enabled) return;
-    setActionError("");
-    setPullProjectState(null);
-    try {
-      const response = await apiFetch<{ enqueued: number; jobs?: SyncJob[] }>(`/api/v1/projects/${selectedProject.id}/backlog/pull`, { method: "POST" });
-      setPullProjectState({ enqueued: response.enqueued, jobs: response.jobs || [] });
-      (response.jobs || []).forEach((job) => {
-        if (!["success", "failed", "cancelled"].includes(job.status)) {
-          const updateProjectJob = (next: SyncJob) => setPullProjectState((current) => current ? { ...current, jobs: current.jobs.map((item) => item.id === next.id ? next : item) } : current);
-          void pollJob(job.id, updateProjectJob, updateProjectJob);
-        }
-      });
-    } catch (error) {
-      setActionError(errorMessage(error, "Project pull could not be queued."));
-    }
-  }
-
   async function pullOne() {
     const issueKey = pullOneKey.trim() || (selectedProject?.backlog_issue_key_prefix ? `${selectedProject.backlog_issue_key_prefix}-1` : "");
     if (!selectedProject || !readiness?.actions.pull_one?.enabled || !issueKey) return;
@@ -352,7 +333,6 @@ export default function BacklogIssuesPage() {
 
   const browseEnabled = Boolean(selectedProject && readiness?.actions.browse.enabled && !contextLoading);
   const pullOneReady = Boolean(selectedProject && readiness?.actions.pull_one?.enabled && !contextLoading);
-  const pullProjectReady = Boolean(selectedProject && readiness?.actions.pull_project?.enabled && !contextLoading);
   const syncReady = Boolean(selectedProject && readiness?.actions.sync_to_cis?.enabled && !contextLoading);
   const currentSnapshot = snapshotFor(form);
   const hasCurrentResult = Boolean(result && submittedSnapshot && submittedSnapshot === currentSnapshot);
@@ -398,9 +378,9 @@ export default function BacklogIssuesPage() {
     </section>
 
     <section className="surface rounded-xl border p-5" aria-labelledby="backlog-action-heading">
-      <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.16em]">Actions</p><h2 className="text-primary mt-2 text-lg font-semibold" id="backlog-action-heading">Backlog → CIS</h2><p className="text-secondary mt-1 text-sm">Pull one issue or the persisted project scope; candidate filters are not sent to project pull.</p></div><Badge tone={pullProjectReady || pullOneReady ? "good" : "warn"}>{pullProjectReady || pullOneReady ? "Actions ready" : "Actions blocked"}</Badge></div>
+      <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.16em]">Actions</p><h2 className="text-primary mt-2 text-lg font-semibold" id="backlog-action-heading">Backlog → CIS</h2><p className="text-secondary mt-1 text-sm">Pull one issue directly. Project-wide pull is temporarily disabled.</p></div><Badge tone={pullOneReady ? "good" : "warn"}>{pullOneReady ? "Actions ready" : "Actions blocked"}</Badge></div>
       <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="surface-muted rounded-lg border p-4"><div className="flex items-center justify-between gap-3"><div><h3 className="text-primary font-semibold">Pull project</h3><p className="text-secondary mt-1 text-xs">{readiness?.actions.pull_project?.execution_mode || "disabled"} · {readiness?.actions.pull_project?.consumer_ready ? "consumer ready" : "consumer waiting"}</p></div><Button disabled={!pullProjectReady} onClick={() => void pullProject()} variant="primary">Pull project</Button></div>{pullProjectState ? <p className="text-secondary mt-3 text-xs" role="status">Enqueued {pullProjectState.enqueued} item{pullProjectState.enqueued === 1 ? "" : "s"}; tracking returned jobs individually.</p> : null}</div>
+        <div className="surface-muted rounded-lg border p-4"><div className="flex items-center justify-between gap-3"><div><h3 className="text-primary font-semibold">Pull project</h3><p className="text-secondary mt-1 text-xs">Temporarily disabled during UI replatforming.</p></div><Button disabled title="Temporarily disabled during UI replatforming." variant="primary">Pull project</Button></div></div>
         <div className="surface-muted rounded-lg border p-4"><div className="flex items-end gap-3"><label className="text-secondary min-w-0 flex-1 text-sm">Issue key<input aria-label="Pull one issue key" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => setPullOneKey(event.target.value)} value={pullOneKey || (selectedProject.backlog_issue_key_prefix ? `${selectedProject.backlog_issue_key_prefix}-1` : "")} /></label><Button disabled={!pullOneReady || !(pullOneKey || selectedProject.backlog_issue_key_prefix)} onClick={() => void pullOne()} variant="primary">Pull one</Button></div>{pullOneState ? <p className="text-secondary mt-3 text-xs" role="status">Job {pullOneState.id}: {pullOneState.status}{pullOneState.last_error ? ` — ${pullOneState.last_error}` : ""}</p> : null}</div>
       </div>
       {actionError ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{actionError}</p> : null}

@@ -14,6 +14,7 @@ type MappingRow = {
   issue_count?: number; existing_rule?: { id: number; approval_status: string } | null;
 };
 type Settings = { systems: { value: string; label: string }[]; flows: { systems_to_cis: MappingRow[]; cis_to_system: MappingRow[] } };
+type MappingGroup = { key: string; label: string; rows: MappingRow[] };
 
 function ruleStatus(row: MappingRow, drafts: Record<string, string>, key: string) {
   const hasDraft = Object.prototype.hasOwnProperty.call(drafts, key);
@@ -23,6 +24,17 @@ function ruleStatus(row: MappingRow, drafts: Record<string, string>, key: string
 
 function ruleStatusTone(status: string): "neutral" | "good" | "warn" {
   return status === "unsaved" ? "warn" : status === "approved" ? "good" : "neutral";
+}
+
+function groupMappingRows(rows: MappingRow[]): MappingGroup[] {
+  const groups = new Map<string, MappingGroup>();
+  for (const row of rows) {
+    const key = row.mapping_type || row.mapping_label || "other";
+    const group = groups.get(key) || { key, label: row.mapping_label || row.mapping_type || "Other", rows: [] };
+    group.rows.push(row);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
 }
 
 function MappingAccordion({ ariaLabel, eyebrow, title, description, children }: { ariaLabel: string; eyebrow: string; title: string; description: string; children: React.ReactNode }) {
@@ -68,8 +80,13 @@ function MappingAccordion({ ariaLabel, eyebrow, title, description, children }: 
 }
 
 function MappingTable({ rows, direction, drafts, setDraft, save, saving }: { rows: MappingRow[]; direction: "to-cis" | "to-system"; drafts: Record<string, string>; setDraft: (key: string, value: string) => void; save: (row: MappingRow) => void; saving: string }) {
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   if (!rows.length) return <p className="text-secondary py-8 text-sm">No mapping values.</p>;
-  return <div className="data-table-wrap"><table className="data-table mapping-settings-table w-full text-left text-sm"><thead className="text-secondary border-b text-xs uppercase tracking-wide"><tr><th>{direction === "to-cis" ? "System value" : "CIS value"}</th><th>{direction === "to-cis" ? "CIS value" : "System value"}</th><th>Seen</th><th>Status</th><th /></tr></thead><tbody>{rows.map((row) => { const key = `${row.direction_from}|${row.direction_to}|${row.mapping_type}|${row.from_value}`; const options = direction === "to-cis" ? row.cis_values || [] : row.system_values || []; const status = ruleStatus(row, drafts, key); return <tr key={key}><td className="text-primary">{row.from_label || row.from_value}{row.required_for_jira ? <span className="ml-2"><Badge tone="warn">required</Badge></span> : null}</td><td><select aria-label={`${row.mapping_label} target`} className="field-control w-full rounded-lg border px-3 py-2" onChange={(event) => setDraft(key, event.target.value)} value={drafts[key] ?? row.to_value ?? ""}><option value="">Select value</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></td><td className="text-secondary">{row.issue_count ?? "—"}</td><td><Badge tone={ruleStatusTone(status)}>{status}</Badge></td><td><Button className="whitespace-nowrap" disabled={saving === key} onClick={() => save(row)} variant="secondary">{saving === key ? "Saving…" : "Save setting"}</Button></td></tr>; })}</tbody></table></div>;
+  return <div className="mapping-field-groups">{groupMappingRows(rows).map((group) => {
+    const isOpen = openGroups[group.key] !== false;
+    const groupId = `mapping-group-${direction}-${group.key}`;
+    return <section className="mapping-field-group" data-mapping-group={group.key} key={group.key}><button aria-controls={groupId} aria-expanded={isOpen} aria-label={`${group.label} mapping group`} className="mapping-group-toggle" onClick={() => setOpenGroups((current) => ({ ...current, [group.key]: !(current[group.key] !== false) }))} type="button"><span className="mapping-group-toggle__label">{group.label}</span><small>{group.rows.length} value{group.rows.length === 1 ? "" : "s"}</small><svg aria-hidden="true" className="mapping-group-toggle__chevron" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="m6 9 6 6 6-6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg></button>{isOpen ? <div className="mapping-field-group__content" id={groupId}><div className="data-table-wrap"><table className="data-table mapping-settings-table w-full text-left text-sm"><thead className="text-secondary text-xs uppercase tracking-wide"><tr><th>{direction === "to-cis" ? "System value" : "CIS value"}</th><th>{direction === "to-cis" ? "CIS value" : "System value"}</th><th>Seen</th><th>Status</th><th /></tr></thead><tbody>{group.rows.map((row) => { const key = `${row.direction_from}|${row.direction_to}|${row.mapping_type}|${row.from_value}`; const options = direction === "to-cis" ? row.cis_values || [] : row.system_values || []; const status = ruleStatus(row, drafts, key); return <tr key={key}><td className="text-primary">{row.from_label || row.from_value}{row.required_for_jira ? <span className="ml-2"><Badge tone="warn">required</Badge></span> : null}</td><td><select aria-label={`${row.mapping_label} target`} className="field-control w-full rounded-lg border px-3 py-2" onChange={(event) => setDraft(key, event.target.value)} value={drafts[key] ?? row.to_value ?? ""}><option value="">Select value</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></td><td className="text-secondary">{row.issue_count ?? "—"}</td><td><Badge tone={ruleStatusTone(status)}>{status}</Badge></td><td><Button className="whitespace-nowrap" disabled={saving === key} onClick={() => save(row)} variant="secondary">{saving === key ? "Saving…" : "Save setting"}</Button></td></tr>; })}</tbody></table></div></div> : null}</section>;
+  })}</div>;
 }
 
 export default function MappingsPage() {

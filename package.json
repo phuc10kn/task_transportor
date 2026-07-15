@@ -11,6 +11,7 @@
     "admin:install": "npm --prefix apps/admin-web install",
     "admin:ci": "node scripts/admin-ui-ci.js",
     "admin:dev": "node scripts/admin-dev.js",
+    "admin:dev:stable": "node scripts/admin-dev.js --stable",
     "admin:start": "npm --prefix apps/admin-web run start",
     "admin:lint": "npm --prefix apps/admin-web run lint",
     "admin:typecheck": "npm --prefix apps/admin-web run typecheck",

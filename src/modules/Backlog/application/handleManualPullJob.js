@@ -4,6 +4,7 @@ const SyncApi = require("../../Sync/SyncApi");
 const { createBacklogClient } = require("../infrastructure/BacklogClient");
 const { downloadAttachmentToCis } = require("./downloadAttachmentToCis");
 const { normalizeBacklogIssue } = require("../support/normalizeBacklogIssue");
+const { applyApprovedBacklogMappings } = require("../support/applyBacklogMappings");
 
 function projectsApi() {
   return require("../../Projects/ProjectsApi");
@@ -63,12 +64,14 @@ async function handleManualPullJob(job, { config }) {
       client.getIssueAttachments(backlogIssueKey),
     ]);
 
-    const normalized = normalizeBacklogIssue({
+    const rawNormalized = normalizeBacklogIssue({
       project,
       issue,
       comments,
       attachments,
     });
+    const mappingResult = applyApprovedBacklogMappings({ config, projectId: project.id, normalized: rawNormalized });
+    const normalized = mappingResult.normalized;
 
     if (normalized.backlog_project_key && project.backlog_project_key && normalized.backlog_project_key !== project.backlog_project_key) {
       throw new AppError({
@@ -153,6 +156,7 @@ async function handleManualPullJob(job, { config }) {
           translate_jobs: translationResult.jobs.length,
           reused_translate_jobs: translationResult.reused_jobs.length,
           translation_queue_ids: translationResult.queue_items.map((item) => item.id),
+          applied_mappings: mappingResult.applied,
         },
         attempt_count: job.attempt_count,
         executed_by: job.payload_json.requested_by || null,
