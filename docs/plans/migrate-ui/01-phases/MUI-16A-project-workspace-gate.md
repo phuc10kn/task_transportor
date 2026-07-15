@@ -112,7 +112,7 @@ Active ID đọc từ `sessionStorage` phải parse thành positive integer; Pro
 
 ## Checklist nghiệm thu
 
-- [ ] Clean `pre-MUI-16A-implementation` SHA đã materialize MUI-16 hoàn chỉnh cùng MUI-16A plan/docs; implementation scope diff chỉ tính từ SHA này.
+- [x] Clean `pre-MUI-16A-implementation` SHA `19335b03ffb2006940a3fa14b41ff49342a49f4f` đã materialize MUI-16 hoàn chỉnh cùng MUI-16A plan/docs; implementation scope diff chỉ tính từ SHA này.
 - [ ] `unselected/resolving/invalid/disabled/unavailable` không mount business page hoặc gửi business read/mutation; chỉ `ready` được mount.
 - [ ] Mỗi login buộc chọn lại; refresh cùng phiên giữ context; logout/`401` xóa context.
 - [ ] Chọn hoặc tạo Project là action explicit; edit/save không ngầm đổi workspace; validation lỗi giữ form; intended route hợp lệ được restore.
@@ -131,4 +131,4 @@ Active ID đọc từ `sessionStorage` phải parse thành positive integer; Pro
 
 ## Kết quả thực hiện
 
-In-progress: MUI-16A - plan đã review và khóa UI-only; chưa triển khai source hoặc mở HG-07A. Thứ tự đã xác nhận: MUI-16A → MUI-17 với Dashboard disabled/server-isolation accepted gap → phase BE đóng `BE-PROJECT-SCOPE-01/02`.
+In-progress: baseline `pre-MUI-16A-implementation` đã materialize tại `19335b03ffb2006940a3fa14b41ff49342a49f4f`; plan đã review và khóa UI-only, chưa triển khai source hoặc mở HG-07A. Thứ tự đã xác nhận: MUI-16A → MUI-17 với Dashboard disabled/server-isolation accepted gap → phase BE đóng `BE-PROJECT-SCOPE-01/02`.

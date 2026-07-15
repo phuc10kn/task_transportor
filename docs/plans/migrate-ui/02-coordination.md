@@ -5,8 +5,8 @@
 ### Handoff hiện tại
 
 Current phase: MUI-16A - Project-first workspace gate
-Done: User đã xác nhận HG-07; MUI-16 legacy cleanup/runbook/local production smoke đã pass. User yêu cầu thêm Project-first workspace trước production cutover.
-Next: Trước source edit, materialize MUI-16 hoàn chỉnh cùng MUI-16A plan/docs thành clean `pre-MUI-16A-implementation` commit/SHA; sau đó triển khai selection owner, render-barrier context gate và dirty registry chỉ trong Next UI. Disable Dashboard và Project `enabled=false`, chạy automated gate rồi chờ HG-07A. Thứ tự đã khóa: MUI-16A → MUI-17 với accepted gap → phase BE.
+Done: User đã xác nhận HG-07; MUI-16 legacy cleanup/runbook/local production smoke đã pass. Clean baseline `pre-MUI-16A-implementation` đã materialize tại `19335b03ffb2006940a3fa14b41ff49342a49f4f`, gồm MUI-16 hoàn chỉnh và MUI-16A plan/source-of-truth docs.
+Next: Triển khai selection owner, render-barrier context gate và dirty registry chỉ trong Next UI; mọi implementation diff tính từ baseline đã ghi. Disable Dashboard và Project `enabled=false`, chạy automated gate rồi chờ HG-07A. Thứ tự đã khóa: MUI-16A → MUI-17 với accepted gap → phase BE.
 Prompt tiếp theo: executor.md
 
 ### Trạng thái Human Gate
