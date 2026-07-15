@@ -42,7 +42,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mapping-group-cell { padding: 0 !important; border-top: 1px solid color-mix(in srgb, var(--tblr-primary) 24%, var(--tblr-border-color)); }
 .mapping-group-toggle { display: grid; width: 100%; min-height: 2.75rem; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: center; gap: .55rem; padding: .55rem .75rem; border: 0; border-left: 3px solid var(--tblr-primary); background: transparent; color: inherit; text-align: left; }
 .mapping-group-toggle:hover { background: color-mix(in srgb, var(--tblr-primary) 7%, transparent); }
-.mapping-group-toggle__icon { color: var(--tblr-primary); font-size: 1rem; transform: rotate(0); }
+.mapping-group-toggle__icon { display: inline-flex; color: var(--tblr-primary); transform: rotate(0); }
 .mapping-group-toggle[aria-expanded="false"] .mapping-group-toggle__icon { transform: rotate(-90deg); }
 .mapping-group-title { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; font-weight: 700; }
 .mapping-group-meta { color: var(--tblr-secondary); font-family: var(--tblr-font-monospace); font-size: .68rem; font-weight: 500; }
