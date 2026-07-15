@@ -65,7 +65,7 @@ async function serveAsset(res, pathname) {
     res.writeHead(200, {
       "content-type": contentType(file),
       "content-length": body.length,
-      "cache-control": process.env.NODE_ENV === "production" ? "public, max-age=86400" : "no-cache",
+      "cache-control": process.env.NODE_ENV === "production" && pathname.startsWith("/vendor/") ? "public, max-age=86400" : "no-cache",
     });
     res.end(body);
   } catch (error) {
