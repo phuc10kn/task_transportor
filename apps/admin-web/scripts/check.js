@@ -28,4 +28,8 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "ut
 for (const name of forbidden) {
   if (manifest.dependencies?.[name] || manifest.devDependencies?.[name]) throw new Error(`Forbidden legacy dependency: ${name}`);
 }
+const mappings = fs.readFileSync(path.join(root, "public", "pages", "mappings.js"), "utf8");
+for (const marker of ['class="mapping-source-value"', "data-status", 'CIS.badge("Unsaved", "yellow")']) {
+  if (!mappings.includes(marker)) throw new Error(`Missing Mappings UI state: ${marker}`);
+}
 console.log(`Admin Web check passed (${files.length} JavaScript files).`);

@@ -18,7 +18,8 @@
     const values = flow === "source" ? item.cis_values : item.system_values;
     const status = item.existing_rule?.approval_status || "not set";
     const canApprove = Boolean(item.to_value) && status !== "approved";
-    return `<tr data-mapping="${CIS.attr(key)}"><td data-label="From"><code>${CIS.escape(item.from_label || item.from_value)}</code><div class="text-secondary small">${item.issue_count || 0} issues</div></td><td data-label="To"><select class="form-select form-select-sm" aria-label="Map ${CIS.attr(item.from_value)}" data-initial-value="${CIS.attr(item.to_value || "")}"><option value="">Not mapped</option>${(values || []).map((option) => { const value = option.value ?? option; const optionLabel = option.label ?? option.name ?? value; return `<option value="${CIS.attr(value)}" ${String(value) === String(item.to_value || "") ? "selected" : ""}>${CIS.escape(optionLabel)}</option>`; }).join("")}</select></td><td data-label="Status">${CIS.badge(status)}</td><td data-label="Actions"><div class="table-actions"><button class="btn btn-sm ${canApprove ? "btn-primary" : "btn-outline-secondary"}" data-save type="button" ${canApprove ? "" : "disabled"}>Save</button></div><div class="job-evidence" aria-live="polite"></div></td></tr>`;
+    const fromLabel = item.from_label || item.from_value;
+    return `<tr data-mapping="${CIS.attr(key)}"><td data-label="From"><div class="mapping-source-value" title="${CIS.attr(fromLabel)}">${CIS.escape(fromLabel)}</div><div class="text-secondary small mt-1">${item.issue_count || 0} issues</div></td><td data-label="To"><select class="form-select form-select-sm" aria-label="Map ${CIS.attr(item.from_value)}" data-initial-value="${CIS.attr(item.to_value || "")}"><option value="">Not mapped</option>${(values || []).map((option) => { const value = option.value ?? option; const optionLabel = option.label ?? option.name ?? value; return `<option value="${CIS.attr(value)}" ${String(value) === String(item.to_value || "") ? "selected" : ""}>${CIS.escape(optionLabel)}</option>`; }).join("")}</select></td><td data-label="Status" data-status aria-live="polite">${CIS.badge(status)}</td><td data-label="Actions"><div class="table-actions"><button class="btn btn-sm ${canApprove ? "btn-primary" : "btn-outline-secondary"}" data-save type="button" ${canApprove ? "" : "disabled"}>Save</button></div><div class="job-evidence" aria-live="polite"></div></td></tr>`;
   }
 
   function groups(items) {
@@ -97,10 +98,13 @@
       const evidence = element.querySelector(".job-evidence");
       const select = element.querySelector("select");
       const save = element.querySelector("[data-save]");
+      const status = element.querySelector("[data-status]");
+      const savedStatus = item.existing_rule?.approval_status || "not set";
       select.addEventListener("change", () => {
         const dirty = select.value !== select.dataset.initialValue;
         const canApprove = Boolean(select.value) && item.existing_rule?.approval_status !== "approved";
         element.classList.toggle("is-dirty", dirty);
+        status.innerHTML = dirty ? CIS.badge("Unsaved", "yellow") : CIS.badge(savedStatus);
         save.disabled = !dirty && !canApprove;
         save.classList.toggle("btn-primary", dirty || canApprove);
         save.classList.toggle("btn-outline-secondary", !dirty && !canApprove);
