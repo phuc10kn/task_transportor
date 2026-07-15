@@ -16,6 +16,7 @@ Source organization:
 
 - Entry app nằm ở `src/app.js`.
 - Server start nằm ở `src/server.js`.
+- Admin Web source nằm ở `apps/admin-web`; `scripts/admin-dev.js` chạy Next development và `npm run admin:start -- --port <port>` chạy Next production. Express không còn source UI/static server.
 - Config loader nằm ở `src/config/env.js`.
 - Database connection/migration nằm ở `src/infrastructure/database`.
 - SQL migrations nằm ở `src/db/migrations`.

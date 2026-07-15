@@ -21,6 +21,7 @@
 | External identity unique theo project và system column | accepted | Backlog chỉ so backlog key, Jira chỉ so Jira key; canonical key lấy từ provider API. |
 | Scheduled pull là optional | accepted | Chỉ bật sau khi manual/project pull ổn định. |
 | Admin UI là bắt buộc | accepted | Operator phải review, approve, retry và xử lý anomaly bằng UI. |
+| Project-first UI cutover không kéo backend vào MUI-16A | accepted | Thứ tự là MUI-16A → MUI-17 với accepted gap → phase BE. Mỗi login chọn/tạo Project và chỉ đổi tại Projects; Dashboard bị disabled/không fetch, `enabled=false` chặn workspace. Phase BE sau đóng `BE-PROJECT-SCOPE-01/02`. |
 | SQLite là database MVP/Lite | accepted | Phù hợp server nội bộ và workload nhỏ. |
 | Một service Express + worker nội bộ | accepted | Chưa tách worker process riêng trong Lite. |
 | Translation dùng AI nhưng human review giữ quyền quyết định | accepted | AI là draft/assistant, không là authority cuối. |

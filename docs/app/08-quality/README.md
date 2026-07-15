@@ -30,6 +30,7 @@ Lite được coi là đạt ở mức product khi:
 - Attachment download failure không block issue ingest/sync, nhưng hiển thị trạng thái lỗi và có retry riêng.
 - Job lỗi retry theo policy, hết retry chuyển `failed`, admin retry được.
 - Dashboard/Admin UI hiển thị pending review, missing mapping, failed job và open anomaly.
+- Workspace sau chọn Project chỉ hiển thị/cho thao tác dữ liệu Project đó theo contract API hiện có; không fallback sang Project khác. Accepted gap MUI-16A/MUI-17 yêu cầu Dashboard disabled/không fetch và Project `enabled=false` chặn toàn bộ workspace read/mutation; phase BE sau mới mở Dashboard project scope/server isolation.
 
 Quality objectives Lite hiện tại:
 
@@ -51,6 +52,8 @@ Verification command:
 - `npm run verify:phase05`: mapping, anomaly và dry-run.
 - `npm run verify:phase06`: Jira outbound.
 - `npm run verify:phase07`: Admin UI acceptance.
+- `npm run admin:ci`: lint, typecheck và production build của Next Admin Web.
+- `npm run verify:admin-ui-e2e`: Playwright behavior của Next Admin Web; quality gate xác nhận endpoint static UI cũ không còn được Express phục vụ.
 - `npm run verify:issue-editor`: Issue Editor API và dry-run/sync.
 - `npm run verify:system-issues`: Backlog Issues, manual CIS issue và external identity linking.
 - `npm run verify:translation-review`: Translation queue, worker gate, direct manual entry point và human review.
@@ -66,6 +69,7 @@ Manual acceptance Lite còn sống:
 - Jira sync modal tự chạy dry-run, hiển thị `can_sync`, warning và payload preview.
 - Sync Jira thật chỉ chạy sau khi dry-run hợp lệ.
 - Dashboard hiển thị pending review, missing mapping, failed job và open anomaly.
+- Next Admin Web là UI duy nhất; endpoint static UI cũ phải trả 404, không được có fallback hay dual UI.
 - SQLite backup được chạy theo operation runbook trước khi coi demo/release an toàn.
 - Issue Editor gate: dry-run dùng canonical effective values mới nhất; stale queue item không fill nội dung dịch; attachment warning chưa là gate v1; manual acceptance ưu tiên `Pull one issue` và `Resync from Backlog`.
 

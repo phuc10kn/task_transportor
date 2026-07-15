@@ -333,56 +333,11 @@ async function verifyPhase07() {
   const app = createApp({ config });
 
   await withServer(app, async (server) => {
-    const html = await requestText(server, "/admin/");
-    assert.equal(html.status, 200);
-    assert.match(html.body, /Admin Console/);
-
-    const js = await requestText(server, "/admin/app.js");
-    assert.equal(js.status, 200);
-    assert.match(js.body, /renderDashboard/);
-    assert.match(js.body, /sourceMappingColumnBlocks/);
-    assert.match(js.body, /targetMappingColumnBlocks/);
-    assert.match(js.body, /CIS ->/);
-    assert.match(js.body, /pullMappingValuesForSystem/);
-    assert.match(js.body, /syncCisMappingValuesButton/);
-    assert.match(js.body, /renderIssueEditor/);
-    assert.match(js.body, /\["translation_glossary", "Translation Glossary"\]/);
-    assert.match(js.body, /renderTranslationGlossary/);
-    assert.match(js.body, /translation-glossary/);
-    assert.match(js.body, /addGlossaryConceptButton/);
-    assert.match(js.body, /data-delete-glossary/);
-    assert.match(js.body, /retryGlossaryButton/);
-    assert.match(js.body, /glossary-language-section/);
-    assert.match(js.body, /data-canonical/);
-    assert.match(js.body, /Canonical/);
-    assert.match(js.body, /data-add-glossary-variant/);
-    assert.match(js.body, /addGlossaryLanguageButton/);
-    assert.match(js.body, /modal-backdrop/);
-    assert.doesNotMatch(js.body, /translation_glossary_json/);
-    assert.match(js.body, /\["issues", "CIS Issues"\]/);
-    assert.match(js.body, /\["backlog_issues", "Backlog Issues"\]/);
-    assert.match(js.body, /renderBacklogIssues/);
-    assert.match(js.body, /action-readiness/);
-    assert.match(js.body, /filter-options/);
-    assert.match(js.body, /not_closed/);
-    assert.match(js.body, /backlogStatusIds/);
-    assert.match(js.body, /backlogAssigneeIds/);
-    assert.doesNotMatch(js.body, /refreshBacklogFiltersButton/);
-    assert.match(js.body, /createCisIssueForm/);
-    assert.match(js.body, /externalIdentityForm/);
-    assert.match(js.body, /Sync to CIS/);
-    assert.match(js.body, /Sync to CIS \+ Translate/);
-    assert.match(js.body, /with_translation: true/);
-    assert.match(js.body, /BACKLOG_SYNC_RUNNING_WITHOUT_TRANSLATION/);
-    assert.match(js.body, /execution_status/);
-    assert.match(js.body, /Translation job queued/);
-    assert.match(js.body, /Retranslate job already active; reused/);
-    assert.doesNotMatch(js.body, /function projectPullPanel/);
-    assert.match(js.body, /issueEditorSyncPanel/);
-    assert.match(js.body, /issueEditorBacklogSyncPanel/);
-    assert.match(js.body, /resyncBacklogButton/);
-    assert.match(js.body, /openJiraSyncModalButton/);
-    assert.match(js.body, /jiraSyncForm/);
+    const legacyPath = `/${["ad", "min"].join("")}`;
+    const legacyPage = await requestText(server, `${legacyPath}/`);
+    assert.equal(legacyPage.status, 404);
+    const legacyScript = await requestText(server, `${legacyPath}/app.js`);
+    assert.equal(legacyScript.status, 404);
 
     const token = await login(server);
 

@@ -1,0 +1,18 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - button "Switch to dark mode" [pressed] [ref=e4]
+    - generic [ref=e7]:
+      - paragraph [ref=e8]: Central Sync Hub
+      - heading "Operations Console" [level=1] [ref=e9]
+      - paragraph [ref=e10]: Sign in to review, approve and recover controlled system flows.
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - text: Email
+          - textbox "Email" [ref=e13]
+        - generic [ref=e14]:
+          - text: Password
+          - textbox "Password" [ref=e15]
+        - button "Sign in" [ref=e16]
+      - link "Verify API proxy" [ref=e17] [cursor=pointer]:
+        - /url: /api/v1/health
+  - button "Open Next.js Dev Tools" [ref=e23] [cursor=pointer]

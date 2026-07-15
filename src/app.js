@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 
 const { loadConfig } = require("./config/env");
 const { createCorrelationIdMiddleware } = require("./http/middleware/correlationId");
@@ -53,12 +52,6 @@ function createApp(options = {}) {
 
   app.get("/api/v1/health", (req, res) => {
     success(res, healthPayload(config));
-  });
-
-  const adminPublicPath = path.join(config.rootDir, "public", "admin");
-  app.use("/admin", express.static(adminPublicPath));
-  app.get("/admin", (req, res) => {
-    res.sendFile(path.join(adminPublicPath, "index.html"));
   });
 
   app.use("/api/v1/auth", createAuthRouter());

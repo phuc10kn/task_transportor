@@ -14,6 +14,14 @@ function checksum(content) {
   return crypto.createHash("sha256").update(content).digest("hex");
 }
 
+function normalizedChecksum(content) {
+  return checksum(content.replace(/\r\n/g, "\n"));
+}
+
+function crlfChecksum(content) {
+  return checksum(content.replace(/\r\n/g, "\n").replace(/\n/g, "\r\n"));
+}
+
 function prepareLegacyDatabase(name) {
   const config = makeTempConfig(name);
   ensureStorage(config.storage);
@@ -89,6 +97,35 @@ function verifyFreshMigration() {
     assert.ok(db.prepare("SELECT term_match_key, is_canonical FROM translation_glossary_terms LIMIT 1").columns);
   } finally {
     db.close();
+  }
+}
+
+function verifyLegacyCrLfChecksumUpgrade() {
+  const config = makeTempConfig("translation-glossary-legacy-crlf-checksum");
+  ensureStorage(config.storage);
+  migrate({ config });
+
+  const fileName = "015_translation_glossary_tables.sql";
+  const content = fs.readFileSync(path.join(migrationsDir, fileName), "utf8");
+  const legacyHash = crlfChecksum(content);
+  const canonicalHash = normalizedChecksum(content);
+  assert.notEqual(legacyHash, canonicalHash);
+
+  const before = createConnection({ config });
+  before.prepare("UPDATE schema_migrations SET checksum = ? WHERE filename = ?")
+    .run(legacyHash, fileName);
+  before.close();
+
+  migrate({ config });
+
+  const after = createConnection({ config });
+  try {
+    assert.equal(
+      after.prepare("SELECT checksum FROM schema_migrations WHERE filename = ?").get(fileName).checksum,
+      canonicalHash
+    );
+  } finally {
+    after.close();
   }
 }
 
@@ -184,6 +221,7 @@ function verifyNormalizedCollisionRollback() {
 
 function main() {
   verifyFreshMigration();
+  verifyLegacyCrLfChecksumUpgrade();
   verifyUpgradeBackfill();
   verifyAtomicFailure({
     name: "Malformed Glossary Project",

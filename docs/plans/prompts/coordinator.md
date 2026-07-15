@@ -76,6 +76,7 @@ Phải xác định rõ:
 - current phase;
 - phase đang blocked nếu có;
 - phase chưa được mở vì dependency.
+- Human Gate đang chờ xác nhận nếu phase table/coordination có gate.
 
 ### 2. Chọn current phase
 
@@ -89,6 +90,16 @@ Không được mở phase sau nếu:
 - phase trước chưa pass;
 - phase trước còn blocker;
 - phase trước chưa có kết luận đủ để resume hoặc đóng phase.
+- Human Gate bắt buộc trước phase đó chưa được user xác nhận rõ.
+
+Khi automated checklist của phase cuối bundle đã pass nhưng Human Gate chưa được xác nhận:
+
+- giữ phase cuối bundle làm current phase với trạng thái `Awaiting human review` trong `Next` của handoff;
+- không ghi `Blocked` chỉ vì đang chờ người review;
+- không tick `Manual check`;
+- chỉ chuyển sang phase kế tiếp sau khi executor đã ghi nhận xác nhận manual theo đúng checklist.
+
+Nếu user báo lỗi tại Human Gate, chọn lại phase sở hữu behavior sớm nhất trong bundle và coi mọi automated/manual evidence downstream có thể bị ảnh hưởng là stale. Không mở bundle kế tiếp cho tới khi executor đã invalidate checklist liên quan, rerun tuần tự tới phase cuối bundle và user xác nhận lại gate.
 
 ### 3. Handoff và blocked note
 
@@ -166,6 +177,7 @@ Chỉ chuyển sang `executor.md` khi:
 
 - current phase đã rõ;
 - dependency đã pass;
+- Human Gate đứng trước current phase đã được xác nhận nếu plan yêu cầu;
 - target files/artifacts của phase đã xác định;
 - không còn blocker điều phối;
 - plan đủ cấu trúc để execution log và handoff không bị thất lạc.
@@ -199,13 +211,14 @@ Yêu cầu bắt buộc:
    - phase blocked;
    - phase chưa được mở.
 4. Kiểm tra dependency: phase sau chỉ mở khi phase trước đã pass acceptance thật.
-5. Chỉ được ghi handoff note hoặc blocked note trong `02-coordination.md` đúng vị trí canonical.
-6. Handoff hiện tại phải overwrite snapshot cũ.
-7. Accepted gap chỉ ghi vào `### Accepted gaps`.
-8. Không tick checklist và không đánh dấu pass thay cho thực thi.
-9. Nếu plan thiếu cấu trúc để điều phối an toàn, nêu findings và quay về `planner.md`.
-10. Nếu current phase đã rõ, kết luận prompt tiếp theo là `executor.md`.
-11. Nếu current phase chưa rõ, kết luận prompt tiếp theo là `planner.md`.
+5. Nếu có Human Gate, không mở bundle kế tiếp trước xác nhận rõ của user; chờ review không ghi thành blocker kỹ thuật.
+6. Chỉ được ghi handoff note hoặc blocked note trong `02-coordination.md` đúng vị trí canonical.
+7. Handoff hiện tại phải overwrite snapshot cũ.
+8. Accepted gap chỉ ghi vào `### Accepted gaps`.
+9. Không tick checklist và không đánh dấu pass thay cho thực thi.
+10. Nếu plan thiếu cấu trúc để điều phối an toàn, nêu findings và quay về `planner.md`.
+11. Nếu current phase đã rõ, kết luận prompt tiếp theo là `executor.md`.
+12. Nếu current phase chưa rõ, kết luận prompt tiếp theo là `planner.md`.
 
 Đầu ra mong muốn:
 
@@ -220,6 +233,7 @@ Yêu cầu bắt buộc:
 - [ ] Current phase được chọn theo dependency thật.
 - [ ] Cây plan đúng `structure-rules.md`.
 - [ ] Không mở phase sau khi phase trước chưa pass.
+- [ ] Không mở phase sau Human Gate khi chưa có user confirmation.
 - [ ] Phase được chọn bằng phase id ổn định.
 - [ ] Chỉ dùng vị trí canonical cho handoff, blocked note và accepted gap.
 - [ ] Handoff hiện tại đã được overwrite bằng snapshot còn hiệu lực.
@@ -235,6 +249,7 @@ Không điều phối theo các kiểu sau:
 - current phase chưa rõ mà vẫn gọi `executor.md`;
 - dùng điều phối để tick checklist;
 - ghi handoff rải rác nhiều chỗ.
+- coi automated pass là đủ để vượt Human Gate hoặc dùng coordinator để tick manual checklist.
 
 ## Mẫu báo cáo cuối
 

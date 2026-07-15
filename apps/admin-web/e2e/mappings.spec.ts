@@ -1,0 +1,34 @@
+import { expect, test } from "@playwright/test";
+
+const settings = {
+  systems: [{ value: "backlog", label: "Backlog" }, { value: "jira", label: "Jira" }],
+  flows: {
+    systems_to_cis: [{ project_id: 1, mapping_type: "status", mapping_label: "Status", required_for_jira: true, direction_from: "backlog", direction_to: "cis", from_value: "1", to_value: "", issue_count: 3, cis_values: [{ value: "open", label: "Open" }], existing_rule: null }],
+    cis_to_system: [{ project_id: 1, mapping_type: "status", mapping_label: "Status", required_for_jira: true, direction_from: "cis", direction_to: "jira", from_value: "open", from_label: "Open", to_value: "", system_values: [{ value: "10001", label: "To Do" }], existing_rule: null }],
+  },
+};
+
+test("mappings keeps URL context, saves both directions and exposes refresh actions", async ({ page }) => {
+  const currentSettings = JSON.parse(JSON.stringify(settings));
+  await page.route("**/api/v1/auth/login", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { token: "mapping-token", admin: { id: 1, email: "admin@example.com" } } }) }));
+  await page.route("**/api/v1/projects", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [{ id: 1, name: "Demo" }, { id: 2, name: "Second" }] }) }));
+  await page.route("**/api/v1/mapping-settings?**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: currentSettings }) }));
+  let saves = 0;
+  await page.route("**/api/v1/mapping-rules", async (route) => { const body = JSON.parse(route.request().postData() || "{}"); saves += 1; expect(body).toMatchObject(saves === 1 ? { project_id: 1, direction_from: "backlog", direction_to: "cis", approval_status: "approved" } : { project_id: 1, direction_from: "cis", direction_to: "jira", approval_status: "approved" }); const row = saves === 1 ? currentSettings.flows.systems_to_cis[0] : currentSettings.flows.cis_to_system[0]; row.to_value = body.to_value; row.existing_rule = { id: 9 + saves, approval_status: "approved" }; return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ data: row.existing_rule }) }); });
+  await page.route("**/api/v1/projects/1/**/mapping-values/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: {} }) }));
+  await page.goto("/login?next=%2Fmappings%3Fproject_id%3D1%26source_system%3Dbacklog%26target_system%3Djira");
+  await page.getByLabel("Email").fill("admin@example.com"); await page.getByLabel("Password").fill("12345678"); await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/mappings\?project_id=1&source_system=backlog&target_system=jira$/); await expect(page.getByRole("heading", { name: "Mapping Settings" })).toBeVisible(); await expect(page.getByRole("columnheader", { name: "System value" }).first()).toBeVisible();
+  await page.getByLabel("Mapping target system").selectOption("backlog"); await expect(page).toHaveURL(/target_system=backlog$/); await page.getByLabel("Mapping target system").selectOption("jira"); await expect(page).toHaveURL(/target_system=jira$/);
+  const source = page.locator('details[aria-label="System to CIS mappings"]'); const target = page.locator('details[aria-label="CIS to system mappings"]'); await expect(source).toHaveAttribute("open", ""); await expect(target).toHaveAttribute("open", ""); await source.locator("summary").press("Enter"); await expect(source).not.toHaveAttribute("open", ""); await expect(source).toHaveCSS("background-color", "rgb(255, 255, 255)"); await expect(source.getByRole("columnheader", { name: "System value" })).toHaveCount(0); await source.locator("summary").press("Enter"); await expect(source).toHaveAttribute("open", ""); await expect(source.getByRole("columnheader", { name: "System value" })).toBeVisible();
+  await page.getByLabel("Status target").first().selectOption("open"); await expect(page.getByText("unsaved", { exact: true }).first()).toBeVisible(); await page.getByRole("button", { name: "Save setting" }).first().click(); await expect(page.getByText("approved", { exact: true }).first()).toBeVisible(); await page.getByLabel("Status target").nth(1).selectOption("10001"); await expect(page.getByText("unsaved", { exact: true }).last()).toBeVisible(); await page.getByRole("button", { name: "Save setting" }).nth(1).click();
+  const pullBacklog = page.getByRole("button", { name: "Pull Backlog fields" }); await expect(pullBacklog).toBeVisible(); await pullBacklog.click(); await expect(page.getByRole("button", { name: "Pulling…" })).toBeVisible(); await expect(pullBacklog).toBeEnabled();
+});
+
+test("mappings exposes empty and retry states", async ({ page }) => {
+  let attempts = 0;
+  await page.route("**/api/v1/auth/login", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { token: "mapping-token", admin: { id: 1, email: "admin@example.com" } } }) }));
+  await page.route("**/api/v1/projects", (route) => { attempts += 1; return attempts === 1 ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: { message: "Projects unavailable." } }) }) : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [] }) }); });
+  await page.goto("/login?next=%2Fmappings"); await page.getByLabel("Email").fill("admin@example.com"); await page.getByLabel("Password").fill("12345678"); await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByText("Projects unavailable.")).toBeVisible(); await page.getByRole("button", { name: "Retry" }).click(); await expect(page.getByText("No projects configured")).toBeVisible();
+});

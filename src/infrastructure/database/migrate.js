@@ -29,21 +29,38 @@ function getMigrationFiles() {
     .sort();
 }
 
-function checksum(content) {
+function hash(content) {
   return crypto.createHash("sha256").update(content).digest("hex");
+}
+
+function migrationChecksums(content) {
+  const normalized = content.replace(/\r\n/g, "\n");
+  return {
+    canonical: hash(normalized),
+    compatible: new Set([
+      hash(content),
+      hash(normalized),
+      hash(normalized.replace(/\n/g, "\r\n")),
+    ]),
+  };
 }
 
 function applyMigration(db, fileName) {
   const filePath = path.join(MIGRATIONS_DIR, fileName);
   const content = fs.readFileSync(filePath, "utf8");
-  const hash = checksum(content);
+  const hashes = migrationChecksums(content);
   const existing = db
     .prepare("SELECT filename, checksum FROM schema_migrations WHERE filename = ?")
     .get(fileName);
 
   if (existing) {
-    if (existing.checksum !== hash) {
+    if (!hashes.compatible.has(existing.checksum)) {
       throw new Error(`Migration checksum changed: ${fileName}`);
+    }
+
+    if (existing.checksum !== hashes.canonical) {
+      db.prepare("UPDATE schema_migrations SET checksum = ? WHERE filename = ?")
+        .run(hashes.canonical, fileName);
     }
 
     return false;
@@ -53,7 +70,7 @@ function applyMigration(db, fileName) {
     db.exec(content);
     db
       .prepare("INSERT INTO schema_migrations (filename, checksum) VALUES (?, ?)")
-      .run(fileName, hash);
+      .run(fileName, hashes.canonical);
   });
 
   run();

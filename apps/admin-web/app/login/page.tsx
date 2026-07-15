@@ -1,0 +1,19 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useAuth } from "../../lib/auth";
+import { safeIntendedPath } from "../../lib/routes";
+import { Button } from "../../components/ui";
+import { ThemeToggle } from "../../components/theme-toggle";
+
+function LoginForm() {
+  const router = useRouter(); const searchParams = useSearchParams(); const { login, status, error: sessionError } = useAuth();
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [error, setError] = useState(""); const [submitting, setSubmitting] = useState(false);
+  useEffect(() => { if (status === "authenticated") router.replace(safeIntendedPath(searchParams.get("next"))); }, [router, searchParams, status]);
+  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSubmitting(true); setError(""); try { await login(email, password); router.replace(safeIntendedPath(searchParams.get("next"))); } catch (requestError) { setError(requestError instanceof Error ? requestError.message : "Login failed."); } finally { setSubmitting(false); } }
+  return <main className="login-shell app-shell min-h-screen"><div className="login-theme"><ThemeToggle /></div><section className="login-frame"><aside className="login-context"><div><div className="flex items-center gap-3"><span aria-hidden="true" className="app-brand__mark">C</span><div><p className="text-base font-semibold text-white">CIS Console</p><p className="mt-0.5 text-xs text-slate-400">Central Sync Hub</p></div></div><div className="mt-20 max-w-md"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300">Controlled delivery</p><h2 className="mt-4 text-4xl font-semibold leading-tight text-white">One operational view from source to destination.</h2><p className="mt-5 text-sm leading-6 text-slate-300">Review canonical data, approve translation and resolve blockers before anything reaches the target system.</p></div></div><div className="login-flow"><span>System</span><b>→</b><strong>CIS</strong><b>→</b><span>System</span></div></aside><section className="login-form-panel"><div className="w-full max-w-md"><p className="eyebrow text-xs font-semibold uppercase tracking-[0.14em]">Secure operator access</p><h1 className="text-primary mt-3 text-3xl font-semibold tracking-tight">Operations Console</h1><p className="text-secondary mt-3 text-sm leading-6">Sign in to review, approve and recover controlled system flows.</p><form className="mt-8 space-y-5" onSubmit={submit}><label className="text-secondary block text-sm font-medium">Email<input className="field-control mt-2 w-full rounded-lg border px-3 py-2" autoComplete="username" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label><label className="text-secondary block text-sm font-medium">Password<input className="field-control mt-2 w-full rounded-lg border px-3 py-2" autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>{(error || sessionError) && <p className="error-panel rounded-lg border p-3 text-sm" role="alert">{error || sessionError}</p>}<Button className="w-full" disabled={submitting} type="submit" variant="primary">{submitting ? "Signing in…" : "Sign in"}</Button></form><div className="mt-6 flex items-center justify-between border-t pt-5" style={{ borderColor: "var(--border)" }}><span className="text-subtle text-xs">CIS API connection</span><Link className="text-xs font-medium text-blue-600 hover:underline" href="/api/v1/health">Verify API proxy</Link></div></div></section></section></main>;
+}
+
+export default function LoginPage() { return <Suspense fallback={<main className="app-shell text-secondary min-h-screen p-8">Loading login…</main>}><LoginForm /></Suspense>; }

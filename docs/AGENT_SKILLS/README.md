@@ -37,6 +37,7 @@ Workbench agent hỗ trợ intake/triage/update theo policy local. `task_transpo
 | `meta-validate` | Validate schema, placement, relation, ID | [meta-validate/SKILL.md](meta-validate/SKILL.md) |
 | `graph-materialize` | Materialize graph slice theo trace need local đã chốt | [graph-materialize/SKILL.md](graph-materialize/SKILL.md) |
 | `workbench-intake` | Intake/triage Workbench khi undetermined-placement | [workbench-intake/SKILL.md](workbench-intake/SKILL.md) |
+| `admin-ui-nextjs` | Thiết kế, triển khai, review hoặc kiểm thử Admin UI Next.js | [admin-ui-nextjs/SKILL.md](admin-ui-nextjs/SKILL.md) |
 | `theory-find` | Tìm theory liên quan task | [theory-find/SKILL.md](theory-find/SKILL.md) |
 | `theory-review` | Review docs/code theo theory | [theory-review/SKILL.md](theory-review/SKILL.md) |
 | `theory-challenge` | Ghi challenge khi theory có vấn đề | [theory-challenge/SKILL.md](theory-challenge/SKILL.md) |
@@ -51,6 +52,7 @@ Bắt đầu bằng [Luồng vận hành chuẩn](../guide/README.md#luồng-v�
 - Tạo hoặc sửa entity: [doc-create-entity](doc-create-entity/SKILL.md) và [meta-validate](meta-validate/SKILL.md).
 - Materialize canonical app relation: [graph-materialize](graph-materialize/SKILL.md), rồi [meta-validate](meta-validate/SKILL.md).
 - Chưa rõ canonical home và Workbench active: [workbench-intake](workbench-intake/SKILL.md).
+- Làm Admin UI Next.js: [admin-ui-nextjs](admin-ui-nextjs/SKILL.md), kết hợp `ui-design` và Playwright theo scope.
 - Có relation hoặc impact: [meta-validate](meta-validate/SKILL.md) và [trace-impact.md](../guide/workflows/trace-impact.md).
 - Liên quan theory: [theory-find](theory-find/SKILL.md), [theory-review](theory-review/SKILL.md) hoặc [theory-impact](theory-impact/SKILL.md).
 - Theory có vấn đề: [theory-challenge](theory-challenge/SKILL.md) hoặc [theory-refine](theory-refine/SKILL.md).

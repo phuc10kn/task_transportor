@@ -21,6 +21,8 @@ System -> CIS -> System
 Lite in scope:
 
 - Admin login và project config tối thiểu.
+- Admin chọn hoặc tạo đúng một Project trước khi vào workspace nghiệp vụ; issue, translation, mapping, anomaly, job và journal của workspace đó chỉ dùng Project đã chọn theo contract API hiện có. Đổi Project chỉ thực hiện tại Project Config.
+- Accepted release gap của MUI-16A/MUI-17: Dashboard bị disabled và không tải summary/alerts; Project `enabled=false` chỉ được sửa tại Project Config và không thể mở workspace. Project-scoped Dashboard cùng server-side object isolation thuộc `BE-PROJECT-SCOPE-01/02` của phase BE sau.
 - Backlog manual pull một issue vào CIS.
 - Backlog project pull enqueue nhiều issue vào CIS.
 - Backlog Issues browser theo project + khoảng ngày tạo, Status/Not closed/người được gán tùy chọn từ snapshot cấu hình Backlog của project; chỉ query candidate sau action của Admin, loại issue đã có trong CIS và chỉ giữ kết quả trong memory của Admin UI.

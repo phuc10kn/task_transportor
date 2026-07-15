@@ -19,8 +19,9 @@ Runtime và platform:
 - HTTP server dùng Express 5, JSON body limit lấy từ `HTTP_JSON_LIMIT`.
 - Admin API dùng version prefix `/api/v1`.
 - Health endpoint hiện có `/health` và `/api/v1/health`.
+- Admin Web là Next.js trong `apps/admin-web`; browser chỉ gọi relative `/api/v1/*` và Next rewrite request server-side đến Express. Express không còn static mount hoặc route UI legacy.
 - Persistence dùng SQLite qua `better-sqlite3`.
-- Migration runner đọc SQL từ `src/db/migrations` và ghi lịch sử vào `schema_migrations`.
+- Migration runner đọc SQL từ `src/db/migrations`, ghi checksum canonical LF vào `schema_migrations`, chấp nhận checksum legacy LF/CRLF và nâng ledger legacy về canonical khi chạy lại.
 
 Runtime config:
 

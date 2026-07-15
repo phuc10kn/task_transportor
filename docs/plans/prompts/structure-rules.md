@@ -113,6 +113,20 @@ Mỗi file phase bắt buộc có:
 
 Risk triggers, automated/manual acceptance và release condition cũng gộp trong file này. Không tạo file handoff/gaps/risks khác.
 
+### Human Review Gate
+
+Với plan UI, workflow operator hoặc migration có artifact chạy được theo từng bundle, phải có một số mốc người review kiểm trực tiếp thay vì dồn toàn bộ manual acceptance về cuối.
+
+- Human Gate là dependency điều phối, không phải phase/file/folder riêng.
+- Root `README.md > ## Phase triển khai` ghi gate sau phase nào và phase nào chỉ mở sau khi gate được xác nhận.
+- Chi tiết gate nằm trong một section H2 của `02-coordination.md`, bên ngoài bốn H3 canonical của `## Quy ước điều phối`.
+- Mỗi gate phải ghi: id ổn định, phase kết thúc bundle, phạm vi thao tác người review, điều kiện xác nhận và phase bị giữ lại khi chưa pass.
+- Chờ người review không phải blocker kỹ thuật; `### Trạng thái blocked` vẫn là `None` nếu không có blocker khác.
+- Phase kế tiếp không được mở chỉ vì automated tests pass nếu dependency còn Human Gate chưa được user xác nhận.
+- Marker `In-progress ... chờ HG` là trạng thái tạm; sau user confirmation executor phải xóa marker này, ghi nhận manual confirmation bằng format result canonical rồi mới để coordinator chuyển phase.
+- Lỗi phát hiện tại gate làm stale evidence của phase sở hữu và mọi phase downstream bị ảnh hưởng trong cùng bundle; phải invalidate/rerun thay vì giữ checklist pass cũ.
+- Không tạo quá nhiều gate: đặt sau một bundle có thể chạy/review có ý nghĩa, ví dụ foundation, configuration, inbound, issue/translation, outbound hoặc operations.
+
 ## Quy tắc thay đổi cấu trúc
 
 - Plan cũ khác cấu trúc phải được flatten khi user yêu cầu sửa/review plan đó.

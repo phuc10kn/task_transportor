@@ -139,12 +139,27 @@ Hai lệnh `rg` đầu không được có kết quả.
 - Mỗi lượt triển khai chỉ nên nằm trong phạm vi của phase hiện tại, trừ khi user yêu cầu mở rộng.
 - Ưu tiên module nhỏ, tập trung, tránh rewrite rộng.
 - Dùng cấu trúc module và boundary hiện tại của repo trong `docs/app/05-architecture/**`, dựa trên template reusable trong `docs/guide/reference/entity-maps/packs/variants/modular-monolith` và theory nền trong `docs/theories/modular-architecture`.
-- Không commit secret. Dùng `.env` hoặc `.codex/config.toml` local cho credential/path riêng máy.
+- Không commit secret. Dùng `.env`, credential store của hệ điều hành hoặc config local đã được ignore cho credential/path riêng máy.
 - Không hard-code credential Backlog/Jira, API key AI, Codex auth path, JWT secret hoặc internal server path.
 - Dùng `direction_from` và `direction_to` cho sync job, sync journal và mapping direction. Không thay bằng một field `direction` nếu docs chưa được cập nhật có chủ ý.
 - Webhook handler phải verify, lưu raw payload, enqueue job và return nhanh. Xử lý nặng thuộc về worker/job code.
 - Manual pull và webhook ingest nên dùng chung normalizer khi có thể.
 - Sync đầu ra phải hỗ trợ dry-run trước khi ghi Jira thật.
+
+## Luật Admin UI Next.js
+
+Khi task liên quan thiết kế, xây mới, sửa hoặc kiểm thử Admin UI Next.js, agent bắt buộc:
+
+1. In đúng một dòng trước khi tiến hành thật: `Đang dùng admin-ui-nextjs + ui-design; kiểm thử bằng playwright/playwright-interactive khi có UI chạy được.`
+2. Đọc `docs/AGENT_SKILLS/admin-ui-nextjs/SKILL.md` và `docs/app/03-interface/README.md`.
+3. Dùng skill `ui-design` để chốt design direction trước khi code; không tự coi Figma là dependency hoặc source of truth.
+4. Dùng `playwright` cho acceptance có thể lặp lại; dùng `playwright-interactive` khi cần điều tra trực quan; chỉ dùng `screenshot` khi thật sự cần bằng chứng hình ảnh hoặc inspiration có chọn lọc.
+5. Giữ business rule và data access trong Express API/module hiện tại. Next.js không truy cập SQLite trực tiếp và không nhân bản nghiệp vụ backend.
+6. Mọi route dữ liệu phải có loading, empty, error và retry phù hợp; form lỗi phải giữ input; thao tác quan trọng phải dùng được bằng bàn phím và có focus rõ.
+7. Dùng token và component primitive dùng chung; không hard-code style rời rạc theo từng màn.
+8. Đích cuối là thay thế hoàn toàn Admin UI cũ. Không giữ hai UI active, legacy route hoặc fallback sau cutover. Chỉ xóa UI cũ khi acceptance của UI mới đã pass.
+
+Nếu skill cá nhân chưa được cài, agent phải báo rõ skill thiếu và làm theo hướng dẫn trong `docs/AGENT_SKILLS/guides/cursor-installation.md`; không được tuyên bố đã dùng skill khi chưa có.
 
 ## Luật checklist theo phase
 

@@ -68,6 +68,10 @@ Chỉ tick khi:
 - acceptance của item đã pass;
 - không còn ambiguity lớn ở item đó.
 
+Item `Manual check (Người review tại HG-xx)` chỉ được tick sau khi user xác nhận rõ gate tương ứng đã pass. Automated browser test, screenshot hoặc suy đoán của agent không thay thế xác nhận này. Sau xác nhận, executor được tick các manual item thuộc bundle của gate dù chúng nằm trong phase trước; đây là ngoại lệ duy nhất cho checklist ngoài current phase và không cho phép sửa implementation ngoài current phase.
+
+Trước khi kết luận phase đã pass, phải lập ma trận `checklist item -> test/verifier/evidence` cho từng item tự động chưa tick. Mỗi item phải có ít nhất một assertion hoặc lệnh verify bao phủ đúng hành vi (bao gồm negative/error, isolation, stale và timeout nếu checklist nêu rõ). Item tự động không có evidence là blocker: phải bổ sung test/fix rồi chạy lại, không được tick theo suy đoán hoặc chỉ vì một suite tổng thể màu xanh.
+
 Không tick khi:
 
 - mới thảo luận;
@@ -96,6 +100,12 @@ Trước khi dừng, phải làm đủ 3 việc:
 3. Cập nhật `<plan-dir>/02-coordination.md > ## Quy ước điều phối > ### Handoff hiện tại` để lượt sau resume đúng điểm.
 
 Executor chỉ được ghi handoff khi bị ngắt giữa phase hoặc cần dừng vì blocker trong lúc làm. Các cập nhật handoff điều phối bình thường thuộc về `coordinator.md`.
+
+Phase kết thúc tại Human Gate được xem là planned interruption: sau automated pass, executor phải để manual item chưa tick, ghi `In-progress: <phase id> - automated gate pass | Next: chờ <HG-id>`, cập nhật handoff `Next` bằng checklist/URL review và dừng. Không ghi trạng thái blocked nếu chỉ đang chờ user.
+
+Sau khi user xác nhận gate pass, executor phải tick đúng các manual item của bundle, xóa marker `In-progress ... chờ <HG-id>` đã hết hiệu lực và ghi `Fix tối thiểu: <phase-file> - ghi nhận <HG-id> đã được user xác nhận`. Sau đó dừng để coordinator chuyển phase; không để marker `In-progress` cũ khiến phase bị chọn lại.
+
+Nếu user báo lỗi tại gate, executor/coordinator xác định phase sở hữu sớm nhất trong bundle. Executor được phép cập nhật plan metadata ngoài current phase để invalidate evidence downstream: bỏ tick automated/manual items bị ảnh hưởng từ phase sở hữu đến phase cuối bundle và ghi marker `In-progress` cho việc rerun. Implementation vẫn chỉ được sửa trong current owning phase. Các phase downstream phải được rerun tuần tự trước khi trình lại gate.
 
 ### 6. Nếu blocked trong lúc làm
 
@@ -127,6 +137,8 @@ Yêu cầu bắt buộc:
 9. Nếu current phase không còn rõ hoặc dependency sai, dừng và quay về `coordinator.md`.
 10. Nếu phát hiện mâu thuẫn ngoài scope, báo lại thay vì âm thầm sửa lan.
 11. Không tạo folder/file ngoài cây `structure-rules.md`.
+12. Nếu current phase kết thúc bằng Human Gate, chuẩn bị local/test URL + deterministic scenario, dừng chờ user và không tự mở phase kế tiếp.
+13. Chỉ tick manual items của Human Gate sau explicit user confirmation; nếu user báo lỗi, giữ/reopen phase sở hữu behavior và rerun gate liên quan.
 
 Đầu ra mong muốn:
 
@@ -143,6 +155,7 @@ Yêu cầu bắt buộc:
 - [ ] Đã cập nhật `Kết quả thực hiện`.
 - [ ] Đã tick đúng checklist phase tương ứng.
 - [ ] Chưa tick deferred item.
+- [ ] Manual check chỉ được tick khi có explicit user confirmation cho đúng Human Gate.
 - [ ] Nếu từng bị ngắt giữa phase, đã để lại `In-progress` và handoff note.
 - [ ] Không tạo drift giữa plan và file thật.
 
