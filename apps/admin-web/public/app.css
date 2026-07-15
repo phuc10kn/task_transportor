@@ -47,7 +47,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mapping-group-title { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; font-weight: 700; }
 .mapping-group-meta { color: var(--tblr-secondary); font-family: var(--tblr-font-monospace); font-size: .68rem; font-weight: 500; }
 [data-mapping].is-dirty { background: color-mix(in srgb, var(--tblr-primary) 5%, transparent); }
-.mapping-action-label { display: none; }
 .filter-section + .filter-section { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--tblr-border-color); }
 .filter-section__heading { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .75rem; }
 .filter-section__heading span { color: var(--tblr-secondary); font-size: .72rem; }
@@ -73,7 +72,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .table td { vertical-align: middle; }
 .table code { font-size: .72rem; }
 .table-actions { display: flex; align-items: center; flex-wrap: nowrap; gap: .25rem; min-width: 7.5rem; }
-.mapping-review-action { border-radius: var(--tblr-border-radius); }
 .empty-row { padding: 2.5rem !important; text-align: center; color: var(--tblr-secondary); }
 .metric-strip { display: flex; flex-wrap: wrap; gap: .75rem; }
 .metric { min-width: 7rem; padding: .65rem .85rem; border: 1px solid var(--tblr-border-color); border-radius: var(--tblr-border-radius); background: var(--tblr-bg-surface); }
@@ -179,8 +177,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .responsive-table td { display: grid; grid-template-columns: 8rem minmax(0,1fr); gap: .75rem; padding: .4rem !important; border: 0; }
   .responsive-table td::before { content: attr(data-label); color: var(--tblr-secondary); font-size: .7rem; font-weight: 700; text-transform: uppercase; }
   .table-actions { min-width: 0; flex-wrap: wrap; }
-  .mapping-action-label { display: inline; }
-  .mapping-review-action { width: auto; }
   .mapping-table .mapping-group-row { padding: 0; }
   .mapping-group-toggle { grid-template-columns: 1rem minmax(0, 1fr); }
   .mapping-group-meta { grid-column: 2; }

@@ -17,8 +17,8 @@
     const key = `${flow}:${item.mapping_type}:${item.from_value}`;
     const values = flow === "source" ? item.cis_values : item.system_values;
     const status = item.existing_rule?.approval_status || "not set";
-    const label = item.mapping_label || CIS.label(item.mapping_type);
-    return `<tr data-mapping="${CIS.attr(key)}"><td data-label="From"><code>${CIS.escape(item.from_label || item.from_value)}</code><div class="text-secondary small">${item.issue_count || 0} issues</div></td><td data-label="To"><select class="form-select form-select-sm" aria-label="Map ${CIS.attr(item.from_value)}" data-initial-value="${CIS.attr(item.to_value || "")}"><option value="">Not mapped</option>${(values || []).map((option) => { const value = option.value ?? option; const optionLabel = option.label ?? option.name ?? value; return `<option value="${CIS.attr(value)}" ${String(value) === String(item.to_value || "") ? "selected" : ""}>${CIS.escape(optionLabel)}</option>`; }).join("")}</select></td><td data-label="Status">${CIS.badge(status)}</td><td data-label="Actions"><div class="table-actions"><button class="btn btn-sm btn-outline-secondary" data-save type="button" disabled>Save</button>${item.existing_rule ? `<button class="btn btn-sm btn-ghost-success btn-icon mapping-review-action" data-approve type="button" title="Approve mapping" aria-label="Approve ${CIS.attr(label)} mapping"><span aria-hidden="true">✓</span><span class="mapping-action-label">Approve</span></button><button class="btn btn-sm btn-ghost-danger btn-icon mapping-review-action" data-reject type="button" title="Reject mapping" aria-label="Reject ${CIS.attr(label)} mapping"><span aria-hidden="true">×</span><span class="mapping-action-label">Reject</span></button>` : ""}</div><div class="job-evidence" aria-live="polite"></div></td></tr>`;
+    const canApprove = Boolean(item.to_value) && status !== "approved";
+    return `<tr data-mapping="${CIS.attr(key)}"><td data-label="From"><code>${CIS.escape(item.from_label || item.from_value)}</code><div class="text-secondary small">${item.issue_count || 0} issues</div></td><td data-label="To"><select class="form-select form-select-sm" aria-label="Map ${CIS.attr(item.from_value)}" data-initial-value="${CIS.attr(item.to_value || "")}"><option value="">Not mapped</option>${(values || []).map((option) => { const value = option.value ?? option; const optionLabel = option.label ?? option.name ?? value; return `<option value="${CIS.attr(value)}" ${String(value) === String(item.to_value || "") ? "selected" : ""}>${CIS.escape(optionLabel)}</option>`; }).join("")}</select></td><td data-label="Status">${CIS.badge(status)}</td><td data-label="Actions"><div class="table-actions"><button class="btn btn-sm ${canApprove ? "btn-primary" : "btn-outline-secondary"}" data-save type="button" ${canApprove ? "" : "disabled"}>Save</button></div><div class="job-evidence" aria-live="polite"></div></td></tr>`;
   }
 
   function groups(items) {
@@ -99,10 +99,11 @@
       const save = element.querySelector("[data-save]");
       select.addEventListener("change", () => {
         const dirty = select.value !== select.dataset.initialValue;
+        const canApprove = Boolean(select.value) && item.existing_rule?.approval_status !== "approved";
         element.classList.toggle("is-dirty", dirty);
-        save.disabled = !dirty;
-        save.classList.toggle("btn-primary", dirty);
-        save.classList.toggle("btn-outline-secondary", !dirty);
+        save.disabled = !dirty && !canApprove;
+        save.classList.toggle("btn-primary", dirty || canApprove);
+        save.classList.toggle("btn-outline-secondary", !dirty && !canApprove);
       });
       save.addEventListener("click", async (event) => {
         event.currentTarget.disabled = true;
@@ -110,15 +111,11 @@
           const body = { to_value: select.value };
           const path = item.existing_rule ? `/api/v1/mapping-rules/${item.existing_rule.id}` : "/api/v1/mapping-rules";
           if (!item.existing_rule) Object.assign(body, { project_id: item.project_id, mapping_type: item.mapping_type, direction_from: item.direction_from, direction_to: item.direction_to, from_value: item.from_value });
-          await CIS.api(path, { method: item.existing_rule ? "PATCH" : "POST", body });
-          evidence.textContent = "Saved; approval is still explicit.";
+          const saved = await CIS.api(path, { method: item.existing_rule ? "PATCH" : "POST", body });
+          if (saved.approval_status !== "approved") await CIS.api(`/api/v1/mapping-rules/${saved.id}/approve`, { method: "POST" });
           await load();
+          CIS.toast("Mapping saved.");
         } catch (failure) { evidence.innerHTML = `<span class="text-danger">${CIS.escape(failure.message)}</span>`; event.currentTarget.disabled = false; }
-      });
-      for (const action of ["approve", "reject"]) element.querySelector(`[data-${action}]`)?.addEventListener("click", async (event) => {
-        event.currentTarget.disabled = true;
-        try { await CIS.api(`/api/v1/mapping-rules/${item.existing_rule.id}/${action}`, { method: "POST" }); await load(); CIS.toast(`Mapping ${action}d.`); }
-        catch (failure) { evidence.innerHTML = `<span class="text-danger">${CIS.escape(failure.message)}</span>`; event.currentTarget.disabled = false; }
       });
     });
   }
