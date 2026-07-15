@@ -131,7 +131,7 @@ function collectTranslationContext({ config, item }) {
     .filter((entry) => entry.id !== item.id)
     .map((entry) => ({
       source_text: truncate(entry.source_text, 300),
-      reviewed_text: truncate(entry.reviewed_text || entry.ai_draft || "", 300),
+      reviewed_text: truncate(entry.ai_draft || "", 300),
       target_type: entry.target_type,
       review_status: entry.review_status,
     }));

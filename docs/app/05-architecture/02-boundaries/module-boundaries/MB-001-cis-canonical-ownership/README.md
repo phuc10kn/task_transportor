@@ -51,7 +51,7 @@ Mọi thay đổi lên `issues`, `issue_revisions`, `issue_comments`, `issue_att
 ## Typical violations this boundary prevents
 
 - `Backlog` upsert trực tiếp vào issue tables sau khi fetch.
-- `Translation` tự apply reviewed text vào issue state mà không qua `Cis`.
+- `Translation` tự apply approved draft vào issue state mà không qua `Cis`.
 - `Jira` tự ghi sync status hoặc conflict flag vào canonical issue state.
 
 ## Architectural consequences

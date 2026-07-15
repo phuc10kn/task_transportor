@@ -33,7 +33,7 @@ AI draft không tự trở thành canonical issue content nếu chưa qua review
 
 ## Statement
 
-Translation draft đi vào queue để approve, reject hoặc manual edit; canonical update chỉ xảy ra khi reviewed result được apply qua `Cis`.
+AI và operator cùng chỉnh một draft trong queue; Save Draft không đổi canonical, và canonical update chỉ xảy ra khi Approve gọi owner path qua `Cis`.
 
 ## Scope
 

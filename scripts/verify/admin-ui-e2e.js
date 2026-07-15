@@ -51,7 +51,7 @@ function stopProcess(child) {
 }
 
 async function main() {
-  const config = makeTempConfig("admin-ui-next-e2e", {
+  const config = makeTempConfig("admin-ui-mpa-e2e", {
     BACKLOG_FAKE_FIXTURE_PATH: path.join(process.cwd(), "scripts", "verify", "fixtures", "backlog-issue.json"),
     JIRA_FAKE_MODE: "1",
   });
@@ -61,7 +61,7 @@ async function main() {
 
   const api = createApp({ config });
   const apiServer = api.listen(0);
-  let nextProcess;
+  let webProcess;
 
   try {
     await new Promise((resolve) => apiServer.once("listening", resolve));
@@ -75,14 +75,11 @@ async function main() {
       throw new Error(`Admin API login preflight failed with status ${loginResponse.status}: ${await loginResponse.text()}`);
     }
     const webPort = Number(process.env.ADMIN_WEB_E2E_PORT || 3101);
-    nextProcess = spawn(npmCommand, ["run", "dev", "--", "--port", String(webPort)], {
+    webProcess = spawn(npmCommand, ["run", "dev", "--", "--port", String(webPort)], {
       cwd: adminWebDir,
       env: {
         ...process.env,
         CIS_API_ORIGIN: `http://127.0.0.1:${apiPort}`,
-        NEXT_PUBLIC_CIS_API_ORIGIN: `http://127.0.0.1:${apiPort}`,
-        NEXT_DIST_DIR: ".next-e2e",
-        NEXT_TELEMETRY_DISABLED: "1",
       },
       shell: process.platform === "win32",
       stdio: process.env.CI ? "ignore" : "inherit",
@@ -100,9 +97,9 @@ async function main() {
     if (result.status !== 0) {
       throw new Error(`Admin UI Playwright exited with status ${result.status}`);
     }
-    console.log("Admin UI Next foundation E2E passed.");
+    console.log("Admin UI Tabler MPA E2E passed.");
   } finally {
-    stopProcess(nextProcess);
+    stopProcess(webProcess);
     await new Promise((resolve) => apiServer.close(() => resolve()));
     const tempRoot = path.resolve(path.dirname(config.database.path), "../..");
     fs.rmSync(tempRoot, { recursive: true, force: true });

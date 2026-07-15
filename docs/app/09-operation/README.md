@@ -17,7 +17,7 @@ Local/demo runtime:
 
 - API chạy bằng `npm start` trong runtime thường và `npm run dev` trong dev runtime.
 - Dev server dùng Node.js CommonJS và Express.
-- Admin Web chạy riêng bằng Next.js trong `apps/admin-web`: local dev dùng `npm run admin:dev`, production dùng `npm run admin:start -- --port 8001` với `CIS_API_ORIGIN` chỉ tới API nội bộ. Browser chỉ gọi relative `/api/v1/*`; Next thực hiện rewrite server-side.
+- Admin Web chạy riêng bằng Node client-rendered MPA trong `apps/admin-web`: local dev dùng `npm run admin:dev`, production dùng `npm run admin:start -- --port 8001` với `CIS_API_ORIGIN` chỉ tới API nội bộ. Browser gọi relative `/api/v1/*`; MPA server proxy same-origin tới Express.
 - SQLite mặc định ở `storage/db/cis.sqlite`.
 - Attachment/local files nằm trong storage path do project quản lý.
 - Không commit DB thật, backup thật, attachment thật, credential thật.
@@ -64,8 +64,8 @@ Deployment/cutover runbook canonical:
 
 1. Từ exact release SHA, chạy `npm ci`, `npm --prefix apps/admin-web ci`, `npm run admin:ci`, `npm test` và `npm run verify:docs`.
 2. Tạo backup SQLite khi API/worker đã dừng: `storage/backups/cis-YYYYMMDD-HHMMSS.sqlite`; ghi checksum trước release swap.
-3. Start API tại `3001`, rồi start Next với `NODE_ENV=production`, server-only `CIS_API_ORIGIN=http://127.0.0.1:3001` và `npm run admin:start -- --port 8001`.
-4. Xác nhận root, login, protected deep-link và `/api/v1/auth/me` qua Next rewrite; hai endpoint static UI cũ phải 404. Chỉ một UI listener được phép ở `8001`.
+3. Start API tại `3001`, rồi start Tabler MPA với `NODE_ENV=production`, `CIS_API_ORIGIN=http://127.0.0.1:3001` và `npm run admin:start -- --port 8001`.
+4. Xác nhận root, login, protected deep-link, route document thật và `/api/v1/auth/me` qua MPA proxy; hai endpoint static UI cũ phải 404. Chỉ một UI listener được phép ở `8001`.
 5. Nếu smoke fail, dừng release mới, khôi phục release pointer/unit trước đó rồi kiểm tra lại health; không hot-fix trực tiếp production.
 
 Path, account, service unit, credential và backup destination cụ thể là inventory môi trường ngoài repo; xác nhận chúng trong maintenance window trước cutover.

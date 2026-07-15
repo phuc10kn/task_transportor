@@ -178,7 +178,7 @@ function createTranslationRepository({ config }) {
           db
             .prepare(
               `UPDATE translation_queue
-               SET reviewed_text = ai_draft,
+               SET reviewed_text = NULL,
                    review_status = 'approved',
                    review_notes = ?,
                    reviewed_at = datetime('now'),
@@ -216,7 +216,7 @@ function createTranslationRepository({ config }) {
       );
     },
 
-    manualEdit(queueId, input) {
+    saveDraft(queueId, input) {
       return withDb((db) =>
         runInTransaction(db, () => {
           const item = db.prepare("SELECT * FROM translation_queue WHERE id = ?").get(queueId);
@@ -227,15 +227,17 @@ function createTranslationRepository({ config }) {
           db
             .prepare(
               `UPDATE translation_queue
-               SET reviewed_text = ?,
-                   review_status = 'edited',
+               SET source_text = COALESCE(?, source_text),
+                   ai_draft = ?,
+                   reviewed_text = NULL,
+                   review_status = 'ai_draft',
                    review_notes = ?,
-                   reviewed_at = datetime('now'),
-                   reviewed_by = ?,
+                   reviewed_at = NULL,
+                   reviewed_by = NULL,
                    updated_at = datetime('now')
                WHERE id = ?`
             )
-            .run(input.reviewed_text, input.review_notes || null, input.reviewed_by || null, queueId);
+            .run(input.source_text || null, input.draft_text, input.review_notes || null, queueId);
           return rowToTranslation(db.prepare("SELECT * FROM translation_queue WHERE id = ?").get(queueId));
         })
       );

@@ -25,7 +25,6 @@ theory-review/
 theory-challenge/
 theory-refine/
 theory-impact/
-admin-ui-nextjs/
 ```
 
 Nếu copy skill ra ngoài repo, copy thêm:
@@ -37,9 +36,7 @@ reference/
 
 Các link trong skill giả định structure này còn cùng cấp với folder skill.
 
-## Bộ skill cho Admin UI Next.js
-
-`admin-ui-nextjs` là skill điều phối riêng của repo và đọc trực tiếp tại `docs/AGENT_SKILLS/admin-ui-nextjs/SKILL.md`.
+## Bộ skill hỗ trợ Admin UI
 
 Với Codex, cài thêm bộ skill hỗ trợ sau vào `$CODEX_HOME/skills`:
 
@@ -56,14 +53,6 @@ Các revision đã review khi chốt bộ skill:
 Cài đúng revision đã review bằng PowerShell:
 
 ```powershell
-$repoSkill = (Resolve-Path 'docs\AGENT_SKILLS\admin-ui-nextjs').Path
-$codexSkills = Join-Path $HOME '.codex\skills'
-$skillLink = Join-Path $codexSkills 'admin-ui-nextjs'
-New-Item -ItemType Directory -Force -Path $codexSkills | Out-Null
-if (-not (Test-Path $skillLink)) {
-    New-Item -ItemType Junction -Path $skillLink -Target $repoSkill | Out-Null
-}
-
 $installer = Join-Path $HOME '.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py'
 python $installer --repo hursh-shah/codex-design-skill --ref 796166cdbe27b9aac6e069d1825b8c9d3b0b1582 --path ui-design
 python $installer --repo openai/skills --ref 49f948faa9258a0c61caceaf225e179651397431 --path skills/.curated/playwright skills/.curated/playwright-interactive skills/.curated/screenshot

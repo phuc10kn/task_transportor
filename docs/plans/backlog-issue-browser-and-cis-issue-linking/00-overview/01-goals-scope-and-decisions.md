@@ -40,7 +40,9 @@
 - CIS -> Backlog, Jira outbound không qua dry-run, hoặc bất kỳ thay đổi nào làm yếu Jira readiness/mapping/anomaly gate.
 - Medium/Full scope, multi-tenant, RBAC mới, distributed worker hoặc dependency mới.
 
-### Quyết định triển khai đã chốt
+
+
+### Quyết định triển khai đã chốt 
 
 | Chủ đề | Quyết định |
 | --- | --- |

@@ -1,40 +1,28 @@
 {
   "name": "@task-transportor/admin-web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "type": "commonjs",
   "scripts": {
-    "dev": "next dev",
-    "start": "next start",
-    "build": "next build",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node scripts/check.js",
+    "lint": "node scripts/check.js",
+    "typecheck": "node scripts/check.js",
     "e2e": "playwright test",
-    "e2e:backlog-actions": "playwright test e2e/backlog-actions.spec.ts",
-    "e2e:cis-issue-editor": "playwright test e2e/cis-issue-editor.spec.ts",
-    "e2e:issue-recovery": "playwright test e2e/issue-recovery.spec.ts",
-    "e2e:translation": "playwright test e2e/translation.spec.ts",
-    "e2e:translation-glossary": "playwright test e2e/translation-glossary.spec.ts",
+    "e2e:backlog-actions": "playwright test --grep backlog",
+    "e2e:cis-issue-editor": "playwright test --grep issue-editor",
+    "e2e:issue-recovery": "playwright test --grep issue-editor",
+    "e2e:translation": "playwright test --grep translation",
+    "e2e:translation-glossary": "playwright test --grep glossary",
     "e2e:install": "playwright install chromium",
-    "ci": "npm run lint && npm run typecheck && npm run build"
+    "ci": "npm run build"
   },
   "dependencies": {
-    "@uiw/react-md-editor": "^4.1.1",
-    "next": "16.2.10",
-    "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "@tabler/core": "1.4.0",
+    "markdown-it": "^14.3.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1",
-    "@tailwindcss/postcss": "4.3.2",
-    "@types/node": "26.1.1",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
-    "eslint": "9.39.5",
-    "eslint-config-next": "16.2.10",
-    "tailwindcss": "4.3.2",
-    "typescript": "5.9.3"
-  },
-  "overrides": {
-    "postcss": "8.5.10"
+    "@playwright/test": "1.61.1"
   }
 }

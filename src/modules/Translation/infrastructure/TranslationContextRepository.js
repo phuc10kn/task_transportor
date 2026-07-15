@@ -114,7 +114,7 @@ function createTranslationContextRepository({ config }) {
       return withDb((db) => {
         const clauses = [
           "project_id = ?",
-          "review_status IN ('approved', 'edited')",
+          "review_status = 'approved'",
         ];
         const values = [projectId];
 

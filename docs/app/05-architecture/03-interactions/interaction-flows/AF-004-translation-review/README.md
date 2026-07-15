@@ -7,7 +7,7 @@ entity_type: InteractionFlow
 layer: 05-architecture
 concern: 03-interactions
 status: active
-summary: Luồng tạo AI draft, review và apply translation vào canonical issue.
+summary: Luồng tạo/chỉnh một translation draft chung và chỉ apply vào canonical khi Approve.
 theory_basis:
   - TH-AI-GOV-01
   - TH-AI-GOV-04
@@ -25,23 +25,23 @@ relations:
 
 ## Summary
 
-Luồng tạo AI draft, review và apply translation vào canonical issue.
+Luồng tạo/chỉnh một translation draft chung và chỉ apply vào canonical khi Approve.
 
 ## Meaning
 
-Luồng tạo AI draft, review và apply translation vào canonical issue.
+AI hoặc operator cùng ghi một draft; Save Draft không có canonical side effect.
 
 ## Trigger
 
-Admin yêu cầu dịch issue hoặc queue item; worker chạy translate job; reviewer approve/reject/manual edit.
+Admin yêu cầu dịch issue hoặc queue item; worker chạy translate job; operator save draft, approve, reject hoặc retranslate.
 
 ## Path
 
-`Admin -> Translation HTTP -> TranslationApi -> collect context -> TranslationAdapter -> translation_queue -> approve/reject/manual edit -> CisApi.applyReviewed...`
+`Admin -> Translation HTTP -> TranslationApi -> collect context -> TranslationAdapter -> translation_queue.ai_draft -> save draft / approve / reject -> CisApi.applyReviewed... chỉ khi approve`
 
 ## Outcome
 
-Issue có translation reviewed state, và canonical fields tương ứng được cập nhật qua `Cis`.
+Queue giữ một draft thống nhất; canonical field chỉ được cập nhật qua `Cis` sau Approve.
 
 ## Related Entities
 
@@ -53,7 +53,7 @@ Issue có translation reviewed state, và canonical fields tương ứng đượ
 
 ## Architectural role
 
-Luồng tạo AI draft, review và apply translation vào canonical issue. Flow này là đơn vị trace cho trigger, participant, outcome và side effect kiến trúc.
+Luồng một-draft-và-approve này là đơn vị trace cho trigger, participant, outcome và side effect kiến trúc.
 
 ## Boundaries respected
 

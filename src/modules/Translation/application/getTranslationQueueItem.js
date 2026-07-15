@@ -12,7 +12,10 @@ function getTranslationQueueItem({ config, queueId }) {
     });
   }
 
-  return item;
+  return {
+    ...item,
+    reviewed_text: undefined,
+  };
 }
 
 module.exports = {

@@ -7,7 +7,7 @@ entity_type: Module
 layer: 05-architecture
 concern: 01-structure
 status: active
-summary: Module review-oriented cho dịch thuật. Nó sở hữu translation queue lifecycle, tạo AI draft, cho phép approve/reject/manual edit và chỉ apply vào canonical state qua `Cis`.
+summary: Module review-oriented cho dịch thuật. Nó sở hữu một translation draft chung cho AI/operator, cho phép save/approve/reject/retranslate và chỉ apply canonical qua `Cis` khi approve.
 theory_basis:
   - TH-MOD-01
   - TH-MOD-04
@@ -24,18 +24,18 @@ relations:
 
 ## Summary
 
-Module review-oriented cho dịch thuật. Nó sở hữu translation queue lifecycle, tạo AI draft, cho phép approve/reject/manual edit và chỉ apply vào canonical state qua `Cis`.
+Module review-oriented cho dịch thuật. Nó sở hữu một translation draft chung cho AI/operator, cho phép save/approve/reject/retranslate và chỉ apply canonical qua `Cis` khi approve.
 
 ## Meaning
 
-Module review-oriented cho dịch thuật. Nó sở hữu translation queue lifecycle, tạo AI draft, cho phép approve/reject/manual edit và chỉ apply vào canonical state qua `Cis`.
+Module review-oriented cho dịch thuật. Nó sở hữu một translation draft chung cho AI/operator, cho phép save/approve/reject/retranslate và chỉ apply canonical qua `Cis` khi approve.
 
 ## Responsibility
 
 - Tạo và quản lý `translation_queue`.
 - Sở hữu glossary concept với canonical/variant terms theo Project và cung cấp runtime lookup.
 - Thu thập context dịch và gọi adapter trung tính.
-- Quản lý approve, reject, retranslate, manual edit.
+- Quản lý save draft, approve, reject và retranslate.
 - Đồng bộ translation review state về issue summary.
 
 ## Key properties
@@ -43,7 +43,7 @@ Module review-oriented cho dịch thuật. Nó sở hữu translation queue life
 | Property | Value |
 |----------|-------|
 | Public surface | `src/modules/Translation/TranslationApi.js`, `src/modules/Translation/http/routes.js` |
-| Owned state | translation queue lifecycle, reviewed translation state |
+| Owned state | translation queue lifecycle, shared draft và approval state |
 | Main inbound | admin translate request, `Sync` translate job |
 | Main outbound | `CisApi.applyReviewed...`, `AnomalyApi` khi low confidence |
 

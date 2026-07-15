@@ -18,7 +18,7 @@ Vocabulary còn sống:
 - `Source snapshot`: dữ liệu gốc lấy từ Backlog/Jira, không bị manual edit ghi đè.
 - `Canonical data`: dữ liệu vận hành hiện tại trong CIS, dùng để review, prepare và publish.
 - `Target preview`: payload preview/dry-run sẽ ghi sang Jira nếu được approve.
-- `Translation review`: quá trình tạo draft, review, approve/edit/reject bản dịch.
+- `Translation review`: quá trình AI hoặc operator cùng tạo/chỉnh một draft, rồi approve/reject bản dịch.
 - `Mapping`: rule chuyển giá trị giữa source, canonical CIS và target.
 - `Anomaly`: tín hiệu bất thường cần đánh giá, khác với error kỹ thuật thuần.
 - `Sync journal`: lịch sử xử lý inbound/outbound để audit và recovery.
@@ -31,7 +31,7 @@ Domain concepts/entities chính:
 - `External identity`: Backlog key và Jira key canonical do provider trả về; uniqueness xét riêng từng system column trong phạm vi `project_id`.
 - `Comment`: trao đổi đi kèm issue; cần translation/review trước outbound khi policy yêu cầu.
 - `Attachment`: file/metadata gắn với issue/comment; download và outbound sync có lifecycle riêng.
-- `Translation`: reviewed text chỉ có giá trị downstream sau approve/manual edit.
+- `Translation`: draft chỉ có giá trị downstream sau Approve; Save Draft không tác động canonical.
 - `Mapping`: approved mapping mới được dùng như rule outbound đáng tin cậy.
 - `Anomaly`: open/investigating/ignored/resolved là quyết định vận hành.
 - `Sync job`: hàng đợi xử lý nội bộ.
@@ -40,7 +40,7 @@ Domain concepts/entities chính:
 Lifecycle/domain state quan trọng:
 
 - Issue: mới vào CIS -> đang review/prepare -> sẵn sàng preview -> sẵn sàng sync -> đã sync -> cần cập nhật lại / conflict / block.
-- Translation: chưa cần dịch -> có draft -> đang review -> approved/edited/rejected -> stale khi source/context đổi.
+- Translation: chưa cần dịch -> có draft -> đang review -> approved/rejected; draft stale được giữ để đối chiếu khi source/context đổi nhưng không được approve cho tới khi reconcile hoặc retranslate.
 - Anomaly: open -> investigating -> ignored/resolved.
 - Sync job: pending -> running -> success/failed/cancelled/retry scheduled.
 - Attachment: download pending/downloaded/failed/skipped và sync pending/synced/skipped/failed là hai lifecycle riêng.
@@ -51,7 +51,7 @@ Domain invariants/gates:
 - Canonical branch là input chính cho Issue Editor và Jira outbound.
 - Target preview/dry-run stale sau canonical change.
 - Issue chưa publish-ready nếu còn missing required mapping, critical/open anomaly, stale dry-run, config thiếu, credential thiếu.
-- Comment cần dịch không sync outbound khi reviewed translation chưa sẵn sàng.
+- Comment cần dịch không sync outbound khi translation draft chưa được approve.
 - Mapping gap block outbound tới khi có approval; decision accepted rõ mới được thay đổi rule này.
 - Attachment failure được xử lý riêng, trừ khi project sau này đánh dấu attachment là required.
 - Backlog/Jira identity chỉ được gán khi field đang trống, external issue tồn tại/đúng integration project và key chưa thuộc CIS issue khác cùng project; cùng text ở hai system column không phải duplicate.

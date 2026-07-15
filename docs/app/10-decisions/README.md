@@ -21,10 +21,11 @@
 | External identity unique theo project và system column | accepted | Backlog chỉ so backlog key, Jira chỉ so Jira key; canonical key lấy từ provider API. |
 | Scheduled pull là optional | accepted | Chỉ bật sau khi manual/project pull ổn định. |
 | Admin UI là bắt buộc | accepted | Operator phải review, approve, retry và xử lý anomaly bằng UI. |
-| Project-first UI cutover không kéo backend vào MUI-16A | accepted | Thứ tự là MUI-16A → MUI-17 với accepted gap → phase BE. Mỗi login chọn/tạo Project và chỉ đổi tại Projects; Dashboard bị disabled/không fetch, `enabled=false` chặn workspace. Phase BE sau đóng `BE-PROJECT-SCOPE-01/02`. |
+| [Admin UI dùng Tabler + JavaScript thuần + client-rendered MPA (`DEC-004`)](01-decision-making/01-decisions/DEC-004-tabler-vanilla-mpa-admin-ui/README.md) | accepted | Mỗi route trả document thật; Node chỉ phục vụ HTML/assets và proxy API. Next.js/React/Vue/SPA router không còn trong implementation active. |
+| Project-first Admin UI không mở rộng backend | accepted | Mỗi login chọn/tạo Project và chỉ đổi tại Projects; Dashboard bị disabled/không fetch, `enabled=false` chặn workspace. Phase BE sau đóng `BE-PROJECT-SCOPE-01/02`. |
 | SQLite là database MVP/Lite | accepted | Phù hợp server nội bộ và workload nhỏ. |
 | Một service Express + worker nội bộ | accepted | Chưa tách worker process riêng trong Lite. |
-| Translation dùng AI nhưng human review giữ quyền quyết định | accepted | AI là draft/assistant, không là authority cuối. |
+| Translation dùng một draft chung nhưng human approval giữ quyền quyết định | accepted | AI/operator cùng chỉnh `ai_draft`; Save Draft không đổi canonical, chỉ Approve mới apply. |
 | Translation config canonical dùng `translation_ai_*` | accepted | Field legacy chỉ là tương thích migration. |
 | Translation Glossary thuộc Translation và dùng hai bảng normalized | accepted | Project Config không còn glossary; concept hỗ trợ số ngôn ngữ động, mỗi language có variants và đúng một canonical, không thêm cột theo ngôn ngữ. |
 | Dry-run Jira trước sync thật | accepted | Không ghi Jira nếu pre-check/dry-run chưa pass. |

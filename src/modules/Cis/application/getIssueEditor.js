@@ -142,8 +142,8 @@ function decorateIssueTranslations(translations, issue) {
         source_text_original: item.source_text,
         source_text: currentSourceText,
         current_source_text: currentSourceText,
-        reviewed_text: isSourceStale ? "" : item.reviewed_text,
-        ai_draft: isSourceStale ? "" : item.ai_draft,
+        reviewed_text: undefined,
+        ai_draft: item.ai_draft,
         is_source_stale: isSourceStale,
       };
     });
@@ -211,7 +211,7 @@ function getIssueEditor({ config, issueId }) {
     translation: {
       total: translations.length,
       pending: translations.filter((item) => item.review_status === "pending" || item.review_status === "ai_draft").length,
-      approved: translations.filter((item) => item.review_status === "approved" || item.review_status === "edited").length,
+      approved: translations.filter((item) => item.review_status === "approved").length,
     },
     translations,
     anomaly: {},

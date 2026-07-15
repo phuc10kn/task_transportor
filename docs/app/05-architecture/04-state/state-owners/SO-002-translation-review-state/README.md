@@ -7,7 +7,7 @@ entity_type: StateOwner
 layer: 05-architecture
 concern: 04-state
 status: active
-summary: State của queue item dịch, draft, review outcome và manual edit trước khi áp vào canonical issue.
+summary: State của queue item dịch, một draft chung và approval outcome trước khi áp vào canonical issue.
 theory_basis:
   - TH-AI-GOV-01
   - TH-AI-GOV-04
@@ -19,11 +19,11 @@ relations:
 
 ## Summary
 
-State của queue item dịch, draft, review outcome và manual edit trước khi áp vào canonical issue.
+State của queue item dịch, một draft chung và approval outcome trước khi áp vào canonical issue.
 
 ## Meaning
 
-State của queue item dịch, draft, review outcome và manual edit trước khi áp vào canonical issue.
+State của queue item dịch, một draft chung và approval outcome trước khi áp vào canonical issue.
 
 ## Owner
 
@@ -36,7 +36,7 @@ Review lifecycle là concern riêng của translation, tách khỏi canonical is
 ## Write policy
 
 - `Translation` write `translation_queue`.
-- `Cis` chỉ apply reviewed result vào canonical issue, không nhận ownership review queue.
+- `Cis` chỉ apply approved draft vào canonical issue, không nhận ownership review queue.
 
 ## Consumers
 
@@ -48,7 +48,7 @@ Review lifecycle là concern riêng của translation, tách khỏi canonical is
 
 ## Why this state is central
 
-State của queue item dịch, draft, review outcome và manual edit trước khi áp vào canonical issue. Ownership phải rõ để consumer không ghi trực tiếp hoặc suy diễn shared ownership.
+State của queue item dịch, shared draft và approval outcome trước khi áp vào canonical issue. Ownership phải rõ để consumer không ghi trực tiếp hoặc suy diễn shared ownership.
 
 ## What belongs to this state
 
@@ -64,7 +64,7 @@ Consumer đọc hoặc yêu cầu thay đổi qua public API/owner path; runtime
 
 ## Relations
 
-`shared_via` ghi DataFlow expose reviewed result tới canonical apply path. Ownership của translation review state không đổi.
+`shared_via` ghi DataFlow expose approved draft tới canonical apply path. Ownership của translation review state không đổi.
 
 ## Evidence
 

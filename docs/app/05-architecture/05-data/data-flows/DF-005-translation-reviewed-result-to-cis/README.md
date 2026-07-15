@@ -7,7 +7,7 @@ entity_type: DataFlow
 layer: 05-architecture
 concern: 05-data
 status: active
-summary: Luồng đưa reviewed translation result từ Translation vào canonical issue state của CIS.
+summary: Luồng đưa approved translation draft từ Translation vào canonical issue state của CIS.
 theory_basis:
   - TH-AI-GOV-01
   - TH-CANON-01
@@ -19,11 +19,11 @@ relations:
 
 ## Summary
 
-Luồng đưa reviewed translation result từ Translation vào canonical issue state của CIS.
+Luồng đưa approved translation draft từ Translation vào canonical issue state của CIS.
 
 ## Meaning
 
-Reviewed text là output đã qua review của Translation và chỉ được apply vào issue qua owner API của Cis.
+`ai_draft` là draft chung của AI/operator và chỉ được apply vào issue sau Approve qua owner API của Cis.
 
 ## Architectural role
 
@@ -36,21 +36,21 @@ Reviewed text là output đã qua review của Translation và chỉ được ap
 
 ## Source / destination
 
-- Source: reviewed translation result trong `translation_queue`.
+- Source: approved `ai_draft` trong `translation_queue`.
 - Destination: canonical issue state trong `Cis`.
 
 ## Data path
 
 ```text
-reviewed translation result
-  -> Translation approve/manual edit
+approved translation draft
+  -> Translation approve
   -> CisApi.applyReviewedIssueTranslation(...)
   -> canonical issue revision
 ```
 
 ## Transformation
 
-Reviewed text được gắn vào target field hợp lệ trước khi update canonical issue và tạo revision tương ứng.
+Approved draft được gắn vào target field hợp lệ trước khi update canonical issue và tạo revision tương ứng.
 
 ## Boundary and ownership
 
@@ -60,11 +60,11 @@ Reviewed text được gắn vào target field hợp lệ trước khi update ca
 
 ## What changes and what does not
 
-Flow đưa reviewed result vào canonical issue state. Translation review lifecycle vẫn thuộc SO-002; chỉ canonical issue state SO-001 nhận payload đã được duyệt.
+Flow đưa approved draft vào canonical issue state. Translation review lifecycle vẫn thuộc SO-002; chỉ canonical issue state SO-001 nhận payload đã được duyệt.
 
 ## Read / write tiers involved
 
-`Translation` đọc result đã review; `CisApi` thực hiện canonical write. Không có direct database write xuyên module.
+`Translation` đọc approved draft; `CisApi` thực hiện canonical write. Không có direct database write xuyên module.
 
 ## Anti-patterns avoided
 

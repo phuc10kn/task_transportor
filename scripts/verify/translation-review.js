@@ -221,12 +221,46 @@ async function verifySuccessAndReviewApi() {
     assert.equal(login.status, 200);
     const token = login.body.data.token;
 
+    const staleSetup = createIssueWithTranslations(config, 1, { project });
+    const staleDb = createConnection({ config });
+    staleDb.prepare(
+      "UPDATE translation_queue SET source_text = ?, ai_draft = ?, review_status = 'ai_draft' WHERE id = ?"
+    ).run("Old source", "Draft preserved across source change", staleSetup.items[0].id);
+    staleDb.close();
+    const staleList = await requestJson(server, {
+      pathname: `/api/v1/translation-queue?issue_id=${staleSetup.issue.id}`,
+      token,
+    });
+    assert.equal(staleList.status, 200);
+    assert.equal(staleList.body.data[0].is_source_stale, true);
+    assert.equal(staleList.body.data[0].ai_draft, "Draft preserved across source change");
+    assert.equal(staleList.body.data[0].source_text, staleSetup.items[0].source_text);
+    const staleApprove = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/translation-queue/${staleSetup.items[0].id}/approve`,
+      token,
+    });
+    assert.equal(staleApprove.status, 409, JSON.stringify(staleApprove.body));
+    assert.equal(staleApprove.body.error.code, "TRANSLATION_SOURCE_STALE");
+    const reconciledDraft = await requestJson(server, {
+      method: "PUT",
+      pathname: `/api/v1/translation-queue/${staleSetup.items[0].id}/draft`,
+      token,
+      body: { draft_text: "Human reconciled draft" },
+    });
+    assert.equal(reconciledDraft.status, 200);
+    assert.equal(reconciledDraft.body.data.source_text, staleSetup.items[0].source_text);
+    assert.equal(reconciledDraft.body.data.ai_draft, "Human reconciled draft");
+
     const list = await requestJson(server, {
       pathname: "/api/v1/translation-queue?review_status=ai_draft",
       token,
     });
     assert.equal(list.status, 200);
     assert.ok(list.body.data.some((item) => item.id === items[0].id));
+    const listedItem = list.body.data.find((item) => item.id === items[0].id);
+    assert.equal(listedItem.source_system, "backlog");
+    assert.equal(listedItem.system_issue_key, issue.backlog_issue_key);
 
     const detail = await requestJson(server, {
       pathname: `/api/v1/translation-queue/${items[0].id}`,
@@ -250,19 +284,29 @@ async function verifySuccessAndReviewApi() {
     assert.ok(followUpContext.context_bundle.translation_memory.length >= 1);
 
     const edit = await requestJson(server, {
-      method: "POST",
-      pathname: `/api/v1/translation-queue/${items[1].id}/manual-edit`,
+      method: "PUT",
+      pathname: `/api/v1/translation-queue/${items[1].id}/draft`,
       token,
       body: {
-        reviewed_text: "Ban dich da chinh sua.",
+        draft_text: "Ban dich da chinh sua.",
         review_notes: "manual",
       },
     });
     assert.equal(edit.status, 200);
-    assert.equal(edit.body.data.review_status, "edited");
-    assert.equal(edit.body.data.reviewed_text, "Ban dich da chinh sua.");
-    assert.equal(getIssueStatus(config, issue.id), "update_pending");
+    assert.equal(edit.body.data.review_status, "ai_draft");
+    assert.equal(edit.body.data.ai_draft, "Ban dich da chinh sua.");
+    assert.notEqual(CisApi.getIssueById({ config, issueId: issue.id }).fields_json.description.cis, "Ban dich da chinh sua.");
+
+    const approveEditedDraft = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/translation-queue/${items[1].id}/approve`,
+      token,
+      body: { review_notes: "approve edited draft" },
+    });
+    assert.equal(approveEditedDraft.status, 200);
+    assert.equal(approveEditedDraft.body.data.review_status, "approved");
     assert.equal(CisApi.getIssueById({ config, issueId: issue.id }).fields_json.description.cis, "Ban dich da chinh sua.");
+    assert.equal(getIssueStatus(config, issue.id), "approved");
 
     const rejectTarget = createIssueWithTranslations(config, 1).items[0];
     enqueueTranslate(config, rejectTarget);
@@ -292,7 +336,7 @@ async function verifySuccessAndReviewApi() {
   });
 
   assertJournalHas(config, "translation_approved", issue.id);
-  assertJournalHas(config, "translation_manual_edited", issue.id);
+  assertJournalHas(config, "translation_draft_saved", issue.id);
 }
 
 async function verifyProviderFailure(mode, expectedErrorCode) {

@@ -19,16 +19,16 @@ UI tối thiểu phải hỗ trợ:
 - Login/logout và trạng thái admin hiện tại.
 - Sau login, operator phải chọn hoặc tạo Project tại `Projects` trước khi vào route nghiệp vụ. Header chỉ hiển thị Project đang active cùng link về `Projects`; các màn nghiệp vụ không có selector hoặc `All projects` và không tự chọn Project đầu tiên.
 - Project config cho Backlog/Jira credential, sync policy, translation config và enable/disable.
-- Dashboard là capability mục tiêu cho pending review, missing mapping, failed job và open anomaly. Trong accepted gap MUI-16A/MUI-17, Dashboard nav/direct route bị disabled có reason và không gọi summary/alerts; phase BE sau mới mở lại khi có Project filter.
+- Dashboard là capability mục tiêu cho pending review, missing mapping, failed job và open anomaly. Trong accepted Admin UI gap hiện tại, Dashboard nav/direct route bị disabled có reason và không gọi summary/alerts; phase BE sau mới mở lại khi có Project filter.
 - Pull one issue và resync từ Backlog.
-- Màn Backlog Issues riêng theo project, bắt buộc created-from/created-to/limit, có Not closed và multi-select Status/người được gán từ snapshot cấu hình Backlog của project. Khi snapshot cũ hoặc thiếu, operator refresh tại Mappings bằng `Pull Backlog fields`; chỉ `Find issues` mới browse candidate, sau đó hiển thị candidate chưa có CIS và Sync to CIS theo từng hàng.
+- Màn Backlog Issues riêng theo project, bắt buộc created-from/created-to/limit, có Not closed và dropdown checkbox có search/summary cho multi-select Status/người được gán từ snapshot cấu hình Backlog của project. Khi snapshot cũ hoặc thiếu, operator refresh tại Mappings bằng `Pull Backlog fields`; chỉ `Find candidates` mới browse candidate. Empty state phải phân biệt Backlog không match giao filter với issue match nhưng đã có trong CIS, đồng thời cho phép bỏ optional filter mà giữ date range; candidate chưa có CIS có Sync to CIS theo từng hàng.
 - Mỗi candidate hiển thị `Sync to CIS` và `Sync to CIS + Translate`; action mới chỉ enqueue parent job, row poll tới terminal rồi operator review Translation Queue. Khi active Sync thường đang running, request action mới hiển thị lỗi có job evidence và không tuyên bố đã queue translation.
 - Màn CIS Issues có form tạo issue thủ công; Issue Editor cho link Backlog issue/Jira task khi field còn trống.
-- Issue Editor hiển thị source snapshot, canonical CIS data, Jira target preview và sync state.
-- Translation modal/action cho summary/description: translate, retranslate, edit, approve + save, reject.
+- Issue Editor dùng vùng biên tập chính rộng và rail nhỏ bên phải cho `Identity and state` cùng `Jira outbound gate`; viewport hẹp mới xếp dọc. Source snapshots là block cuối vùng nội dung, hiển thị theo ma trận Field × System: Summary/Description dùng toàn chiều ngang, field ngắn dùng grid compact, nội dung dài mặc định thu gọn và có Show more/Show less. Canonical Summary dùng toàn bộ chiều ngang, Description có Markdown Edit/Preview, formatting toolbar và character count. Preview không thực thi raw HTML từ nội dung.
+- Translation review cho summary/description dùng một `AI draft` chung cho AI và operator: source snapshot render Markdown read-only, draft dùng Markdown Edit/Preview cùng chiều cao. Save Draft chỉ lưu draft; Approve là action riêng duy nhất apply draft vào canonical; vẫn hỗ trợ retranslate và reject. Translation Queue dùng table compact chỉ hiển thị định danh `[SYSTEM] ISSUE-KEY`, CIS issue, field, status, AI evidence và actions; Source cùng AI draft chỉ hiển thị trong modal Edit. Draft stale vẫn được giữ và cảnh báo, nhưng Approve bị khóa tới khi operator Save Draft theo source hiện tại hoặc retranslate.
 - Translation Glossary lazy-load theo Project khi operator mở màn hoặc đổi Project; table có Group, Concept key, danh sách term theo language kèm nhãn Canonical, Note, Actions; Add/Edit/View dùng modal language sections, radio canonical và nút add/remove variant/language, có filter Group, search, loading/empty/error/retry và confirm delete.
 - Mỗi term dùng language code động, không hard-code cột ngôn ngữ; lỗi validation/conflict giữ form và hiển thị rõ.
-- Mapping review/approval trước outbound.
+- Mapping review/approval trước outbound; mỗi direction dùng một bảng liên tục, nhóm các value bằng field band compact theo `mapping_type`. Tên field, required marker và tổng value/issue chỉ hiện một lần trên band; operator có thể thu gọn từng field mà không tạo card lồng nhau.
 - Anomaly list/detail để resolve, ignore, keep open theo rủi ro.
 - Jira sync modal chạy dry-run, hiển thị `can_sync`, warning, payload preview và hành động sync thật khi gate pass.
 - Sync Jobs, Journal và Attachment retry để operator phục hồi có chủ đích.
@@ -49,9 +49,9 @@ UI không được làm sai product truth:
 - Navigation, page header, filter bar, data table, form field, modal/drawer, status badge, toast và state panel phải đi qua primitive/token dùng chung.
 - Mỗi màn dữ liệu phải thể hiện loading, empty, error/retry và success feedback phù hợp. Accessibility tối thiểu WCAG AA, dùng được bằng bàn phím và có focus visible.
 - Figma không phải dependency. Design direction được chốt trong code và tài liệu này; external inspiration chỉ dùng có chọn lọc, không sao chép 1:1.
-- Next.js chỉ là interface client của Express API; không truy cập SQLite trực tiếp và không sở hữu lại business rule của module backend.
+- Admin Web là client-rendered MPA dùng Tabler local và JavaScript thuần; mỗi route trả document HTML thật, browser chỉ gọi public Express API và không truy cập SQLite hoặc sở hữu lại business rule.
 - Cutover cuối cùng thay thế hoàn toàn Admin UI cũ; không duy trì legacy UI, fallback hoặc hai UI active sau khi acceptance pass.
-- Sau MUI-16, console Next tại `apps/admin-web` là UI duy nhất; Express chỉ phục vụ API/health và không còn interface static admin cũ.
+- Sau cutover DEC-004, Tabler MPA tại `apps/admin-web` là UI duy nhất; không còn source, dependency, route fallback hoặc listener Next/React/Vue/legacy.
 - Route map, phase và thứ tự cutover thuộc kế hoạch migration riêng; chưa được suy diễn từ section này.
 
 ## Folder Structure

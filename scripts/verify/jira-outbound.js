@@ -326,20 +326,22 @@ function createReadyIssue(config, project, options = {}) {
     },
   });
 
-  TranslationApi.manualEditTranslation({
+  TranslationApi.saveTranslationDraft({
     config,
     queueId: summaryTranslation.id,
-    reviewedText: `VI: ${summary}`,
-    reviewedBy: 1,
+    draftText: `VI: ${summary}`,
+    editedBy: 1,
     reviewNotes: "verify",
   });
-  TranslationApi.manualEditTranslation({
+  TranslationApi.approveTranslation({ config, queueId: summaryTranslation.id, reviewedBy: 1, reviewNotes: "verify" });
+  TranslationApi.saveTranslationDraft({
     config,
     queueId: descriptionTranslation.id,
-    reviewedText: `VI: ${description}`,
-    reviewedBy: 1,
+    draftText: `VI: ${description}`,
+    editedBy: 1,
     reviewNotes: "verify",
   });
+  TranslationApi.approveTranslation({ config, queueId: descriptionTranslation.id, reviewedBy: 1, reviewNotes: "verify" });
 
   let comment = null;
   if (options.include_comment !== false) {
@@ -360,13 +362,14 @@ function createReadyIssue(config, project, options = {}) {
         source_text: comment.content_original,
       },
     });
-    TranslationApi.manualEditTranslation({
+    TranslationApi.saveTranslationDraft({
       config,
       queueId: commentTranslation.id,
-      reviewedText: `VI: ${comment.content_original}`,
-      reviewedBy: 1,
+      draftText: `VI: ${comment.content_original}`,
+      editedBy: 1,
       reviewNotes: "verify",
     });
+    TranslationApi.approveTranslation({ config, queueId: commentTranslation.id, reviewedBy: 1, reviewNotes: "verify" });
   }
 
   return {

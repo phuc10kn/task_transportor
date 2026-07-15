@@ -6,6 +6,24 @@ const { syncIssueTranslationState } = require("./syncIssueTranslationState");
 
 function approveTranslation({ config, queueId, reviewedBy, reviewNotes, correlationId }) {
   const repository = createTranslationRepository({ config });
+  const draft = repository.findById(queueId);
+  if (!draft || !draft.ai_draft) {
+    throw new AppError({
+      code: "TRANSLATION_DRAFT_REQUIRED",
+      message: "Translation draft is required before approval.",
+      status: 422,
+    });
+  }
+  if (!draft.comment_id && draft.target_type === "issue" && draft.target_field) {
+    const currentSource = CisApi.getIssueTranslationTargets({ config, issueId: draft.issue_id }).target_map[draft.target_field];
+    if (currentSource != null && String(currentSource).trim() !== String(draft.source_text || "").trim()) {
+      throw new AppError({
+        code: "TRANSLATION_SOURCE_STALE",
+        message: "Source changed. Save the draft against the current source or retranslate before approval.",
+        status: 409,
+      });
+    }
+  }
   const item = repository.approve(queueId, {
     reviewed_by: reviewedBy,
     review_notes: reviewNotes,
@@ -19,16 +37,10 @@ function approveTranslation({ config, queueId, reviewedBy, reviewNotes, correlat
     });
   }
 
-  syncIssueTranslationState({
-    config,
-    repository,
-    issueId: item.issue_id,
-    correlationId,
-  });
   const canonicalApply = CisApi.applyReviewedIssueTranslation({
     config,
     item,
-    text: item.reviewed_text,
+    text: item.ai_draft,
     executedBy: reviewedBy,
     correlationId,
     reason: "Apply approved issue translation.",
@@ -37,9 +49,16 @@ function approveTranslation({ config, queueId, reviewedBy, reviewNotes, correlat
     ? CisApi.applyReviewedCommentTranslation({
       config,
       commentId: item.comment_id,
-      text: item.reviewed_text,
+      text: item.ai_draft,
     })
     : null;
+
+  syncIssueTranslationState({
+    config,
+    repository,
+    issueId: item.issue_id,
+    correlationId,
+  });
 
   SyncApi.writeJournal({
     config,

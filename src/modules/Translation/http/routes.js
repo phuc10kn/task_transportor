@@ -28,7 +28,7 @@ function createTranslationRouter({ authenticate }) {
   router.post("/translation-queue/:queueId/approve", TranslationQueueController.approve);
   router.post("/translation-queue/:queueId/reject", TranslationQueueController.reject);
   router.post("/translation-queue/:queueId/retranslate", TranslationQueueController.retranslate);
-  router.post("/translation-queue/:queueId/manual-edit", TranslationQueueController.manualEdit);
+  router.put("/translation-queue/:queueId/draft", TranslationQueueController.saveDraft);
 
   return router;
 }

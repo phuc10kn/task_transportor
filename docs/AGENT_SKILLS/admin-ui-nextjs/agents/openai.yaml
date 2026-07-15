@@ -1,4 +1,0 @@
-interface:
-  display_name: "Admin UI Next.js"
-  short_description: "Thiết kế và kiểm thử Admin UI Next.js của CIS"
-  default_prompt: "Dùng $admin-ui-nextjs để thiết kế hoặc triển khai Admin UI Next.js theo interface truth và quality gate của task_transportor."

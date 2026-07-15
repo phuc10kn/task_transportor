@@ -16,7 +16,7 @@ Source organization:
 
 - Entry app nằm ở `src/app.js`.
 - Server start nằm ở `src/server.js`.
-- Admin Web source nằm ở `apps/admin-web`; `scripts/admin-dev.js` chạy Next development và `npm run admin:start -- --port <port>` chạy Next production. Express không còn source UI/static server.
+- Admin Web source nằm ở `apps/admin-web`; `server.js` dùng Node HTTP chuẩn để phục vụ document/assets và proxy API, `views/layout.js` render shell Tabler, `public/shared.js` giữ auth/workspace/API primitives và `public/pages/*.js` giữ controller theo màn. `scripts/admin-dev.js` và `npm run admin:start -- --port <port>` chạy cùng MPA server; Express không còn source UI/static server.
 - Config loader nằm ở `src/config/env.js`.
 - Database connection/migration nằm ở `src/infrastructure/database`.
 - SQL migrations nằm ở `src/db/migrations`.
@@ -37,7 +37,7 @@ Implementation flow theo code hiện tại:
 - Backlog candidate `Sync to CIS + Translate` ghi `with_translation` vào parent payload; `handleManualPullJob` gọi capability public `TranslationApi.enqueueIssueTranslations`, tạo/reuse current-source queue và child `translate` jobs. `SyncApi.enqueueTranslateJobIfNoneActive` là atomic gate theo `translation_queue_id`.
 - Backlog/Jira client pull mapping values trả text legacy cho Mapping và directory `{ id, value, name }` cho toàn bộ catalog `issue_type`, `status`, `priority`, `user`, `component`; Jira user giữ `accountId` riêng với email/text legacy. Application pull replace directory snapshot nhưng giữ behavior text cũ; Jira sanitizer lọc user directory bằng cùng policy lọc user text. Mappings là UI duy nhất gọi Pull fields. Backlog candidate browse dùng `BacklogApi.listIssueCandidates`, batch read qua `CisApi`, không persist và chỉ chạy sau submit form. `BacklogApi.listIssueCandidateFilterOptions` chỉ đọc snapshot `status_directory`/`user_directory` khi UI mở. Browse dùng ID snapshot để query Backlog; `not_closed` resolve Status ID trừ `Closed`/`Close` rồi intersect với Status do Admin chọn nếu có. Directory không phải mapping business và không được copy sang CIS mapping values. Per-row action dùng `SyncApi.enqueueManualPullIfNoneActive` rồi worker chạy shared handler.
 - CIS manual create và external identity link là owner actions; Backlog/Jira chỉ expose public remote lookup trả canonical provider key/project identity.
-- Translation: Issue Editor có route dịch trực tiếp cho summary/description, vẫn lưu `translation_queue`; route Translate issue, Translate item và Translation Queue Retranslate đều enqueue/reuse translate job chung; approve + save apply reviewed text vào canonical CIS branch.
+- Translation: Issue Editor có route dịch trực tiếp cho summary/description, vẫn lưu `translation_queue`; route Translate issue, Translate item và Translation Queue Retranslate đều enqueue/reuse translate job chung. AI và operator cùng ghi `ai_draft`; `PUT /translation-queue/:id/draft` chỉ lưu draft, còn Approve mới apply `ai_draft` vào canonical CIS branch.
 - Mapping/anomaly: Jira dry-run dùng approved mapping qua CIS và tạo/đọc anomaly để quyết định `can_sync`.
 - Jira outbound: dry-run chạy qua API và ghi journal; sync thật enqueue `push_issue`, worker gọi Jira client khi gate pass.
 
@@ -48,7 +48,7 @@ Issue Editor contract:
 - Translation source lấy từ `fields_json.<field>.backlog`.
 - Translation Glossary do `src/modules/Translation` sở hữu: `TranslationGlossaryRepository`, các application CRUD, controller/routes và `collectTranslationContext` runtime lookup; Projects chỉ giữ identity/language config và từ chối field legacy.
 - Migration `src/db/migrations/015_translation_glossary_tables.sql` backfill atomic rồi drop JSON column; `016_translation_glossary_term_variants.sql` rebuild terms cho variants/canonical; verifier gồm migration, API, runtime và Admin UI acceptance.
-- `Approve + save` translation apply reviewed text vào `fields_json.<target_field>.cis`.
+- Save Draft không đổi `fields_json`; Approve translation mới apply `ai_draft` vào `fields_json.<target_field>.cis`.
 - Jira sync modal chạy dry-run, cho sửa payload target, sync bằng payload đã chỉnh và lưu draft Jira field branch.
 
 Implementation verification hiện có:

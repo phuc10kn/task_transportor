@@ -68,8 +68,8 @@ function decorateTranslations(items, targets) {
       source_text_original: item.source_text,
       source_text: currentSource,
       current_source_text: currentSource,
-      reviewed_text: isSourceStale ? "" : item.reviewed_text,
-      ai_draft: isSourceStale ? "" : item.ai_draft,
+      reviewed_text: undefined,
+      ai_draft: item.ai_draft,
       is_source_stale: isSourceStale,
     };
   });

@@ -135,22 +135,30 @@ async function main() {
     assert.equal(canonicalRetranslate.body.data.item.review_status, "ai_draft");
     assert.ok(canonicalRetranslate.body.data.item.ai_draft.startsWith("[vi] "));
 
-    // Happy case 3: manual edit applies to canonical via CisApi (Phase B path)
+    // Happy case 3: draft save does not apply canonical; approval does.
     const descriptionItem = canonicalTranslate.body.data.translations.find((item) => item.target_field === "description");
     const manualEdit = await requestJson(server, {
-      method: "POST",
-      pathname: `/api/v1/translation-queue/${descriptionItem.id}/manual-edit`,
+      method: "PUT",
+      pathname: `/api/v1/translation-queue/${descriptionItem.id}/draft`,
       token,
       body: {
-        reviewed_text: "Ban dich da chinh sua happy case",
+        draft_text: "Ban dich da chinh sua happy case",
         review_notes: "translation-routes-happy-case",
       },
     });
     assert.equal(manualEdit.status, 200);
-    assert.equal(manualEdit.body.data.review_status, "edited");
+    assert.equal(manualEdit.body.data.review_status, "ai_draft");
 
     const afterManualEdit = readIssue(config, issue.id);
-    assert.equal(afterManualEdit.fields_json.description.cis, "Ban dich da chinh sua happy case");
+    assert.notEqual(afterManualEdit.fields_json.description.cis, "Ban dich da chinh sua happy case");
+    const approveDraft = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/translation-queue/${descriptionItem.id}/approve`,
+      token,
+      body: { review_notes: "translation-routes-approve-draft" },
+    });
+    assert.equal(approveDraft.status, 200);
+    assert.equal(readIssue(config, issue.id).fields_json.description.cis, "Ban dich da chinh sua happy case");
 
     // Happy case 4: compat CIS route alias still works
     const compatTranslate = await requestJson(server, {
@@ -180,7 +188,7 @@ async function main() {
     assert.equal(editor.body.data.translation.total, 2);
     assert.ok(editor.body.data.translations.some((item) => item.target_field === "description"));
     assert.equal(
-      editor.body.data.translations.find((item) => item.target_field === "description").reviewed_text,
+      editor.body.data.translations.find((item) => item.target_field === "description").ai_draft,
       "Ban dich da chinh sua happy case"
     );
   });

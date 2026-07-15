@@ -231,14 +231,14 @@ async function main() {
     assert.equal(editor.body.data.collections.worklog_summary.count, 0);
     assert.equal(editor.body.data.assignee_meta.jira.account_id, "jira-account");
 
-    const approvedTranslation = await requestJson(server, {
+    const approvedDraftResponse = await requestJson(server, {
       method: "POST",
       pathname: `/api/v1/translation-queue/${translation.id}/approve`,
       token,
       body: { review_notes: "issue-editor-approve" },
     });
-    assert.equal(approvedTranslation.status, 200);
-    assert.equal(approvedTranslation.body.data.review_status, "approved");
+    assert.equal(approvedDraftResponse.status, 200);
+    assert.equal(approvedDraftResponse.body.data.review_status, "approved");
 
     const approvedIssue = readIssue(config, issue.id);
     assert.equal(approvedIssue.fields_json.description.backlog, "Backlog description");
@@ -323,18 +323,26 @@ async function main() {
 
     const descriptionTranslation = translate.body.data.translations.find((item) => item.target_field === "description");
     const reviewedTranslation = await requestJson(server, {
-      method: "POST",
-      pathname: `/api/v1/translation-queue/${descriptionTranslation.id}/manual-edit`,
+      method: "PUT",
+      pathname: `/api/v1/translation-queue/${descriptionTranslation.id}/draft`,
       token,
       body: {
-        reviewed_text: "Reviewed description translation",
+        draft_text: "Reviewed description translation",
         review_notes: "issue-editor-reviewed",
       },
     });
     assert.equal(reviewedTranslation.status, 200);
-    assert.equal(reviewedTranslation.body.data.review_status, "edited");
+    assert.equal(reviewedTranslation.body.data.review_status, "ai_draft");
     const reviewedIssue = readIssue(config, untranslatedIssue.id);
-    assert.equal(reviewedIssue.fields_json.description.cis, "Reviewed description translation");
+    assert.notEqual(reviewedIssue.fields_json.description.cis, "Reviewed description translation");
+    const approvedTranslation = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/translation-queue/${descriptionTranslation.id}/approve`,
+      token,
+      body: { review_notes: "issue-editor-approved" },
+    });
+    assert.equal(approvedTranslation.status, 200);
+    assert.equal(readIssue(config, untranslatedIssue.id).fields_json.description.cis, "Reviewed description translation");
 
     const patchedStaleIssue = await requestJson(server, {
       method: "PATCH",

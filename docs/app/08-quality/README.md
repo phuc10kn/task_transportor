@@ -21,7 +21,7 @@ Lite được coi là đạt ở mức product khi:
 - Pull mapping values giữ các mảng text legacy cho Mapping/dry-run và đồng thời materialize directory provider ID cho toàn catalog; Jira user directory giữ được `accountId` nhưng CIS mapping vẫn chỉ nhận text. Candidate browse chỉ chạy sau action Admin; `filter-options` chỉ đọc Status/người được gán snapshot đã lưu trong project config, còn browse dùng ID snapshot để query Backlog theo created range cùng Status/Not closed/người được gán tùy chọn. Luồng không tạo database write, loại Backlog key đã thuộc CIS cùng project và over-fetch tới limit/source bound.
 - Manual CIS issue có revision đầu tiên + journal; external identity verify tồn tại/project và duplicate theo `project_id + đúng system column`.
 - CIS lưu raw/source snapshot, canonical issue, comments, attachments metadata, job và journal.
-- Translation option tạo draft Nhật -> Việt và có human review/edit/approve/reject.
+- Translation option tạo draft Nhật -> Việt; AI/operator cùng chỉnh một draft, Save Draft không đổi canonical, Approve mới apply, và vẫn có reject/retranslate.
 - Translation Glossary kiểm tra migration fresh/upgrade/atomic failure, CRUD/error contract, runtime source variants/target canonical, non-overlap preprocessing (chỉ term xuất hiện trong source text, tối đa 40 entry) và Admin UI lazy-load/filter/modal/error/retry/delete/variant.
 - Mapping required có approve path.
 - Dry-run Jira trả payload, validation, warning và `can_sync`.
@@ -30,7 +30,7 @@ Lite được coi là đạt ở mức product khi:
 - Attachment download failure không block issue ingest/sync, nhưng hiển thị trạng thái lỗi và có retry riêng.
 - Job lỗi retry theo policy, hết retry chuyển `failed`, admin retry được.
 - Dashboard/Admin UI hiển thị pending review, missing mapping, failed job và open anomaly.
-- Workspace sau chọn Project chỉ hiển thị/cho thao tác dữ liệu Project đó theo contract API hiện có; không fallback sang Project khác. Accepted gap MUI-16A/MUI-17 yêu cầu Dashboard disabled/không fetch và Project `enabled=false` chặn toàn bộ workspace read/mutation; phase BE sau mới mở Dashboard project scope/server isolation.
+- Workspace sau chọn Project chỉ hiển thị/cho thao tác dữ liệu Project đó theo contract API hiện có; không fallback sang Project khác. Accepted Admin UI gap hiện tại yêu cầu Dashboard disabled/không fetch và Project `enabled=false` chặn toàn bộ workspace read/mutation; phase BE sau mới mở Dashboard project scope/server isolation.
 
 Quality objectives Lite hiện tại:
 
@@ -52,8 +52,8 @@ Verification command:
 - `npm run verify:phase05`: mapping, anomaly và dry-run.
 - `npm run verify:phase06`: Jira outbound.
 - `npm run verify:phase07`: Admin UI acceptance.
-- `npm run admin:ci`: lint, typecheck và production build của Next Admin Web.
-- `npm run verify:admin-ui-e2e`: Playwright behavior của Next Admin Web; quality gate xác nhận endpoint static UI cũ không còn được Express phục vụ.
+- `npm run admin:ci`: kiểm tra cú pháp JavaScript, asset/route foundation và chặn dependency Next/React/TypeScript/Tailwind trong Admin Web.
+- `npm run verify:admin-ui-e2e`: Playwright behavior của Tabler MPA; kiểm tra login/Project gate, URL document route, Backlog job, Issue Editor/Jira gate, Translation Queue và Glossary.
 - `npm run verify:issue-editor`: Issue Editor API và dry-run/sync.
 - `npm run verify:system-issues`: Backlog Issues, manual CIS issue và external identity linking.
 - `npm run verify:translation-review`: Translation queue, worker gate, direct manual entry point và human review.
@@ -64,14 +64,14 @@ Manual acceptance Lite còn sống:
 - Admin login được.
 - Admin trigger `Pull one issue` và resync issue từ Backlog.
 - Issue Editor hiển thị canonical CIS, source Backlog/CIS/Jira và trạng thái issue.
-- Translation modal translate/retranslate, edit text, `Approve + save`, reject được.
+- Translation modal translate/retranslate, Markdown Edit/Preview, Save Draft, Approve riêng và reject được; hai màn CIS Issue/Translation Queue cùng đọc `ai_draft`.
 - Checklist glossary: Project-scoped CRUD, mỗi language đúng một canonical và không normalized duplicate, concept thiếu pair không vào runtime context, không còn legacy Project JSON và Translation Queue vẫn pass.
 - Jira sync modal tự chạy dry-run, hiển thị `can_sync`, warning và payload preview.
 - Sync Jira thật chỉ chạy sau khi dry-run hợp lệ.
 - Dashboard hiển thị pending review, missing mapping, failed job và open anomaly.
-- Next Admin Web là UI duy nhất; endpoint static UI cũ phải trả 404, không được có fallback hay dual UI.
+- Tabler MPA là Admin UI duy nhất; source/dependency Next/React/Vue và endpoint static UI cũ không được tồn tại hoặc có fallback/dual UI.
 - SQLite backup được chạy theo operation runbook trước khi coi demo/release an toàn.
-- Issue Editor gate: dry-run dùng canonical effective values mới nhất; stale queue item không fill nội dung dịch; attachment warning chưa là gate v1; manual acceptance ưu tiên `Pull one issue` và `Resync from Backlog`.
+- Issue Editor gate: dry-run dùng canonical effective values mới nhất; stale queue item vẫn giữ draft để đối chiếu nhưng Approve bị khóa tới khi Save Draft theo source hiện tại hoặc retranslate; attachment warning chưa là gate v1; manual acceptance ưu tiên `Pull one issue` và `Resync from Backlog`.
 
 ## Folder Structure
 

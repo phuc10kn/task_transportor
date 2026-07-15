@@ -145,13 +145,14 @@ function createIssueWithRevision(config, project, overrides = {}) {
 
 function reviewTranslations(config, items) {
   for (const item of items) {
-    TranslationApi.manualEditTranslation({
+    TranslationApi.saveTranslationDraft({
       config,
       queueId: item.id,
-      reviewedText: `VI: ${item.source_text}`,
-      reviewedBy: 1,
+      draftText: `VI: ${item.source_text}`,
+      editedBy: 1,
       reviewNotes: "verify",
     });
+    TranslationApi.approveTranslation({ config, queueId: item.id, reviewedBy: 1, reviewNotes: "verify" });
   }
 }
 

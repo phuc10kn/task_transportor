@@ -10,7 +10,7 @@
 
 ## meaning
 
-State của draft, approve, reject, manual edit hoặc review outcome trước khi apply vào canonical state.
+State của shared draft, approve hoặc reject trước khi apply vào canonical state; Save Draft không phải canonical outcome.
 
 ## use when
 

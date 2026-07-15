@@ -33,7 +33,7 @@ function approve(req, res, next) {
       config: req.app.locals.config,
       queueId: req.params.queueId,
       reviewedBy: req.user && req.user.id,
-      reviewNotes: req.body.review_notes,
+      reviewNotes: req.body && req.body.review_notes,
       correlationId: req.correlationId,
     }));
   } catch (error) {
@@ -68,13 +68,13 @@ function retranslate(req, res, next) {
   }
 }
 
-function manualEdit(req, res, next) {
+function saveDraft(req, res, next) {
   try {
-    success(res, TranslationApi.manualEditTranslation({
+    success(res, TranslationApi.saveTranslationDraft({
       config: req.app.locals.config,
       queueId: req.params.queueId,
-      reviewedText: req.body.reviewed_text,
-      reviewedBy: req.user && req.user.id,
+      draftText: req.body.draft_text,
+      editedBy: req.user && req.user.id,
       reviewNotes: req.body.review_notes,
       correlationId: req.correlationId,
     }));
@@ -86,8 +86,8 @@ function manualEdit(req, res, next) {
 module.exports = {
   approve,
   list,
-  manualEdit,
   reject,
   retranslate,
+  saveDraft,
   show,
 };

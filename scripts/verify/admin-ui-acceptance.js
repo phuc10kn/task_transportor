@@ -170,13 +170,14 @@ function createIssue(config, project) {
     },
   });
 
-  TranslationApi.manualEditTranslation({
+  TranslationApi.saveTranslationDraft({
     config,
     queueId: descriptionTranslation.id,
-    reviewedText: "VI: Save action returns a server error.",
-    reviewedBy: 1,
+    draftText: "VI: Save action returns a server error.",
+    editedBy: 1,
     reviewNotes: "verify",
   });
+  TranslationApi.approveTranslation({ config, queueId: descriptionTranslation.id, reviewedBy: 1, reviewNotes: "verify" });
 
   const db = createConnection({ config });
   db

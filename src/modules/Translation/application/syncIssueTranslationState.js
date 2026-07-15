@@ -62,7 +62,7 @@ function syncIssueTranslationState({ config, repository, issueId, correlationId 
   }
 
   const pendingCount = items.filter((item) => item.review_status === "pending").length;
-  const doneCount = items.filter((item) => ["approved", "edited"].includes(item.review_status)).length;
+  const doneCount = items.filter((item) => item.review_status === "approved").length;
   let nextStatus = ISSUE_STATUSES.PENDING_REVIEW;
 
   if (pendingCount > 0) {
