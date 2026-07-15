@@ -140,7 +140,8 @@ function portFrom(argv = process.argv, env = process.env) {
 
 if (require.main === module) {
   const port = portFrom();
-  createServer().listen(port, "127.0.0.1", () => console.log(`Admin Web running on http://127.0.0.1:${port}`));
+  const host = process.env.ADMIN_WEB_HOST || "127.0.0.1";
+  createServer().listen(port, host, () => console.log(`Admin Web running on http://${host}:${port}`));
 }
 
 module.exports = { createServer, portFrom, routeFor };

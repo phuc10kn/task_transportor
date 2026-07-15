@@ -17,7 +17,7 @@ Local/demo runtime:
 
 - API chạy bằng `npm start` trong runtime thường và `npm run dev` trong dev runtime.
 - Dev server dùng Node.js CommonJS và Express.
-- Admin Web chạy riêng bằng Node client-rendered MPA trong `apps/admin-web`: local dev dùng `npm run admin:dev`, production dùng `npm run admin:start -- --port 8001` với `CIS_API_ORIGIN` chỉ tới API nội bộ. Browser gọi relative `/api/v1/*`; MPA server proxy same-origin tới Express.
+- Admin Web chạy riêng bằng Node client-rendered MPA trong `apps/admin-web`: local dev dùng `npm run admin:dev`, production dùng `npm run admin:start -- --port 8001` với `CIS_API_ORIGIN` chỉ tới API nội bộ. Listener mặc định bind `127.0.0.1`; deployment phục vụ trực tiếp qua public port phải đặt `ADMIN_WEB_HOST=0.0.0.0`. Browser gọi relative `/api/v1/*`; MPA server proxy same-origin tới Express.
 - SQLite mặc định ở `storage/db/cis.sqlite`.
 - Attachment/local files nằm trong storage path do project quản lý.
 - Không commit DB thật, backup thật, attachment thật, credential thật.
