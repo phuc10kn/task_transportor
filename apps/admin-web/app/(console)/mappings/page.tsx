@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch, ApiClientError } from "../../../lib/api-client";
 import { Badge, Button, StatePanel } from "../../../components/ui";
+import { useProjectWorkspace } from "../../../lib/project-workspace";
 
 type Project = { id: number; name: string };
 type MappingRow = {
@@ -74,10 +75,10 @@ function MappingTable({ rows, direction, drafts, setDraft, save, saving }: { row
 export default function MappingsPage() {
   const router = useRouter();
   const search = useSearchParams();
-  const projectId = Number(search.get("project_id")) || 0;
+  const { activeProject, setDirtySource } = useProjectWorkspace();
+  const projectId = activeProject?.id || 0;
   const sourceSystem = search.get("source_system") || "backlog";
   const targetSystem = search.get("target_system") || "jira";
-  const [projects, setProjects] = useState<Project[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -85,21 +86,22 @@ export default function MappingsPage() {
   const [action, setAction] = useState("");
   const [saving, setSaving] = useState("");
 
-  const selectedProject = useMemo(() => projects.find((project) => project.id === projectId) || projects[0] || null, [projects, projectId]);
+  useEffect(() => {
+    setDirtySource("Mappings", Object.keys(drafts).length > 0);
+    return () => setDirtySource("Mappings", false);
+  }, [drafts, setDirtySource]);
+
+  const selectedProject = activeProject as Project | null;
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const listed = await apiFetch<Project[]>("/api/v1/projects");
-      setProjects(listed);
-      const selected = listed.find((project) => project.id === projectId) || listed[0];
-      if (!selected) { setSettings(null); return; }
-      if (!projectId) router.replace(`/mappings?project_id=${selected.id}&source_system=${sourceSystem}&target_system=${targetSystem}`);
-      setSettings(await apiFetch<Settings>(`/api/v1/mapping-settings?project_id=${selected.id}&source_system=${encodeURIComponent(sourceSystem)}&target_system=${encodeURIComponent(targetSystem)}`));
+      if (!selectedProject) { setSettings(null); return; }
+      setSettings(await apiFetch<Settings>(`/api/v1/mapping-settings?project_id=${selectedProject.id}&source_system=${encodeURIComponent(sourceSystem)}&target_system=${encodeURIComponent(targetSystem)}`));
       setDrafts({});
     } catch (requestError) {
       setError(requestError instanceof ApiClientError ? requestError.message : "Mappings could not be loaded.");
     } finally { setLoading(false); }
-  }, [projectId, router, sourceSystem, targetSystem]);
+  }, [selectedProject, sourceSystem, targetSystem]);
 
   useEffect(() => { const timer = window.setTimeout(() => void load(), 0); const refresh = () => void load(); window.addEventListener("cis-global-refresh", refresh); return () => { window.clearTimeout(timer); window.removeEventListener("cis-global-refresh", refresh); }; }, [load]);
 
@@ -128,5 +130,5 @@ export default function MappingsPage() {
   function updateQuery(name: string, value: string) { const query = new URLSearchParams(search.toString()); query.set(name, value); router.push(`/mappings?${query.toString()}`); }
 
   const mappingTableProps = (direction: "to-cis" | "to-system", rows: MappingRow[]) => ({ direction, drafts, rows, save, saving, setDraft: (key: string, value: string) => setDrafts((current) => ({ ...current, [key]: value })) });
-  return <section className="mx-auto max-w-7xl space-y-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.2em]">Mappings</p><h1 className="text-primary mt-3 text-3xl font-semibold">Mapping Settings</h1><p className="text-secondary mt-2 text-sm">Approve system values before outbound sync.</p></div><div className="flex flex-wrap gap-2"><Button disabled={!selectedProject || action === "backlog"} onClick={() => void refreshSystem("backlog")}>{action === "backlog" ? "Pulling…" : "Pull Backlog fields"}</Button><Button disabled={!selectedProject || action === "jira"} onClick={() => void refreshSystem("jira")}>{action === "jira" ? "Pulling…" : "Pull Jira fields"}</Button><Button disabled={!selectedProject || action === "cis"} onClick={() => void refreshSystem("cis")}>{action === "cis" ? "Syncing…" : "Sync CIS mapping fields"}</Button></div></div>{loading ? <StatePanel title="Loading mappings" message="Reading current mapping settings…" /> : error && !settings ? <StatePanel title="Mappings unavailable" message={error} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /> : !selectedProject ? <StatePanel title="No projects configured" message="Create a project before configuring mappings." /> : !settings ? <StatePanel title="Mappings unavailable" message={error || "Mapping settings are not available."} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /> : <><div className="surface rounded-xl border p-4"><div className="grid gap-4 sm:grid-cols-3"><label className="text-secondary text-sm">Project<select aria-label="Mapping project" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateQuery("project_id", event.target.value)} value={String(selectedProject.id)}>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label className="text-secondary text-sm">Source<select aria-label="Mapping source system" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateQuery("source_system", event.target.value)} value={sourceSystem}>{settings.systems.map((system) => <option key={system.value} value={system.value}>{system.label}</option>)}</select></label><label className="text-secondary text-sm">Target<select aria-label="Mapping target system" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateQuery("target_system", event.target.value)} value={targetSystem}>{settings.systems.map((system) => <option key={system.value} value={system.value}>{system.label}</option>)}</select></label></div>{error ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{error}</p> : null}</div><div className="mapping-accordions"><MappingAccordion ariaLabel="System to CIS mappings" eyebrow="Source mapping" title={`${sourceSystem} → CIS`} description="System values discovered from current project issues."><MappingTable {...mappingTableProps("to-cis", settings.flows.systems_to_cis)} /></MappingAccordion><MappingAccordion ariaLabel="CIS to system mappings" eyebrow="Target mapping" title={`CIS → ${targetSystem}`} description="Canonical values mapped to the target system."><MappingTable {...mappingTableProps("to-system", settings.flows.cis_to_system)} /></MappingAccordion></div></>}</section>;
+  return <section className="mx-auto max-w-7xl space-y-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.2em]">Mappings</p><h1 className="text-primary mt-3 text-3xl font-semibold">Mapping Settings</h1><p className="text-secondary mt-2 text-sm">Approve system values before outbound sync.</p></div><div className="flex flex-wrap gap-2"><Button disabled={!selectedProject || action === "backlog"} onClick={() => void refreshSystem("backlog")}>{action === "backlog" ? "Pulling…" : "Pull Backlog fields"}</Button><Button disabled={!selectedProject || action === "jira"} onClick={() => void refreshSystem("jira")}>{action === "jira" ? "Pulling…" : "Pull Jira fields"}</Button><Button disabled={!selectedProject || action === "cis"} onClick={() => void refreshSystem("cis")}>{action === "cis" ? "Syncing…" : "Sync CIS mapping fields"}</Button></div></div>{loading ? <StatePanel title="Loading mappings" message="Reading current mapping settings…" /> : error && !settings ? <StatePanel title="Mappings unavailable" message={error} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /> : !selectedProject ? <StatePanel title="No projects configured" message="Create a project before configuring mappings." /> : !settings ? <StatePanel title="Mappings unavailable" message={error || "Mapping settings are not available."} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /> : <><div className="surface rounded-xl border p-4"><div className="grid gap-4 sm:grid-cols-3"><div className="text-secondary text-sm">Workspace<span className="field-control mt-2 block rounded-lg border px-3 py-2">{selectedProject.name} · #{selectedProject.id}</span></div><label className="text-secondary text-sm">Source<select aria-label="Mapping source system" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateQuery("source_system", event.target.value)} value={sourceSystem}>{settings.systems.map((system) => <option key={system.value} value={system.value}>{system.label}</option>)}</select></label><label className="text-secondary text-sm">Target<select aria-label="Mapping target system" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateQuery("target_system", event.target.value)} value={targetSystem}>{settings.systems.map((system) => <option key={system.value} value={system.value}>{system.label}</option>)}</select></label></div>{error ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{error}</p> : null}</div><div className="mapping-accordions"><MappingAccordion ariaLabel="System to CIS mappings" eyebrow="Source mapping" title={`${sourceSystem} → CIS`} description="System values discovered from current project issues."><MappingTable {...mappingTableProps("to-cis", settings.flows.systems_to_cis)} /></MappingAccordion><MappingAccordion ariaLabel="CIS to system mappings" eyebrow="Target mapping" title={`CIS → ${targetSystem}`} description="Canonical values mapped to the target system."><MappingTable {...mappingTableProps("to-system", settings.flows.cis_to_system)} /></MappingAccordion></div></>}</section>;
 }

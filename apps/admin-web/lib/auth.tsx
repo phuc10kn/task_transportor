@@ -6,6 +6,11 @@ import { apiFetch, ApiClientError, clearAuthToken, getAuthToken, setAuthToken } 
 import { safeIntendedPath } from "./routes";
 import { Button } from "../components/ui";
 
+const ACTIVE_PROJECT_KEY = "cis_active_project_id";
+function clearActiveProject() {
+  if (typeof window !== "undefined") window.sessionStorage.removeItem(ACTIVE_PROJECT_KEY);
+}
+
 type Admin = { id: number; email: string };
 type AuthStatus = "loading" | "authenticating" | "authenticated" | "unauthenticated" | "error";
 
@@ -27,6 +32,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
 
   const refresh = useCallback(async () => {
     if (!getAuthToken()) {
+      clearActiveProject();
       setAdmin(null);
       setStatus("unauthenticated");
       return;
@@ -39,6 +45,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       setStatus("authenticated");
     } catch (requestError) {
       clearAuthToken();
+      if (requestError instanceof ApiClientError && requestError.status === 401) clearActiveProject();
       setAdmin(null);
       if (requestError instanceof ApiClientError && requestError.status === 401) {
         setStatus("unauthenticated");
@@ -52,6 +59,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
   useEffect(() => {
     const initialCheck = window.setTimeout(() => void refresh(), 0);
     const onExpired = () => {
+      clearActiveProject();
       setAdmin(null);
       setStatus("unauthenticated");
     };
@@ -76,6 +84,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
           timeoutMs: 60000,
           body: { email, password },
         });
+        clearActiveProject();
         setAuthToken(result.token);
         setAdmin(result.admin);
         setStatus("authenticated");
@@ -87,6 +96,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       }
     },
     logout() {
+      clearActiveProject();
       clearAuthToken();
       setAdmin(null);
       setStatus("unauthenticated");

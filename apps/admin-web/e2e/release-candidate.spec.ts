@@ -2,32 +2,34 @@ import { expect, test } from "@playwright/test";
 import { login, mockAuth } from "./support/phase-fixtures";
 
 const axePath = require.resolve("axe-core/axe.min.js");
-const routes = ["/dashboard", "/projects", "/mappings", "/backlog-issues", "/cis-issues", "/translation-queue", "/translation-glossary", "/anomalies", "/sync-jobs", "/journal"];
+const routes = ["/projects", "/mappings", "/backlog-issues", "/cis-issues", "/translation-queue", "/translation-glossary", "/anomalies", "/sync-jobs", "/journal"];
 
-async function mockDashboard(page: Parameters<typeof mockAuth>[0]) {
-  let reads = 0;
-  await page.route("**/api/v1/dashboard/summary", (route) => {
-    reads += 1;
-    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { health: { status: "ok", database: "ok" }, counts: { pull_jobs_pending: 2, pull_jobs_failed: 0, translation_pending: 1, issue_pending_mapping: 3, sync_jobs_failed: 0, anomaly_open: 1 } } }) });
-  });
-  await page.route("**/api/v1/dashboard/alerts", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [] }) }));
-  return () => reads;
+async function mockBacklogContext(page: Parameters<typeof mockAuth>[0]) {
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { project_id: 1, actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: true }, sync_to_cis: { enabled: true } } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { project_id: 1, statuses: [], assignees: [] } }) }));
 }
 
 test("release candidate shell reaches every active route and Refresh only re-reads the current route", async ({ page }) => {
-  await mockAuth(page); const reads = await mockDashboard(page);
+  await mockAuth(page);
+  await mockBacklogContext(page);
+  let projectReads = 0;
+  page.on("request", (request) => {
+    if (request.url().includes("/api/v1/projects/1/")) projectReads += 1;
+  });
   await login(page, "/dashboard");
   const navigation = page.getByRole("navigation", { name: "Primary" });
-  await expect(navigation.getByRole("link")).toHaveCount(routes.length);
-  for (const href of routes) await expect(navigation.locator(`a[href="${href}"]`)).toBeVisible();
-  const before = reads();
+  const navHrefs = await navigation.getByRole("link").evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(navHrefs).toEqual(routes);
+  expect(await navigation.locator(".nav-link--disabled").filter({ hasText: "Dashboard" }).count()).toBe(1);
+  const before = projectReads;
   await page.getByRole("button", { name: "Refresh current route" }).click();
-  await expect.poll(reads).toBeGreaterThan(before);
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect.poll(() => projectReads).toBeGreaterThan(before);
+  await expect(page).toHaveURL(/\/backlog-issues(?:\?.*)?$/);
 });
 
 test("release candidate shell has viewport fit, 44px touch targets, reduced motion and selected axe WCAG A/AA", async ({ page }) => {
-  await mockAuth(page); await mockDashboard(page);
+  await mockAuth(page);
+  await mockBacklogContext(page);
   await login(page, "/dashboard");
   for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);

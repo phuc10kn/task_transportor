@@ -127,8 +127,16 @@ Active ID đọc từ `sessionStorage` phải parse thành positive integer; Pro
 - [ ] `npm test`, `admin:ci`, full Playwright và boundary search pass.
 - [ ] HG-07A được user xác nhận.
 - [ ] Manual check (Người review tại HG-07A).
-- [ ] Unit test check (Agent).
+- [x] Unit test check (Agent): `npm test`, `npm run admin:ci`, `npm --prefix apps/admin-web run e2e` (42/42), `npm run verify:docs` và `git diff --check` đã pass.
 
 ## Kết quả thực hiện
 
-In-progress: baseline `pre-MUI-16A-implementation` đã materialize tại `19335b03ffb2006940a3fa14b41ff49342a49f4f`; plan đã review và khóa UI-only, chưa triển khai source hoặc mở HG-07A. Thứ tự đã xác nhận: MUI-16A → MUI-17 với Dashboard disabled/server-isolation accepted gap → phase BE đóng `BE-PROJECT-SCOPE-01/02`.
+Implemented in `apps/admin-web` only, from baseline `pre-MUI-16A-implementation` `19335b03ffb2006940a3fa14b41ff49342a49f4f`:
+
+- Added client Project workspace provider/gate with session-scoped active ID, render barrier, invalid/disabled/unavailable states, stale-response invalidation, safe intended route and shared dirty-navigation guard.
+- Made `Projects` the only selection owner; added explicit `Open workspace` / `Create and open workspace`, active `Tên · #ID` chip, and blocked `enabled=false` projects.
+- Bound business list/detail screens to the active Project using existing API contracts; removed per-route selectors and first-project fallbacks; added object mismatch blocking before companion reads/mutations.
+- Disabled Dashboard navigation/direct rendering and verified no summary/alerts request; kept `BE-PROJECT-SCOPE-01/02` open for the later BE phase.
+- Updated UI E2E fixtures/specs, including Project-first login, request binding, Dashboard accepted gap, responsive/keyboard/axe and release-candidate gates. Release-candidate suite: 2/2 pass; final full Playwright suite: 42/42 pass.
+
+No files under `src/modules/**`, `src/db/**` or Express/API semantics were changed. HG-07A and manual review remain open for user confirmation. Handoff order remains `MUI-16A → MUI-17 với accepted gap → phase BE`.

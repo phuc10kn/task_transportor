@@ -15,7 +15,7 @@ async function mockProjects(page: Parameters<typeof mockAuth>[0]) {
   await page.route("**/api/v1/projects", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [project] }) }));
 }
 
-test("Sync jobs keeps project filter, evidence columns and global refresh in one ledger", async ({ page }) => {
+test("Sync jobs keeps active workspace, evidence columns and global refresh in one ledger", async ({ page }) => {
   await mockAuth(page); await mockProjects(page);
   let listCalls = 0; let lastQuery = "";
   await page.route("**/api/v1/sync-jobs**", (route) => {
@@ -31,8 +31,7 @@ test("Sync jobs keeps project filter, evidence columns and global refresh in one
   const beforeRefresh = listCalls;
   await page.evaluate(() => window.dispatchEvent(new CustomEvent("cis-global-refresh")));
   await expect.poll(() => listCalls).toBeGreaterThan(beforeRefresh);
-  await page.getByLabel("Sync jobs project").selectOption("");
-  await expect(page).not.toHaveURL(/project_id=/);
+  await expect(page.getByText("Demo · #1").first()).toBeVisible();
 });
 
 test("Sync job Retry and Cancel retain server rejection, prevent duplicate submit and reload server truth", async ({ page }) => {
@@ -82,8 +81,7 @@ test("Sync journal is project-filtered read-only audit evidence", async ({ page 
   const row = page.getByRole("row", { name: /#71/ });
   await expect(row).toContainText("job-failed"); await expect(row).toContainText("Job Failed"); await expect(row).toContainText("Target transition rejected.");
   await expect(page.getByRole("button", { name: /Retry|Cancel/ })).toHaveCount(0); expect(mutationCalls).toBe(0);
-  await page.getByLabel("Sync journal project").selectOption("");
-  await expect(page).not.toHaveURL(/project_id=/);
+  await expect(page.getByText("Demo · #1").first()).toBeVisible();
 });
 
 test("Operation ledgers expose loading, error retry, empty and mobile keyboard actions", async ({ page }) => {
@@ -104,5 +102,5 @@ test("Operation ledgers expose loading, error retry, empty and mobile keyboard a
   await page.goto("/journal");
   const row = page.getByRole("row", { name: /#72/ });
   await expect(row).toHaveCSS("display", "block");
-  await page.getByLabel("Sync journal project").focus(); await expect(page.getByLabel("Sync journal project")).toBeFocused();
+  await expect(page.getByText("Demo · #1").first()).toBeVisible();
 });

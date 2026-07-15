@@ -7,6 +7,7 @@ import { AuthGuard, useAuth } from "../../lib/auth";
 import { consoleRoutes } from "../../lib/route-registry";
 import { Button } from "../../components/ui";
 import { ThemeToggle } from "../../components/theme-toggle";
+import { ProjectWorkspaceGate, ProjectWorkspaceProvider, useProjectWorkspace } from "../../lib/project-workspace";
 
 function NavIcon({ href }: { href: string }) {
   const common = { fill: "none", height: 20, viewBox: "0 0 24 24", width: 20 };
@@ -26,9 +27,13 @@ function NavIcon({ href }: { href: string }) {
 }
 
 function Navigation({ pathname, mobile = false }: { pathname: string; mobile?: boolean }) {
+  const { state } = useProjectWorkspace();
   return <nav aria-label={mobile ? "Mobile primary" : "Primary"} className="space-y-1">
     {consoleRoutes.map((route) => {
       const active = pathname === route.href || pathname.startsWith(`${route.href}/`);
+      const disabled = route.href === "/dashboard" || (route.href !== "/projects" && state !== "ready");
+      const reason = route.href === "/dashboard" ? "Chờ BE project scope" : "Chọn Project để mở workspace";
+      if (disabled) return <span aria-current={active ? "page" : undefined} aria-disabled="true" className={`nav-link nav-link--disabled ${active ? "nav-link--active" : ""}`} key={route.href} title={reason}><NavIcon href={route.href} /><span>{route.label}</span><small className="sr-only">{reason}</small></span>;
       return <Link aria-current={active ? "page" : undefined} className={`nav-link ${active ? "nav-link--active" : ""}`} href={route.href} key={route.href}>
         <NavIcon href={route.href} />
         <span>{route.label}</span>
@@ -40,10 +45,12 @@ function Navigation({ pathname, mobile = false }: { pathname: string; mobile?: b
 function ConsoleShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const { admin, logout } = useAuth();
+  const { activeProject, state } = useProjectWorkspace();
   const [refreshing, setRefreshing] = React.useState(false);
   const currentRoute = consoleRoutes.find((route) => pathname === route.href) || consoleRoutes.find((route) => pathname.startsWith(`${route.href}/`));
 
   function refresh() {
+    if (state !== "ready" || pathname === "/dashboard") return;
     setRefreshing(true);
     window.dispatchEvent(new CustomEvent("cis-global-refresh", { detail: { pathname } }));
     window.setTimeout(() => setRefreshing(false), 450);
@@ -77,8 +84,9 @@ function ConsoleShell({ children }: Readonly<{ children: React.ReactNode }>) {
             </details>
             <div className="min-w-0"><p className="text-primary truncate text-base font-semibold">{currentRoute?.label || "CIS Operations"}</p><p className="text-subtle mt-0.5 hidden text-xs sm:block">Operator workspace</p></div>
             <div className="ml-auto flex items-center gap-2">
+              {activeProject ? <Link aria-label="Change active Project" className="workspace-chip inline-flex max-w-40 truncate sm:max-w-56" href="/projects">{activeProject.name} <span>· #{activeProject.id}</span></Link> : <Link className="workspace-chip workspace-chip--empty inline-flex" href="/projects">Chọn Project</Link>}
               <ThemeToggle />
-              <Button aria-label="Refresh current route" className="header-action whitespace-nowrap" disabled={refreshing} onClick={refresh}>{refreshing ? "Refreshing…" : "Refresh"}</Button>
+              <Button aria-label="Refresh current route" className="header-action whitespace-nowrap" disabled={refreshing || state !== "ready" || pathname === "/dashboard"} onClick={refresh}>{refreshing ? "Refreshing…" : "Refresh"}</Button>
               <div className="admin-identity hidden items-center gap-2 pl-2 md:flex"><span aria-hidden="true" className="admin-avatar">{admin?.email?.slice(0, 1).toUpperCase() || "A"}</span><span className="text-secondary max-w-40 truncate text-xs">{admin?.email}</span></div>
               <Button className="header-action whitespace-nowrap" onClick={logout} variant="ghost">Sign out</Button>
             </div>
@@ -91,5 +99,5 @@ function ConsoleShell({ children }: Readonly<{ children: React.ReactNode }>) {
 }
 
 export default function ConsoleLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <AuthGuard><ConsoleShell>{children}</ConsoleShell></AuthGuard>;
+  return <AuthGuard><ProjectWorkspaceProvider><ConsoleShell><ProjectWorkspaceGate>{children}</ProjectWorkspaceGate></ConsoleShell></ProjectWorkspaceProvider></AuthGuard>;
 }

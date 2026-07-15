@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge, Button, StatePanel } from "../../../components/ui";
 import { ApiClientError, apiFetch } from "../../../lib/api-client";
+import { useProjectWorkspace } from "../../../lib/project-workspace";
 
 type Project = { id: number; name: string; backlog_project_key?: string; backlog_issue_key_prefix?: string };
 type FilterOption = { id: number; name: string };
@@ -103,16 +104,14 @@ function OptionPicker({ disabled, helper, label, onChange, options, selected }: 
 export default function BacklogIssuesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { activeProject } = useProjectWorkspace();
   const searchString = searchParams.toString();
-  const projectId = Number(searchParams.get("project_id")) || 0;
-  const [projects, setProjects] = useState<Project[]>([]);
+  const projectId = activeProject?.id || 0;
   const [form, setForm] = useState<BrowseForm>(() => formFromSearch(new URLSearchParams(searchString)));
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
-  const [projectsLoading, setProjectsLoading] = useState(true);
   const [contextLoading, setContextLoading] = useState(false);
   const [loadingResults, setLoadingResults] = useState(false);
-  const [projectsError, setProjectsError] = useState("");
   const [contextError, setContextError] = useState("");
   const [optionsError, setOptionsError] = useState("");
   const [browseError, setBrowseError] = useState("");
@@ -130,10 +129,7 @@ export default function BacklogIssuesPage() {
   const lastSubmittedQuery = useRef("");
   const initializedSearch = useRef(false);
 
-  const selectedProject = useMemo(
-    () => projects.find((project) => project.id === projectId) || projects[0] || null,
-    [projects, projectId],
-  );
+  const selectedProject = activeProject as Project | null;
 
   const clearResult = useCallback(() => {
     setResult(null);
@@ -141,23 +137,6 @@ export default function BacklogIssuesPage() {
     setBrowseError("");
     setRetryForm(null);
   }, []);
-
-  const loadProjects = useCallback(async () => {
-    setProjectsLoading(true);
-    setProjectsError("");
-    try {
-      const listed = await apiFetch<Project[]>("/api/v1/projects");
-      setProjects(listed);
-      const selected = listed.find((project) => project.id === projectId) || listed[0];
-      if (selected && selected.id !== projectId) {
-        router.replace(`/backlog-issues?project_id=${selected.id}`);
-      }
-    } catch (error) {
-      setProjectsError(errorMessage(error, "Projects could not be loaded."));
-    } finally {
-      setProjectsLoading(false);
-    }
-  }, [projectId, router]);
 
   const loadProjectContext = useCallback(async (selectedId: number) => {
     setContextLoading(true);
@@ -180,19 +159,14 @@ export default function BacklogIssuesPage() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadProjects(), 0);
-    const refresh = () => void loadProjects();
+    if (!selectedProject) return;
+    const timer = window.setTimeout(() => void loadProjectContext(selectedProject.id), 0);
+    const refresh = () => void loadProjectContext(selectedProject.id);
     window.addEventListener("cis-global-refresh", refresh);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("cis-global-refresh", refresh);
     };
-  }, [loadProjects]);
-
-  useEffect(() => {
-    if (!selectedProject) return;
-    const timer = window.setTimeout(() => void loadProjectContext(selectedProject.id), 0);
-    return () => window.clearTimeout(timer);
   }, [loadProjectContext, selectedProject]);
 
   useEffect(() => () => {
@@ -228,21 +202,6 @@ export default function BacklogIssuesPage() {
     lastSubmittedQuery.current = "";
     setForm((current) => ({ ...current, ...next }));
     clearResult();
-  }
-
-  function changeProject(event: ChangeEvent<HTMLSelectElement>) {
-    const nextId = Number(event.target.value);
-    setForm(formFromSearch(new URLSearchParams(`project_id=${nextId}`)));
-    setReadiness(null);
-    setFilterOptions(null);
-    setContextError("");
-    setOptionsError("");
-    clearResult();
-    invalidateActionTracking();
-    setPullOneState(null);
-    setPullProjectState(null);
-    setActionError("");
-    router.replace(`/backlog-issues?project_id=${nextId}`);
   }
 
   const pollJob = useCallback(async (jobId: string, onUpdate: (job: SyncJob) => void, onTerminal: (job: SyncJob) => void, generation = actionGeneration.current) => {
@@ -399,9 +358,7 @@ export default function BacklogIssuesPage() {
   const hasCurrentResult = Boolean(result && submittedSnapshot && submittedSnapshot === currentSnapshot);
   const reasons = readinessReasons(readiness);
 
-  if (projectsLoading) return <section className="mx-auto max-w-7xl"><StatePanel title="Loading Backlog Issues" message="Reading projects and search readiness…" /></section>;
-  if (projectsError) return <section className="mx-auto max-w-7xl"><StatePanel title="Backlog Issues unavailable" message={projectsError} action={<Button onClick={() => void loadProjects()} variant="primary">Retry</Button>} /></section>;
-  if (!projects.length) return <section className="mx-auto max-w-7xl"><StatePanel title="No projects configured" message="Create a project before browsing Backlog issues." action={<Link className="ui-button ui-button--primary" href="/projects">Open Project Config</Link>} /></section>;
+  if (!selectedProject) return <section className="mx-auto max-w-7xl"><StatePanel title="No active workspace" message="Choose an enabled Project before browsing Backlog issues." action={<Link className="ui-button ui-button--primary" href="/projects">Open Project Config</Link>} /></section>;
 
   return <section className="backlog-page mx-auto max-w-7xl space-y-6">
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -421,7 +378,7 @@ export default function BacklogIssuesPage() {
 
       <form className="mt-5 space-y-5" onSubmit={submit}>
         <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_repeat(2,minmax(0,1fr))_8rem]">
-          <label className="text-secondary text-sm">Project *<select aria-label="Backlog project" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={changeProject} value={selectedProject ? String(selectedProject.id) : ""}>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
+          <div className="text-secondary text-sm">Workspace<span className="field-control mt-2 block w-full rounded-lg border px-3 py-2">{selectedProject?.name || "—"} · #{selectedProject?.id || "—"}</span></div>
           <label className="text-secondary text-sm">Created from *<input aria-label="Created from" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateForm({ createdFrom: event.target.value })} required type="date" value={form.createdFrom} /></label>
           <label className="text-secondary text-sm">Created to *<input aria-label="Created to" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateForm({ createdTo: event.target.value })} required type="date" value={form.createdTo} /></label>
           <label className="text-secondary text-sm">Display *<input aria-label="Display limit" className="field-control mt-2 w-full rounded-lg border px-3 py-2" max="100" min="1" onChange={(event) => updateForm({ limit: event.target.value })} required type="number" value={form.limit} /></label>

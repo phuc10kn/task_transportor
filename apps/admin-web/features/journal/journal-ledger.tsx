@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, StatePanel } from "../../components/ui";
 import { apiFetch, ApiClientError } from "../../lib/api-client";
+import { useProjectWorkspace } from "../../lib/project-workspace";
 
-type Project = { id: number; name: string };
 type JournalEntry = {
   id: number;
   sync_job_id?: string | null;
@@ -43,10 +43,9 @@ function Direction({ from, to }: { from: string; to: string }) {
 }
 
 export function JournalLedger() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const projectId = searchParams.get("project_id") || "";
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { activeProject } = useProjectWorkspace();
+  const projectId = String(activeProject?.id || "");
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -57,12 +56,9 @@ export function JournalLedger() {
     setLoading(true); setError("");
     const query = projectId ? `?project_id=${encodeURIComponent(projectId)}` : "";
     try {
-      const [nextProjects, nextEntries] = await Promise.all([
-        apiFetch<Project[]>("/api/v1/projects"),
-        apiFetch<JournalEntry[]>(`/api/v1/sync-journal${query}`),
-      ]);
+      const nextEntries = await apiFetch<JournalEntry[]>(`/api/v1/sync-journal${query}`);
       if (current !== requestId.current) return;
-      setProjects(nextProjects || []); setEntries(nextEntries || []);
+      setEntries(nextEntries || []);
     } catch (requestError) {
       if (current === requestId.current) setError(messageFor(requestError, "Sync journal could not be loaded."));
     } finally { if (current === requestId.current) setLoading(false); }
@@ -71,18 +67,12 @@ export function JournalLedger() {
   useEffect(() => { const timer = window.setTimeout(() => void load(), 0); return () => window.clearTimeout(timer); }, [load]);
   useEffect(() => { const refresh = () => void load(); window.addEventListener("cis-global-refresh", refresh); return () => window.removeEventListener("cis-global-refresh", refresh); }, [load]);
 
-  function updateProject(value: string) {
-    const next = new URLSearchParams(window.location.search);
-    if (value) next.set("project_id", value); else next.delete("project_id");
-    router.replace(`/journal${next.size ? `?${next}` : ""}`);
-  }
-
   const failureCount = entries.filter((entry) => entry.status === "failed").length;
   const successCount = entries.filter((entry) => entry.status === "success").length;
 
   return <section className="operations-page mx-auto max-w-7xl space-y-6">
     <div className="page-heading flex flex-wrap items-end justify-between gap-5"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.2em]">Operations ledger</p><h1 className="text-primary mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Sync journal</h1><p className="text-secondary mt-3 max-w-2xl text-sm leading-6">Read-only audit evidence for decisions, execution attempts and final outcomes.</p></div><div className="operation-summary" aria-label="Sync journal summary"><div><span>Visible</span><strong>{entries.length}</strong></div><div><span>Success</span><strong>{successCount}</strong></div><div data-danger={failureCount > 0}><span>Failed</span><strong>{failureCount}</strong></div></div></div>
-    <section className="surface operation-filter-bar rounded-xl border" aria-label="Sync journal filters"><label className="text-secondary block max-w-md text-sm">Project<select aria-label="Sync journal project" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateProject(event.target.value)} value={projectId}><option value="">All projects</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>{error && entries.length ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{error} <button className="font-semibold underline" onClick={() => void load()} type="button">Retry</button></p> : null}</section>
+    <section className="surface operation-filter-bar rounded-xl border" aria-label="Sync journal filters"><div className="text-secondary block max-w-md text-sm">Workspace<span className="field-control mt-2 block rounded-lg border px-3 py-2">{activeProject?.name} · #{activeProject?.id}</span></div>{error && entries.length ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{error} <button className="font-semibold underline" onClick={() => void load()} type="button">Retry</button></p> : null}</section>
     {loading && !entries.length ? <StatePanel title="Loading sync journal" message="Reading current audit evidence…" /> : null}
     {!loading && error && !entries.length ? <StatePanel title="Sync journal unavailable" message={error} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /> : null}
     {!loading && !error && !entries.length ? <StatePanel title="No journal entries found" message="No audit entries match the selected Project." /> : null}

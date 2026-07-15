@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Badge, Button, Dialog, StatePanel } from "../../../../components/ui";
 import { JiraSyncPanel } from "../../../../features/jira/jira-sync-dialog";
 import { ApiClientError, apiFetch } from "../../../../lib/api-client";
+import { useProjectWorkspace } from "../../../../lib/project-workspace";
 
 type CanonicalValue = { value: string | null; source: string | null };
 type CatalogValue = string | { value?: string; label?: string; name?: string };
@@ -31,6 +32,16 @@ const labels: Record<string, string> = { summary: "Summary", description: "Descr
 function messageFor(error: unknown, fallback: string) { return error instanceof ApiClientError ? error.message : error instanceof Error ? error.message : fallback; }
 function optionValue(option: CatalogValue) { return typeof option === "string" ? option : option.value || option.name || ""; }
 function optionLabel(option: CatalogValue) { return typeof option === "string" ? option : option.label || option.name || option.value || ""; }
+function catalogWithCurrentValue(catalog: CatalogValue[], value: string) {
+  if (!value || catalog.some((option) => optionValue(option) === value)) {
+    return { options: catalog, missing: false };
+  }
+
+  return {
+    options: [{ value, label: `${value} (current; not in catalog)` }, ...catalog],
+    missing: true,
+  };
+}
 function stringify(value: unknown) { return value === null || value === undefined || value === "" ? "—" : typeof value === "string" ? value : JSON.stringify(value); }
 function translationText(item: Translation) { return item.is_source_stale ? "" : item.reviewed_text || item.ai_draft || ""; }
 function isTerminal(status: string) { return ["success", "failed", "cancelled", "timeout"].includes(status); }
@@ -38,6 +49,7 @@ function isTerminal(status: string) { return ["success", "failed", "cancelled", 
 export default function IssueEditorPage() {
   const params = useParams<{ issueId: string }>();
   const router = useRouter();
+  const { activeProject, setDirtySource } = useProjectWorkspace();
   const issueId = params.issueId;
   const [editor, setEditor] = useState<Editor | null>(null);
   const [history, setHistory] = useState<History | null>(null);
@@ -69,8 +81,14 @@ export default function IssueEditorPage() {
     if (!silent) setLoading(true);
     setError("");
     try {
-      const [nextEditor, nextHistory, nextAttachments] = await Promise.all([
-        apiFetch<Editor>(`/api/v1/issues/${encodeURIComponent(issueId)}/editor`),
+      const nextEditor = await apiFetch<Editor>(`/api/v1/issues/${encodeURIComponent(issueId)}/editor`);
+      if (requestId !== loadRequest.current) return;
+      if (!activeProject || nextEditor.issue.project_id !== activeProject.id) {
+        setEditor(null); setHistory(null); setAttachments([]);
+        setError("Issue này không thuộc Project workspace đang active. Chọn đúng Project tại Projects để tiếp tục.");
+        return;
+      }
+      const [nextHistory, nextAttachments] = await Promise.all([
         apiFetch<History>(`/api/v1/issues/${encodeURIComponent(issueId)}/history`),
         apiFetch<Attachment[]>(`/api/v1/issues/${encodeURIComponent(issueId)}/attachments`),
       ]);
@@ -82,10 +100,14 @@ export default function IssueEditorPage() {
       setDirty(false); setActionError("");
     } catch (loadError) { if (requestId === loadRequest.current) { const message = messageFor(loadError, "Issue editor could not be loaded."); if (silent) setActionError(message); else setError(message); } }
     finally { if (requestId === loadRequest.current && !silent) setLoading(false); }
-  }, [issueId]);
+  }, [activeProject, issueId]);
 
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
   useEffect(() => { jiraDirtyRef.current = jiraDraftDirty; }, [jiraDraftDirty]);
+  useEffect(() => {
+    setDirtySource("Issue Editor", dirty || jiraDraftDirty);
+    return () => setDirtySource("Issue Editor", false);
+  }, [dirty, jiraDraftDirty, setDirtySource]);
   useEffect(() => { const timer = window.setTimeout(() => void load(), 0); const refresh = () => { if (!dirtyRef.current && !jiraDirtyRef.current) void load(); }; window.addEventListener("cis-global-refresh", refresh); return () => { window.clearTimeout(timer); window.removeEventListener("cis-global-refresh", refresh); }; }, [load]);
   useEffect(() => { const handler = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } }; window.addEventListener("beforeunload", handler); return () => window.removeEventListener("beforeunload", handler); }, [dirty]);
 
@@ -158,14 +180,14 @@ export default function IssueEditorPage() {
   }
 
   if (loading) return <section className="mx-auto max-w-7xl"><StatePanel title="Loading Issue Editor" message="Reading canonical, source and recovery evidence…" /></section>;
-  if (error || !editor) return <section className="mx-auto max-w-7xl"><StatePanel title="Issue Editor unavailable" message={error || "Issue was not found."} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /></section>;
+  if (error || !editor) return <section className="mx-auto max-w-7xl"><StatePanel title="Issue Editor unavailable" message={error || "Issue was not found."} action={<div className="flex gap-2"><Button onClick={() => void load()} variant="secondary">Retry</Button><Link className="ui-button ui-button--primary" href="/projects">Open Projects</Link></div>} /></section>;
   const worklog = editor.collections?.worklog_summary;
   return <section className="mx-auto max-w-7xl space-y-6">
     <div className="flex flex-wrap items-end justify-between gap-4"><div><button className="eyebrow text-xs font-semibold uppercase tracking-[0.16em]" onClick={backToList} type="button">← CIS Issues</button><h1 className="text-primary mt-3 text-3xl font-semibold tracking-tight">{editor.issue.backlog_issue_key || editor.issue.id}</h1><p className="text-secondary mt-2 text-sm">Canonical Issue Editor · Project {editor.issue.project_id}</p></div><div className="flex items-center gap-2">{dirty || jiraDraftDirty ? <Badge tone="warn">Unsaved</Badge> : <Badge>{editor.issue.sync_status || "unknown"}</Badge>}<Button disabled={dirty || jiraDraftDirty} onClick={() => void load()} variant="secondary">Reload</Button></div></div>
     {actionError ? <p className="error-panel rounded-lg border p-3 text-sm" role="alert">{actionError}</p> : null}
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.75fr)]">
       <div className="space-y-6">
-        <section className="surface rounded-xl border p-5" aria-labelledby="canonical-heading"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="eyebrow font-mono text-xs font-semibold uppercase tracking-[0.16em]">Canonical CIS data</p><h2 className="text-primary mt-2 text-lg font-semibold" id="canonical-heading">Editable fields</h2><p className="text-secondary mt-1 text-sm">Select options come from the current editor catalog.</p></div><Button disabled={!dirty || saving} onClick={() => void save()} variant="primary">{saving ? "Saving…" : "Save canonical"}</Button></div><div className="mt-5 grid gap-4 sm:grid-cols-2">{editableFields.map((field) => { const type = editor.field_meta.field_types[field]; const value = draft[field] || ""; const catalog = editor.field_meta.catalogs[field] || []; return <label className={`${field === "description" ? "sm:col-span-2" : ""} text-secondary text-sm`} key={field}>{labels[field]}{type === "text" ? <textarea aria-label={labels[field]} className="field-control mt-2 min-h-32 w-full rounded-lg border px-3 py-2" onChange={(event) => setField(field, event.target.value)} value={value} /> : type === "single_select" || type === "user" ? <select aria-label={labels[field]} className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => setField(field, event.target.value)} value={value}><option value="">Select {labels[field].toLowerCase()}</option>{catalog.map((option) => <option key={optionValue(option)} value={optionValue(option)}>{optionLabel(option)}</option>)}</select> : <input aria-label={labels[field]} className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => setField(field, event.target.value)} type={type === "date" ? "date" : "text"} value={value} />}</label>; })}<label className="text-secondary text-sm sm:col-span-2">Jira account ID<input aria-label="Jira account ID" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => { setJiraAccountId(event.target.value); setDirty(true); }} value={jiraAccountId} /></label><label className="text-secondary text-sm sm:col-span-2">Reason (audit note)<textarea aria-label="Reason" className="field-control mt-2 min-h-20 w-full rounded-lg border px-3 py-2" onChange={(event) => { setReason(event.target.value); setDirty(true); }} value={reason} /></label></div>{saveError ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{saveError}</p> : null}</section>
+        <section className="surface rounded-xl border p-5" aria-labelledby="canonical-heading"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="eyebrow font-mono text-xs font-semibold uppercase tracking-[0.16em]">Canonical CIS data</p><h2 className="text-primary mt-2 text-lg font-semibold" id="canonical-heading">Editable fields</h2><p className="text-secondary mt-1 text-sm">Select options come from the current editor catalog.</p></div><Button disabled={!dirty || saving} onClick={() => void save()} variant="primary">{saving ? "Saving…" : "Save canonical"}</Button></div><div className="mt-5 grid gap-4 sm:grid-cols-2">{editableFields.map((field) => { const type = editor.field_meta.field_types[field]; const value = draft[field] || ""; const catalog = editor.field_meta.catalogs[field] || []; const catalogState = type === "single_select" || type === "user" ? catalogWithCurrentValue(catalog, value) : { options: catalog, missing: false }; return <label className={`${field === "description" ? "sm:col-span-2" : ""} text-secondary text-sm`} key={field}>{labels[field]}{type === "text" ? <textarea aria-label={labels[field]} className="field-control mt-2 min-h-32 w-full rounded-lg border px-3 py-2" onChange={(event) => setField(field, event.target.value)} value={value} /> : type === "single_select" || type === "user" ? <><select aria-label={labels[field]} className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => setField(field, event.target.value)} value={value}><option value="">Select {labels[field].toLowerCase()}</option>{catalogState.options.map((option) => <option key={optionValue(option)} value={optionValue(option)}>{optionLabel(option)}</option>)}</select>{catalogState.missing ? <span className="warning-panel mt-2 block rounded border p-2 text-xs" role="status">Current value is not in the active catalog. Refresh Mappings before changing it.</span> : null}</> : <input aria-label={labels[field]} className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => setField(field, event.target.value)} type={type === "date" ? "date" : "text"} value={value} />}</label>; })}<label className="text-secondary text-sm sm:col-span-2">Jira account ID<input aria-label="Jira account ID" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => { setJiraAccountId(event.target.value); setDirty(true); }} value={jiraAccountId} /></label><label className="text-secondary text-sm sm:col-span-2">Reason (audit note)<textarea aria-label="Reason" className="field-control mt-2 min-h-20 w-full rounded-lg border px-3 py-2" onChange={(event) => { setReason(event.target.value); setDirty(true); }} value={reason} /></label></div>{saveError ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{saveError}</p> : null}</section>
         <section className="surface rounded-xl border p-5" aria-labelledby="source-heading"><h2 className="text-primary text-lg font-semibold" id="source-heading">Source comparison</h2><p className="text-secondary mt-1 text-sm">Read-only source evidence; canonical values are the editable surface.</p><div className="mt-4 overflow-x-auto"><table className="data-table source-comparison-table w-full min-w-[960px] text-left text-sm"><thead className="text-subtle border-b text-xs uppercase tracking-wide"><tr><th>Field</th><th>Backlog</th><th>CIS</th><th>Jira</th></tr></thead><tbody>{sourceRows.map(([field, values]) => <tr key={field}><td className="text-primary align-top font-semibold">{labels[field] || field}</td><td className="source-comparison-cell text-secondary"><div className="source-comparison-value">{stringify(values.backlog)}</div></td><td className="source-comparison-cell text-secondary"><div className="source-comparison-value">{stringify(values.cis)}</div></td><td className="source-comparison-cell text-secondary"><div className="source-comparison-value">{stringify(values.jira)}</div></td></tr>)}</tbody></table></div></section>
         <section className="surface rounded-xl border p-5" aria-labelledby="translation-heading"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-primary text-lg font-semibold" id="translation-heading">Translations</h2><p className="text-secondary mt-1 text-sm">AI output is a draft; human review remains authoritative.</p></div><Button disabled={dirty || Boolean(translationState)} onClick={() => void translateIssue()} variant="primary">{translationState === "issue" ? "Translating…" : "Translate issue"}</Button></div>{translationFeedback ? <p className="warning-panel mt-4 rounded border p-2 text-xs" role="status">{translationFeedback}</p> : null}{translationItems.some((item) => item.ai_draft && item.ai_draft === item.source_text) ? <p className="warning-panel mt-4 rounded border p-2 text-xs">Draft matches source text. Check the provider or edit the translation manually before approval.</p> : null}<div className="mt-4 space-y-4">{translationItems.length ? translationItems.map((item) => { const text = translationEdit[String(item.id)] ?? translationText(item); const stale = Boolean(item.is_source_stale); return <article className="surface-muted rounded-lg border p-4" key={String(item.id)}><div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-primary font-semibold">{labels[item.target_field || ""] || item.target_field || `Translation #${item.id}`}</h3><p className="translation-source-text text-subtle mt-1 text-xs">Source: {stringify(item.source_text)}</p></div><Badge tone={stale ? "warn" : item.review_status === "approved" ? "good" : "neutral"}>{stale ? "source stale" : item.review_status || "pending"}</Badge></div>{item.provider_error ? <p className="error-panel mt-3 rounded border p-2 text-xs">{item.provider_error}</p> : null}{stale ? <p className="warning-panel mt-3 rounded border p-2 text-xs">Source changed. Retranslate before editing or approval.</p> : null}<textarea aria-label={`Translation ${item.id}`} className="field-control mt-3 min-h-24 w-full rounded-lg border px-3 py-2" disabled={dirty || stale} onChange={(event) => setTranslationEdit((current) => ({ ...current, [String(item.id)]: event.target.value }))} value={text} /><div className="mt-3 flex flex-wrap gap-2"><Button disabled={dirty || Boolean(translationState)} onClick={() => void translateItem(item)} variant="secondary">{translationState === `item:${item.id}` ? "Translating…" : "Retranslate"}</Button><Button disabled={dirty || stale || !text.trim() || Boolean(translationState)} onClick={() => void reviewItem(item, "manual-edit")} variant="primary">{translationState === `review:${item.id}` ? "Saving…" : "Approve + save"}</Button><Button disabled={dirty || stale || Boolean(translationState)} onClick={() => void reviewItem(item, "reject")} variant="secondary">Reject</Button></div></article>; }) : <p className="text-secondary text-sm">No translation queue items yet. Use Translate issue to create a draft.</p>}</div></section>
       </div>

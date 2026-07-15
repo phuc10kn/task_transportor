@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge, Button, Dialog, StatePanel } from "../../components/ui";
 import { apiFetch, ApiClientError } from "../../lib/api-client";
+import { useProjectWorkspace } from "../../lib/project-workspace";
 
-type Project = { id: number; name: string };
 type Anomaly = {
   id: number;
   project_id: number;
@@ -103,10 +103,10 @@ function DetailDialog({ anomaly, error, pending, projectName, onAction, onClose 
 export function AnomaliesWorkbench() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const projectId = searchParams.get("project_id") || "";
+  const { activeProject } = useProjectWorkspace();
+  const projectId = String(activeProject?.id || "");
   const status = searchParams.get("status") || "";
   const anomalyType = searchParams.get("anomaly_type") || "";
-  const [projects, setProjects] = useState<Project[]>([]);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [detail, setDetail] = useState<Anomaly | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -127,12 +127,9 @@ export function AnomaliesWorkbench() {
     if (status) query.set("status", status);
     if (anomalyType) query.set("anomaly_type", anomalyType);
     try {
-      const [nextProjects, nextAnomalies] = await Promise.all([
-        apiFetch<Project[]>("/api/v1/projects"),
-        apiFetch<Anomaly[]>(`/api/v1/anomalies${query.size ? `?${query}` : ""}`),
-      ]);
+      const nextAnomalies = await apiFetch<Anomaly[]>(`/api/v1/anomalies${query.size ? `?${query}` : ""}`);
       if (requestId !== listRequest.current) return;
-      setProjects(nextProjects || []); setAnomalies(nextAnomalies || []);
+      setAnomalies(nextAnomalies || []);
     } catch (requestError) {
       if (requestId === listRequest.current) setError(messageFor(requestError, "Anomalies could not be loaded."));
     } finally { if (requestId === listRequest.current) setLoading(false); }
@@ -143,11 +140,12 @@ export function AnomaliesWorkbench() {
     setDetailLoading(true); setDetailError("");
     try {
       const nextDetail = await apiFetch<Anomaly>(`/api/v1/anomalies/${id}`);
-      if (requestId === detailRequest.current) setDetail(nextDetail);
+      if (requestId === detailRequest.current && activeProject && nextDetail.project_id === activeProject.id) setDetail(nextDetail);
+      else if (requestId === detailRequest.current) setDetailError("Anomaly này không thuộc Project workspace đang active.");
     } catch (requestError) {
       if (requestId === detailRequest.current) setDetailError(messageFor(requestError, "Anomaly details could not be loaded."));
     } finally { if (requestId === detailRequest.current) setDetailLoading(false); }
-  }, []);
+  }, [activeProject]);
 
   useEffect(() => { const timer = window.setTimeout(() => void loadList(), 0); return () => window.clearTimeout(timer); }, [loadList]);
   useEffect(() => {
@@ -184,7 +182,7 @@ export function AnomaliesWorkbench() {
     finally { setPending(""); }
   }
 
-  const projectNames = new Map(projects.map((project) => [project.id, project.name]));
+  const projectNames = new Map(activeProject ? [[activeProject.id, activeProject.name]] : []);
   const openCount = anomalies.filter((item) => item.status === "open" || item.status === "investigating").length;
   const criticalCount = anomalies.filter((item) => item.severity === "critical").length;
 
@@ -195,7 +193,7 @@ export function AnomaliesWorkbench() {
     </div>
     <section className="surface anomaly-filter-bar rounded-xl border" aria-label="Anomaly filters">
       <div className="grid gap-4 md:grid-cols-3">
-        <label className="text-secondary text-sm">Project<select aria-label="Anomaly project" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateFilter("project_id", event.target.value)} value={projectId}><option value="">All projects</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
+        <div className="text-secondary text-sm">Workspace<span className="field-control mt-2 block rounded-lg border px-3 py-2">{activeProject?.name} · #{activeProject?.id}</span></div>
         <label className="text-secondary text-sm">Status<select aria-label="Anomaly status" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateFilter("status", event.target.value)} value={status}><option value="">All statuses</option>{anomalyStatuses.map((value) => <option key={value} value={value}>{labelFor(value)}</option>)}</select></label>
         <label className="text-secondary text-sm">Type<select aria-label="Anomaly type" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateFilter("anomaly_type", event.target.value)} value={anomalyType}><option value="">All types</option>{anomalyTypes.map((value) => <option key={value} value={value}>{labelFor(value)}</option>)}</select></label>
       </div>

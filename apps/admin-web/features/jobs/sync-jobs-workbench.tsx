@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge, Button, StatePanel } from "../../components/ui";
 import { apiFetch, ApiClientError } from "../../lib/api-client";
+import { useProjectWorkspace } from "../../lib/project-workspace";
 
-type Project = { id: number; name: string };
 type SyncJob = {
   id: string;
   project_id: number;
@@ -41,10 +41,9 @@ function Direction({ from, to }: { from: string; to: string }) {
 }
 
 export function SyncJobsWorkbench() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const projectId = searchParams.get("project_id") || "";
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { activeProject } = useProjectWorkspace();
+  const projectId = String(activeProject?.id || "");
   const [jobs, setJobs] = useState<SyncJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -58,12 +57,9 @@ export function SyncJobsWorkbench() {
     setLoading(true); setError("");
     const query = projectId ? `?project_id=${encodeURIComponent(projectId)}` : "";
     try {
-      const [nextProjects, nextJobs] = await Promise.all([
-        apiFetch<Project[]>("/api/v1/projects"),
-        apiFetch<SyncJob[]>(`/api/v1/sync-jobs${query}`),
-      ]);
+      const nextJobs = await apiFetch<SyncJob[]>(`/api/v1/sync-jobs${query}`);
       if (current !== requestId.current) return;
-      setProjects(nextProjects || []); setJobs(nextJobs || []);
+      setJobs(nextJobs || []);
     } catch (requestError) {
       if (current === requestId.current) setError(messageFor(requestError, "Sync jobs could not be loaded."));
     } finally { if (current === requestId.current) setLoading(false); }
@@ -71,13 +67,6 @@ export function SyncJobsWorkbench() {
 
   useEffect(() => { const timer = window.setTimeout(() => void load(), 0); return () => window.clearTimeout(timer); }, [load]);
   useEffect(() => { const refresh = () => void load(); window.addEventListener("cis-global-refresh", refresh); return () => window.removeEventListener("cis-global-refresh", refresh); }, [load]);
-
-  function updateProject(value: string) {
-    const next = new URLSearchParams(window.location.search);
-    if (value) next.set("project_id", value); else next.delete("project_id");
-    setActionError(""); setNotice("");
-    router.replace(`/sync-jobs${next.size ? `?${next}` : ""}`);
-  }
 
   async function runAction(job: SyncJob, action: "retry" | "cancel") {
     if (pendingId) return;
@@ -95,7 +84,7 @@ export function SyncJobsWorkbench() {
 
   return <section className="operations-page mx-auto max-w-7xl space-y-6">
     <div className="page-heading flex flex-wrap items-end justify-between gap-5"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.2em]">Operations ledger</p><h1 className="text-primary mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Sync job queue</h1><p className="text-secondary mt-3 max-w-2xl text-sm leading-6">Inspect execution state, then retry or cancel only when the current server rule allows it.</p></div><div className="operation-summary" aria-label="Sync job summary"><div><span>Visible</span><strong>{jobs.length}</strong></div><div><span>Active</span><strong>{activeCount}</strong></div><div data-danger={failedCount > 0}><span>Failed</span><strong>{failedCount}</strong></div></div></div>
-    <section className="surface operation-filter-bar rounded-xl border" aria-label="Sync job filters"><label className="text-secondary block max-w-md text-sm">Project<select aria-label="Sync jobs project" className="field-control mt-2 w-full rounded-lg border px-3 py-2" onChange={(event) => updateProject(event.target.value)} value={projectId}><option value="">All projects</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>{error && jobs.length ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{error} <button className="font-semibold underline" onClick={() => void load()} type="button">Retry</button></p> : null}</section>
+    <section className="surface operation-filter-bar rounded-xl border" aria-label="Sync job filters"><div className="text-secondary block max-w-md text-sm">Workspace<span className="field-control mt-2 block rounded-lg border px-3 py-2">{activeProject?.name} · #{activeProject?.id}</span></div>{error && jobs.length ? <p className="error-panel mt-4 rounded-lg border p-3 text-sm" role="alert">{error} <button className="font-semibold underline" onClick={() => void load()} type="button">Retry</button></p> : null}</section>
     {notice ? <p className="success-panel rounded-lg border p-3 text-sm" role="status">{notice}</p> : null}
     {actionError ? <p className="error-panel rounded-lg border p-3 text-sm" role="alert">{actionError}</p> : null}
     {loading && !jobs.length ? <StatePanel title="Loading sync jobs" message="Reading current execution evidence…" /> : null}

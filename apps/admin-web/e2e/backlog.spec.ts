@@ -35,6 +35,7 @@ test("backlog browse loads saved filters and only searches after Find issues", a
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("link", { name: "Choose or create Project" }).click(); await page.getByRole("button", { name: "Open workspace" }).first().click();
   await expect(page).toHaveURL(/\/backlog-issues\?project_id=1$/);
   await expect(page.getByRole("heading", { name: "Backlog Issues", exact: true })).toBeVisible();
   await expect(page.getByText("Browse ready")).toBeVisible();
@@ -74,6 +75,7 @@ test("backlog filter errors lead to mappings without pulling automatically", asy
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("link", { name: "Choose or create Project" }).click(); await page.getByRole("button", { name: "Open workspace" }).first().click();
   await expect(page.getByText("Status and Assignee filters are unavailable: Saved Backlog fields are unavailable.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Mappings to pull Backlog fields" })).toHaveAttribute("href", "/mappings?project_id=1");
   await expect(page.getByRole("button", { name: "Find issues" })).toBeEnabled();
@@ -94,7 +96,7 @@ test("empty optional filters are omitted and empty candidates are explicit", asy
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [], filters: { created_from: "2026-07-15", created_to: "2026-07-15", limit: 20, status_ids: [], assignee_ids: [], not_closed: false }, meta: { requested_limit: 20, returned_count: 0, source_rows_scanned: 0, excluded_existing_cis_count: 0, pages_scanned: 0, source_exhausted: true, scan_limit_reached: false, deadline_reached: false, stop_reason: "source_exhausted", provider_error_code: null } } }) });
   });
   await page.goto("/login?next=%2Fbacklog-issues%3Fproject_id%3D1");
-  await page.getByLabel("Email").fill(email); await page.getByLabel("Password").fill(password); await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByLabel("Email").fill(email); await page.getByLabel("Password").fill(password); await page.getByRole("button", { name: "Sign in" }).click(); await page.getByRole("link", { name: "Choose or create Project" }).click(); await page.getByRole("button", { name: "Open workspace" }).first().click();
   await page.getByRole("button", { name: "Find issues" }).click();
   await expect(page).toHaveURL(/project_id=1.*created_from=.*created_to=.*limit=20$/);
   await expect(page.getByText("No new candidates found")).toBeVisible();
@@ -116,7 +118,7 @@ test("candidate search exposes loading, error and retry states", async ({ page }
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [], filters: { created_from: "2026-07-15", created_to: "2026-07-15", limit: 20, status_ids: [], assignee_ids: [], not_closed: false }, meta: { requested_limit: 20, returned_count: 0, source_rows_scanned: 0, excluded_existing_cis_count: 0, pages_scanned: 0, source_exhausted: true, scan_limit_reached: false, deadline_reached: false, provider_error_code: null } } }) });
   });
   await page.goto("/login?next=%2Fbacklog-issues%3Fproject_id%3D1");
-  await page.getByLabel("Email").fill(email); await page.getByLabel("Password").fill(password); await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByLabel("Email").fill(email); await page.getByLabel("Password").fill(password); await page.getByRole("button", { name: "Sign in" }).click(); await page.getByRole("link", { name: "Choose or create Project" }).click(); await page.getByRole("button", { name: "Open workspace" }).first().click();
   await page.getByRole("button", { name: "Find issues" }).click();
   await expect(page.getByRole("button", { name: "Finding…" })).toBeVisible();
   await expect(page.getByText("Backlog provider unavailable.")).toBeVisible();

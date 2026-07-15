@@ -22,7 +22,7 @@ test("project config lists and persists active fields", async ({ page }) => {
   });
   await page.goto("/login?next=%2Fprojects%3Fproject_id%3D1");
   await page.getByLabel("Email").fill("admin@example.com"); await page.getByLabel("Password").fill("12345678"); await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/projects\?project_id=1$/); await expect(page.getByRole("heading", { name: "Project Config", exact: true })).toBeVisible(); await expect(page.locator('input').first()).toHaveValue("Demo"); await expect(page.getByRole("button", { name: "Open Demo" })).toContainText("BLG"); await expect(page.getByRole("button", { name: "Open Demo" })).toContainText("JIRA");
+  await expect(page).toHaveURL(/\/projects\?project_id=1$/); await expect(page.getByRole("heading", { name: "Project Config", exact: true })).toBeVisible(); await expect(page.locator('input').first()).toHaveValue("Demo"); await expect(page.getByRole("button", { name: "Open workspace" }).first()).toBeVisible(); await expect(page.getByText("BLG · JIRA · Enabled", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "General configuration" })).toBeVisible();
   const backlogSystem = page.locator('details[aria-label="Backlog connection"]');
   const jiraSystem = page.locator('details[aria-label="Jira connection"]');

@@ -77,6 +77,33 @@ test("CIS Issues editor keeps canonical, identity, recovery and translation evid
   expect(resyncCalls).toBe(1);
 });
 
+test("CIS editor preserves a synced canonical value missing from the active catalog", async ({ page }) => {
+  await mockAuth(page);
+  await page.route("**/api/v1/issues?project_id=1", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [{ id: "issue-mismatch", project_id: 1, backlog_issue_key: "BLG-MISMATCH", sync_status: "synced", current_summary: "Backlog issue" }] }) }));
+  await page.route("**/api/v1/issues/issue-mismatch/editor", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: {
+    issue: { id: "issue-mismatch", project_id: 1, backlog_issue_key: "BLG-MISMATCH", jira_issue_key: null, sync_status: "synced", updated_at: "2026-07-15T00:00:00Z" },
+    canonical: {
+      summary: { value: "Backlog issue", source: "backlog" }, description: { value: "Body", source: "backlog" },
+      issue_type: { value: "調査", source: "backlog" }, priority: { value: "Normal", source: "backlog" },
+      status: { value: "調査中", source: "backlog" }, assignee: { value: "tuangiang.vu10kn", source: "backlog" }, due_date: { value: null, source: null },
+    },
+    sources: {}, assignee_meta: { cis: { jira_account_id: null } },
+    field_meta: { catalogs: { issue_type: ["Task"], priority: ["Medium"], status: ["Resolved"], assignee: ["jira-account"] }, field_types: { summary: "string", description: "text", issue_type: "single_select", priority: "single_select", status: "single_select", assignee: "user", due_date: "date" } },
+    translations: [], collections: { worklog_summary: { count: 0, total_spent_seconds: 0, sources: [] } }, sync: { canonical_hash: "mismatch-hash" },
+  } }) }));
+  await page.route("**/api/v1/issues/issue-mismatch/history", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { manual_edits: [] } }) }));
+  await page.route("**/api/v1/issues/issue-mismatch/attachments", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [] }) }));
+
+  await login(page, "/cis-issues?project_id=1");
+  await page.getByRole("link", { name: "Open editor" }).click();
+  await expect(page.getByLabel("Issue type")).toHaveValue("調査");
+  await expect(page.getByLabel("Issue type").locator("option").nth(1)).toHaveText("調査 (current; not in catalog)");
+  await expect(page.getByText("Current value is not in the active catalog.").first()).toBeVisible();
+  await expect(page.getByLabel("Priority")).toHaveValue("Normal");
+  await expect(page.getByLabel("Status")).toHaveValue("調査中");
+  await expect(page.getByLabel("Assignee")).toHaveValue("tuangiang.vu10kn");
+});
+
 test("CIS issue list supports create and retry without losing route context", async ({ page }) => {
   await mockAuth(page);
   let issueCalls = 0;

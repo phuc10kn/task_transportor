@@ -1,9 +1,11 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch, ApiClientError } from "../../../lib/api-client";
 import { Badge, Button, StatePanel } from "../../../components/ui";
+import { useProjectWorkspace, type WorkspaceProject } from "../../../lib/project-workspace";
+import { safeIntendedPath } from "../../../lib/routes";
 
 type Project = Record<string, unknown> & { id: number; name: string };
 type TextFieldDefinition = readonly [field: string, label: string];
@@ -81,10 +83,18 @@ function SystemAccordion({ children, description, label, title }: { children: Re
   </details>;
 }
 
-function ProjectForm({ project, onSaved }: { project: Project | null; onSaved: (project: Project) => void }) {
+function ProjectForm({ project, onSaved }: { project: Project | null; onSaved: (project: Project, openAfterSave?: boolean) => void }) {
   const [form, setForm] = useState<Record<string, unknown>>({ ...defaults, ...(project || {}) });
+  const initialForm = useRef(JSON.stringify({ ...defaults, ...(project || {}) }));
+  const { setDirtySource } = useProjectWorkspace();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [openAfterSave, setOpenAfterSave] = useState(false);
+
+  useEffect(() => {
+    setDirtySource("Project Config", JSON.stringify(form) !== initialForm.current);
+    return () => setDirtySource("Project Config", false);
+  }, [form, setDirtySource]);
 
   function set(field: string, value: unknown) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -105,7 +115,7 @@ function ProjectForm({ project, onSaved }: { project: Project | null; onSaved: (
       const data = project
         ? await apiFetch<Project>(`/api/v1/projects/${project.id}`, { method: "PATCH", body: form })
         : await apiFetch<Project>("/api/v1/projects", { method: "POST", body: form });
-      onSaved(data);
+      onSaved(data, openAfterSave);
     } catch (requestError) {
       setError(requestError instanceof ApiClientError ? requestError.message : "Project could not be saved.");
       const field = requestError instanceof ApiClientError && requestError.details && typeof requestError.details === "object" && "field" in requestError.details
@@ -120,7 +130,7 @@ function ProjectForm({ project, onSaved }: { project: Project | null; onSaved: (
   return <form className="space-y-6" onSubmit={submit}>
     <div className="flex items-start justify-between gap-4">
       <div><p className="eyebrow font-mono text-xs uppercase tracking-[0.2em]">{project ? `Project #${project.id}` : "New project"}</p><h2 className="text-primary mt-2 text-2xl font-semibold">{project ? "Project configuration" : "Create project"}</h2></div>
-      <Button disabled={saving} variant="primary">{saving ? "Saving…" : "Save project"}</Button>
+      <div className="flex flex-wrap justify-end gap-2"><Button disabled={saving} onClick={() => setOpenAfterSave(false)} type="submit" variant="secondary">{saving ? "Saving…" : "Save project"}</Button>{!project ? <Button disabled={saving} onClick={() => setOpenAfterSave(true)} type="submit" variant="primary">{saving ? "Creating…" : "Create and open workspace"}</Button> : null}</div>
     </div>
     {error ? <p className="error-panel rounded-lg border p-3 text-sm" role="alert">{error}</p> : null}
 
@@ -141,6 +151,7 @@ function ProjectForm({ project, onSaved }: { project: Project | null; onSaved: (
 export default function ProjectsPage() {
   const router = useRouter();
   const search = useSearchParams();
+  const { activeProject, openWorkspace, refreshWorkspace } = useProjectWorkspace();
   const selectedId = Number(search.get("project_id")) || 0;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,11 +180,21 @@ export default function ProjectsPage() {
     };
   }, [load]);
 
-  function saved(project: Project) {
+  function saved(project: Project, openAfterSave = false) {
     setCreating(false);
     setProjects((current) => current.some((item) => item.id === project.id) ? current.map((item) => item.id === project.id ? project : item) : [...current, project]);
     router.replace(`/projects?project_id=${project.id}`);
+    void refreshWorkspace();
+    if (openAfterSave && project.enabled !== false) {
+      openWorkspace(project as WorkspaceProject);
+      router.push(safeIntendedPath(search.get("next")));
+    }
   }
 
-  return <section className="mx-auto max-w-7xl space-y-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.2em]">Projects</p><h1 className="text-primary mt-3 text-3xl font-semibold">Project Config</h1><p className="text-secondary mt-2 text-sm">Manage active project connection, translation and sync policy.</p></div><Button onClick={() => setCreating(true)} variant="primary">New project</Button></div>{loading ? <StatePanel title="Loading projects" message="Reading server truth…" /> : error ? <StatePanel title="Projects unavailable" message={error} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /> : <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.5fr)]"><section className="surface rounded-xl border p-4"><div className="mb-3 flex items-center justify-between"><h2 className="text-primary font-semibold">Project list</h2><Badge>{projects.length}</Badge></div>{projects.length === 0 ? <p className="text-secondary py-8 text-sm">No projects configured.</p> : <div><div className="text-subtle hidden grid-cols-[minmax(0,1fr)_5rem_5rem_4rem] gap-3 px-3 pb-2 text-[0.68rem] uppercase tracking-wide sm:grid"><span>Name</span><span>Backlog</span><span>Jira</span><span>Sync</span></div><div className="space-y-2">{projects.map((project) => <button aria-label={`Open ${project.name}`} className={`project-list-item text-primary grid w-full grid-cols-[minmax(0,1fr)_5rem_5rem_4rem] items-center gap-3 rounded-lg border px-3 py-3 text-left ${project.id === selectedId ? "project-list-item--selected selected-surface" : ""}`} key={project.id} onClick={() => router.push(`/projects?project_id=${project.id}`)} type="button"><span className="min-w-0 truncate font-medium">{project.name}</span><span className="text-secondary truncate text-xs">{asText(project.backlog_project_key) || "—"}</span><span className="text-secondary truncate text-xs">{asText(project.jira_project_key) || "—"}</span><span className="text-xs"><Badge>{project.sync_enabled ? "On" : "Off"}</Badge></span></button>)}</div></div>}</section><section className="surface rounded-xl border p-5">{creating ? <ProjectForm key="new" onSaved={saved} project={null} /> : selected ? <ProjectForm key={selected.id} onSaved={saved} project={selected} /> : <StatePanel title="Select a project" message="Choose a project to review or edit its configuration." />}</section></div>}</section>;
+  function open(project: Project) {
+    if (!openWorkspace(project as WorkspaceProject)) return;
+    router.push(safeIntendedPath(search.get("next")));
+  }
+
+  return <section className="mx-auto max-w-7xl space-y-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow font-mono text-xs uppercase tracking-[0.2em]">Projects</p><h1 className="text-primary mt-3 text-3xl font-semibold">Project Config</h1><p className="text-secondary mt-2 text-sm">Choose one enabled Project to open its workspace. Editing never changes workspace.</p></div><Button onClick={() => setCreating(true)} variant="primary">New project</Button></div>{activeProject ? <p className="workspace-notice rounded-lg border px-4 py-3 text-sm" role="status">Workspace hiện tại: <strong>{activeProject.name} · #{activeProject.id}</strong>. Đổi workspace chỉ bằng nút Open workspace bên dưới.</p> : null}{loading ? <StatePanel title="Loading projects" message="Reading server truth…" /> : error ? <StatePanel title="Projects unavailable" message={error} action={<Button onClick={() => void load()} variant="primary">Retry</Button>} /> : <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.5fr)]"><section className="surface rounded-xl border p-4"><div className="mb-3 flex items-center justify-between"><h2 className="text-primary font-semibold">Project list</h2><Badge>{projects.length}</Badge></div>{projects.length === 0 ? <p className="text-secondary py-8 text-sm">No projects configured. Create one, then open its workspace.</p> : <div className="space-y-2">{projects.map((project) => <div className={`project-list-item text-primary grid gap-3 rounded-lg border px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center ${project.id === selectedId ? "project-list-item--selected selected-surface" : ""}`} key={project.id}><button aria-label={`Edit ${project.name}`} className="min-w-0 text-left" onClick={() => router.push(`/projects?project_id=${project.id}`)} type="button"><span className="block truncate font-medium">{project.name}</span><span className="text-secondary mt-1 block text-xs">{asText(project.backlog_project_key) || "No Backlog"} · {asText(project.jira_project_key) || "No Jira"} · {project.enabled === false ? "Disabled" : "Enabled"}</span></button><Button disabled={project.enabled === false} onClick={() => open(project)} title={project.enabled === false ? "Bật Project trong cấu hình trước khi mở workspace" : undefined} variant="secondary">{project.enabled === false ? "Workspace disabled" : "Open workspace"}</Button></div>)}</div>}</section><section className="surface rounded-xl border p-5">{creating ? <ProjectForm key="new" onSaved={saved} project={null} /> : selected ? <ProjectForm key={selected.id} onSaved={saved} project={selected} /> : <StatePanel title="Select a project" message="Choose a project to review or edit its configuration." />}</section></div>}</section>;
 }

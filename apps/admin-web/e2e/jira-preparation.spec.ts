@@ -45,6 +45,7 @@ test("Jira preparation renders blocked dry-run evidence and uses Jira catalogs",
   await expect(dialog.getByLabel("Jira issue type").locator("option")).toHaveText(["Select issue type", "Bug", "Task"]);
   await expect(dialog.getByLabel("Jira priority").locator("option")).toHaveText(["Select priority", "Highest", "High"]);
   await expect(dialog.getByLabel("Jira status").locator("option")).toHaveText(["Select status", "To Do", "Done"]);
+  await expect(dialog.getByLabel("Jira assignee").locator("option")).toHaveText(["Select assignee", "jira-account"]);
   await expect(dialog.getByRole("button", { name: "Sync Jira" })).toBeDisabled();
   await dialog.getByText("Payload preview").click();
   await expect(dialog.getByText(/Dry-run summary/)).toBeVisible();
@@ -91,11 +92,11 @@ test("Jira preparation preserves overrides on stale sync then polls queued job t
   await dialog.getByLabel("Jira issue type").selectOption("Task");
   await dialog.getByLabel("Jira priority").selectOption("High");
   await dialog.getByLabel("Jira status").selectOption("Done");
-  await dialog.getByLabel("Jira assignee").fill("jira-user@example.test");
+  await dialog.getByLabel("Jira assignee").selectOption("jira-account");
   await dialog.getByLabel("Jira due date").fill("2026-08-15");
   await dialog.getByRole("button", { name: "Sync Jira" }).click();
   await expect(dialog.getByText("jira-job · success")).toBeVisible();
-  expect((syncBody as { jira_fields?: Record<string, string> } | null)?.jira_fields).toEqual({ summary: "Published override", description: "Published body", issue_type: "Task", priority: "High", status: "Done", assignee: "jira-user@example.test", due_date: "2026-08-15" });
+  expect((syncBody as { jira_fields?: Record<string, string> } | null)?.jira_fields).toEqual({ summary: "Published override", description: "Published body", issue_type: "Task", priority: "High", status: "Done", assignee: "jira-account", due_date: "2026-08-15" });
 });
 
 test("Jira preparation keeps modal context when initial dry-run fails and retries", async ({ page }) => {

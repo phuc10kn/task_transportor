@@ -23,5 +23,6 @@ export function isAllowedIntendedPath(value: string | null | undefined) {
 }
 
 export function safeIntendedPath(value: string | null | undefined) {
-  return isAllowedIntendedPath(value) ? value! : "/dashboard";
+  if (!isAllowedIntendedPath(value) || value === "/dashboard" || value?.startsWith("/dashboard?")) return "/backlog-issues";
+  return value!;
 }
