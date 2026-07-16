@@ -12,16 +12,16 @@ const TABLER = path.join(ROOT, "node_modules", "@tabler", "core", "dist");
 const routes = [
   { match: /^\/login\/?$/, page: "login", title: "Sign in", script: "auth.js" },
   { match: /^\/projects\/?$/, page: "projects", title: "Project Config", script: "projects.js" },
-  { match: /^\/dashboard\/?$/, page: "dashboard", title: "Dashboard", script: "operations.js" },
-  { match: /^\/mappings\/?$/, page: "mappings", title: "Mappings", script: "mappings.js" },
-  { match: /^\/backlog-issues\/?$/, page: "backlog", title: "Backlog Issues", script: "backlog.js" },
-  { match: /^\/cis-issues\/?$/, page: "issues", title: "CIS Issues", script: "issues.js" },
-  { match: /^\/cis-issues\/[^/]+\/?$/, page: "issue-editor", title: "Issue Editor", script: "issues.js" },
-  { match: /^\/translation-queue\/?$/, page: "translation-queue", title: "Translation Queue", script: "translation.js" },
-  { match: /^\/translation-glossary\/?$/, page: "translation-glossary", title: "Translation Glossary", script: "translation.js" },
-  { match: /^\/anomalies\/?$/, page: "anomalies", title: "Anomalies", script: "operations.js" },
-  { match: /^\/sync-jobs\/?$/, page: "sync-jobs", title: "Sync Jobs", script: "operations.js" },
-  { match: /^\/journal\/?$/, page: "journal", title: "Journal", script: "operations.js" },
+  { match: /^\/project\/[1-9]\d*\/dashboard\/?$/, page: "dashboard", title: "Dashboard", script: "operations.js" },
+  { match: /^\/project\/[1-9]\d*\/mappings\/?$/, page: "mappings", title: "Mappings", script: "mappings.js" },
+  { match: /^\/project\/[1-9]\d*\/backlog-issues\/?$/, page: "backlog", title: "Backlog Issues", script: "backlog.js" },
+  { match: /^\/project\/[1-9]\d*\/cis-issues\/?$/, page: "issues", title: "CIS Issues", script: "issues.js" },
+  { match: /^\/project\/[1-9]\d*\/cis-issues\/[^/]+\/?$/, page: "issue-editor", title: "Issue Editor", script: "issues.js" },
+  { match: /^\/project\/[1-9]\d*\/translation-queue\/?$/, page: "translation-queue", title: "Translation Queue", script: "translation.js" },
+  { match: /^\/project\/[1-9]\d*\/translation-glossary\/?$/, page: "translation-glossary", title: "Translation Glossary", script: "translation.js" },
+  { match: /^\/project\/[1-9]\d*\/anomalies\/?$/, page: "anomalies", title: "Anomalies", script: "operations.js" },
+  { match: /^\/project\/[1-9]\d*\/sync-jobs\/?$/, page: "sync-jobs", title: "Sync Jobs", script: "operations.js" },
+  { match: /^\/project\/[1-9]\d*\/journal\/?$/, page: "journal", title: "Journal", script: "operations.js" },
 ];
 
 const assets = new Map([

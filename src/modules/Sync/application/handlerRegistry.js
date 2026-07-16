@@ -37,6 +37,12 @@ async function manualPullHandler(job, context) {
   return BacklogApi.handleManualPullJob(job, context);
 }
 
+async function syncTranslateJiraHandler(job, context) {
+  const BacklogApi = require("../../Backlog/BacklogApi");
+
+  return BacklogApi.handleManualPullJob(job, context);
+}
+
 async function translateHandler(job, context) {
   const TranslationApi = require("../../Translation/TranslationApi");
 
@@ -58,6 +64,7 @@ async function pushCommentHandler(job, context) {
 function registerDefaultHandlers() {
   registerHandler("noop_test", noopTestHandler);
   registerHandler("manual_pull", manualPullHandler);
+  registerHandler("sync_translate_jira", syncTranslateJiraHandler);
   registerHandler("translate", translateHandler);
   registerHandler("push_issue", pushIssueHandler);
   registerHandler("push_comment", pushCommentHandler);

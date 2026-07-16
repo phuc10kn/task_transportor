@@ -77,7 +77,7 @@ Read/write đi qua owner API, orchestration hoặc worker path phù hợp; khôn
 ## Failure and retry notes
 
 - Với single pull nhỏ, flow có thể chạy ngay.
-- Với project pull hoặc scheduled pull, enqueue job qua `Sync` giúp retry và journal rõ hơn.
+- Project pull và scheduled pull hiện không chạy; nếu được bật lại phải enqueue qua `Sync` để giữ retry và journal.
 - Retry policy không nằm trong client fetch thuần, mà nằm ở flow orchestration hoặc worker path.
 
 ## Anti-patterns avoided

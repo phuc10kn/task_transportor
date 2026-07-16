@@ -16,13 +16,14 @@
 | --- | --- | --- |
 | Dùng mô hình `System -> CIS -> System` | accepted | Không sync point-to-point Backlog -> Jira trực tiếp. |
 | Lite ưu tiên `Backlog -> CIS` và `CIS -> Jira` | accepted | Jira -> CIS đầy đủ để Medium/phase sau. |
-| Manual pull/project pull là inbound chính của Lite | accepted | Webhook không bắt buộc trong Lite. |
+| Pull one/candidate sync là inbound chính; project/scheduled pull bị disable | accepted | Không query/enqueue batch project pull; webhook vẫn không bắt buộc trong Lite. |
 | Backlog candidate browse là read-only | accepted | Filter/result không lưu DB; issue chỉ vào CIS sau action Sync to CIS riêng. |
 | External identity unique theo project và system column | accepted | Backlog chỉ so backlog key, Jira chỉ so Jira key; canonical key lấy từ provider API. |
-| Scheduled pull là optional | accepted | Chỉ bật sau khi manual/project pull ổn định. |
+| Scheduled pull bị disable | accepted | Chỉ xem xét bật lại cùng thiết kế project pull queue-only mới. |
 | Admin UI là bắt buộc | accepted | Operator phải review, approve, retry và xử lý anomaly bằng UI. |
 | [Admin UI dùng Tabler + JavaScript thuần + client-rendered MPA (`DEC-004`)](01-decision-making/01-decisions/DEC-004-tabler-vanilla-mpa-admin-ui/README.md) | accepted | Mỗi route trả document thật; Node chỉ phục vụ HTML/assets và proxy API. Next.js/React/Vue/SPA router không còn trong implementation active. |
-| Project-first Admin UI không mở rộng backend | accepted | Mỗi login chọn/tạo Project và chỉ đổi tại Projects; Dashboard bị disabled/không fetch, `enabled=false` chặn workspace. Phase BE sau đóng `BE-PROJECT-SCOPE-01/02`. |
+| [Workspace API scope theo Project (`DEC-005`)](01-decision-making/01-decisions/DEC-005-project-scoped-workspace-api/README.md) | accepted | Mọi data-plane endpoint mang `projectId`; owner repository enforce isolation; Backend và Admin Web cutover cùng capability, không giữ route legacy. |
+| Project-first Admin UI dùng Project-scoped workspace | accepted | Mỗi login chọn/tạo Project và chỉ đổi tại Projects; Dashboard cùng mọi data-plane API enforce active Project, `enabled=false` chặn workspace. `BE-PROJECT-SCOPE-01/02` đã đóng bởi `DEC-005`. |
 | SQLite là database MVP/Lite | accepted | Phù hợp server nội bộ và workload nhỏ. |
 | Một service Express + worker nội bộ | accepted | Chưa tách worker process riêng trong Lite. |
 | Translation dùng một draft chung nhưng human approval giữ quyền quyết định | accepted | AI/operator cùng chỉnh `ai_draft`; Save Draft không đổi canonical, chỉ Approve mới apply. |

@@ -37,18 +37,24 @@ Luồng admin kéo một issue Backlog đơn lẻ vào hệ thống. Flow này l
 
 ## Trigger
 
-Admin gọi route Pull one hoặc Sync to CIS trên một Backlog candidate theo project và issue key.
+Admin gọi route Pull one hoặc một trong ba candidate action Sync to CIS/Translate/Jira theo project và issue key.
 
 ## Path
 
-`Admin -> Backlog HTTP -> BacklogApi -> SyncApi enqueue/reuse manual_pull hoặc pull now -> BacklogClient -> normalizer -> CisApi.upsertBacklogIssue(...)`
+Candidate path: `Admin -> Backlog HTTP -> local readiness/CIS check -> SyncApi enqueue/reuse manual_pull -> HTTP 202 -> worker -> BacklogClient provider/project verification -> normalizer -> CisApi.upsertBacklogIssue(...)`.
+
+Jira branch tiếp tục trong cùng parent lifecycle: `translation staging children -> atomic batch approval -> Jira dry-run/gate -> push_issue child -> parent success`.
+
+Pull-one compatibility path vẫn tạo `manual_pull` rồi chạy job ngay trong request hiện tại.
 
 ## Why the path is shaped this way
 
 - Request vào qua `Backlog` vì đây là source-specific boundary.
 - Normalization ở `Backlog` để payload external không đi thẳng vào core.
 - Write cuối cùng đi qua `CisApi` vì `Cis` là owner của canonical issue state.
-- Có thể dùng job path nếu muốn retry/journal tốt hơn thay vì nhồi mọi thứ vào request lifecycle.
+- Candidate action luôn chốt queue trước khi gọi provider; reload đọc active job theo Project + Backlog key và không làm đứt execution của worker.
+- Provider/project verification nằm trong worker để HTTP không giữ external request lifecycle và mọi failure được lưu trên job.
+- Translation batch là all-or-nothing đối với canonical apply: một child terminal failure hủy sibling còn pending, giữ staging evidence, không đổi canonical và không gọi Jira.
 
 ## Outcome
 

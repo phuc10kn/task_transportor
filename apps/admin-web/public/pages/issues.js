@@ -2,7 +2,7 @@
 
 (() => CIS.ready(({ project }) => {
   const root = document.querySelector("#page-content");
-  const issueMatch = location.pathname.match(/^\/cis-issues\/([^/]+)\/?$/);
+  const issueMatch = location.pathname.match(/^\/project\/[1-9]\d*\/cis-issues\/([^/]+)\/?$/);
   if (issueMatch) editorPage(decodeURIComponent(issueMatch[1]));
   else listPage();
 
@@ -10,14 +10,37 @@
     return `<div class="page-heading"><div><div class="route-kicker">Canonical workspace</div><h1>${title}</h1><p class="text-secondary mb-0">${copy}</p></div><div class="flow-rail"><span>${rail}</span><strong>· ${CIS.escape(project.name)} #${project.id}</strong></div></div>`;
   }
 
+  function pageHref(params, page) {
+    const next = new URLSearchParams(params);
+    if (page > 1) next.set("page", String(page)); else next.delete("page");
+    return CIS.projectPath(`/cis-issues${next.size ? `?${next}` : ""}`, project.id);
+  }
+
+  function pagination(meta, params) {
+    if (!meta || meta.total_pages <= 1) return "";
+    return `<div class="card-footer cis-list-footer"><div class="text-secondary small">Page ${meta.page} of ${meta.total_pages} · ${meta.total} issues</div><nav aria-label="CIS issue pages"><ul class="pagination pagination-sm mb-0"><li class="page-item ${meta.page <= 1 ? "disabled" : ""}"><a class="page-link" href="${CIS.attr(pageHref(params, meta.page - 1))}" aria-label="Previous page">Previous</a></li><li class="page-item ${meta.page >= meta.total_pages ? "disabled" : ""}"><a class="page-link" href="${CIS.attr(pageHref(params, meta.page + 1))}" aria-label="Next page">Next</a></li></ul></nav></div>`;
+  }
+
   async function listPage() {
     root.innerHTML = `<div class="container-xl">${heading("CIS Issues", "Create and review canonical issue state before any outbound delivery.")}<section class="card state-card" aria-busy="true"><div class="card-body"><span class="spinner-border spinner-border-sm me-2"></span>Loading issues…</div></section></div>`;
-    let issues;
-    try { issues = await CIS.api(`/api/v1/issues?project_id=${project.id}`); }
+    const params = new URLSearchParams(location.search);
+    const query = new URLSearchParams();
+    for (const field of ["q", "page"]) if (params.get(field)) query.set(field, params.get(field));
+    let result;
+    try { result = await CIS.projectApi(project.id, `/issues?${query}`); }
     catch (error) { root.innerHTML = CIS.state("CIS Issues unavailable", error.message, CIS.retryLink()); return; }
+    const issues = Array.isArray(result) ? result : result.items || [];
+    const meta = Array.isArray(result) ? { page: 1, page_size: 20, total: result.length, total_pages: 1 } : result.pagination;
+    const hasFilters = Boolean(params.get("q"));
     root.innerHTML = `<div class="container-xl">${heading("CIS Issues", "Create and review canonical issue state before any outbound delivery.")}
       <section class="card mb-3"><div class="card-header"><h2 class="card-title">Create manual CIS issue</h2></div><div class="card-body"><div id="create-error"></div><form id="create-issue"><div class="row g-3 align-items-end"><div class="col-md-5"><label class="form-label" for="issue-summary">Summary</label><input class="form-control" id="issue-summary" name="summary" required></div><div class="col-md-5"><label class="form-label" for="issue-description">Description</label><input class="form-control" id="issue-description" name="description"></div><div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Create issue</button></div></div></form></div></section>
-      <section class="card"><div class="card-header"><h2 class="card-title">Issue register</h2><span class="badge bg-secondary-lt ms-auto">${issues.length}</span></div>${issues.length ? `<div class="table-responsive"><table class="table table-vcenter responsive-table"><thead><tr><th>Backlog</th><th>Status</th><th>Summary</th><th>Pending review</th><th>Anomaly</th><th></th></tr></thead><tbody>${issues.map((issue) => `<tr><td data-label="Backlog"><code>${CIS.escape(issue.backlog_issue_key || "—")}</code></td><td data-label="Status">${CIS.badge(issue.sync_status || "unknown")}</td><td data-label="Summary">${CIS.escape(issue.current_summary || "—")}</td><td data-label="Pending review">${issue.pending_translation_count || 0}</td><td data-label="Anomaly">${issue.open_anomaly_count || 0}</td><td data-label="Action"><a class="btn btn-sm btn-outline-primary" href="/cis-issues/${encodeURIComponent(issue.id)}">Open Editor</a></td></tr>`).join("")}</tbody></table></div>` : '<div class="card-body text-center py-6"><h2 class="h3">No CIS issues found</h2><p class="text-secondary">Create the first canonical issue in this Project.</p></div>'}</section>
+      <section class="card"><div class="card-header"><div><h2 class="card-title">Issue register</h2><div class="text-secondary small">Canonical Summary search</div></div><span class="badge bg-secondary-lt ms-auto">${meta.total}</span></div>
+        <form class="card-body border-bottom cis-issue-filters" method="get" action="${CIS.attr(CIS.projectPath("/cis-issues", project.id))}" aria-label="CIS issue filters"><div class="row g-2 align-items-end">
+          <div class="col-12"><label class="form-label" for="issue-search">Summary</label><input class="form-control" id="issue-search" name="q" value="${CIS.attr(params.get("q") || "")}" placeholder="Mục đích sửa đổi"></div>
+          <div class="col-12 cis-filter-actions"><button class="btn btn-primary" type="submit">Search issues</button>${hasFilters ? `<a class="btn btn-link" href="${CIS.attr(CIS.projectPath("/cis-issues", project.id))}">Clear filters</a>` : ""}</div>
+        </div></form>
+        ${issues.length ? `<div class="table-responsive"><table class="table table-vcenter responsive-table"><thead><tr><th>Source</th><th>Status</th><th>Summary</th><th>Priority</th><th>Assignee</th><th>Pending review</th><th>Anomaly</th><th></th></tr></thead><tbody>${issues.map((issue) => `<tr><td data-label="Source"><code>${CIS.escape(issue.backlog_issue_key || issue.jira_issue_key || "—")}</code></td><td data-label="Status">${CIS.badge(issue.sync_status || "unknown")}</td><td data-label="Summary">${CIS.escape(issue.current_summary || "—")}</td><td data-label="Priority">${CIS.escape(issue.current_priority || "—")}</td><td data-label="Assignee">${CIS.escape(issue.current_assignee || "—")}</td><td data-label="Pending review">${issue.pending_translation_count || 0}</td><td data-label="Anomaly">${issue.open_anomaly_count || 0}</td><td data-label="Action"><a class="btn btn-sm btn-outline-primary" href="${CIS.attr(CIS.projectPath(`/cis-issues/${encodeURIComponent(issue.id)}`, project.id))}">Open Editor</a></td></tr>`).join("")}</tbody></table></div>` : `<div class="card-body text-center py-6"><h2 class="h3">${hasFilters ? "No issues match these filters" : "No CIS issues found"}</h2><p class="text-secondary">${hasFilters ? "Adjust or clear filters to broaden the result." : "Create the first canonical issue in this Project."}</p></div>`}
+        ${pagination(meta, params)}</section>
     </div>`;
     document.querySelector("#create-issue").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -25,8 +48,8 @@
       const button = form.querySelector("button");
       button.disabled = true;
       try {
-        const result = await CIS.api("/api/v1/issues", { method: "POST", body: { project_id: project.id, ...CIS.formJson(form) } });
-        location.assign(`/cis-issues/${encodeURIComponent(result.issue.id)}`);
+        const result = await CIS.projectApi(project.id, "/issues", { method: "POST", body: CIS.formJson(form) });
+        location.assign(CIS.projectPath(`/cis-issues/${encodeURIComponent(result.issue.id)}`, project.id));
       } catch (error) {
         document.querySelector("#create-error").innerHTML = CIS.alert(error.message);
         button.disabled = false;
@@ -54,12 +77,14 @@
   }
 
   function canonicalField(name, editor) {
-    const labels = { summary: "Summary", description: "Description", issue_type: "Issue type", priority: "Priority", status: "Status", assignee: "Assignee", due_date: "Due date" };
-    const current = editor.canonical?.[name]?.value || "";
+    const labels = { summary: "Summary", description: "Description", issue_type: "Issue type", priority: "Priority", status: "Status", assignee: "Assignee", due_date: "Due date", story_point: "Story Point" };
+    const current = editor.canonical?.[name]?.value ?? "";
     const source = editor.canonical?.[name]?.source || "manual";
     if (name === "description") return markdownDescription(current, source);
     const catalog = editor.field_meta?.catalogs?.[name] || [];
-    const input = catalog.length ? `<select class="form-select" id="canonical-${name}" name="${name}">${catalogOptions(catalog, current)}</select>` : `<input class="form-control" id="canonical-${name}" name="${name}" type="${name === "due_date" ? "date" : "text"}" value="${CIS.attr(current)}">`;
+    const type = name === "due_date" ? "date" : name === "story_point" ? "number" : "text";
+    const numberRules = name === "story_point" ? ' min="0" step="any" required' : "";
+    const input = catalog.length ? `<select class="form-select" id="canonical-${name}" name="${name}">${catalogOptions(catalog, current)}</select>` : `<input class="form-control" id="canonical-${name}" name="${name}" type="${type}" value="${CIS.attr(current)}"${numberRules}>`;
     return `<div class="${name === "summary" ? "col-12" : "col-md-6"}"><label class="form-label" for="canonical-${name}">${labels[name]} <span class="text-secondary fw-normal">· ${CIS.escape(source)}</span></label>${input}</div>`;
   }
 
@@ -70,10 +95,11 @@
     const systems = ["cis", "backlog", "jira"];
     const valueCell = (field, system, value) => {
       const id = `snapshot-${field}-${system}`;
+      const displayValue = value === null || value === undefined || value === "" ? "—" : value;
       const content = field === "description"
-        ? `<textarea class="d-none" data-md-readonly-source tabindex="-1" aria-hidden="true">${CIS.escape(value || "—")}</textarea><div class="markdown-preview snapshot-markdown" data-md-readonly></div>`
-        : `<div class="snapshot-plain">${CIS.escape(value || "—")}</div>`;
-      if (!wideFields.has(field)) return `<div class="snapshot-compact-value"><span>${CIS.escape(system.toUpperCase())}</span><strong>${CIS.escape(value || "—")}</strong></div>`;
+        ? `<textarea class="d-none" data-md-readonly-source tabindex="-1" aria-hidden="true">${CIS.escape(displayValue)}</textarea><div class="markdown-preview snapshot-markdown" data-md-readonly></div>`
+        : `<div class="snapshot-plain">${CIS.escape(displayValue)}</div>`;
+      if (!wideFields.has(field)) return `<div class="snapshot-compact-value"><span>${CIS.escape(system.toUpperCase())}</span><strong>${CIS.escape(displayValue)}</strong></div>`;
       return `<div class="snapshot-system"><div class="snapshot-system__label">${CIS.escape(system.toUpperCase())}</div><div class="snapshot-clamp" id="${CIS.attr(id)}" data-snapshot-clamp>${content}</div><button class="btn btn-sm btn-ghost-primary snapshot-toggle" type="button" data-snapshot-toggle aria-controls="${CIS.attr(id)}" aria-expanded="false" hidden>Show more ${CIS.escape(system.toUpperCase())}</button></div>`;
     };
     const fieldCard = ([field, values]) => {
@@ -87,7 +113,10 @@
   function translationCards(items) {
     return (items || []).map((item) => {
       const text = item.ai_draft || "";
-      return `<article class="card mb-3" data-translation="${item.id}"><div class="card-header"><div><h3 class="card-title">${CIS.escape(CIS.label(item.target_field || item.target_type))}</h3><div class="text-secondary small">AI and operator share one draft; approval alone updates canonical.</div></div>${CIS.badge(item.review_status || "pending")}</div><div class="card-body"><div class="row g-3 translation-compare"><div class="col-lg-6">${readonlyMarkdown("Source snapshot", item.source_text)}</div><div class="col-lg-6">${markdownWorkbench({ id: `translation-${item.id}`, label: "AI draft", current: text, className: "translation-workbench h-100" })}</div></div>${item.is_source_stale ? '<div class="alert alert-warning mt-3">Source changed. Reconcile and save this draft against the current source, or retranslate. Approval is locked until then.</div>' : ""}${item.provider_error ? `<div class="alert alert-danger mt-3">${CIS.escape(item.provider_error)}</div>` : ""}</div><div class="card-footer"><div class="table-actions"><button class="btn btn-sm btn-outline-primary" data-translation-action="retranslate" type="button">Retranslate</button><button class="btn btn-sm btn-outline-secondary" data-translation-action="save-draft" type="button" ${!text ? "disabled" : ""}>Save draft</button><button class="btn btn-sm btn-primary" data-translation-action="approve" type="button" ${item.is_source_stale || !text ? "disabled" : ""}>Approve</button><button class="btn btn-sm btn-outline-danger" data-translation-action="reject" type="button">Reject</button></div><div class="job-evidence" aria-live="polite"></div></div></article>`;
+      const field = item.target_field || item.target_type;
+      const cardKey = item.id || `field-${field}`;
+      const persisted = Boolean(item.id);
+      return `<article class="card mb-3" data-translation="${CIS.attr(cardKey)}" data-translation-id="${CIS.attr(item.id || "")}" data-translation-field="${CIS.attr(field)}"><div class="card-header"><div><h3 class="card-title">${CIS.escape(CIS.label(field))}</h3><div class="text-secondary small">AI and operator share one draft; approved drafts update canonical.</div></div><span data-translation-status>${CIS.badge(item.review_status || "pending")}</span></div><div class="card-body"><div class="row g-3 translation-compare"><div class="col-lg-6">${readonlyMarkdown("Source snapshot", item.source_text)}</div><div class="col-lg-6">${markdownWorkbench({ id: `translation-${cardKey}`, label: "AI draft", current: text, className: "translation-workbench h-100" })}</div></div>${item.is_source_stale ? '<div class="alert alert-warning mt-3">Source changed. Reconcile and save this draft against the current source, or retranslate.</div>' : ""}${item.provider_error ? `<div class="alert alert-danger mt-3">${CIS.escape(item.provider_error)}</div>` : ""}</div><div class="card-footer"><div class="table-actions"><button class="btn btn-sm btn-outline-primary" data-translation-action="retranslate" type="button" ${item.source_text ? "" : "disabled"}>Retranslate</button><button class="btn btn-sm btn-outline-secondary" data-translation-action="save-draft" type="button" ${persisted && text ? "" : "disabled"}>Save draft</button><button class="btn btn-sm btn-primary" data-translation-action="approve" type="button" ${persisted && text && !item.is_source_stale ? "" : "disabled"}>Approve</button><button class="btn btn-sm btn-outline-danger" data-translation-action="reject" type="button" ${persisted ? "" : "disabled"}>Reject</button></div><div class="job-evidence" aria-live="polite"></div></div></article>`;
     }).join("") || '<div class="text-secondary">No translation queue items for this issue.</div>';
   }
 
@@ -98,12 +127,12 @@
     let history = {};
     try {
       [editor, attachments, history] = await Promise.all([
-        CIS.api(`/api/v1/issues/${encodeURIComponent(issueId)}/editor`),
-        CIS.api(`/api/v1/issues/${encodeURIComponent(issueId)}/attachments`),
-        CIS.api(`/api/v1/issues/${encodeURIComponent(issueId)}/history`),
+        CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/editor`),
+        CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/attachments`),
+        CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/history`),
       ]);
       if (editor.issue.project_id !== project.id) throw new Error("This issue does not belong to the active Project workspace.");
-    } catch (error) { root.innerHTML = CIS.state("Issue Editor unavailable", error.message, '<a class="btn btn-primary" href="/cis-issues">Back to CIS Issues</a>'); return; }
+    } catch (error) { root.innerHTML = CIS.state("Issue Editor unavailable", error.message, `<a class="btn btn-primary" href="${CIS.attr(CIS.projectPath("/cis-issues", project.id))}">Back to CIS Issues</a>`); return; }
 
     const issue = editor.issue;
     root.innerHTML = `<div class="container-xl">${heading("Issue Editor", "Canonical state is the controlled handoff between source evidence and Jira preview.", `CIS ${issue.id}`)}
@@ -114,8 +143,8 @@
           <section class="card"><div class="card-header d-block"><h2 class="card-title">Jira outbound gate</h2><div class="text-secondary small mt-1">Dry-run is mandatory before any write.</div></div><div class="card-body"><div class="metric-strip issue-editor-rail__metrics"><div class="metric"><span>Manual edits</span><strong>${history.manual_edits?.length || 0}</strong></div><div class="metric"><span>Translations</span><strong>${editor.translation?.total || editor.translations?.length || 0}</strong></div><div class="metric"><span>Attachments</span><strong>${attachments.length}</strong></div></div></div><div class="card-footer"><button class="btn btn-primary w-100" id="jira-dry-run" type="button">Prepare Jira sync</button></div></section>
         </aside>
         <div class="issue-editor-main">
-          <section class="card mb-3"><div class="card-header"><h2 class="card-title">Canonical CIS data</h2><span class="text-secondary ms-auto">${editor.sync?.canonical_hash ? `Hash ${CIS.escape(editor.sync.canonical_hash.slice(0, 12))}` : "Unsynced"}</span></div><form id="canonical-form"><div class="card-body"><div class="row g-3">${["summary", "description", "issue_type", "priority", "status", "assignee", "due_date"].map((name) => canonicalField(name, editor)).join("")}<div class="col-12"><label class="form-label" for="edit-reason">Change reason</label><input class="form-control" id="edit-reason" name="reason" required placeholder="Why is canonical truth changing?"></div></div></div><div class="card-footer d-flex justify-content-end"><button class="btn btn-primary" type="submit">Save canonical revision</button></div></form></section>
-          <section class="card mb-3"><div class="card-header"><div><h2 class="card-title">Translation review</h2><div class="text-secondary small">AI proposes; operator decides.</div></div><button class="btn btn-sm btn-outline-primary ms-auto" id="translate-all" type="button">Translate issue</button></div><div class="card-body" id="translations">${translationCards(editor.translations)}</div></section>
+          <section class="card mb-3"><div class="card-header"><h2 class="card-title">Canonical CIS data</h2><span class="text-secondary ms-auto">${editor.sync?.canonical_hash ? `Hash ${CIS.escape(editor.sync.canonical_hash.slice(0, 12))}` : "Unsynced"}</span></div><form id="canonical-form"><div class="card-body"><div class="row g-3">${["summary", "description", "issue_type", "priority", "status", "assignee", "due_date", "story_point"].map((name) => canonicalField(name, editor)).join("")}<div class="col-12"><label class="form-label" for="edit-reason">Change reason <span class="text-secondary fw-normal">· optional</span></label><input class="form-control" id="edit-reason" name="reason" placeholder="Optional context for this change"></div></div></div><div class="card-footer d-flex justify-content-end"><button class="btn btn-primary" type="submit">Save canonical revision</button></div></form></section>
+          <section class="card mb-3"><div class="card-header"><div><h2 class="card-title">Translation review</h2><div class="text-secondary small">AI proposes; operator decides.</div></div></div><div class="card-body" id="translations">${translationCards(editor.translations)}</div></section>
           <section class="card mb-3"><div class="card-header"><h2 class="card-title">Attachments</h2><span class="badge bg-secondary-lt ms-auto">${attachments.length}</span></div>${attachments.length ? `<div class="table-responsive"><table class="table table-vcenter"><thead><tr><th>File</th><th>Download</th><th>Sync</th><th>Error</th><th></th></tr></thead><tbody>${attachments.map((item) => `<tr data-attachment="${item.id}"><td>${CIS.escape(item.filename || item.file_name || `Attachment ${item.id}`)}</td><td>${CIS.badge(item.download_status || "unknown")}</td><td>${CIS.badge(item.sync_status || "unknown")}</td><td>${CIS.escape(item.error || "—")}</td><td><button class="btn btn-sm btn-outline-primary" data-retry-attachment type="button">Retry download</button></td></tr>`).join("")}</tbody></table></div>` : '<div class="card-body text-secondary">No attachments.</div>'}</section>
           ${sourceSnapshots(editor)}
         </div>
@@ -137,39 +166,79 @@
       const form = event.currentTarget;
       const button = form.querySelector("button");
       button.disabled = true;
-      try { await CIS.api(`/api/v1/issues/${encodeURIComponent(issueId)}`, { method: "PATCH", body: CIS.formJson(form) }); dirty = false; CIS.toast("Canonical revision saved."); location.reload(); }
-      catch (error) { notice.innerHTML = CIS.alert(error.message); button.disabled = false; }
+      const label = button.textContent;
+      button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Saving…';
+      try {
+        const result = await CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}`, { method: "PATCH", body: CIS.formJson(form) });
+        editor.canonical = result.canonical;
+        editor.issue = { ...editor.issue, ...result.issue };
+        dirty = false;
+        form.elements.reason.value = "";
+        notice.innerHTML = "";
+        CIS.toast("Canonical revision saved.");
+      } catch (error) {
+        notice.innerHTML = CIS.alert(error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = label;
+      }
     });
     document.querySelector("#identity-form").addEventListener("submit", async (event) => {
       event.preventDefault(); const form = event.currentTarget; const body = CIS.formJson(form); Object.keys(body).forEach((key) => { if (!body[key]) delete body[key]; });
-      try { await CIS.api(`/api/v1/issues/${encodeURIComponent(issueId)}/external-identities`, { method: "POST", body }); location.reload(); }
-      catch (error) { notice.innerHTML = CIS.alert(error.message); }
+      const button = form.querySelector("button"); button.disabled = true;
+      try {
+        const result = await CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/external-identities`, { method: "POST", body });
+        for (const [name, identity] of [["backlog_issue_key", result.external_identities?.backlog], ["jira_issue_key", result.external_identities?.jira]]) {
+          if (!identity) continue;
+          form.elements[name].value = identity.key;
+          form.elements[name].disabled = true;
+          editor.issue[name] = identity.key;
+        }
+        button.disabled = Boolean(editor.issue.backlog_issue_key && editor.issue.jira_issue_key);
+        document.querySelector("#resync").disabled = !editor.issue.backlog_issue_key;
+        CIS.toast("External identity linked.");
+      } catch (error) { notice.innerHTML = CIS.alert(error.message); button.disabled = false; }
     });
     document.querySelector("#resync").addEventListener("click", async (event) => {
       const target = document.querySelector("#resync-state"); event.currentTarget.disabled = true;
-      try { const job = await CIS.api(`/api/v1/projects/${editor.issue.project_id}/backlog/issues/${encodeURIComponent(editor.issue.backlog_issue_key)}/pull`, { method: "POST" }); target.textContent = `Job ${job.id}: ${job.status}`; await CIS.pollJob(job.id, (current) => { target.textContent = `Job ${current.id}: ${current.status}`; }); }
+      try { const job = await CIS.projectApi(project.id, `/backlog/issues/${encodeURIComponent(editor.issue.backlog_issue_key)}/pull`, { method: "POST" }); target.textContent = `Job ${job.id}: ${job.status}`; await CIS.pollJob(project.id, job.id, (current) => { target.textContent = `Job ${current.id}: ${current.status}`; }); }
       catch (error) { target.innerHTML = `<span class="text-danger">${CIS.escape(error.message)}</span>`; } finally { event.currentTarget.disabled = false; }
     });
-    document.querySelector("#translate-all").addEventListener("click", async (event) => {
-      event.currentTarget.disabled = true;
-      try { const result = await CIS.api(`/api/v1/translations/issues/${encodeURIComponent(issueId)}/translate`, { method: "POST" }); CIS.toast(result.queued_job_ids?.length ? `Translation queued: ${result.queued_job_ids.join(", ")}` : "Translation request accepted."); location.reload(); }
-      catch (error) { notice.innerHTML = CIS.alert(error.message); event.currentTarget.disabled = false; }
-    });
     document.querySelectorAll("[data-translation]").forEach((card) => card.querySelectorAll("[data-translation-action]").forEach((button) => button.addEventListener("click", async () => {
-      const id = card.dataset.translation; const action = button.dataset.translationAction; const evidence = card.querySelector(".job-evidence"); button.disabled = true;
+      const action = button.dataset.translationAction; const evidence = card.querySelector(".job-evidence"); const label = button.innerHTML; button.disabled = true; button.setAttribute("aria-busy", "true");
+      if (action === "retranslate") button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Retranslating…';
       try {
-        if (action === "retranslate") await CIS.api(`/api/v1/translations/issues/${encodeURIComponent(issueId)}/items/${encodeURIComponent(id)}/translate`, { method: "POST" });
-        else if (action === "save-draft") await CIS.api(`/api/v1/translation-queue/${encodeURIComponent(id)}/draft`, { method: "PUT", body: { draft_text: card.querySelector("textarea").value, review_notes: "issue-editor" } });
-        else await CIS.api(`/api/v1/translation-queue/${encodeURIComponent(id)}/${action}`, { method: "POST", body: { review_notes: "issue-editor" } });
-        CIS.toast(action === "save-draft" ? "Translation draft saved." : `Translation ${action} requested.`); location.reload();
+        let result;
+        const id = card.dataset.translationId;
+        if (action === "retranslate" && id) result = await CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/translations/${encodeURIComponent(id)}/translate`, { method: "POST" });
+        else if (action === "retranslate") {
+          const translated = await CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/translations/translate`, { method: "POST", body: { target_field: card.dataset.translationField } });
+          result = { item: translated.translations.find((item) => item.target_field === card.dataset.translationField) };
+        } else if (action === "save-draft") await CIS.projectApi(project.id, `/translation-queue/${encodeURIComponent(id)}/draft`, { method: "PUT", body: { draft_text: card.querySelector(".translation-workbench textarea").value, review_notes: "issue-editor" } });
+        else await CIS.projectApi(project.id, `/translation-queue/${encodeURIComponent(id)}/${action}`, { method: "POST", body: { review_notes: "issue-editor" } });
+        if (action === "retranslate") {
+          const item = result.item;
+          card.dataset.translationId = item.id;
+          const draft = card.querySelector(".translation-workbench textarea");
+          draft.value = item.ai_draft || "";
+          draft.dispatchEvent(new Event("input", { bubbles: true }));
+          card.querySelector('[data-translation-action="save-draft"]').disabled = !item.ai_draft;
+          card.querySelector('[data-translation-action="approve"]').disabled = !item.ai_draft;
+          card.querySelector('[data-translation-action="reject"]').disabled = false;
+          evidence.textContent = "Draft retranslated. Review and approve to update canonical.";
+        }
+        const status = action === "approve" ? "approved" : action === "reject" ? "rejected" : "ai_draft";
+        card.querySelector("[data-translation-status]").innerHTML = CIS.badge(status);
+        CIS.toast(action === "retranslate" ? "Draft retranslated; canonical is unchanged." : action === "save-draft" ? "Translation draft saved." : `Translation ${action} requested.`); button.disabled = action === "approve";
       } catch (error) { evidence.innerHTML = `<span class="text-danger">${CIS.escape(error.message)}</span>`; button.disabled = false; }
+      finally { button.removeAttribute("aria-busy"); button.innerHTML = label; }
     })));
     document.querySelectorAll("[data-retry-attachment]").forEach((button) => button.addEventListener("click", async () => {
       const id = button.closest("tr").dataset.attachment; button.disabled = true;
-      try { await CIS.api(`/api/v1/attachments/${encodeURIComponent(id)}/retry-download`, { method: "POST" }); CIS.toast(`Attachment ${id} queued for retry.`); }
+      try { await CIS.projectApi(project.id, `/attachments/${encodeURIComponent(id)}/retry-download`, { method: "POST" }); CIS.toast(`Attachment ${id} queued for retry.`); button.disabled = false; }
       catch (error) { notice.innerHTML = CIS.alert(error.message); button.disabled = false; }
     }));
-    document.querySelector("#jira-dry-run").addEventListener("click", () => openJiraGate(issueId));
+    document.querySelector("#jira-dry-run").addEventListener("click", () => openJiraGate(issueId, editor));
   }
 
   function bindSourceSnapshots() {
@@ -258,25 +327,37 @@
     });
   }
 
-  async function openJiraGate(issueId) {
+  async function openJiraGate(issueId, editor) {
     const modal = CIS.dialog("Jira sync preparation", `<div class="dialog-header"><div><div class="route-kicker">Outbound safety</div><h2 class="h3 mb-0">Jira dry-run</h2></div><button class="btn-close" data-dialog-close aria-label="Close"></button></div><div class="dialog-body" id="jira-gate"><span class="spinner-border spinner-border-sm me-2"></span>Running pre-check…</div>`);
     const region = modal.querySelector("#jira-gate");
     try {
-      const dryRun = await CIS.api(`/api/v1/issues/${encodeURIComponent(issueId)}/dry-run/jira`, { method: "POST" });
+      const dryRun = await CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/dry-run/jira`, { method: "POST" });
       const errors = dryRun.validation?.errors || [];
       const warnings = dryRun.warnings || [];
       const fields = dryRun.payload?.fields || {};
+      const storyPointFieldId = dryRun.target_fields?.story_point;
       const transition = dryRun.payload?.transition_preview || {};
-      const assignee = fields.assignee?.accountId || fields.assignee?.account_id || fields.assignee?.name || "";
+      const assignee = fields.assignee?.accountId || fields.assignee?.account_id || fields.assignee?.emailAddress || fields.assignee?.name || "";
+      const jiraCatalogs = editor.field_meta?.catalogs_by_system?.jira || {};
+      const canonicalCatalogs = editor.field_meta?.catalogs || {};
+      const catalog = (name) => jiraCatalogs[name]?.length ? jiraCatalogs[name] : canonicalCatalogs[name] || [];
+      const select = (id, name, current) => `<select class="form-select" id="${id}" name="${name}">${catalogOptions(catalog(name), current)}</select>`;
+      const storyPoint = storyPointFieldId
+        ? fields[storyPointFieldId] ?? editor.canonical?.story_point?.value ?? 1
+        : editor.canonical?.story_point?.value ?? 1;
+      const storyPointAvailability = storyPointFieldId
+        ? `Jira ${storyPointFieldId}`
+        : `Not available for ${fields.issuetype?.name || "this issue type"} in Jira`;
       region.innerHTML = `<div class="d-flex align-items-center justify-content-between mb-3"><strong>Gate result</strong>${CIS.badge(dryRun.can_sync ? "can_sync" : "blocked", dryRun.can_sync ? "green" : "red")}</div>${errors.map((item) => CIS.alert(`${item.code || "ERROR"}: ${item.message}`)).join("")}${warnings.map((item) => CIS.alert(`${item.code || "WARNING"}: ${item.message}`, "warning")).join("")}
         <form id="jira-fields" class="card mt-3"><div class="card-header"><div><h3 class="card-title">Jira fields</h3><div class="text-secondary small">Review the exact outbound values before publishing.</div></div></div><div class="card-body"><div class="row g-3">
           <div class="col-12"><label class="form-label" for="jira-summary">Summary</label><input class="form-control" id="jira-summary" name="summary" value="${CIS.attr(fields.summary || "")}" required></div>
           <div class="col-12"><label class="form-label" for="jira-description">Description</label><textarea class="form-control" id="jira-description" name="description" rows="5">${CIS.escape(fields.description || "")}</textarea></div>
-          <div class="col-md-6"><label class="form-label" for="jira-type">Issue type</label><input class="form-control" id="jira-type" name="issue_type" value="${CIS.attr(fields.issuetype?.name || fields.issuetype?.id || "")}"></div>
-          <div class="col-md-6"><label class="form-label" for="jira-priority">Priority</label><input class="form-control" id="jira-priority" name="priority" value="${CIS.attr(fields.priority?.name || fields.priority?.id || "")}"></div>
-          <div class="col-md-4"><label class="form-label" for="jira-status">Target status</label><input class="form-control" id="jira-status" name="status" value="${CIS.attr(transition.status || "")}"></div>
-          <div class="col-md-4"><label class="form-label" for="jira-assignee">Assignee</label><input class="form-control" id="jira-assignee" name="assignee" value="${CIS.attr(assignee)}"></div>
+          <div class="col-md-6"><label class="form-label" for="jira-type">Issue type</label>${select("jira-type", "issue_type", fields.issuetype?.name || fields.issuetype?.id || "")}</div>
+          <div class="col-md-6"><label class="form-label" for="jira-priority">Priority</label>${select("jira-priority", "priority", fields.priority?.name || fields.priority?.id || "")}</div>
+          <div class="col-md-4"><label class="form-label" for="jira-status">Target status</label>${select("jira-status", "status", transition.status || "")}</div>
+          <div class="col-md-4"><label class="form-label" for="jira-assignee">Assignee</label>${select("jira-assignee", "assignee", assignee)}</div>
           <div class="col-md-4"><label class="form-label" for="jira-due-date">Due date</label><input class="form-control" id="jira-due-date" name="due_date" type="date" value="${CIS.attr(fields.duedate || "")}"></div>
+          <div class="col-md-4"><label class="form-label" for="jira-story-point">Story Point</label><input class="form-control" id="jira-story-point" name="story_point" type="number" min="0" step="any" value="${CIS.attr(storyPoint)}" ${storyPointFieldId ? "required" : "disabled"}><div class="form-hint">${CIS.escape(storyPointAvailability)}</div></div>
         </div></div></form>
         <details class="card mt-3"><summary class="card-header"><span class="card-title">Original payload preview</span></summary><pre class="card-body source-panel">${CIS.escape(JSON.stringify(dryRun.payload || {}, null, 2))}</pre></details><div class="d-flex justify-content-end gap-2 mt-3"><button class="btn btn-outline-secondary" data-dialog-close type="button">Close</button><button class="btn btn-primary" id="publish-jira" type="button" ${dryRun.can_sync ? "" : "disabled"}>Sync Jira</button></div><div class="job-evidence" id="jira-job" aria-live="polite"></div>`;
       region.querySelectorAll("[data-dialog-close]").forEach((button) => button.addEventListener("click", () => modal.close()));
@@ -285,9 +366,9 @@
         try {
           const form = region.querySelector("#jira-fields");
           if (!form.reportValidity()) { event.currentTarget.disabled = false; return; }
-          const job = await CIS.api(`/api/v1/issues/${encodeURIComponent(issueId)}/sync/jira`, { method: "POST", body: { jira_fields: CIS.formJson(form) } });
+          const job = await CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/sync/jira`, { method: "POST", body: { jira_fields: CIS.formJson(form) } });
           jobRegion.textContent = `Job ${job.id}: ${job.status}`;
-          await CIS.pollJob(job.id, (current) => { jobRegion.textContent = `Job ${current.id}: ${current.status}`; });
+          await CIS.pollJob(project.id, job.id, (current) => { jobRegion.textContent = `Job ${current.id}: ${current.status}`; });
         }
         catch (error) { jobRegion.innerHTML = `<span class="text-danger">${CIS.escape(error.message)}</span>`; event.currentTarget.disabled = false; }
       });

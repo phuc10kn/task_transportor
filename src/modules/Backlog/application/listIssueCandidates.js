@@ -1,5 +1,6 @@
 const { AppError } = require("../../../http/errors/AppError");
 const CisApi = require("../../Cis/CisApi");
+const SyncApi = require("../../Sync/SyncApi");
 const { createBacklogClient } = require("../infrastructure/BacklogClient");
 const { getIssueActionReadiness } = require("./getIssueActionReadiness");
 
@@ -68,6 +69,36 @@ function candidateAssignee(row) {
   return Number.isSafeInteger(id) && id > 0 && name ? { id, name } : null;
 }
 
+function activeCandidateJobs({ config, projectId }) {
+  const jobs = ["pending", "running"].flatMap((status) => SyncApi.listJobs({
+    config,
+    filters: { project_id: projectId, status },
+  }));
+  const jobsByKey = new Map();
+
+  for (const job of jobs) {
+    if (!["manual_pull", "sync_translate_jira"].includes(job.job_type) || job.direction_from !== "backlog") continue;
+    const key = String(job.payload_json?.backlog_issue_key || "").trim().toUpperCase();
+    if (!key) continue;
+    const current = jobsByKey.get(key);
+    if (!current || (current.status === "pending" && job.status === "running")) jobsByKey.set(key, job);
+  }
+
+  return jobsByKey;
+}
+
+function candidateActiveJob(job) {
+  if (!job) return null;
+  return {
+    id: job.id,
+    status: job.status,
+    with_translation: job.payload_json?.with_translation === true,
+    push_to_jira: job.payload_json?.push_to_jira === true,
+    created_at: job.created_at,
+    updated_at: job.updated_at,
+  };
+}
+
 async function listIssueCandidates({ config, projectId, filters }) {
   const from = String(filters.created_from || "");
   const to = String(filters.created_to || "");
@@ -83,6 +114,7 @@ async function listIssueCandidates({ config, projectId, filters }) {
   if (!readiness.actions.browse.enabled) {
     throw new AppError({ code: "BACKLOG_CONFIG_INCOMPLETE", message: "Backlog configuration is incomplete.", status: 422 });
   }
+  const activeJobsByKey = activeCandidateJobs({ config, projectId: project.id });
   const mappingValues = project.backlog_mapping_values_json || {};
   const statusDirectory = configuredDirectory(mappingValues.status_directory);
   const userDirectory = configuredDirectory(mappingValues.user_directory);
@@ -153,7 +185,7 @@ async function listIssueCandidates({ config, projectId, filters }) {
     const existing = CisApi.getIssuesByBacklogKeys({ config, projectId: project.id, backlogIssueKeys: page.map((item) => item.key) });
     const existingKeys = new Set(existing.map((item) => String(item.backlog_issue_key || "").trim().toUpperCase()));
     for (const { row, key } of page) {
-      if (existingKeys.has(key)) { excluded += 1; continue; }
+      if (existingKeys.has(key) && !activeJobsByKey.has(key)) { excluded += 1; continue; }
       if (candidates.length < limit) {
         candidates.push({
           backlog_issue_key: key,
@@ -162,6 +194,7 @@ async function listIssueCandidates({ config, projectId, filters }) {
           assignee: candidateAssignee(row),
           created_at_source: row.created || null,
           updated_at_source: row.updated || null,
+          active_job: candidateActiveJob(activeJobsByKey.get(key)),
         });
       }
     }

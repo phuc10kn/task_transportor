@@ -192,9 +192,8 @@ function createSyncJobRepository({ config }) {
         const existing = db.prepare(
           `SELECT * FROM sync_jobs
            WHERE project_id = ?
-             AND job_type = 'manual_pull'
+             AND job_type IN ('manual_pull', 'sync_translate_jira')
              AND direction_from = 'backlog'
-             AND direction_to = 'cis'
              AND status IN ('pending', 'running')
              AND UPPER(TRIM(json_extract(payload_json, '$.backlog_issue_key'))) = ?
            ORDER BY created_at ASC LIMIT 1`
@@ -206,33 +205,50 @@ function createSyncJobRepository({ config }) {
             reused: false,
             promoted: false,
             running_without_translation: false,
+            running_without_jira: false,
           };
         }
 
         const currentPayload = parseJson(existing.payload_json, {});
         const wantsTranslation = input.payload_json && input.payload_json.with_translation === true;
         const hasTranslation = currentPayload.with_translation === true;
+        const wantsJira = input.payload_json && input.payload_json.push_to_jira === true;
+        const hasJira = existing.job_type === "sync_translate_jira" || currentPayload.push_to_jira === true;
 
-        if (wantsTranslation && !hasTranslation && existing.status === "pending") {
+        if (((wantsTranslation && !hasTranslation) || (wantsJira && !hasJira)) && existing.status === "pending") {
           const promotedPayload = {
             ...currentPayload,
-            with_translation: true,
+            with_translation: hasTranslation || wantsTranslation || wantsJira,
+            push_to_jira: hasJira || wantsJira,
             requested_by: input.payload_json.requested_by || null,
             request_correlation_id: input.payload_json.request_correlation_id || null,
           };
           db.prepare(
             `UPDATE sync_jobs
-             SET payload_json = ?, updated_at = datetime('now')
+             SET payload_json = ?,
+                 job_type = CASE WHEN ? = 1 THEN 'sync_translate_jira' ELSE job_type END,
+                 direction_to = CASE WHEN ? = 1 THEN 'jira' ELSE direction_to END,
+                 max_attempts = MAX(max_attempts, ?),
+                 updated_at = datetime('now')
              WHERE id = ? AND status = 'pending'`
-          ).run(stringifyJson(promotedPayload), existing.id);
+          ).run(
+            stringifyJson(promotedPayload),
+            wantsJira ? 1 : 0,
+            wantsJira ? 1 : 0,
+            input.max_attempts || existing.max_attempts,
+            existing.id
+          );
           const promotedJob = db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(existing.id);
           insertJournal(db, jobJournalInput(promotedJob, {
-            action: "manual_pull_translation_promoted",
+            action: wantsJira && !hasJira ? "manual_pull_jira_promoted" : "manual_pull_translation_promoted",
             status: "pending",
             trigger: input.trigger || "manual",
-            message: "Manual pull was promoted to request translation.",
+            message: wantsJira && !hasJira
+              ? "Manual pull was promoted to request translation and Jira delivery."
+              : "Manual pull was promoted to request translation.",
             details_json: {
-              with_translation: true,
+              with_translation: promotedPayload.with_translation,
+              push_to_jira: promotedPayload.push_to_jira,
               requested_by: promotedPayload.requested_by,
               request_correlation_id: promotedPayload.request_correlation_id,
             },
@@ -244,6 +260,7 @@ function createSyncJobRepository({ config }) {
             reused: true,
             promoted: true,
             running_without_translation: false,
+            running_without_jira: false,
           };
         }
 
@@ -252,6 +269,7 @@ function createSyncJobRepository({ config }) {
           reused: true,
           promoted: false,
           running_without_translation: Boolean(wantsTranslation && !hasTranslation && existing.status === "running"),
+          running_without_jira: Boolean(wantsJira && !hasJira && existing.status === "running"),
         };
       }));
     },
@@ -334,9 +352,11 @@ function createSyncJobRepository({ config }) {
       );
     },
 
-    findById(id) {
+    findById(id, projectId) {
       return withDb((db) => rowToJob(
-        db.prepare(syncJobSelectSql("WHERE sync_jobs.id = ?")).get(id)
+        projectId
+          ? db.prepare(syncJobSelectSql("WHERE sync_jobs.id = ? AND sync_jobs.project_id = ?")).get(id, projectId)
+          : db.prepare(syncJobSelectSql("WHERE sync_jobs.id = ?")).get(id)
       ));
     },
 

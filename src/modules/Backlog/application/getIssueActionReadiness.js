@@ -1,6 +1,6 @@
 function projectsApi() { return require("../../Projects/ProjectsApi"); }
 
-const REASON_ORDER = ["PROJECT_DISABLED", "BACKLOG_CONFIG_INCOMPLETE", "BACKLOG_PULL_DISABLED", "PROJECT_SYNC_DISABLED", "SYNC_WORKER_UNAVAILABLE"];
+const REASON_ORDER = ["PROJECT_PULL_DISABLED", "PROJECT_DISABLED", "BACKLOG_CONFIG_INCOMPLETE", "BACKLOG_PULL_DISABLED", "PROJECT_SYNC_DISABLED", "SYNC_WORKER_UNAVAILABLE"];
 
 function backlogConfigReady(config, project) {
   return Boolean(project.backlog_project_key) && (
@@ -36,7 +36,7 @@ function getIssueActionReadiness({ config, projectId }) {
     actions: {
       browse: { enabled: configReady, disabled_reasons: configReady ? [] : ["BACKLOG_CONFIG_INCOMPLETE"] },
       pull_one: writeAction({ enabled: pullEnabled, mode: project.sync_enabled ? "inline" : "queued_waiting", consumerReady: project.sync_enabled, reasons: baseReasons }),
-      pull_project: writeAction({ enabled: pullEnabled, mode: queueReady ? "queued_ready" : "queued_waiting", consumerReady: queueReady, reasons: baseReasons }),
+      pull_project: writeAction({ enabled: false, mode: "disabled", consumerReady: false, reasons: ["PROJECT_PULL_DISABLED"] }),
       sync_to_cis: writeAction({ enabled: syncReasons.length === 0, mode: "queued_ready", consumerReady: queueReady, reasons: syncReasons }),
     },
   };

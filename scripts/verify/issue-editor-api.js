@@ -204,13 +204,14 @@ async function main() {
     },
   });
   const untranslatedIssue = createIssue(config, project, "IE-2");
+  const placeholderIssue = createIssue(config, project, "IE-4");
   const app = createApp({ config });
 
   await withServer(app, async (server) => {
     const token = await login(server);
 
     const editor = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}/editor`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/editor`,
       token,
     });
     assert.equal(editor.status, 200);
@@ -221,19 +222,35 @@ async function main() {
     assert.ok(!editor.body.data.field_meta.readonly_fields.includes("labels"));
     assert.ok(!Object.prototype.hasOwnProperty.call(editor.body.data.field_meta.field_types, "components"));
     assert.deepEqual(editor.body.data.field_meta.catalogs.status, ["open", "in_progress", "review", "done"]);
-    assert.equal(editor.body.data.translation.total, 1);
-    assert.equal(editor.body.data.translation.pending, 1);
-    assert.equal(editor.body.data.translations[0].id, translation.id);
-    assert.equal(editor.body.data.translations[0].target_type, "issue");
-    assert.equal(editor.body.data.translations[0].target_field, "description");
-    assert.equal(editor.body.data.translations[0].review_status, "ai_draft");
-    assert.equal(editor.body.data.translations[0].ai_draft, "Latest description translation");
+    assert.equal(editor.body.data.translation.total, 2);
+    assert.equal(editor.body.data.translation.pending, 2);
+    const summaryPlaceholder = editor.body.data.translations.find((item) => item.target_field === "summary");
+    const descriptionDraft = editor.body.data.translations.find((item) => item.target_field === "description");
+    assert.equal(summaryPlaceholder.id, null);
+    assert.equal(summaryPlaceholder.review_status, "pending");
+    assert.equal(summaryPlaceholder.ai_draft, null);
+    assert.equal(descriptionDraft.id, translation.id);
+    assert.equal(descriptionDraft.target_type, "issue");
+    assert.equal(descriptionDraft.review_status, "ai_draft");
+    assert.equal(descriptionDraft.ai_draft, "Latest description translation");
     assert.equal(editor.body.data.collections.worklog_summary.count, 0);
     assert.equal(editor.body.data.assignee_meta.jira.account_id, "jira-account");
+    assert.equal(editor.body.data.canonical.story_point.value, 1);
+    assert.equal(editor.body.data.field_meta.field_types.story_point, "number");
+
+    const translatedPlaceholder = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/issues/${placeholderIssue.id}/translations/translate`,
+      token,
+      body: { target_field: "summary" },
+    });
+    assert.equal(translatedPlaceholder.status, 200);
+    assert.deepEqual(translatedPlaceholder.body.data.created_items.map((item) => item.target_field), ["summary"]);
+    assert.equal(translatedPlaceholder.body.data.translations.find((item) => item.target_field === "summary").review_status, "ai_draft");
 
     const approvedDraftResponse = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${translation.id}/approve`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${translation.id}/approve`,
       token,
       body: { review_notes: "issue-editor-approve" },
     });
@@ -245,17 +262,18 @@ async function main() {
     assert.equal(approvedIssue.fields_json.description.cis, "Latest description translation");
 
     const editorAfterApproval = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}/editor`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/editor`,
       token,
     });
     assert.equal(editorAfterApproval.status, 200);
     assert.equal(editorAfterApproval.body.data.canonical.description.value, "Latest description translation");
-    assert.equal(editorAfterApproval.body.data.translations[0].source_text, "Backlog description");
-    assert.equal(editorAfterApproval.body.data.translations[0].is_source_stale, false);
+    const approvedDescription = editorAfterApproval.body.data.translations.find((item) => item.target_field === "description");
+    assert.equal(approvedDescription.source_text, "Backlog description");
+    assert.equal(approvedDescription.is_source_stale, false);
 
     const rejected = await requestJson(server, {
       method: "PATCH",
-      pathname: `/api/v1/issues/${issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}`,
       token,
       body: {
         labels: ["blocked"],
@@ -263,15 +281,25 @@ async function main() {
     });
     assert.equal(rejected.status, 422);
 
+    const invalidStoryPoint = await requestJson(server, {
+      method: "PATCH",
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}`,
+      token,
+      body: { story_point: -1 },
+    });
+    assert.equal(invalidStoryPoint.status, 422);
+    assert.equal(invalidStoryPoint.body.error.code, "INVALID_STORY_POINT");
+
     const patched = await requestJson(server, {
       method: "PATCH",
-      pathname: `/api/v1/issues/${issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}`,
       token,
       body: {
-        summary: "Canonical summary",
+        summary: "【IE-1】Canonical summary【IE-1】",
         priority: "Medium",
         status: "done",
         due_date: "2026-07-31",
+        story_point: "3.5",
         assignee: "user@example.test",
         assignee_meta: {
           jira_account_id: "account-123",
@@ -282,25 +310,26 @@ async function main() {
     assert.equal(patched.status, 200);
     assert.deepEqual(
       patched.body.data.changed_fields.sort(),
-      ["assignee", "due_date", "priority", "status", "summary"].sort()
+      ["assignee", "due_date", "priority", "status", "story_point", "summary"].sort()
     );
     assert.equal(patched.body.data.issue.sync_status, ISSUE_STATUSES.UPDATE_PENDING);
 
     const saved = readIssue(config, issue.id);
     assert.equal(saved.sync_status, ISSUE_STATUSES.UPDATE_PENDING);
     assert.equal(saved.fields_json.summary.backlog, "Original summary");
-    assert.equal(saved.fields_json.summary.cis, "Canonical summary");
+    assert.equal(saved.fields_json.summary.cis, "【IE-1】Canonical summary");
     assert.equal(saved.fields_json.description.cis, "Latest description translation");
     assert.equal(saved.fields_json.priority.backlog, "High");
     assert.equal(saved.fields_json.priority.cis, "Medium");
     assert.equal(saved.fields_json.status.backlog, "Open");
     assert.equal(saved.fields_json.status.cis, "done");
     assert.equal(saved.fields_json.due_date.cis, "2026-07-31");
+    assert.equal(saved.fields_json.story_point.cis, 3.5);
     assert.equal(saved.fields_json.assignee_meta.cis.jira_account_id, "account-123");
 
     const translate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${untranslatedIssue.id}/translations/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${untranslatedIssue.id}/translations/translate`,
       token,
     });
     assert.equal(translate.status, 200);
@@ -310,21 +339,34 @@ async function main() {
     assert.equal(translate.body.data.translations.length, 2);
     assert.deepEqual(translate.body.data.translations.map((item) => item.target_field).sort(), ["description", "summary"]);
     assert.ok(translate.body.data.translations.every((item) => item.review_status === "ai_draft"));
-    assert.ok(translate.body.data.translations.every((item) => item.ai_draft.startsWith("[vi] ")));
+    assert.ok(translate.body.data.translations.every((item) => item.ai_draft.includes("[vi] ")));
 
+    const directItem = translate.body.data.translations[0];
+    const directBeforeDb = createConnection({ config });
+    const directJobsBefore = directBeforeDb.prepare("SELECT COUNT(*) AS total FROM sync_jobs").get().total;
+    directBeforeDb.close();
     const directItemTranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${untranslatedIssue.id}/translations/${translate.body.data.translations[0].id}/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${untranslatedIssue.id}/translations/${directItem.id}/translate`,
       token,
     });
     assert.equal(directItemTranslate.status, 200);
     assert.equal(directItemTranslate.body.data.item.review_status, "ai_draft");
-    assert.ok(directItemTranslate.body.data.item.ai_draft.startsWith("[vi] "));
+    assert.ok(directItemTranslate.body.data.item.ai_draft.includes("[vi] "));
+    assert.equal(directItemTranslate.body.data.queued_job_ids.length, 0);
+    assert.equal(directItemTranslate.body.data.job, null);
+    const directCheckDb = createConnection({ config });
+    assert.equal(directCheckDb.prepare("SELECT COUNT(*) AS total FROM sync_jobs").get().total, directJobsBefore);
+    directCheckDb.close();
+    assert.equal(
+      readIssue(config, untranslatedIssue.id).fields_json[directItem.target_field].cis,
+      directItem.target_field === "summary" ? "Original summary" : "Backlog description"
+    );
 
     const descriptionTranslation = translate.body.data.translations.find((item) => item.target_field === "description");
     const reviewedTranslation = await requestJson(server, {
       method: "PUT",
-      pathname: `/api/v1/translation-queue/${descriptionTranslation.id}/draft`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${descriptionTranslation.id}/draft`,
       token,
       body: {
         draft_text: "Reviewed description translation",
@@ -337,7 +379,7 @@ async function main() {
     assert.notEqual(reviewedIssue.fields_json.description.cis, "Reviewed description translation");
     const approvedTranslation = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${descriptionTranslation.id}/approve`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${descriptionTranslation.id}/approve`,
       token,
       body: { review_notes: "issue-editor-approved" },
     });
@@ -346,7 +388,7 @@ async function main() {
 
     const patchedStaleIssue = await requestJson(server, {
       method: "PATCH",
-      pathname: `/api/v1/issues/${staleIssue.id}`,
+      pathname: `/api/v1/projects/${project.id}/issues/${staleIssue.id}`,
       token,
       body: {
         description: "Current description from editor",
@@ -355,18 +397,18 @@ async function main() {
     assert.equal(patchedStaleIssue.status, 200);
 
     const staleEditor = await requestJson(server, {
-      pathname: `/api/v1/issues/${staleIssue.id}/editor`,
+      pathname: `/api/v1/projects/${project.id}/issues/${staleIssue.id}/editor`,
       token,
     });
     assert.equal(staleEditor.status, 200);
-    assert.equal(staleEditor.body.data.translations[0].target_field, "description");
-    assert.equal(staleEditor.body.data.translations[0].source_text, "Backlog description");
-    assert.equal(staleEditor.body.data.translations[0].source_text_original, "Old description line 1\nOld description line 2");
-    assert.equal(staleEditor.body.data.translations[0].is_source_stale, true);
+    const staleDescription = staleEditor.body.data.translations.find((item) => item.target_field === "description");
+    assert.equal(staleDescription.source_text, "Backlog description");
+    assert.equal(staleDescription.source_text_original, "Old description line 1\nOld description line 2");
+    assert.equal(staleDescription.is_source_stale, true);
 
     const refreshedStaleTranslation = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${staleIssue.id}/translations/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${staleIssue.id}/translations/translate`,
       token,
     });
     assert.equal(refreshedStaleTranslation.status, 200);
@@ -382,7 +424,7 @@ async function main() {
     assert.equal(currentDescriptionTranslation.ai_draft, "[vi] Backlog description");
 
     const history = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}/history`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/history`,
       token,
     });
     assert.equal(history.status, 200);
@@ -391,7 +433,7 @@ async function main() {
     assert.ok(history.body.data.manual_edits.some((entry) => entry.details_json.reason === "Verify canonical editor"));
 
     const worklogs = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}/worklogs`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/worklogs`,
       token,
     });
     assert.equal(worklogs.status, 200);
@@ -415,7 +457,7 @@ async function main() {
     const token = await login(server);
     const response = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${retryIssue.id}/translations/translate`,
+      pathname: `/api/v1/projects/${retryProject.id}/issues/${retryIssue.id}/translations/translate`,
       token,
     });
 

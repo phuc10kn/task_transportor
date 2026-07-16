@@ -16,8 +16,9 @@
 Lite được coi là đạt ở mức product khi:
 
 - Backlog manual pull tạo inbound job `backlog -> cis`.
-- Candidate `Sync to CIS + Translate` tạo parent `manual_pull`, đúng queue `summary`/`description`, child `translate` jobs bất đồng bộ và giữ parent/child journal trace; retry/re-click không tạo active job trùng.
-- Project pull enqueue candidate issue, không sync Jira trực tiếp.
+- Candidate `Sync to CIS`/`Sync to CIS + Translate` trả `202` sau local gate + enqueue, còn provider/project verification chạy trong worker. Candidate browse overlay pending/running parent job để reload khóa đúng row và resume polling mà không enqueue lại; đúng queue `summary`/`description`, child `translate` jobs bất đồng bộ và parent/child journal trace được giữ; retry/re-click không tạo active job trùng.
+- Candidate `Sync + Translate + Jira` auto-approves chỉ khi operator chọn action explicit; request tạo/promote job `sync_translate_jira` và không tạo child queue. Một translation item hoặc dry-run fail phải rollback draft/canonical/approval của toàn batch và chặn Jira; job chỉ success sau direct Jira delivery, còn reload giữa workflow vẫn overlay đúng row.
+- Manual project pull trả `409 BACKLOG_PROJECT_PULL_DISABLED`; scheduled scan trả disabled, không query Backlog, không enqueue job và không cập nhật pull state.
 - Pull mapping values giữ các mảng text legacy cho Mapping/dry-run và đồng thời materialize directory provider ID cho toàn catalog; Jira user directory giữ được `accountId` nhưng CIS mapping vẫn chỉ nhận text. Candidate browse chỉ chạy sau action Admin; `filter-options` chỉ đọc Status/người được gán snapshot đã lưu trong project config, còn browse dùng ID snapshot để query Backlog theo created range cùng Status/Not closed/người được gán tùy chọn. Luồng không tạo database write, loại Backlog key đã thuộc CIS cùng project và over-fetch tới limit/source bound.
 - Manual CIS issue có revision đầu tiên + journal; external identity verify tồn tại/project và duplicate theo `project_id + đúng system column`.
 - CIS lưu raw/source snapshot, canonical issue, comments, attachments metadata, job và journal.
@@ -30,7 +31,7 @@ Lite được coi là đạt ở mức product khi:
 - Attachment download failure không block issue ingest/sync, nhưng hiển thị trạng thái lỗi và có retry riêng.
 - Job lỗi retry theo policy, hết retry chuyển `failed`, admin retry được.
 - Dashboard/Admin UI hiển thị pending review, missing mapping, failed job và open anomaly.
-- Workspace sau chọn Project chỉ hiển thị/cho thao tác dữ liệu Project đó theo contract API hiện có; không fallback sang Project khác. Accepted Admin UI gap hiện tại yêu cầu Dashboard disabled/không fetch và Project `enabled=false` chặn toàn bộ workspace read/mutation; phase BE sau mới mở Dashboard project scope/server isolation.
+- Workspace sau chọn Project chỉ hiển thị/cho thao tác dữ liệu Project đó; Backend enforce Project path + owner lookup, không fallback hoặc tiết lộ resource Project khác. Dashboard dùng cùng scope; Project `enabled=false` chặn toàn bộ workspace read/mutation.
 
 Quality objectives Lite hiện tại:
 
@@ -68,10 +69,11 @@ Manual acceptance Lite còn sống:
 - Checklist glossary: Project-scoped CRUD, mỗi language đúng một canonical và không normalized duplicate, concept thiếu pair không vào runtime context, không còn legacy Project JSON và Translation Queue vẫn pass.
 - Jira sync modal tự chạy dry-run, hiển thị `can_sync`, warning và payload preview.
 - Sync Jira thật chỉ chạy sau khi dry-run hợp lệ.
-- Dashboard hiển thị pending review, missing mapping, failed job và open anomaly.
+- Dashboard active Project hiển thị pending review, missing mapping, failed job và open anomaly; metric/alert link giữ Project context, có loading/empty/error/retry và không fetch khi chưa chọn Project.
 - Tabler MPA là Admin UI duy nhất; source/dependency Next/React/Vue và endpoint static UI cũ không được tồn tại hoặc có fallback/dual UI.
 - SQLite backup được chạy theo operation runbook trước khi coi demo/release an toàn.
 - Issue Editor gate: dry-run dùng canonical effective values mới nhất; stale queue item vẫn giữ draft để đối chiếu nhưng Approve bị khóa tới khi Save Draft theo source hiện tại hoặc retranslate; attachment warning chưa là gate v1; manual acceptance ưu tiên `Pull one issue` và `Resync from Backlog`.
+- Story Point gate: issue cũ/mới có effective default `1`; patch sai kiểu hoặc âm bị từ chối; WEC1 Task dry-run, operator override và worker payload đều giữ đúng giá trị tại `customfield_10038`.
 
 ## Folder Structure
 

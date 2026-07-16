@@ -42,7 +42,7 @@ Module thực thi job nội bộ cho các side effect nặng hoặc cần retry.
 |----------|-------|
 | Public surface | `src/modules/Sync/SyncApi.js`, `src/modules/Sync/http/routes.js` |
 | Owned state | `sync_jobs`, `sync_journal` |
-| Registered handlers | `manual_pull`, `translate`, `push_issue`, `push_comment` |
+| Registered handlers | `manual_pull`, `sync_translate_jira`, `translate`, `push_issue`, `push_comment` |
 | Runtime role | internal worker orchestration |
 
 ## Rules / constraints

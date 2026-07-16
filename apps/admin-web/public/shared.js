@@ -23,18 +23,35 @@
   const label = (value) => String(value || "—").replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
   const formatDate = (value) => value ? new Date(value).toLocaleString() : "—";
   const token = () => localStorage.getItem(AUTH_KEY) || "";
-  const activeProjectId = () => Number.parseInt(sessionStorage.getItem(PROJECT_KEY) || "", 10) || null;
+  const projectIdFromPath = (pathname = location.pathname) => Number.parseInt(pathname.match(/^\/project\/([1-9]\d*)(?:\/|$)/)?.[1] || "", 10) || null;
+  const storedProjectId = () => Number.parseInt(sessionStorage.getItem(PROJECT_KEY) || "", 10) || null;
+  const activeProjectId = () => projectIdFromPath() || storedProjectId();
   const formJson = (form) => Object.fromEntries(new FormData(form).entries());
+  const workspacePattern = /^\/project\/[1-9]\d*\/(?:dashboard|mappings|backlog-issues|cis-issues(?:\/[^/]+)?|translation-queue|translation-glossary|anomalies|sync-jobs|journal)\/?$/;
 
   function safePath(value) {
-    if (!value || !value.startsWith("/") || value.startsWith("//")) return "/backlog-issues";
-    const allowed = ["/projects", "/mappings", "/backlog-issues", "/cis-issues", "/translation-queue", "/translation-glossary", "/anomalies", "/sync-jobs", "/journal"];
+    if (!value || !value.startsWith("/") || value.startsWith("//")) return "/projects";
     try {
       const url = new URL(value, location.origin);
-      return allowed.some((route) => url.pathname === route || url.pathname.startsWith(`${route}/`)) ? `${url.pathname}${url.search}` : "/backlog-issues";
+      return url.pathname === "/projects" || workspacePattern.test(url.pathname) ? `${url.pathname}${url.search}` : "/projects";
     } catch {
-      return "/backlog-issues";
+      return "/projects";
     }
+  }
+
+  function projectPath(path = "/backlog-issues", projectId = activeProjectId()) {
+    const id = Number(projectId);
+    if (!Number.isSafeInteger(id) || id < 1) return "/projects";
+    if (!path.startsWith("/") || path.startsWith("//")) return "/projects";
+    const url = new URL(path, location.origin);
+    const candidate = `/project/${id}${url.pathname}${url.search}`;
+    return workspacePattern.test(`/project/${id}${url.pathname}`) ? candidate : "/projects";
+  }
+
+  function workspacePath(value, projectId) {
+    const next = safePath(value);
+    const match = next.match(/^\/project\/[1-9]\d*(\/[^?]*)(\?.*)?$/);
+    return match ? projectPath(`${match[1]}${match[2] || ""}`, projectId) : projectPath("/backlog-issues", projectId);
   }
 
   async function api(path, options = {}) {
@@ -67,6 +84,13 @@
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  function projectApi(projectId, path, options = {}) {
+    const id = Number(projectId);
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error("A positive projectId is required.");
+    if (!path || !path.startsWith("/") || path.startsWith("//")) throw new Error("A relative Project API path is required.");
+    return api(`/api/v1/projects/${encodeURIComponent(id)}${path}`, options);
   }
 
   function state(title, message, action = "") {
@@ -112,10 +136,10 @@
     return element;
   }
 
-  async function pollJob(id, onUpdate, timeout = 60000) {
+  async function pollJob(projectId, id, onUpdate, timeout = 60000) {
     const started = Date.now();
     while (Date.now() - started < timeout) {
-      const job = await api(`/api/v1/sync-jobs/${encodeURIComponent(id)}`);
+      const job = await projectApi(projectId, `/sync-jobs/${encodeURIComponent(id)}`);
       onUpdate?.(job);
       if (["success", "failed", "cancelled"].includes(job.status)) return job;
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -163,16 +187,20 @@
     try {
       const [me, projects] = await Promise.all([api("/api/v1/auth/me"), api("/api/v1/projects")]);
       document.querySelector("#admin-email").textContent = me.admin.email;
-      const requestedId = activeProjectId();
-      const project = projects.find((item) => item.id === requestedId && item.enabled !== false) || null;
+      const pathProjectId = projectIdFromPath();
+      const requestedId = pathProjectId || storedProjectId();
+      const project = projects.find((item) => item.id === requestedId) || null;
       if (!project && requestedId) sessionStorage.removeItem(PROJECT_KEY);
+      if (project) sessionStorage.setItem(PROJECT_KEY, String(project.id));
       const projectLink = document.querySelector("#active-project");
-      if (projectLink) projectLink.textContent = project ? `${project.name} · #${project.id}` : "Choose Project";
-      context = { admin: me.admin, projects, project, projectId: project?.id || null };
-      if (page === "dashboard") {
-        document.querySelector("#page-content").innerHTML = state("Dashboard unavailable", "Dashboard awaits project-scoped backend support. No summary or alert request was sent.", `<a class="btn btn-primary" href="/projects">Open Projects</a>`);
-        return;
+      if (projectLink) {
+        projectLink.textContent = project ? `${project.name} · #${project.id}` : "Choose Project";
+        projectLink.href = project ? `/projects?project_id=${project.id}` : "/projects";
       }
+      document.querySelectorAll("[data-workspace-path]").forEach((link) => {
+        link.href = project ? projectPath(link.dataset.workspacePath, project.id) : "/projects";
+      });
+      context = { admin: me.admin, projects, project, projectId: project?.id || null };
       if (page !== "projects" && !project) {
         renderWorkspaceGate();
         return;
@@ -191,6 +219,6 @@
     }
   }
 
-  window.CIS = { AUTH_KEY, PROJECT_KEY, ApiError, activeProjectId, alert, api, attr, badge, dialog, escape, formJson, formatDate, label, pollJob, ready, retryLink, safePath, state, toast };
+  window.CIS = { AUTH_KEY, PROJECT_KEY, ApiError, activeProjectId, alert, api, attr, badge, dialog, escape, formJson, formatDate, label, pollJob, projectApi, projectIdFromPath, projectPath, ready, retryLink, safePath, state, toast, workspacePath };
   boot();
 })();

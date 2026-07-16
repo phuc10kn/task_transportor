@@ -29,6 +29,7 @@ async function candidateFilterOptions(req, res, next) {
 async function syncCandidateToCis(req, res, next) {
   try {
     const hasTranslationFlag = req.body && Object.prototype.hasOwnProperty.call(req.body, "with_translation");
+    const hasJiraFlag = req.body && Object.prototype.hasOwnProperty.call(req.body, "push_to_jira");
     const result = await BacklogApi.syncCandidateToCis({
       config: req.app.locals.config,
       projectId: req.params.projectId,
@@ -36,6 +37,7 @@ async function syncCandidateToCis(req, res, next) {
       executedBy: req.user && req.user.id,
       correlationId: req.correlationId,
       withTranslation: hasTranslationFlag ? req.body.with_translation : undefined,
+      pushToJira: hasJiraFlag ? req.body.push_to_jira : undefined,
     });
     success(res, result, result.outcome === "queued" ? 202 : 200);
   } catch (error) { next(error); }

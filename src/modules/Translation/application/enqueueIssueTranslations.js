@@ -45,13 +45,17 @@ async function enqueueIssueTranslations({
   requestCorrelationId = null,
   includeRejected = false,
   executionMode = null,
+  enqueueJobs = true,
+  targetFields = null,
   trigger = "manual",
 }) {
   try {
     const repository = createTranslationRepository({ config });
     const bundle = CisApi.getIssueTranslationTargets({ config, issueId });
+    const requestedFields = targetFields ? new Set(targetFields) : null;
+    const targets = (bundle.targets || []).filter((target) => !requestedFields || requestedFields.has(target.field));
     const targetMap = new Map(
-      (bundle.targets || [])
+      targets
         .map((target) => [target.field, normalizeSource(target.value)])
         .filter((entry) => entry[1])
     );
@@ -60,7 +64,7 @@ async function enqueueIssueTranslations({
     const reusedItems = [];
     const selected = [];
 
-    for (const target of bundle.targets || []) {
+    for (const target of targets) {
       const sourceText = normalizeSource(target.value);
       if (!sourceText) {
         continue;
@@ -111,7 +115,7 @@ async function enqueueIssueTranslations({
 
     const jobs = [];
     const reusedJobs = [];
-    for (const item of candidateItems.values()) {
+    for (const item of enqueueJobs ? candidateItems.values() : []) {
       const payload = {
         translation_queue_id: item.id,
         parent_sync_job_id: parentSyncJobId,
@@ -148,6 +152,7 @@ async function enqueueIssueTranslations({
       created_items: created,
       reused_items: reusedItems,
       queue_items: [...candidateItems.values()],
+      current_items: selected,
       jobs,
       reused_jobs: reusedJobs,
       cleaned_queue_ids: [],

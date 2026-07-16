@@ -29,4 +29,6 @@ Concern này định nghĩa các loại flow chuẩn cho custom modular monolith
 - [AF-006-jira-dry-run](./interaction-flows/AF-006-jira-dry-run/README.md)
 - [AF-007-cis-to-jira-sync](./interaction-flows/AF-007-cis-to-jira-sync/README.md)
 
-Candidate `Sync to CIS + Translate` là nhánh explicit của inbound `AF-001`: parent `manual_pull` ingest vào CIS, sau đó `TranslationApi` materialize current-source queue và `SyncApi` enqueue child `translate` jobs. HTTP không gọi AI; worker giữ execution, retry và journal trace parent/child.
+`AF-002` và `AF-003` giữ trace kiến trúc nhưng execution hiện bị disable: manual route trả lỗi có chủ ý, scheduled scan trả disabled và không tạo job.
+
+Candidate `Sync to CIS`/`Sync + Translate` là các nhánh `manual_pull`; `Sync + Translate + Jira` dùng job riêng `sync_translate_jira`. HTTP chỉ validate local state, enqueue/reuse/promote rồi trả `202`. Worker của job Jira verify Backlog, ingest CIS, dịch trực tiếp toàn batch, dry-run trên staged values, apply/approve batch atomically và gọi Jira trong cùng handler; không enqueue child `translate`, `push_issue` hoặc `push_comment`. Candidate read model overlay cả hai job type theo Project + Backlog key, kể cả CIS issue đã được tạo giữa workflow, để UI phục hồi polling sau reload. HTTP không gọi provider, AI hoặc Jira.

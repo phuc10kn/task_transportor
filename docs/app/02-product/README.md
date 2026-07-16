@@ -21,15 +21,16 @@ System -> CIS -> System
 Lite in scope:
 
 - Admin login và project config tối thiểu.
-- Admin chọn hoặc tạo đúng một Project trước khi vào workspace nghiệp vụ; issue, translation, mapping, anomaly, job và journal của workspace đó chỉ dùng Project đã chọn theo contract API hiện có. Đổi Project chỉ thực hiện tại Project Config.
-- Accepted Admin UI gap hiện tại: Dashboard bị disabled và không tải summary/alerts; Project `enabled=false` chỉ được sửa tại Project Config và không thể mở workspace. Project-scoped Dashboard cùng server-side object isolation thuộc `BE-PROJECT-SCOPE-01/02` của phase BE sau.
+- Admin chọn hoặc tạo đúng một Project trước khi vào workspace nghiệp vụ; Dashboard, issue, translation, mapping, anomaly, job và journal chỉ đọc/ghi Project đã chọn bằng Project-scoped API. Đổi Project chỉ thực hiện tại Project Config.
+- `BE-PROJECT-SCOPE-01/02` đã đóng: Backend enforce object isolation theo Project path, Dashboard đã mở cho active Project, route workspace legacy đã bị xóa và Project `enabled=false` chặn toàn bộ workspace.
 - Backlog manual pull một issue vào CIS.
-- Backlog project pull enqueue nhiều issue vào CIS.
-- Backlog Issues browser theo project + khoảng ngày tạo, Status/Not closed/người được gán tùy chọn từ snapshot cấu hình Backlog của project; chỉ query candidate sau action của Admin, loại issue đã có trong CIS và chỉ giữ kết quả trong memory của Admin UI.
-- Sync từng Backlog candidate vào CIS qua shared manual-pull job; không đi thẳng Jira.
+- Backlog project pull và scheduled pull bị disable; API không query Backlog hoặc enqueue batch job.
+- Backlog Issues browser theo project + khoảng ngày tạo, Status/Not closed/người được gán tùy chọn từ snapshot cấu hình Backlog của project; chỉ query candidate sau action của Admin, loại issue đã có trong CIS và overlay active `manual_pull` job lên đúng candidate row khi tải lại màn.
+- Sync từng Backlog candidate vào CIS qua shared manual-pull job; HTTP chỉ validate cục bộ/enqueue rồi trả `202`, provider/project verification thuộc worker và không đi thẳng Jira.
 - Sync từng Backlog candidate kèm Translation Queue qua action explicit `Sync to CIS + Translate`; chỉ tạo queue cho Backlog `summary`/`description`, AI chạy bất đồng bộ và vẫn cần human review.
+- Action explicit `Sync + Translate + Jira` là operator authorization cho auto-delivery: enqueue job riêng `sync_translate_jira`; worker ingest Backlog, dịch trực tiếp đủ batch `summary`/`description`, chạy Jira dry-run trên staged values, rồi mới approve/apply cả batch trong một transaction và create/update Jira. Job này không tạo child `translate`/`push_issue`; một bước lỗi phải rollback cả batch local và không chạy bước tiếp theo.
 - Tạo CIS issue thủ công và link immutable Backlog/Jira identity đã verify theo project.
-- Scheduled pull optional sau khi manual/project pull ổn định.
+- Scheduled pull không hoạt động trong scope Lite hiện tại.
 - CIS lưu raw/source snapshot, canonical issue data, comments, attachments metadata, sync job và journal.
 - Translation Nhật -> Việt bằng AI adapter khi bật option.
 - Human review cho translation/comment cần duyệt: AI và operator cùng dùng một draft; Save Draft không đổi canonical, chỉ Approve mới apply draft vào CIS.
@@ -40,7 +41,7 @@ Lite in scope:
 - CIS -> Jira create/update issue/comment khi pre-check pass.
 - Admin UI tối thiểu cho dashboard, project config, issue editor, translation, mapping, anomaly, jobs và journal.
 - Translation Glossary là màn riêng; Translation Queue vẫn là màn review độc lập.
-- Admin UI tách CIS Issues và Backlog Issues; control Pull one/Pull project nằm ở Backlog Issues.
+- Admin UI tách CIS Issues và Backlog Issues; Pull one nằm ở Backlog Issues, còn Pull project hiển thị disabled để operator dùng action theo từng candidate.
 
 Lite out of scope nếu chưa có decision mới:
 
@@ -57,7 +58,9 @@ Product behavior ưu tiên:
 
 - Người dùng bắt đầu từ Backlog pull vào CIS, không sync trực tiếp sang Jira.
 - Issue Editor là nơi review và chuẩn bị canonical issue.
+- Canonical issue có `story_point` kiểu số, mặc định `1`; outbound WEC1 Task map field này sang Jira `customfield_10038` (`Story Points`).
 - Translation trong Issue Editor là modal/action hỗ trợ, không thay thế canonical ownership.
+- Auto-approval chỉ áp dụng cho batch được operator yêu cầu rõ bằng `Sync + Translate + Jira`; các Translation Queue flow khác vẫn cần human review.
 - Jira sync chạy qua modal/action dry-run, cho sửa payload target, rồi sync bằng payload đã kiểm tra.
 - Issue canonical sync không bị chặn bởi translation queue/review riêng, nhưng state `pending_translate` vẫn chưa syncable trong code Lite hiện tại.
 - Medium/Full plan chỉ là future scope/provenance, không tự trở thành Lite scope.

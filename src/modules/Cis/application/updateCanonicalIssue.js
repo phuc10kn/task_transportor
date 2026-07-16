@@ -11,6 +11,7 @@ const {
 const { hashCanonicalIssue } = require("../support/hashCanonicalIssue");
 const { resolveCanonicalField } = require("../support/resolveCanonicalField");
 const { buildCanonicalSnapshot, pickAssigneeMeta } = require("./getIssueEditor");
+const { normalizeCanonicalSummary } = require("./normalizeCanonicalSummary");
 
 const META_ALLOWED_KEYS = new Set(["jira_account_id"]);
 
@@ -54,6 +55,18 @@ function validateAssigneeMeta(value) {
       });
     }
   }
+}
+
+function normalizeStoryPoint(value) {
+  const parsed = Number(value);
+  if (value === "" || value === null || value === undefined || !Number.isFinite(parsed) || parsed < 0) {
+    throw new AppError({
+      code: "INVALID_STORY_POINT",
+      message: "story_point must be a non-negative number.",
+      status: 422,
+    });
+  }
+  return parsed;
 }
 
 function validatePatchPayload(payload) {
@@ -108,6 +121,10 @@ function validatePatchPayload(payload) {
     validateDueDate(payload.due_date);
   }
 
+  if (Object.prototype.hasOwnProperty.call(payload, "story_point")) {
+    normalizeStoryPoint(payload.story_point);
+  }
+
   return fields;
 }
 
@@ -143,8 +160,8 @@ function revisionSnapshotFromCanonical(canonical, previousRevision, fieldsJson) 
   };
 }
 
-function updateCanonicalIssue({ config, issueId, payload, executedBy, correlationId }) {
-  const repository = createCisRepository({ config });
+function updateCanonicalIssue({ config, issueId, payload, executedBy, correlationId, db = null, audit = {} }) {
+  const repository = createCisRepository({ config, db });
   const issue = repository.getIssueById(issueId);
 
   if (!issue) {
@@ -154,7 +171,10 @@ function updateCanonicalIssue({ config, issueId, payload, executedBy, correlatio
       status: 404,
     });
   }
-  if (SyncApi.hasActiveIssueJob({ config, issueId: issue.id, jobType: "push_issue" })) {
+  const activePushJob = db
+    ? SyncApi.hasActiveIssueJobInTransaction({ db, issueId: issue.id, jobType: "push_issue" })
+    : SyncApi.hasActiveIssueJob({ config, issueId: issue.id, jobType: "push_issue" });
+  if (activePushJob) {
     throw new AppError({ code: "ISSUE_SYNC_IN_PROGRESS", message: "Issue cannot be edited while Jira sync is pending or running.", status: 409 });
   }
 
@@ -169,7 +189,11 @@ function updateCanonicalIssue({ config, issueId, payload, executedBy, correlatio
   const changedFields = [];
 
   for (const field of patchFields) {
-    const incoming = payload[field];
+    const incoming = field === "story_point"
+      ? normalizeStoryPoint(payload[field])
+      : field === "summary"
+        ? normalizeCanonicalSummary({ issue, summary: payload[field] })
+        : payload[field];
     const current = resolveCanonicalField(fieldsJson, field, revision && revision[field]);
 
     if (current.value !== incoming) {
@@ -207,25 +231,26 @@ function updateCanonicalIssue({ config, issueId, payload, executedBy, correlatio
   const afterHash = hashCanonicalIssue({ canonical: afterCanonical, issue });
   const createsRevision = changedFields.some((field) => REVISION_CANONICAL_FIELDS.includes(field));
 
-  const updated = repository.updateCanonicalIssue({
+  const updateInput = {
     issue_id: issue.id,
     fields_json: fieldsJson,
     sync_status: nextSyncStatus(issue.sync_status, changedFields),
     revision_snapshot: createsRevision ? revisionSnapshotFromCanonical(afterCanonical, revision, fieldsJson) : null,
-  });
+  };
+  const updated = db
+    ? repository.updateCanonicalIssueInTransaction(updateInput)
+    : repository.updateCanonicalIssue(updateInput);
 
-  SyncApi.writeJournal({
-    config,
-    input: {
+  const journalInput = {
       project_id: issue.project_id,
       issue_id: issue.id,
       direction_from: "cis",
       direction_to: "cis",
-      job_type: "manual_edit",
-      action: "issue_manual_edit_saved",
+      job_type: audit.job_type || "manual_edit",
+      action: audit.action || "issue_manual_edit_saved",
       status: "success",
-      trigger: "manual",
-      message: "Canonical issue manual edit saved.",
+      trigger: audit.trigger || "manual",
+      message: audit.message || "Canonical issue manual edit saved.",
       details_json: {
         changed_fields: changedFields,
         before,
@@ -238,11 +263,13 @@ function updateCanonicalIssue({ config, issueId, payload, executedBy, correlatio
         actor: executedBy || null,
         canonical_hash_before: beforeHash,
         canonical_hash_after: afterHash,
+        ...(audit.details_json || {}),
       },
       executed_by: executedBy || null,
       correlation_id: correlationId || null,
-    },
-  });
+  };
+  if (db) SyncApi.writeJournalInTransaction({ db, input: journalInput });
+  else SyncApi.writeJournal({ config, input: journalInput });
 
   return {
     issue: updated,

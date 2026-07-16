@@ -36,6 +36,7 @@ function createManualIssue({ config, input, executedBy, correlationId }) {
     status: optionalText(input.status),
     assignee: optionalText(input.assignee),
     due_date: dueDate,
+    story_point: 1,
   };
   const fieldsJson = {};
   for (const [field, value] of Object.entries(values)) {

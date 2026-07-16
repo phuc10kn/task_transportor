@@ -6,6 +6,7 @@ const EDITABLE_CANONICAL_FIELDS = Object.freeze([
   "status",
   "assignee",
   "due_date",
+  "story_point",
 ]);
 
 const REVISION_CANONICAL_FIELDS = Object.freeze([
@@ -14,6 +15,7 @@ const REVISION_CANONICAL_FIELDS = Object.freeze([
   "issue_type",
   "priority",
   "assignee",
+  "story_point",
 ]);
 
 const READONLY_CANONICAL_FIELDS = Object.freeze(["reporter"]);
@@ -39,6 +41,11 @@ const FIELD_TYPES = Object.freeze({
   status: "single_select",
   assignee: "user",
   due_date: "date",
+  story_point: "number",
+});
+
+const DEFAULT_CANONICAL_VALUES = Object.freeze({
+  story_point: 1,
 });
 
 const DEFAULT_CATALOGS = Object.freeze({
@@ -146,6 +153,7 @@ function isDisallowedEditorField(field) {
 
 module.exports = {
   DISALLOWED_EDITOR_FIELDS,
+  DEFAULT_CANONICAL_VALUES,
   EDITABLE_CANONICAL_FIELDS,
   READONLY_CANONICAL_FIELDS,
   REVISION_CANONICAL_FIELDS,

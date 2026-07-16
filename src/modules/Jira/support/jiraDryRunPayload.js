@@ -24,6 +24,22 @@ function maybeSet(fields, key, value) {
   }
 }
 
+const WEC1_STORY_POINT_FIELD_ID = "customfield_10038";
+
+function jiraStoryPointFieldId(project, jiraIssueType) {
+  let hostname = "";
+  try {
+    hostname = new URL(project && project.jira_site_url || "https://invalid.local").hostname.toLowerCase();
+  } catch (error) {
+    hostname = "";
+  }
+  return hostname === "10kn-developer.atlassian.net"
+    && String(project && project.jira_project_key || "").toUpperCase() === "WEC1"
+    && String(jiraIssueType || "").toLowerCase() === "task"
+    ? WEC1_STORY_POINT_FIELD_ID
+    : null;
+}
+
 function buildJiraPayload({ issue, project, canonical, mapped, assigneeAccountId }) {
   const fields = {
     project: { key: project.jira_project_key || null },
@@ -35,6 +51,14 @@ function buildJiraPayload({ issue, project, canonical, mapped, assigneeAccountId
 
   const dueDate = canonicalValue(canonical, "due_date");
   maybeSet(fields, "duedate", dueDate);
+  const storyPointFieldId = jiraStoryPointFieldId(
+    project,
+    mapped.issue_type && mapped.issue_type.jira_value
+  );
+  const storyPoint = Number(canonicalValue(canonical, "story_point"));
+  if (storyPointFieldId && Number.isFinite(storyPoint) && storyPoint >= 0) {
+    fields[storyPointFieldId] = storyPoint;
+  }
 
   if (assigneeAccountId) {
     fields.assignee = { accountId: assigneeAccountId };
@@ -58,5 +82,7 @@ function buildJiraPayload({ issue, project, canonical, mapped, assigneeAccountId
 
 module.exports = {
   buildJiraPayload,
+  jiraStoryPointFieldId,
   jiraUserField,
+  WEC1_STORY_POINT_FIELD_ID,
 };

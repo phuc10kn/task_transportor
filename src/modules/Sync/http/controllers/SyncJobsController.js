@@ -1,4 +1,5 @@
 const SyncApi = require("../../SyncApi");
+const CisApi = require("../../../Cis/CisApi");
 const { success } = require("../../../../http/response/envelope");
 
 function list(req, res, next) {
@@ -7,7 +8,7 @@ function list(req, res, next) {
       config: req.app.locals.config,
       filters: {
         status: req.query.status,
-        project_id: req.query.project_id ? Number(req.query.project_id) : undefined,
+        project_id: req.project.id,
       },
     }));
   } catch (error) {
@@ -17,12 +18,16 @@ function list(req, res, next) {
 
 function create(req, res, next) {
   try {
+    if (req.body.issue_id) {
+      CisApi.getIssueById({ config: req.app.locals.config, issueId: req.body.issue_id, projectId: req.project.id });
+    }
     success(
       res,
       SyncApi.enqueueJob({
         config: req.app.locals.config,
         input: {
           ...req.body,
+          project_id: req.project.id,
           executed_by: req.user && req.user.id,
           correlation_id: req.correlationId,
         },
@@ -39,6 +44,7 @@ function show(req, res, next) {
     success(res, SyncApi.getJob({
       config: req.app.locals.config,
       jobId: req.params.jobId,
+      projectId: req.project && req.project.id,
     }));
   } catch (error) {
     next(error);
@@ -47,6 +53,7 @@ function show(req, res, next) {
 
 function retry(req, res, next) {
   try {
+    SyncApi.getJob({ config: req.app.locals.config, jobId: req.params.jobId, projectId: req.project.id });
     success(res, SyncApi.retryJob({
       config: req.app.locals.config,
       jobId: req.params.jobId,
@@ -59,6 +66,7 @@ function retry(req, res, next) {
 
 function cancel(req, res, next) {
   try {
+    SyncApi.getJob({ config: req.app.locals.config, jobId: req.params.jobId, projectId: req.project.id });
     success(res, SyncApi.cancelJob({
       config: req.app.locals.config,
       jobId: req.params.jobId,

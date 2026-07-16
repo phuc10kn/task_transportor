@@ -99,7 +99,7 @@ README này không lặp lại lý do tồn tại của từng concern; chi ti�
 
 ## Evolution Lite -> Medium -> Full
 
-- Lite ưu tiên pull-first: Backlog manual/project pull vào CIS, Translation review, Jira dry-run và CIS -> Jira sync có kiểm soát.
+- Lite ưu tiên pull-first: Backlog Pull one/candidate sync vào CIS, Translation review, Jira dry-run và CIS -> Jira sync có kiểm soát; project/scheduled pull hiện bị disable.
 - Medium mở rộng webhook/Jira inbound sau khi Lite ổn định; webhook chỉ verify, lưu raw event, enqueue job và return nhanh.
 - Full mở CIS -> Backlog, replay/rollback, learning sâu hơn, notification, tách worker/process và nâng database khi tải/vận hành yêu cầu.
 - Mọi evolution phải giữ invariant `System -> CIS -> System`, owner-write discipline, dry-run trước outbound write và audit/journal đủ truy vết.

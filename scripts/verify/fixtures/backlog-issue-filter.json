@@ -37,6 +37,30 @@
       "assignee": { "id": 11, "name": "Suzuki", "mailAddress": "suzuki@example.test" },
       "created": "2026-06-30T01:00:00Z",
       "updated": "2026-06-30T02:00:00Z"
+    },
+    {
+      "id": 1004,
+      "issueKey": "WEC-4",
+      "projectKey": "WEC",
+      "summary": "Jira workflow candidate",
+      "description": "Translate this candidate atomically before Jira delivery.",
+      "issueType": { "id": 2, "name": "Task" },
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 3, "name": "Normal" },
+      "created": "2026-07-01T01:00:00Z",
+      "updated": "2026-07-01T02:00:00Z"
+    },
+    {
+      "id": 1005,
+      "issueKey": "WEC-5",
+      "projectKey": "WEC",
+      "summary": "Atomic rollback candidate",
+      "description": "The second translation element must fail without partial canonical apply.",
+      "issueType": { "id": 2, "name": "Task" },
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 3, "name": "Normal" },
+      "created": "2026-07-02T01:00:00Z",
+      "updated": "2026-07-02T02:00:00Z"
     }
   ],
   "commentsByIssue": {
@@ -49,7 +73,9 @@
       }
     ],
     "WEC-2": [],
-    "WEC-3": []
+    "WEC-3": [],
+    "WEC-4": [],
+    "WEC-5": []
   },
   "attachmentsByIssue": {
     "WEC-1": [
@@ -62,7 +88,9 @@
       }
     ],
     "WEC-2": [],
-    "WEC-3": []
+    "WEC-3": [],
+    "WEC-4": [],
+    "WEC-5": []
   },
   "attachmentDownloads": {
     "701": {

@@ -1,12 +1,20 @@
 const { success } = require("../../../../http/response/envelope");
 const TranslationApi = require("../../TranslationApi");
 
+function assertQueueItemInProject(req) {
+  return TranslationApi.getTranslationQueueItem({
+    config: req.app.locals.config,
+    queueId: req.params.queueId,
+    projectId: req.project.id,
+  });
+}
+
 function list(req, res, next) {
   try {
     success(res, TranslationApi.listTranslationQueue({
       config: req.app.locals.config,
       filters: {
-        project_id: req.query.project_id ? Number(req.query.project_id) : undefined,
+        project_id: req.project.id,
         issue_id: req.query.issue_id,
         review_status: req.query.review_status,
       },
@@ -18,10 +26,7 @@ function list(req, res, next) {
 
 function show(req, res, next) {
   try {
-    success(res, TranslationApi.getTranslationQueueItem({
-      config: req.app.locals.config,
-      queueId: req.params.queueId,
-    }));
+    success(res, assertQueueItemInProject(req));
   } catch (error) {
     next(error);
   }
@@ -29,6 +34,7 @@ function show(req, res, next) {
 
 function approve(req, res, next) {
   try {
+    assertQueueItemInProject(req);
     success(res, TranslationApi.approveTranslation({
       config: req.app.locals.config,
       queueId: req.params.queueId,
@@ -43,6 +49,7 @@ function approve(req, res, next) {
 
 function reject(req, res, next) {
   try {
+    assertQueueItemInProject(req);
     success(res, TranslationApi.rejectTranslation({
       config: req.app.locals.config,
       queueId: req.params.queueId,
@@ -57,6 +64,7 @@ function reject(req, res, next) {
 
 function retranslate(req, res, next) {
   try {
+    assertQueueItemInProject(req);
     success(res, TranslationApi.retranslateTranslation({
       config: req.app.locals.config,
       queueId: req.params.queueId,
@@ -70,6 +78,7 @@ function retranslate(req, res, next) {
 
 function saveDraft(req, res, next) {
   try {
+    assertQueueItemInProject(req);
     success(res, TranslationApi.saveTranslationDraft({
       config: req.app.locals.config,
       queueId: req.params.queueId,

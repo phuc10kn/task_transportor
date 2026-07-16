@@ -26,6 +26,7 @@ const { markCommentJiraSyncFailed } = require("./application/markCommentJiraSync
 const { markDuplicateIssue } = require("./application/markDuplicateIssue");
 const { markIssueConflict } = require("./application/markIssueConflict");
 const { markIssueSyncStatus } = require("./application/markIssueSyncStatus");
+const { normalizeCanonicalSummary } = require("./application/normalizeCanonicalSummary");
 const {
   markAttachmentDownloaded,
   markAttachmentDownloadFailed,
@@ -64,6 +65,7 @@ module.exports = {
   markDuplicateIssue,
   markIssueConflict,
   markIssueSyncStatus,
+  normalizeCanonicalSummary,
   markAttachmentDownloaded,
   markAttachmentDownloadFailed,
   saveJiraDraftFields,

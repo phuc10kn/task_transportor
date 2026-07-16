@@ -3,6 +3,7 @@ const cors = require("cors");
 
 const { loadConfig } = require("./config/env");
 const { createCorrelationIdMiddleware } = require("./http/middleware/correlationId");
+const { requireProjectWorkspace } = require("./http/middleware/requireProjectWorkspace");
 const { notFoundHandler, errorHandler } = require("./http/middleware/errorHandlers");
 const { success } = require("./http/response/envelope");
 const { createAuthRouter } = require("./modules/Auth/http/routes");
@@ -59,6 +60,7 @@ function createApp(options = {}) {
     "/api/v1",
     createDashboardRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
@@ -71,48 +73,56 @@ function createApp(options = {}) {
     "/api/v1",
     createCisRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1/projects",
     createBacklogRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
-    "/api/v1/attachments",
+    "/api/v1/projects",
     createBacklogAttachmentRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createSyncRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createTranslationRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createMappingRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createAnomalyRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createJiraRouter({
       authenticate: createAuthenticateAdmin(),
+      requireProjectWorkspace,
     })
   );
 

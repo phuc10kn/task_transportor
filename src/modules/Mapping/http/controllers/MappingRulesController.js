@@ -1,9 +1,9 @@
 const { success } = require("../../../../http/response/envelope");
 const MappingApi = require("../../MappingApi");
 
-function filtersFromQuery(query) {
+function filtersFromQuery(query, projectId) {
   return {
-    project_id: query.project_id ? Number(query.project_id) : undefined,
+    project_id: projectId,
     mapping_type: query.mapping_type,
     direction_from: query.direction_from,
     direction_to: query.direction_to,
@@ -11,11 +11,19 @@ function filtersFromQuery(query) {
   };
 }
 
+function assertRuleInProject(req) {
+  return MappingApi.getMappingRule({
+    config: req.app.locals.config,
+    ruleId: req.params.ruleId,
+    projectId: req.project.id,
+  });
+}
+
 function list(req, res, next) {
   try {
     success(res, MappingApi.listMappingRules({
       config: req.app.locals.config,
-      filters: filtersFromQuery(req.query),
+      filters: filtersFromQuery(req.query, req.project.id),
     }));
   } catch (error) {
     next(error);
@@ -27,7 +35,7 @@ function settings(req, res, next) {
     success(res, MappingApi.getMappingSettings({
       config: req.app.locals.config,
       filters: {
-        project_id: req.query.project_id,
+        project_id: req.project.id,
         source_system: req.query.source_system,
         target_system: req.query.target_system,
       },
@@ -41,7 +49,7 @@ function create(req, res, next) {
   try {
     success(res, MappingApi.createMappingRule({
       config: req.app.locals.config,
-      input: req.body,
+      input: { ...req.body, project_id: req.project.id },
     }), 201);
   } catch (error) {
     next(error);
@@ -50,10 +58,7 @@ function create(req, res, next) {
 
 function show(req, res, next) {
   try {
-    success(res, MappingApi.getMappingRule({
-      config: req.app.locals.config,
-      ruleId: req.params.ruleId,
-    }));
+    success(res, assertRuleInProject(req));
   } catch (error) {
     next(error);
   }
@@ -61,6 +66,7 @@ function show(req, res, next) {
 
 function update(req, res, next) {
   try {
+    assertRuleInProject(req);
     success(res, MappingApi.updateMappingRule({
       config: req.app.locals.config,
       ruleId: req.params.ruleId,
@@ -73,6 +79,7 @@ function update(req, res, next) {
 
 function approve(req, res, next) {
   try {
+    assertRuleInProject(req);
     success(res, MappingApi.approveMappingRule({
       config: req.app.locals.config,
       ruleId: req.params.ruleId,
@@ -85,6 +92,7 @@ function approve(req, res, next) {
 
 function reject(req, res, next) {
   try {
+    assertRuleInProject(req);
     success(res, MappingApi.rejectMappingRule({
       config: req.app.locals.config,
       ruleId: req.params.ruleId,
@@ -97,6 +105,7 @@ function reject(req, res, next) {
 
 function remove(req, res, next) {
   try {
+    assertRuleInProject(req);
     success(res, MappingApi.deleteMappingRule({
       config: req.app.locals.config,
       ruleId: req.params.ruleId,

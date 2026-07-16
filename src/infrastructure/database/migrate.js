@@ -6,6 +6,11 @@ const { loadConfig } = require("../../config/env");
 const { createConnection } = require("./connection");
 
 const MIGRATIONS_DIR = path.resolve(__dirname, "../../db/migrations");
+const LEGACY_MIGRATION_CHECKSUMS = Object.freeze({
+  "017_sync_translate_jira_job.sql": new Set([
+    "90596e625a4e67df50d5b809fa38b78e6c20195b8550bd3806e618aa9075107f",
+  ]),
+});
 
 function ensureMigrationTable(db) {
   db.exec(`
@@ -54,7 +59,8 @@ function applyMigration(db, fileName) {
     .get(fileName);
 
   if (existing) {
-    if (!hashes.compatible.has(existing.checksum)) {
+    const legacyChecksums = LEGACY_MIGRATION_CHECKSUMS[fileName];
+    if (!hashes.compatible.has(existing.checksum) && !legacyChecksums?.has(existing.checksum)) {
       throw new Error(`Migration checksum changed: ${fileName}`);
     }
 

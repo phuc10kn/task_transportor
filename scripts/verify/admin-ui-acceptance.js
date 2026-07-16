@@ -383,10 +383,10 @@ async function verifyPhase07() {
       token,
     });
     assert.equal(issues.status, 200);
-    assert.ok(issues.body.data.some((row) => row.id === issue.id));
+    assert.ok(issues.body.data.items.some((row) => row.id === issue.id));
 
     const detail = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}`,
       token,
     });
     assert.equal(detail.status, 200);
@@ -395,7 +395,7 @@ async function verifyPhase07() {
     assert.equal(detail.body.data.attachments.length, 1);
 
     const attachments = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}/attachments`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/attachments`,
       token,
     });
     assert.equal(attachments.status, 200);
@@ -403,7 +403,7 @@ async function verifyPhase07() {
 
     const approve = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${summaryTranslation.id}/approve`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${summaryTranslation.id}/approve`,
       token,
       body: { review_notes: "verify phase07" },
     });
@@ -412,16 +412,16 @@ async function verifyPhase07() {
 
     const dryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(dryRun.status, 200);
     assert.equal(dryRun.body.data.can_sync, true);
-    assert.equal(dryRun.body.data.payload.fields.summary, "VI: Login screen shows error");
+    assert.equal(dryRun.body.data.payload.fields.summary, "【ADM-1】VI: Login screen shows error");
     assert.ok(Array.isArray(dryRun.body.data.warnings));
 
     const mappings = await requestJson(server, {
-      pathname: `/api/v1/mapping-rules?project_id=${project.id}`,
+      pathname: `/api/v1/projects/${project.id}/mapping-rules`,
       token,
     });
     assert.equal(mappings.status, 200);
@@ -477,7 +477,7 @@ async function verifyPhase07() {
     assert.deepEqual(syncedCisValues.body.data.cis_mapping_values_json.user, ["fake-jira-user@example.test"]);
 
     const mappingSettings = await requestJson(server, {
-      pathname: `/api/v1/mapping-settings?project_id=${project.id}&source_system=backlog&target_system=jira`,
+      pathname: `/api/v1/projects/${project.id}/mapping-settings?source_system=backlog&target_system=jira`,
       token,
     });
     assert.equal(mappingSettings.status, 200);
@@ -494,14 +494,14 @@ async function verifyPhase07() {
     ));
 
     const anomalies = await requestJson(server, {
-      pathname: `/api/v1/anomalies?issue_id=${issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/anomalies?issue_id=${issue.id}`,
       token,
     });
     assert.equal(anomalies.status, 200);
     assert.ok(anomalies.body.data.some((row) => row.anomaly_type === "mapping_gap"));
 
     const jobs = await requestJson(server, {
-      pathname: `/api/v1/sync-jobs?project_id=${project.id}`,
+      pathname: `/api/v1/projects/${project.id}/sync-jobs`,
       token,
     });
     assert.equal(jobs.status, 200);
@@ -520,7 +520,7 @@ async function verifyPhase07() {
     assert.equal(successJob.target_issue_key, "");
 
     const allJournal = await requestJson(server, {
-      pathname: `/api/v1/sync-journal?project_id=${project.id}`,
+      pathname: `/api/v1/projects/${project.id}/sync-journal`,
       token,
     });
     assert.equal(allJournal.status, 200);
@@ -535,7 +535,7 @@ async function verifyPhase07() {
     assert.equal(manualPullJournal.target_issue_key, "ADM-1");
 
     const journal = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}/sync-journal`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/sync-journal`,
       token,
     });
     assert.equal(journal.status, 200);
@@ -546,7 +546,7 @@ async function verifyPhase07() {
     assert.ok(successJournal.success_at);
 
     const summary = await requestJson(server, {
-      pathname: "/api/v1/dashboard/summary",
+      pathname: `/api/v1/projects/${project.id}/dashboard/summary`,
       token,
     });
     assert.equal(summary.status, 200);
@@ -554,9 +554,10 @@ async function verifyPhase07() {
     assert.equal(summary.body.data.counts.translation_pending, 0);
     assert.equal(summary.body.data.counts.issue_pending_mapping, 1);
     assert.equal(summary.body.data.counts.anomaly_open, 1);
+    assert.equal(Object.hasOwn(summary.body.data.counts, "projects_enabled"), false);
 
     const alerts = await requestJson(server, {
-      pathname: "/api/v1/dashboard/alerts",
+      pathname: `/api/v1/projects/${project.id}/dashboard/alerts`,
       token,
     });
     assert.equal(alerts.status, 200);

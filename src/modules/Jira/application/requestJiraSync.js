@@ -55,10 +55,17 @@ function normalizeJiraFields(input = {}) {
       fields[field] = textOrNull(input[field]);
     }
   }
+  if (hasOwn(input, "story_point")) {
+    const storyPoint = Number(input.story_point);
+    if (input.story_point === "" || input.story_point === null || !Number.isFinite(storyPoint) || storyPoint < 0) {
+      throw new AppError({ code: "INVALID_STORY_POINT", message: "story_point must be a non-negative number.", status: 422 });
+    }
+    fields.story_point = storyPoint;
+  }
   return fields;
 }
 
-function buildPayloadOverride(basePayload, jiraFields) {
+function buildPayloadOverride(basePayload, jiraFields, targetFields = {}) {
   const payload = JSON.parse(JSON.stringify(basePayload || {}));
   payload.fields = payload.fields || {};
 
@@ -92,6 +99,10 @@ function buildPayloadOverride(basePayload, jiraFields) {
     } else {
       delete payload.fields.duedate;
     }
+  }
+
+  if (hasOwn(jiraFields, "story_point") && targetFields.story_point) {
+    payload.fields[targetFields.story_point] = jiraFields.story_point;
   }
 
   if (hasOwn(jiraFields, "status")) {
@@ -159,7 +170,7 @@ async function resolveTargetAtRequest({ config, readiness, executedBy, correlati
   throw new AppError({ code: "JIRA_TRACE_CONFLICT", message: "Multiple Jira issues matched the CIS trace.", status: 409 });
 }
 
-async function requestJiraSync({ config, issueId, executedBy, correlationId, jiraFields }) {
+async function requestJiraSync({ config, issueId, executedBy, correlationId, jiraFields, parentSyncJobId = null }) {
   const readiness = evaluateJiraSyncReadiness({ config, issueId });
 
   if (!readiness.can_sync) {
@@ -192,9 +203,16 @@ async function requestJiraSync({ config, issueId, executedBy, correlationId, jir
   }
 
   const normalizedJiraFields = normalizeJiraFields(jiraFields || {});
+  if (hasOwn(normalizedJiraFields, "story_point") && !readiness.target_fields.story_point) {
+    throw new AppError({
+      code: "JIRA_STORY_POINT_FIELD_UNAVAILABLE",
+      message: "Story Point is not available for the target Jira project and issue type.",
+      status: 422,
+    });
+  }
   const hasJiraFieldOverrides = Object.keys(normalizedJiraFields).length > 0;
   const jiraPayloadOverride = hasJiraFieldOverrides
-    ? buildPayloadOverride(readiness.payload, normalizedJiraFields)
+    ? buildPayloadOverride(readiness.payload, normalizedJiraFields, readiness.target_fields)
     : null;
   const activeJob = SyncApi.hasActiveIssueJob({ config, issueId: readiness.issue.id, jobType: "push_issue" });
   if (activeJob) {
@@ -215,6 +233,7 @@ async function requestJiraSync({ config, issueId, executedBy, correlationId, jir
     verifiedTraceKey: target.verifiedTraceKey,
     executedBy,
     correlationId,
+    parentSyncJobId,
   });
   return prepared.job;
 }

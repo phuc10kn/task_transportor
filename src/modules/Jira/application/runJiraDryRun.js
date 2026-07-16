@@ -2,7 +2,7 @@ const { AppError } = require("../../../http/errors/AppError");
 const AnomalyApi = require("../../Anomaly/AnomalyApi");
 const MappingApi = require("../../Mapping/MappingApi");
 const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
-const { buildJiraPayload } = require("../support/jiraDryRunPayload");
+const { buildJiraPayload, jiraStoryPointFieldId } = require("../support/jiraDryRunPayload");
 const SyncApi = require("../../Sync/SyncApi");
 const CisApi = require("../../Cis/CisApi");
 const { ISSUE_STATUSES } = require("../../../shared/stateConstants");
@@ -201,7 +201,7 @@ function evaluateDryRunFreshness(result) {
   };
 }
 
-function evaluateJiraSyncReadiness({ config, issueId }) {
+function evaluateJiraSyncReadiness({ config, issueId, canonicalOverrides = null }) {
   const bundle = createJiraSyncRepository({ config }).getIssueBundle(issueId);
   if (!bundle) {
     throw new AppError({
@@ -212,7 +212,7 @@ function evaluateJiraSyncReadiness({ config, issueId }) {
   }
 
   const { attachments, issue, project, revision } = bundle;
-  const snapshot = CisApi.buildCanonicalSyncSnapshot({ issue, revision });
+  const snapshot = CisApi.buildCanonicalSyncSnapshot({ issue, revision, overrides: canonicalOverrides });
   const assignee = assigneeMeta(issue.fields_json);
   const errors = [];
   const warnings = [];
@@ -298,6 +298,11 @@ function evaluateJiraSyncReadiness({ config, issueId }) {
     }));
   }
 
+  const storyPoint = Number(snapshot.canonical.story_point && snapshot.canonical.story_point.value);
+  if (!Number.isFinite(storyPoint) || storyPoint < 0) {
+    errors.push(validationError("INVALID_STORY_POINT", "Canonical Story Point must be a non-negative number."));
+  }
+
   const blockingAnomalies = AnomalyApi.listBlockingAnomalies({
     config,
     issueId: issue.id,
@@ -315,6 +320,9 @@ function evaluateJiraSyncReadiness({ config, issueId }) {
     mapped,
     project,
   });
+  const targetFields = {
+    story_point: jiraStoryPointFieldId(project, mapped.issue_type && mapped.issue_type.jira_value),
+  };
   const canSync = errors.length === 0;
 
   return {
@@ -325,6 +333,7 @@ function evaluateJiraSyncReadiness({ config, issueId }) {
     can_sync: canSync,
     canonical_hash: canonicalHash,
     field_sources: snapshot.field_sources,
+    target_fields: targetFields,
     excluded_collections: ["worklogs"],
     payload,
     validation: {
@@ -342,13 +351,14 @@ function evaluateJiraSyncReadiness({ config, issueId }) {
   };
 }
 
-function runJiraDryRun({ config, issueId, executedBy, correlationId }) {
-  const result = evaluateJiraSyncReadiness({ config, issueId });
+function runJiraDryRun({ config, issueId, executedBy, correlationId, canonicalOverrides = null, syncJobId = null }) {
+  const result = evaluateJiraSyncReadiness({ config, issueId, canonicalOverrides });
 
   SyncApi.writeJournal({
     config,
     input: {
       project_id: result.project.id,
+      sync_job_id: syncJobId,
       issue_id: result.issue.id,
       direction_from: "cis",
       direction_to: "jira",
@@ -377,6 +387,7 @@ function runJiraDryRun({ config, issueId, executedBy, correlationId }) {
     can_sync: result.can_sync,
     canonical_hash: result.canonical_hash,
     field_sources: result.field_sources,
+    target_fields: result.target_fields,
     excluded_collections: result.excluded_collections,
     stale: false,
     payload: result.payload,

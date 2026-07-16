@@ -3,6 +3,8 @@ const SyncApi = require("../../Sync/SyncApi");
 const { createBacklogClient } = require("../infrastructure/BacklogClient");
 const { parseScheduledPullFilter } = require("../support/parseScheduledPullFilter");
 
+const PROJECT_PULL_ENABLED = false;
+
 function projectsApi() {
   return require("../../Projects/ProjectsApi");
 }
@@ -26,6 +28,14 @@ function assertProjectPullConfig(project) {
 }
 
 async function pullProject({ config, projectId, executedBy, correlationId, trigger = "manual" }) {
+  if (!PROJECT_PULL_ENABLED) {
+    throw new AppError({
+      code: "BACKLOG_PROJECT_PULL_DISABLED",
+      message: "Backlog project pull is disabled. Sync selected candidates instead.",
+      status: 409,
+    });
+  }
+
   const project = projectsApi().getProject({ config, projectId: Number(projectId) });
   assertProjectPullConfig(project);
 
@@ -73,5 +83,6 @@ async function pullProject({ config, projectId, executedBy, correlationId, trigg
 }
 
 module.exports = {
+  PROJECT_PULL_ENABLED,
   pullProject,
 };

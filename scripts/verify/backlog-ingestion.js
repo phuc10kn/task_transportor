@@ -123,10 +123,27 @@ async function main() {
       attachmentId: children.attachments[0].id,
       errorMessage: "Forced retry verification failure",
     });
+    const otherProject = ProjectsApi.createProject({ config, input: { name: "Other attachment Project" } });
     const jobCountBeforeRetry = SyncApi.listJobs({ config, filters: {} }).length;
+    const journalCountBeforeRetry = SyncApi.listJournal({ config, filters: {} }).length;
+    const crossProjectRetry = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${otherProject.id}/attachments/${children.attachments[0].id}/retry-download`,
+      token,
+    });
+    assert.equal(crossProjectRetry.status, 404);
+    assert.equal(crossProjectRetry.body.error.code, "RESOURCE_NOT_FOUND");
+    assert.equal(CisApi.getAttachmentById({ config, attachmentId: children.attachments[0].id }).download_status, "failed");
+    assert.equal(SyncApi.listJournal({ config, filters: {} }).length, journalCountBeforeRetry);
+    const legacyAttachmentRetry = await requestJson(server, {
+      method: "POST",
+      pathname: ["", "api", "v1", "attachments", children.attachments[0].id, "retry-download"].join("/"),
+      token,
+    });
+    assert.equal(legacyAttachmentRetry.status, 404);
     const retryAttachment = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/attachments/${children.attachments[0].id}/retry-download`,
+      pathname: `/api/v1/projects/${project.id}/attachments/${children.attachments[0].id}/retry-download`,
       token,
     });
     const jobCountAfterRetry = SyncApi.listJobs({ config, filters: {} }).length;
@@ -164,20 +181,22 @@ async function main() {
       pathname: `/api/v1/projects/${project.id}/backlog/pull`,
       token,
     });
-    assert.equal(projectPull.status, 202);
-    assert.equal(projectPull.body.data.enqueued, 2);
+    assert.equal(projectPull.status, 409);
+    assert.equal(projectPull.body.error.code, "BACKLOG_PROJECT_PULL_DISABLED");
   });
 
   const scheduled = await BacklogApi.runScheduledPullScan({ config });
-  assert.equal(scheduled.scanned_projects, 1);
-  assert.equal(scheduled.results[0].enqueued, 2);
+  assert.equal(scheduled.disabled, true);
+  assert.equal(scheduled.reason, "BACKLOG_PROJECT_PULL_DISABLED");
+  assert.equal(scheduled.scanned_projects, 0);
+  assert.deepEqual(scheduled.results, []);
 
   const db = createConnection({ config });
   const pullState = db
     .prepare("SELECT * FROM pull_state WHERE project_id = ? AND source_system = 'backlog'")
     .get(project.id);
   db.close();
-  assert.ok(pullState.last_successful_pull_at);
+  assert.equal(pullState, undefined);
 
   const missingCredentialConfig = makeTempConfig("backlog-missing-credential");
   ensureStorage(missingCredentialConfig.storage);

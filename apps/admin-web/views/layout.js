@@ -1,23 +1,41 @@
 "use strict";
 
 const nav = [
-  ["/dashboard", "Dashboard", true],
+  ["/dashboard", "Dashboard"],
   ["/projects", "Projects"],
   ["/mappings", "Mappings"],
-  ["/backlog-issues", "Backlog Issues"],
-  ["/cis-issues", "CIS Issues"],
-  ["/translation-queue", "Translation Queue"],
-  ["/translation-glossary", "Translation Glossary"],
+  { label: "Issues", slug: "issues", children: [["/backlog-issues", "Backlog Issues"], ["/cis-issues", "CIS Issues"]] },
+  { label: "Translation", slug: "translation", children: [["/translation-queue", "Translation Queue"], ["/translation-glossary", "Translation Glossary"]] },
   ["/anomalies", "Anomalies"],
   ["/sync-jobs", "Sync Jobs"],
   ["/journal", "Journal"],
 ];
 
+function projectIdFrom(pathname) {
+  return pathname.match(/^\/project\/([1-9]\d*)(?:\/|$)/)?.[1] || null;
+}
+
+function scopedHref(projectId, href) {
+  if (href === "/projects") return href;
+  return projectId ? `/project/${projectId}${href}` : "/projects";
+}
+
+function navLink(pathname, projectId, [path, label]) {
+  const href = scopedHref(projectId, path);
+  const active = pathname === href || pathname.startsWith(`${href}/`);
+  const workspace = path === "/projects" ? "" : ` data-workspace-path="${path}"`;
+  return `<li class="nav-item${active ? " active" : ""}"><a class="nav-link${active ? " active" : ""}" href="${href}"${workspace}${active ? ' aria-current="page"' : ""}><span class="nav-link-title">${label}</span></a></li>`;
+}
+
 function navItems(pathname) {
-  return nav.map(([href, label, disabled]) => {
-    const active = pathname === href || pathname.startsWith(`${href}/`);
-    if (disabled) return `<li class="nav-item"><span class="nav-link disabled" title="Dashboard awaits project-scoped backend support" aria-disabled="true"><span class="nav-link-title">${label}</span></span></li>`;
-    return `<li class="nav-item${active ? " active" : ""}"><a class="nav-link${active ? " active" : ""}" href="${href}"><span class="nav-link-title">${label}</span></a></li>`;
+  const projectId = projectIdFrom(pathname);
+  return nav.map((item) => {
+    if (Array.isArray(item)) return navLink(pathname, projectId, item);
+    const active = item.children.some(([path]) => {
+      const href = scopedHref(projectId, path);
+      return pathname === href || pathname.startsWith(`${href}/`);
+    });
+    return `<li class="nav-item nav-tree-item"><details class="nav-tree" data-nav-group="${item.slug}"${active ? " open" : ""}><summary class="nav-tree__summary"><span>${item.label}</span><svg class="nav-tree__chevron" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></summary><ul class="nav-tree__children">${item.children.map((child) => navLink(pathname, projectId, child)).join("")}</ul></details></li>`;
   }).join("");
 }
 
@@ -42,6 +60,8 @@ function loginBody() {
 }
 
 function consoleBody(route, pathname) {
+  const projectId = projectIdFrom(pathname);
+  const projectHref = projectId ? `/projects?project_id=${projectId}` : "/projects";
   return `<div class="page" id="console-shell">
     <aside class="navbar navbar-vertical navbar-expand-lg">
       <div class="container-fluid">
@@ -50,7 +70,7 @@ function consoleBody(route, pathname) {
         <div class="collapse navbar-collapse" id="sidebar-menu"><nav aria-label="Primary"><ul class="navbar-nav pt-lg-3">${navItems(pathname)}</ul></nav></div>
         <div class="sidebar-context">
           <div class="route-kicker">System → CIS → System</div>
-          <a href="/projects" id="active-project">Choose Project</a>
+          <a href="${projectHref}" id="active-project">Choose Project</a>
         </div>
       </div>
     </aside>

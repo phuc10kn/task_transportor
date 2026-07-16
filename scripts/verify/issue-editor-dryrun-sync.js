@@ -7,6 +7,7 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { ISSUE_STATUSES } = require("../../src/shared/stateConstants");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
@@ -39,8 +40,8 @@ function createProject(config) {
       backlog_project_key: "IEDR",
       backlog_issue_key_prefix: "IEDR",
       backlog_api_key_env: "BACKLOG_API_KEY",
-      jira_site_url: "https://jira.example.test",
-      jira_project_key: "IED",
+      jira_site_url: "https://10kn-developer.atlassian.net",
+      jira_project_key: "WEC1",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_TOKEN",
       require_translation_review: true,
@@ -143,10 +144,30 @@ async function main() {
 
   await withServer(app, async (server) => {
     const token = await login(server);
+    const legacyDryRun = await requestJson(server, { method: "POST", pathname: ["", "api", "v1", "issues", issue.id, "dry-run", "jira"].join("/"), token });
+    assert.equal(legacyDryRun.status, 404);
+    const otherProject = ProjectsApi.createProject({ config, input: { name: "Other Project" } });
+    const jobsBeforeIsolationChecks = SyncApi.listJobs({ config, filters: {} }).length;
+    const journalBeforeIsolationChecks = SyncApi.listJournal({ config, filters: {} }).length;
+    const crossProjectDryRun = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${otherProject.id}/issues/${issue.id}/dry-run/jira`,
+      token,
+    });
+    assert.equal(crossProjectDryRun.status, 404);
+    assert.equal(crossProjectDryRun.body.error.code, "RESOURCE_NOT_FOUND");
+    const crossProjectSync = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${otherProject.id}/issues/${issue.id}/sync/jira`,
+      token,
+    });
+    assert.equal(crossProjectSync.status, 404);
+    assert.equal(SyncApi.listJobs({ config, filters: {} }).length, jobsBeforeIsolationChecks);
+    assert.equal(SyncApi.listJournal({ config, filters: {} }).length, journalBeforeIsolationChecks);
 
     const patched = await requestJson(server, {
       method: "PATCH",
-      pathname: `/api/v1/issues/${issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}`,
       token,
       body: {
         summary: "Canonical summary",
@@ -166,17 +187,19 @@ async function main() {
 
     const dryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(dryRun.status, 200);
     assert.equal(dryRun.body.data.can_sync, true);
-    assert.equal(dryRun.body.data.payload.fields.summary, "Canonical summary");
+    assert.equal(dryRun.body.data.payload.fields.summary, "【IEDR-1】Canonical summary");
     assert.equal(dryRun.body.data.payload.fields.description, "Canonical plain description");
     assert.equal(dryRun.body.data.payload.fields.issuetype.name, "Task");
     assert.equal(dryRun.body.data.payload.fields.priority.name, "Medium");
     assert.equal(dryRun.body.data.payload.fields.assignee.accountId, "account-123");
     assert.equal(dryRun.body.data.payload.fields.duedate, "2026-07-31");
+    assert.equal(dryRun.body.data.payload.fields.customfield_10038, 1);
+    assert.equal(dryRun.body.data.target_fields.story_point, "customfield_10038");
     assert.ok(!Object.prototype.hasOwnProperty.call(dryRun.body.data.payload.fields, "labels"));
     assert.equal(dryRun.body.data.payload.transition_preview.status, "Done");
     assert.equal(dryRun.body.data.field_sources.summary, "cis");
@@ -189,7 +212,7 @@ async function main() {
 
     const editedAfterDryRun = await requestJson(server, {
       method: "PATCH",
-      pathname: `/api/v1/issues/${issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}`,
       token,
       body: {
         summary: "Canonical summary changed",
@@ -200,7 +223,7 @@ async function main() {
 
     const staleSync = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${issue.id}/sync/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/sync/jira`,
       token,
     });
     assert.equal(staleSync.status, 422);
@@ -208,16 +231,16 @@ async function main() {
 
     const freshDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(freshDryRun.status, 200);
     assert.equal(freshDryRun.body.data.can_sync, true);
-    assert.equal(freshDryRun.body.data.payload.fields.summary, "Canonical summary changed");
+    assert.equal(freshDryRun.body.data.payload.fields.summary, "【IEDR-1】Canonical summary changed");
 
     const acceptedSync = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${issue.id}/sync/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/sync/jira`,
       token,
       body: {
         jira_fields: {
@@ -228,6 +251,7 @@ async function main() {
           status: "Done",
           assignee: "account-123",
           due_date: "2026-08-15",
+          story_point: "5",
         },
       },
     });
@@ -236,11 +260,13 @@ async function main() {
     assert.equal(acceptedSync.body.data.payload_json.jira_payload_override.fields.summary, "Edited Jira summary");
     assert.equal(acceptedSync.body.data.payload_json.jira_payload_override.fields.description, "Edited Jira description");
     assert.equal(acceptedSync.body.data.payload_json.jira_payload_override.fields.duedate, "2026-08-15");
+    assert.equal(acceptedSync.body.data.payload_json.jira_payload_override.fields.customfield_10038, 5);
     assert.equal(acceptedSync.body.data.payload_json.jira_payload_override.transition_preview.status, "Done");
     const issueAfterSyncRequest = CisApi.getIssueById({ config, issueId: issue.id });
     assert.equal(issueAfterSyncRequest.fields_json.summary.jira, "Edited Jira summary");
     assert.equal(issueAfterSyncRequest.fields_json.description.jira, "Edited Jira description");
     assert.equal(issueAfterSyncRequest.fields_json.due_date.jira, "2026-08-15");
+    assert.equal(issueAfterSyncRequest.fields_json.story_point.jira, 5);
   });
 
   console.log("Issue Editor dry-run/sync verification passed.");

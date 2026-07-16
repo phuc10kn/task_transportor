@@ -1,11 +1,11 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { createMappingRepository } = require("../infrastructure/MappingRepository");
 
-function getMappingRule({ config, ruleId }) {
-  const rule = createMappingRepository({ config }).findById(ruleId);
+function getMappingRule({ config, ruleId, projectId }) {
+  const rule = createMappingRepository({ config }).findById(ruleId, projectId);
   if (!rule) {
     throw new AppError({
-      code: "MAPPING_RULE_NOT_FOUND",
+      code: projectId === undefined ? "MAPPING_RULE_NOT_FOUND" : "RESOURCE_NOT_FOUND",
       message: "Mapping rule not found.",
       status: 404,
     });

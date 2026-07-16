@@ -121,10 +121,10 @@ function createMappingRepository({ config }) {
       });
     },
 
-    findById(ruleId) {
-      return withDb((db) =>
-        rowToMapping(db.prepare("SELECT * FROM mapping_rules WHERE id = ?").get(ruleId))
-      );
+    findById(ruleId, projectId) {
+      return withDb((db) => rowToMapping(projectId === undefined
+        ? db.prepare("SELECT * FROM mapping_rules WHERE id = ?").get(ruleId)
+        : db.prepare("SELECT * FROM mapping_rules WHERE id = ? AND project_id = ?").get(ruleId, projectId)));
     },
 
     findApproved(input) {

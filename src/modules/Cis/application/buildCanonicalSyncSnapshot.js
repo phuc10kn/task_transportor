@@ -6,7 +6,7 @@ function latestRevisionFallback(revision, field) {
   return revision ? revision[field] : undefined;
 }
 
-function buildCanonicalSyncSnapshot({ issue, revision }) {
+function buildCanonicalSyncSnapshot({ issue, revision, overrides = null }) {
   const canonical = {};
   const fieldSources = {};
 
@@ -16,6 +16,13 @@ function buildCanonicalSyncSnapshot({ issue, revision }) {
       field,
       latestRevisionFallback(revision, field)
     );
+    if (overrides && Object.prototype.hasOwnProperty.call(overrides, field)) {
+      canonical[field] = {
+        ...canonical[field],
+        value: overrides[field],
+        source: "cis",
+      };
+    }
     fieldSources[field] = canonical[field].source;
   }
 

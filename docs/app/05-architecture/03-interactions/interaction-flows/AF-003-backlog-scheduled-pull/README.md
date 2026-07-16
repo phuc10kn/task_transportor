@@ -7,7 +7,7 @@ entity_type: InteractionFlow
 layer: 05-architecture
 concern: 03-interactions
 status: active
-summary: Luồng quét scheduled pull nội bộ để tạo job inbound cho các project đã enable.
+summary: Luồng scheduled pull được giữ làm trace nhưng execution hiện trả disabled và không tạo job.
 theory_basis:
   - TH-HUBFLOW-02
   - TH-OPS-TRACE-02
@@ -23,23 +23,23 @@ relations:
 
 ## Summary
 
-Luồng quét scheduled pull nội bộ để tạo job inbound cho các project đã enable.
+Luồng scheduled pull được giữ làm trace nhưng execution hiện trả disabled và không tạo job.
 
 ## Meaning
 
-Luồng quét scheduled pull nội bộ để tạo job inbound cho các project đã enable.
+Scheduled pull không hoạt động trong Lite hiện tại.
 
 ## Trigger
 
-Internal scheduler hoặc worker process gọi scheduled pull scan.
+Internal caller có thể gọi scan nhưng nhận kết quả disabled.
 
 ## Path
 
-`internal scheduler -> BacklogApi.runScheduledPullScan(...) -> load enabled projects -> query source list -> SyncApi.enqueueJob(manual_pull x N)`
+`internal scheduler -> BacklogApi.runScheduledPullScan(...) -> disabled result`, không query source và không enqueue.
 
 ## Outcome
 
-Tạo job backlog pull định kỳ theo project mà không cần request thủ công từ admin.
+Trả `scanned_projects=0`, `results=[]` và reason `BACKLOG_PROJECT_PULL_DISABLED`.
 
 ## Related Entities
 
@@ -51,7 +51,7 @@ Tạo job backlog pull định kỳ theo project mà không cần request thủ 
 
 ## Architectural role
 
-Luồng quét scheduled pull nội bộ để tạo job inbound cho các project đã enable. Flow này là đơn vị trace cho trigger, participant, outcome và side effect kiến trúc.
+Flow giữ provenance và disabled contract cho scheduled project pull.
 
 ## Boundaries respected
 

@@ -24,7 +24,7 @@ System -> CIS -> System
 
 Lite ưu tiên:
 
-- Backlog -> CIS qua manual pull và project pull.
+- Backlog -> CIS qua Pull one và candidate sync; project/scheduled pull hiện bị disable.
 - Translation AI draft với human review.
 - Mapping/anomaly gate trước outbound.
 - Jira dry-run trước sync thật.

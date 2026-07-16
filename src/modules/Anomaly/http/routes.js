@@ -2,15 +2,16 @@ const express = require("express");
 
 const AnomaliesController = require("./controllers/AnomaliesController");
 
-function createAnomalyRouter({ authenticate }) {
+function createAnomalyRouter({ authenticate, requireProjectWorkspace }) {
   const router = express.Router();
 
   router.use(authenticate);
-  router.get("/anomalies", AnomaliesController.list);
-  router.post("/anomalies", AnomaliesController.create);
-  router.get("/anomalies/:anomalyId", AnomaliesController.show);
-  router.post("/anomalies/:anomalyId/ignore", AnomaliesController.ignore);
-  router.post("/anomalies/:anomalyId/resolve", AnomaliesController.resolve);
+  router.use("/projects/:projectId", requireProjectWorkspace);
+  router.get("/projects/:projectId/anomalies", AnomaliesController.list);
+  router.post("/projects/:projectId/anomalies", AnomaliesController.create);
+  router.get("/projects/:projectId/anomalies/:anomalyId", AnomaliesController.show);
+  router.post("/projects/:projectId/anomalies/:anomalyId/ignore", AnomaliesController.ignore);
+  router.post("/projects/:projectId/anomalies/:anomalyId/resolve", AnomaliesController.resolve);
 
   return router;
 }

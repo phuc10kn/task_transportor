@@ -8,6 +8,7 @@ const HASH_FIELDS = Object.freeze([
   "status",
   "assignee",
   "due_date",
+  "story_point",
 ]);
 
 function hashCanonicalIssue({ canonical, issue }) {

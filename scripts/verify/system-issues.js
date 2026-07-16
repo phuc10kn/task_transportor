@@ -8,8 +8,10 @@ const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
+const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
+const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
@@ -18,6 +20,19 @@ function tableCount(config, table) {
   const db = createConnection({ config });
   try { return db.prepare(`SELECT COUNT(*) AS total FROM ${table}`).get().total; }
   finally { db.close(); }
+}
+
+function createApprovedMapping(config, projectId, mappingType, fromValue, cisValue, jiraValue) {
+  const inbound = MappingApi.createMappingRule({
+    config,
+    input: { project_id: projectId, mapping_type: mappingType, direction_from: "backlog", direction_to: "cis", from_value: fromValue, to_value: cisValue },
+  });
+  MappingApi.approveMappingRule({ config, ruleId: inbound.id, approvedBy: 1 });
+  const outbound = MappingApi.createMappingRule({
+    config,
+    input: { project_id: projectId, mapping_type: mappingType, direction_from: "cis", direction_to: "jira", from_value: cisValue, to_value: jiraValue },
+  });
+  MappingApi.approveMappingRule({ config, ruleId: outbound.id, approvedBy: 1 });
 }
 
 function runConcurrentUpsert(config, projectId, key) {
@@ -46,6 +61,7 @@ async function main() {
     JIRA_FAKE_MODE: "1",
     JIRA_FAKE_SEED_PATH: path.join(__dirname, "fixtures", "jira-system-issues.json"),
     WORKER_ENABLED: "true",
+    CODEX_EXEC_COMMAND: `"${process.execPath}" "${path.join(__dirname, "fakes", "codex-exec.js")}" success`,
   });
   ensureStorage(config.storage);
   migrate({ config });
@@ -61,10 +77,14 @@ async function main() {
       backlog_project_key: "WEC",
       backlog_issue_key_prefix: "WEC",
       backlog_api_key_env: "BACKLOG_API_KEY_WEC",
+      jira_site_url: "https://example.atlassian.net",
       jira_project_key: "WEC",
-      jira_email_env: "JIRA_EMAIL",
-      jira_api_token_env: "JIRA_TOKEN",
-      translation_provider: "codex_exec",
+      jira_email: "system-issues@example.test",
+      jira_api_token: "system-issues-token",
+      translation_ai_provider: "codex_exec",
+      source_language: "ja",
+      target_language: "vi",
+      auto_translate: true,
       backlog_mapping_values_json: {
         status_directory: [
           { id: 1, name: "Open", display_order: 1 },
@@ -77,6 +97,9 @@ async function main() {
       },
     },
   });
+  createApprovedMapping(config, project.id, "issue_type", "Task", "task", "Task");
+  createApprovedMapping(config, project.id, "status", "Open", "open", "To Do");
+  createApprovedMapping(config, project.id, "priority", "Normal", "normal", "Medium");
   const secondProject = ProjectsApi.createProject({
     config,
     input: {
@@ -105,6 +128,8 @@ async function main() {
     const login = await requestJson(server, { method: "POST", pathname: "/api/v1/auth/login", body: { email: "system-issues@example.test", password: "verify-password" } });
     const token = login.body.data.token;
     const call = (options) => requestJson(server, { token, ...options });
+    const legacyIssues = await call({ pathname: ["", "api", "v1", "issues"].join("/") });
+    assert.equal(legacyIssues.status, 404);
 
     const legacyFilterOptions = await call({ pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/filter-options` });
     assert.equal(legacyFilterOptions.status, 200);
@@ -123,12 +148,14 @@ async function main() {
     const readiness = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/action-readiness` });
     assert.equal(readiness.status, 200);
     assert.equal(readiness.body.data.actions.pull_one.execution_mode, "inline");
-    assert.equal(readiness.body.data.actions.pull_project.execution_mode, "queued_ready");
+    assert.equal(readiness.body.data.actions.pull_project.enabled, false);
+    assert.equal(readiness.body.data.actions.pull_project.execution_mode, "disabled");
+    assert.deepEqual(readiness.body.data.actions.pull_project.disabled_reasons, ["PROJECT_PULL_DISABLED"]);
     assert.equal(readiness.body.data.actions.sync_to_cis.enabled, true);
     config.worker.enabled = false;
     const workerOff = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/action-readiness` });
     assert.equal(workerOff.body.data.actions.pull_one.execution_mode, "inline");
-    assert.equal(workerOff.body.data.actions.pull_project.execution_mode, "queued_waiting");
+    assert.deepEqual(workerOff.body.data.actions.pull_project.disabled_reasons, ["PROJECT_PULL_DISABLED"]);
     assert.deepEqual(workerOff.body.data.actions.sync_to_cis.disabled_reasons, ["SYNC_WORKER_UNAVAILABLE"]);
     assert.equal(workerOff.body.data.actions.sync_to_cis.execution_mode, "disabled");
     assert.equal(workerOff.body.data.actions.sync_to_cis.consumer_ready, false);
@@ -168,32 +195,44 @@ async function main() {
     assert.throws(() => CisApi.createManualIssue({ config, input: { project_id: project.id, summary: "Rollback create" }, executedBy: 999999 }));
     assert.equal(tableCount(config, "issues"), issueCountBeforeRollback, "journal failure must rollback manual create");
 
-    const createdA = await call({ method: "POST", pathname: "/api/v1/issues", body: { project_id: project.id, summary: "Manual A", description: "Created in CIS" } });
+    const createdA = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/issues`, body: { summary: "Manual A", description: "Created in CIS" } });
     assert.equal(createdA.status, 201);
     assert.equal(createdA.body.data.issue.source_system, "manual");
     assert.equal(createdA.body.data.issue.current_revision, 1);
     const issueA = createdA.body.data.issue;
-    const linkBacklog = await call({ method: "POST", pathname: `/api/v1/issues/${issueA.id}/external-identities`, body: { backlog_issue_key: "wec-1" } });
+    const linkBacklog = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/issues/${issueA.id}/external-identities`, body: { backlog_issue_key: "wec-1" } });
     assert.equal(linkBacklog.status, 200);
     assert.equal(linkBacklog.body.data.external_identities.backlog.key, "WEC-1");
 
-    const createdB = await call({ method: "POST", pathname: "/api/v1/issues", body: { project_id: project.id, summary: "Manual B" } });
+    const createdB = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/issues`, body: { summary: "Manual B" } });
     const issueB = createdB.body.data.issue;
-    const linkJira = await call({ method: "POST", pathname: `/api/v1/issues/${issueB.id}/external-identities`, body: { jira_issue_key: "wec-1" } });
+    const linkJira = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/issues/${issueB.id}/external-identities`, body: { jira_issue_key: "wec-1" } });
     assert.equal(linkJira.status, 200, "same text in Backlog and Jira columns must be allowed");
 
-    const createdC = await call({ method: "POST", pathname: "/api/v1/issues", body: { project_id: project.id, summary: "Manual C" } });
-    const duplicateJira = await call({ method: "POST", pathname: `/api/v1/issues/${createdC.body.data.issue.id}/external-identities`, body: { jira_issue_key: "WEC-1" } });
+    const createdC = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/issues`, body: { summary: "Manual C" } });
+    const duplicateJira = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/issues/${createdC.body.data.issue.id}/external-identities`, body: { jira_issue_key: "WEC-1" } });
     assert.equal(duplicateJira.status, 409);
     assert.equal(duplicateJira.body.error.code, "EXTERNAL_LINK_DUPLICATE");
-    const duplicateBacklog = await call({ method: "POST", pathname: `/api/v1/issues/${createdC.body.data.issue.id}/external-identities`, body: { backlog_issue_key: "WEC-1" } });
+    const duplicateBacklog = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/issues/${createdC.body.data.issue.id}/external-identities`, body: { backlog_issue_key: "WEC-1" } });
     assert.equal(duplicateBacklog.status, 409);
     assert.equal(duplicateBacklog.body.error.code, "EXTERNAL_LINK_DUPLICATE");
 
-    const secondProjectIssue = await call({ method: "POST", pathname: "/api/v1/issues", body: { project_id: secondProject.id, summary: "Other project" } });
+    const secondProjectIssue = await call({ method: "POST", pathname: `/api/v1/projects/${secondProject.id}/issues`, body: { summary: "Other project" } });
+    const firstProjectIssues = await call({ pathname: `/api/v1/projects/${project.id}/issues` });
+    assert.equal(firstProjectIssues.status, 200);
+    assert.equal(firstProjectIssues.body.data.items.some((issue) => issue.id === secondProjectIssue.body.data.issue.id), false);
+    const secondProjectIssues = await call({ pathname: `/api/v1/projects/${secondProject.id}/issues` });
+    assert.equal(secondProjectIssues.status, 200);
+    assert.equal(secondProjectIssues.body.data.items.some((issue) => issue.id === secondProjectIssue.body.data.issue.id), true);
+    const crossProjectRead = await call({ pathname: `/api/v1/projects/${project.id}/issues/${secondProjectIssue.body.data.issue.id}` });
+    assert.equal(crossProjectRead.status, 404);
+    assert.equal(crossProjectRead.body.error.code, "RESOURCE_NOT_FOUND");
+    const crossProjectMutation = await call({ method: "PATCH", pathname: `/api/v1/projects/${project.id}/issues/${secondProjectIssue.body.data.issue.id}`, body: { summary: "Must not cross projects" } });
+    assert.equal(crossProjectMutation.status, 404);
+    assert.equal(CisApi.getIssueById({ config, issueId: secondProjectIssue.body.data.issue.id }).fields_json.summary.cis, "Other project");
     const otherProjectLinks = await call({
       method: "POST",
-      pathname: `/api/v1/issues/${secondProjectIssue.body.data.issue.id}/external-identities`,
+      pathname: `/api/v1/projects/${secondProject.id}/issues/${secondProjectIssue.body.data.issue.id}/external-identities`,
       body: { backlog_issue_key: "1001", jira_issue_key: "10019" },
     });
     assert.equal(otherProjectLinks.status, 200, "same identities in another CIS project must be allowed");
@@ -214,11 +253,26 @@ async function main() {
     const queued = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-2/sync-to-cis` });
     assert.equal(queued.status, 202);
     assert.equal(queued.body.data.outcome, "queued");
+    const activeBrowse = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-06-29&created_to=2026-06-29&limit=2` });
+    const activeCandidate = activeBrowse.body.data.candidates.find((item) => item.backlog_issue_key === "WEC-2");
+    assert.equal(activeCandidate.active_job.id, queued.body.data.job.id);
+    assert.equal(activeCandidate.active_job.status, "pending");
+    assert.equal(activeCandidate.active_job.with_translation, false);
     const reused = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-2/sync-to-cis` });
     assert.equal(reused.body.data.job.id, queued.body.data.job.id);
     const worked = await SyncApi.runWorkerOnce({ config, workerId: "system-issues-worker" });
     assert.equal(worked.job.status, "success");
     assert.ok(CisApi.getIssueByBacklogKey({ config, projectId: project.id, backlogIssueKey: "WEC-2" }));
+
+    const deferredProviderVerification = await call({ method: "POST", pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-404/sync-to-cis` });
+    assert.equal(deferredProviderVerification.status, 202, "candidate request must enqueue before provider verification");
+    const providerVerificationFailure = await SyncApi.runJobNow({
+      config,
+      jobId: deferredProviderVerification.body.data.job.id,
+      workerId: "system-issues-provider-verification",
+    });
+    assert.equal(providerVerificationFailure.job.status, "failed");
+    assert.equal(providerVerificationFailure.error.code, "BACKLOG_ISSUE_NOT_FOUND");
 
     const invalidTranslationFlag = await call({
       method: "POST",
@@ -227,6 +281,13 @@ async function main() {
     });
     assert.equal(invalidTranslationFlag.status, 422);
     assert.equal(invalidTranslationFlag.body.error.code, "VALIDATION_ERROR");
+    const invalidJiraFlag = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-3/sync-to-cis`,
+      body: { push_to_jira: "true" },
+    });
+    assert.equal(invalidJiraFlag.status, 422);
+    assert.equal(invalidJiraFlag.body.error.code, "VALIDATION_ERROR");
 
     const legacyBeforePromotion = await call({
       method: "POST",
@@ -242,6 +303,10 @@ async function main() {
     assert.equal(promoted.body.data.job.id, legacyBeforePromotion.body.data.job.id);
     assert.equal(promoted.body.data.promoted, true);
     assert.equal(promoted.body.data.job.payload_json.with_translation, true);
+    const promotedBrowse = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-06-30&created_to=2026-06-30&limit=2` });
+    const promotedCandidate = promotedBrowse.body.data.candidates.find((item) => item.backlog_issue_key === "WEC-3");
+    assert.equal(promotedCandidate.active_job.id, promoted.body.data.job.id);
+    assert.equal(promotedCandidate.active_job.with_translation, true);
 
     const translatedParent = await SyncApi.runWorkerOnce({ config, workerId: "system-issues-translation-parent" });
     assert.equal(translatedParent.job.id, promoted.body.data.job.id);
@@ -261,6 +326,82 @@ async function main() {
     ).get(translationItems[0].id, translationItems[1].id).total, 2);
     translationDb.close();
 
+    const jiraWorkflowBase = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-4/sync-to-cis`,
+    });
+    const jiraWorkflow = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-4/sync-to-cis`,
+      body: { with_translation: true, push_to_jira: true },
+    });
+    assert.equal(jiraWorkflow.status, 202);
+    assert.equal(jiraWorkflow.body.data.job.id, jiraWorkflowBase.body.data.job.id);
+    assert.equal(jiraWorkflow.body.data.promoted, true);
+    assert.equal(jiraWorkflow.body.data.job.payload_json.with_translation, true);
+    assert.equal(jiraWorkflow.body.data.job.payload_json.push_to_jira, true);
+    assert.equal(jiraWorkflow.body.data.job.job_type, "sync_translate_jira");
+    assert.equal(jiraWorkflow.body.data.job.direction_to, "jira");
+    assert.equal(jiraWorkflow.body.data.job.max_attempts, 5);
+    const jiraActiveBrowse = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-07-01&created_to=2026-07-01&limit=2` });
+    const jiraActiveCandidate = jiraActiveBrowse.body.data.candidates.find((item) => item.backlog_issue_key === "WEC-4");
+    assert.equal(jiraActiveCandidate.active_job.id, jiraWorkflow.body.data.job.id);
+    assert.equal(jiraActiveCandidate.active_job.push_to_jira, true);
+
+    const jiraWorkflowRun = await SyncApi.runJobNow({
+      config,
+      jobId: jiraWorkflow.body.data.job.id,
+      workerId: "system-issues-jira-workflow",
+    });
+    assert.equal(jiraWorkflowRun.job.status, "success", jiraWorkflowRun.error && jiraWorkflowRun.error.message);
+    const jiraIssue = CisApi.getIssueByBacklogKey({ config, projectId: project.id, backlogIssueKey: "WEC-4" });
+    assert.ok(jiraIssue.jira_issue_key);
+    const jiraEditor = CisApi.getIssueEditor({ config, issueId: jiraIssue.id });
+    assert.match(jiraEditor.canonical.summary.value, /^【WEC-4】\[vi\]/);
+    assert.match(jiraEditor.canonical.description.value, /^\[vi\]/);
+    assert.deepEqual(jiraEditor.translations.map((item) => item.review_status), ["approved", "approved"]);
+    const workflowJournal = SyncApi.listJournal({ config, filters: { issue_id: jiraIssue.id } });
+    assert.ok(workflowJournal.some((entry) => entry.action === "translation_batch_auto_approved"));
+    assert.ok(workflowJournal.some((entry) => entry.job_type === "dry_run" && entry.details_json.can_sync === true));
+    assert.ok(workflowJournal.some((entry) => ["create", "update"].includes(entry.action) && entry.direction_to === "jira"));
+    const jiraCompletedBrowse = await call({ pathname: `/api/v1/projects/${project.id}/backlog/issues/candidates?created_from=2026-07-01&created_to=2026-07-01&limit=2` });
+    assert.equal(jiraCompletedBrowse.body.data.candidates.some((item) => item.backlog_issue_key === "WEC-4"), false);
+
+    const failedBatchRequest = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-5/sync-to-cis`,
+      body: { with_translation: true, push_to_jira: true },
+    });
+    const originalTranslateHandler = TranslationApi.translateQueueItemNow;
+    TranslationApi.translateQueueItemNow = async (input) => {
+      const item = TranslationApi.getTranslationQueueItem({ config, queueId: input.queueId, projectId: project.id });
+      if (item && item.target_field === "description") {
+        const error = new Error("Forced translation element failure.");
+        error.code = "VERIFY_TRANSLATION_ELEMENT_FAILED";
+        error.retryable = false;
+        throw error;
+      }
+      return originalTranslateHandler(input);
+    };
+    let failedBatchRun;
+    try {
+      failedBatchRun = await SyncApi.runJobNow({
+        config,
+        jobId: failedBatchRequest.body.data.job.id,
+        workerId: "system-issues-failed-translation-batch",
+      });
+    } finally {
+      TranslationApi.translateQueueItemNow = originalTranslateHandler;
+    }
+    assert.equal(failedBatchRun.job.status, "failed");
+    assert.equal(failedBatchRun.error.code, "VERIFY_TRANSLATION_ELEMENT_FAILED");
+    const failedBatchIssue = CisApi.getIssueByBacklogKey({ config, projectId: project.id, backlogIssueKey: "WEC-5" });
+    assert.equal(failedBatchIssue.jira_issue_key, null);
+    const failedBatchEditor = CisApi.getIssueEditor({ config, issueId: failedBatchIssue.id });
+    assert.equal(failedBatchEditor.canonical.summary.value, "Atomic rollback candidate");
+    assert.equal(failedBatchEditor.canonical.description.value, "The second translation element must fail without partial canonical apply.");
+    assert.equal(SyncApi.listJobs({ config, filters: { project_id: project.id } }).some((job) => job.issue_id === failedBatchIssue.id && job.job_type === "push_issue"), false);
+
     const runningLegacy = await call({
       method: "POST",
       pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/WEC-2/sync-to-cis`,
@@ -279,6 +420,13 @@ async function main() {
     assert.equal(runningConflict.body.error.code, "BACKLOG_SYNC_RUNNING_WITHOUT_TRANSLATION");
     assert.equal(runningConflict.body.error.details.job_id, runningJob.id);
     assert.equal(runningConflict.body.error.details.status, "running");
+    const runningJiraConflict = await call({
+      method: "POST",
+      pathname: `/api/v1/projects/${secondProject.id}/backlog/issues/WEC-2/sync-to-cis`,
+      body: { with_translation: true, push_to_jira: true },
+    });
+    assert.equal(runningJiraConflict.status, 409);
+    assert.equal(runningJiraConflict.body.error.code, "BACKLOG_SYNC_RUNNING_WITHOUT_JIRA");
     createSyncJobRepository({ config }).markFailed(runningJob.id, new Error("verification cleanup"), { retryable: false });
 
     const transientRequest = await call({
@@ -329,7 +477,7 @@ async function main() {
     assert.equal(firstPush.reused, false);
     assert.equal(secondPush.reused, true);
     assert.equal(secondPush.job.id, firstPush.job.id);
-    const blockedEdit = await call({ method: "PATCH", pathname: `/api/v1/issues/${guardedIssue.id}`, body: { summary: "Must not save" } });
+    const blockedEdit = await call({ method: "PATCH", pathname: `/api/v1/projects/${project.id}/issues/${guardedIssue.id}`, body: { summary: "Must not save" } });
     assert.equal(blockedEdit.status, 409);
     assert.equal(blockedEdit.body.error.code, "ISSUE_SYNC_IN_PROGRESS");
 

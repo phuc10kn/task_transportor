@@ -1,4 +1,4 @@
-const { EDITABLE_CANONICAL_FIELDS } = require("./canonicalIssueFields");
+const { DEFAULT_CANONICAL_VALUES, EDITABLE_CANONICAL_FIELDS } = require("./canonicalIssueFields");
 
 const SOURCE_ORDER = Object.freeze(["backlog", "jira", "revision"]);
 
@@ -41,6 +41,10 @@ function materializeCisFields(fieldsJson, options = {}) {
         current.cis = candidate;
         break;
       }
+    }
+
+    if (!hasValue(current.cis) && Object.prototype.hasOwnProperty.call(DEFAULT_CANONICAL_VALUES, field)) {
+      current.cis = DEFAULT_CANONICAL_VALUES[field];
     }
 
     if (Object.keys(current).length > 0) {

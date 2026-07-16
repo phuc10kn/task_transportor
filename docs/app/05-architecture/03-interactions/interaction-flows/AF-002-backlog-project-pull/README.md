@@ -7,7 +7,7 @@ entity_type: InteractionFlow
 layer: 05-architecture
 concern: 03-interactions
 status: active
-summary: Luồng batch pull theo project để enqueue nhiều manual pull job từ Backlog vào CIS.
+summary: Luồng batch pull theo project được giữ làm trace nhưng execution hiện bị disable.
 theory_basis:
   - TH-HUBFLOW-02
   - TH-CANON-01
@@ -23,23 +23,23 @@ relations:
 
 ## Summary
 
-Luồng batch pull theo project để enqueue nhiều manual pull job từ Backlog vào CIS.
+Luồng batch pull theo project được giữ làm trace nhưng execution hiện bị disable.
 
 ## Meaning
 
-Luồng batch pull theo project để enqueue nhiều manual pull job từ Backlog vào CIS.
+Manual project pull không khả dụng trong Lite hiện tại; operator sync từng candidate riêng.
 
 ## Trigger
 
-Admin gọi route Pull project từ màn Backlog Issues cho project đang chọn.
+Không có trigger active; route manual trả `BACKLOG_PROJECT_PULL_DISABLED`.
 
 ## Path
 
-`Admin -> Backlog HTTP -> BacklogApi.pullProject(...) -> load project config -> query source list -> SyncApi.enqueueJob(manual_pull x N)`
+`Admin -> Backlog HTTP -> disabled guard -> 409`, không gọi Backlog và không enqueue job.
 
 ## Outcome
 
-Hệ thống tạo batch job pull từng issue của project, thay vì xử lý nặng ngay trong request.
+Không có batch job; operator dùng candidate action thuộc `AF-001`.
 
 ## Related Entities
 
@@ -51,7 +51,7 @@ Hệ thống tạo batch job pull từng issue của project, thay vì xử lý 
 
 ## Architectural role
 
-Luồng batch pull theo project để enqueue nhiều manual pull job từ Backlog vào CIS. Flow này là đơn vị trace cho trigger, participant, outcome và side effect kiến trúc.
+Flow này giữ provenance cho capability đã disable và là điểm review nếu project pull được thiết kế lại theo queue-only.
 
 ## Boundaries respected
 
@@ -74,4 +74,5 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 
 - Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
 - Evidence UI trigger đã được refresh sau khi control chuyển sang Backlog Issues.
+- Execution bị disable theo quyết định sản phẩm hiện tại; UI giữ control disabled để giải thích cho operator.
 - Không suy diễn relation canonical mới từ prose hiện có.

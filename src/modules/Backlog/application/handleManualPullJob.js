@@ -5,6 +5,7 @@ const { createBacklogClient } = require("../infrastructure/BacklogClient");
 const { downloadAttachmentToCis } = require("./downloadAttachmentToCis");
 const { normalizeBacklogIssue } = require("../support/normalizeBacklogIssue");
 const { applyApprovedBacklogMappings } = require("../support/applyBacklogMappings");
+const { runCandidateJiraWorkflow } = require("./runCandidateJiraWorkflow");
 
 function projectsApi() {
   return require("../../Projects/ProjectsApi");
@@ -96,6 +97,7 @@ async function handleManualPullJob(job, { config }) {
     });
 
     const translationRequested = job.payload_json && job.payload_json.with_translation === true;
+    const inlineJiraWorkflow = job.job_type === "sync_translate_jira";
     const translationResult = translationRequested
       ? await translationApi().enqueueIssueTranslations({
         config,
@@ -104,6 +106,7 @@ async function handleManualPullJob(job, { config }) {
         requestedBy: job.payload_json.requested_by || null,
         requestCorrelationId: job.payload_json.request_correlation_id || null,
         trigger: "manual",
+        enqueueJobs: !inlineJiraWorkflow,
       })
       : {
         created_items: [],
@@ -111,6 +114,7 @@ async function handleManualPullJob(job, { config }) {
         jobs: [],
         reused_jobs: [],
         queue_items: [],
+        current_items: [],
       };
 
     const attachmentDownloads = [];
@@ -131,6 +135,15 @@ async function handleManualPullJob(job, { config }) {
       });
     }
 
+    const jiraWorkflowResult = job.payload_json?.push_to_jira === true
+      ? await runCandidateJiraWorkflow({
+        config,
+        parentJob: job,
+        issueId: result.issue.id,
+        translationResult,
+      })
+      : null;
+
     SyncApi.writeJournal({
       config,
       input: {
@@ -138,8 +151,8 @@ async function handleManualPullJob(job, { config }) {
         project_id: project.id,
         issue_id: result.issue.id,
         direction_from: "backlog",
-        direction_to: "cis",
-        job_type: "manual_pull",
+        direction_to: inlineJiraWorkflow ? "jira" : "cis",
+        job_type: job.job_type,
         action: result.created_revision ? "backlog_issue_ingested" : "backlog_issue_skipped_duplicate",
         status: "success",
         trigger: job.payload_json.mode === "scheduled" ? "scheduled" : "manual",
@@ -157,6 +170,8 @@ async function handleManualPullJob(job, { config }) {
           reused_translate_jobs: translationResult.reused_jobs.length,
           translation_queue_ids: translationResult.queue_items.map((item) => item.id),
           applied_mappings: mappingResult.applied,
+          push_to_jira: Boolean(jiraWorkflowResult),
+          jira_job_id: jiraWorkflowResult ? job.id : null,
         },
         attempt_count: job.attempt_count,
         executed_by: job.payload_json.requested_by || null,
@@ -177,6 +192,11 @@ async function handleManualPullJob(job, { config }) {
       translate_jobs: translationResult.jobs.length,
       reused_translate_jobs: translationResult.reused_jobs.length,
       translation_queue_ids: translationResult.queue_items.map((item) => item.id),
+      push_to_jira: Boolean(jiraWorkflowResult),
+      jira_job_id: jiraWorkflowResult ? job.id : null,
+      jira_issue_key: jiraWorkflowResult
+        ? CisApi.getIssueById({ config, issueId: result.issue.id }).jira_issue_key
+        : null,
     };
   } catch (error) {
     if (error.retryable === undefined) {

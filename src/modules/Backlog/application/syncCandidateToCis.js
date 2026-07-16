@@ -1,22 +1,35 @@
 const { AppError } = require("../../../http/errors/AppError");
 const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
-const { lookupBacklogIssueIdentity } = require("./lookupBacklogIssueIdentity");
 const { getIssueActionReadiness } = require("./getIssueActionReadiness");
 
-function validateWithTranslation(value) {
+function validateBoolean(value, field) {
   if (value !== undefined && typeof value !== "boolean") {
     throw new AppError({
       code: "VALIDATION_ERROR",
-      message: "with_translation must be a JSON boolean.",
+      message: `${field} must be a JSON boolean.`,
       status: 422,
-      details: { field: "with_translation" },
+      details: { field },
     });
   }
 }
 
-async function syncCandidateToCis({ config, projectId, backlogIssueKey, executedBy, correlationId, withTranslation }) {
-  validateWithTranslation(withTranslation);
+function normalizeBacklogIssueKey(value) {
+  const key = String(value || "").trim().toUpperCase();
+  if (!key) {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "A Backlog issue key is required.",
+      status: 422,
+      details: { field: "backlog_issue_key" },
+    });
+  }
+  return key;
+}
+
+async function syncCandidateToCis({ config, projectId, backlogIssueKey, executedBy, correlationId, withTranslation, pushToJira }) {
+  validateBoolean(withTranslation, "with_translation");
+  validateBoolean(pushToJira, "push_to_jira");
   const readiness = getIssueActionReadiness({ config, projectId });
   if (!readiness.actions.sync_to_cis.enabled) {
     const reasons = readiness.actions.sync_to_cis.disabled_reasons;
@@ -29,16 +42,18 @@ async function syncCandidateToCis({ config, projectId, backlogIssueKey, executed
       details: { disabled_reasons: reasons },
     });
   }
-  const identity = await lookupBacklogIssueIdentity({ config, projectId, lookupToken: backlogIssueKey });
-  const existing = CisApi.getIssueByBacklogKey({ config, projectId: Number(projectId), backlogIssueKey: identity.canonical_key });
+  const normalizedKey = normalizeBacklogIssueKey(backlogIssueKey);
+  const existing = CisApi.getIssueByBacklogKey({ config, projectId: Number(projectId), backlogIssueKey: normalizedKey });
   if (existing) {
-    return { outcome: "already_in_cis", issue_id: existing.id, backlog_issue_key: identity.canonical_key, job: null };
+    return { outcome: "already_in_cis", issue_id: existing.id, backlog_issue_key: normalizedKey, job: null };
   }
-  const requestedTranslation = withTranslation === true;
+  const requestedJiraPush = pushToJira === true;
+  const requestedTranslation = requestedJiraPush || withTranslation === true;
   const payload = {
     mode: "candidate",
-    backlog_issue_key: identity.canonical_key,
+    backlog_issue_key: normalizedKey,
     with_translation: requestedTranslation,
+    push_to_jira: requestedJiraPush,
     ...(requestedTranslation ? {
       requested_by: executedBy || null,
       request_correlation_id: correlationId || null,
@@ -49,15 +64,27 @@ async function syncCandidateToCis({ config, projectId, backlogIssueKey, executed
     input: {
       project_id: Number(projectId),
       direction_from: "backlog",
-      direction_to: "cis",
-      job_type: "manual_pull",
+      direction_to: requestedJiraPush ? "jira" : "cis",
+      job_type: requestedJiraPush ? "sync_translate_jira" : "manual_pull",
       payload_json: payload,
       priority: 50,
+      max_attempts: requestedJiraPush ? 5 : 3,
       trigger: "manual",
       executed_by: executedBy || null,
       correlation_id: correlationId || null,
     },
   });
+  if (enqueueResult.running_without_jira) {
+    throw new AppError({
+      code: "BACKLOG_SYNC_RUNNING_WITHOUT_JIRA",
+      message: "The active Backlog sync is already running without Jira delivery.",
+      status: 409,
+      details: {
+        job_id: enqueueResult.job.id,
+        status: enqueueResult.job.status,
+      },
+    });
+  }
   if (enqueueResult.running_without_translation) {
     throw new AppError({
       code: "BACKLOG_SYNC_RUNNING_WITHOUT_TRANSLATION",
@@ -73,11 +100,12 @@ async function syncCandidateToCis({ config, projectId, backlogIssueKey, executed
   return {
     outcome: "queued",
     issue_id: null,
-    backlog_issue_key: identity.canonical_key,
+    backlog_issue_key: normalizedKey,
     job: enqueueResult.job,
     reused: enqueueResult.reused,
     promoted: enqueueResult.promoted,
     with_translation: requestedTranslation,
+    push_to_jira: requestedJiraPush,
   };
 }
 

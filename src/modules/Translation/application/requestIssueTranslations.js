@@ -93,7 +93,10 @@ function decorateTranslations(items, targets) {
   ];
 }
 
-async function requestIssueTranslations({ config, issueId, executedBy, correlationId }) {
+async function requestIssueTranslations({ config, issueId, targetField = null, executedBy, correlationId }) {
+  if (targetField && !["summary", "description"].includes(targetField)) {
+    throw new AppError({ code: "TRANSLATION_FIELD_INVALID", message: "target_field must be summary or description.", status: 422 });
+  }
   const repository = createTranslationRepository({ config });
   const bundle = CisApi.getIssueTranslationTargets({ config, issueId });
   const queued = await enqueueIssueTranslations({
@@ -103,6 +106,7 @@ async function requestIssueTranslations({ config, issueId, executedBy, correlati
     requestCorrelationId: correlationId || null,
     includeRejected: true,
     executionMode: "manual_immediate",
+    targetFields: targetField ? [targetField] : null,
     trigger: "manual",
   });
   const translated = [];

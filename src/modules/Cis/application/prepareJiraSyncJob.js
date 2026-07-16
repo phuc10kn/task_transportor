@@ -5,7 +5,7 @@ const SyncApi = require("../../Sync/SyncApi");
 const { createCisRepository } = require("../infrastructure/CisRepository");
 const { buildCanonicalSyncSnapshot } = require("./buildCanonicalSyncSnapshot");
 
-function prepareJiraSyncJob({ config, issueId, expectedHash, jiraFields, jiraPayloadOverride, targetAction, verifiedTraceKey, executedBy, correlationId }) {
+function prepareJiraSyncJob({ config, issueId, expectedHash, jiraFields, jiraPayloadOverride, targetAction, verifiedTraceKey, executedBy, correlationId, parentSyncJobId = null }) {
   const db = createConnection({ config });
   try {
     return runImmediateTransaction(db, () => {
@@ -79,6 +79,7 @@ function prepareJiraSyncJob({ config, issueId, expectedHash, jiraFields, jiraPay
             target_action: targetAction,
             verified_trace_key: verifiedTraceKey || null,
             jira_payload_override: jiraPayloadOverride || null,
+            parent_sync_job_id: parentSyncJobId,
           },
           priority: 40,
           trigger: "manual",

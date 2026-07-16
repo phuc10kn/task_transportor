@@ -4,6 +4,7 @@ const SyncApi = require("../../Sync/SyncApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
 const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
 const { evaluateJiraSyncReadiness } = require("./runJiraDryRun");
+const { jiraStoryPointFieldId } = require("../support/jiraDryRunPayload");
 
 function syncBlockedError(result) {
   const first = result.validation.errors[0] || {
@@ -198,12 +199,18 @@ async function handlePushIssueJob(job, { config }) {
       assignee: payload.fields.assignee
         && (payload.fields.assignee.emailAddress || payload.fields.assignee.accountId || payload.fields.assignee.name),
       due_date: payload.fields.duedate,
+      story_point: payload.fields[jiraStoryPointFieldId(
+        readiness.project,
+        payload.fields.issuetype && payload.fields.issuetype.name
+      )],
       reporter: payload.fields.reporter
         && (payload.fields.reporter.emailAddress || payload.fields.reporter.accountId || payload.fields.reporter.name),
       },
     });
 
-    const syncableComments = repository.listSyncableComments(readiness.issue.id);
+    const syncableComments = job.payload_json?.suppress_comment_jobs === true
+      ? []
+      : repository.listSyncableComments(readiness.issue.id);
     const commentJobs = syncableComments.map((comment) =>
       SyncApi.enqueueJob({
         config,

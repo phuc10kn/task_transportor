@@ -11,6 +11,7 @@ const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
+const { createTranslationRepository } = require("../../src/modules/Translation/infrastructure/TranslationRepository");
 const { makeTempConfig } = require("./helpers/tempConfig");
 const { requestJson, withServer } = require("./helpers/http");
 
@@ -141,6 +142,41 @@ function enqueueTranslate(config, item, input = {}) {
   });
 }
 
+function verifyAtomicBatchRollback() {
+  const config = setupConfig("translation-batch-rollback", "success");
+  const { issue, items } = createIssueWithTranslations(config, 2);
+  const repository = createTranslationRepository({ config });
+  for (const item of items) {
+    repository.markAiDraft(item.id, {
+      ai_draft: `[vi] ${item.source_text}`,
+      provider: "codex_exec",
+      model_or_command: "fake-success",
+      confidence: 0.9,
+    });
+  }
+  const before = CisApi.getIssueEditor({ config, issueId: issue.id });
+  const db = createConnection({ config });
+  db.exec(`CREATE TRIGGER verify_translation_batch_rollback
+    BEFORE UPDATE OF review_status ON translation_queue
+    WHEN NEW.id = ${Number(items[1].id)} AND NEW.review_status = 'approved'
+    BEGIN SELECT RAISE(ABORT, 'forced batch failure'); END;`);
+  db.close();
+
+  assert.throws(() => TranslationApi.approveTranslationBatch({
+    config,
+    queueIds: items.map((item) => item.id),
+    reviewedBy: null,
+    parentSyncJobId: "verify-parent",
+  }), /forced batch failure/);
+  const after = CisApi.getIssueEditor({ config, issueId: issue.id });
+  assert.equal(after.canonical.summary.value, before.canonical.summary.value);
+  assert.equal(after.canonical.description.value, before.canonical.description.value);
+  assert.deepEqual(
+    createTranslationRepository({ config }).list({ issue_id: issue.id }).map((item) => item.review_status),
+    ["ai_draft", "ai_draft"],
+  );
+}
+
 function getIssueStatus(config, issueId) {
   return CisApi.getIssueById({ config, issueId }).status;
 }
@@ -192,7 +228,7 @@ async function verifySuccessAndReviewApi() {
   assert.equal(first.provider, "codex_exec");
   assert.ok(first.model_or_command.includes("codex-exec.js"));
   assert.equal(first.confidence, 0.82);
-  assert.match(first.ai_draft, /^\[vi\]/);
+  assert.match(first.ai_draft, new RegExp(`^【${issue.backlog_issue_key}】\\[vi\\]`));
   assert.ok(first.ai_draft.includes("```js\nconst a = 1;\n```"));
   assert.equal(getIssueStatus(config, issue.id), "pending_translate");
 
@@ -228,7 +264,7 @@ async function verifySuccessAndReviewApi() {
     ).run("Old source", "Draft preserved across source change", staleSetup.items[0].id);
     staleDb.close();
     const staleList = await requestJson(server, {
-      pathname: `/api/v1/translation-queue?issue_id=${staleSetup.issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue?issue_id=${staleSetup.issue.id}`,
       token,
     });
     assert.equal(staleList.status, 200);
@@ -237,14 +273,14 @@ async function verifySuccessAndReviewApi() {
     assert.equal(staleList.body.data[0].source_text, staleSetup.items[0].source_text);
     const staleApprove = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${staleSetup.items[0].id}/approve`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${staleSetup.items[0].id}/approve`,
       token,
     });
     assert.equal(staleApprove.status, 409, JSON.stringify(staleApprove.body));
     assert.equal(staleApprove.body.error.code, "TRANSLATION_SOURCE_STALE");
     const reconciledDraft = await requestJson(server, {
       method: "PUT",
-      pathname: `/api/v1/translation-queue/${staleSetup.items[0].id}/draft`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${staleSetup.items[0].id}/draft`,
       token,
       body: { draft_text: "Human reconciled draft" },
     });
@@ -253,7 +289,7 @@ async function verifySuccessAndReviewApi() {
     assert.equal(reconciledDraft.body.data.ai_draft, "Human reconciled draft");
 
     const list = await requestJson(server, {
-      pathname: "/api/v1/translation-queue?review_status=ai_draft",
+      pathname: `/api/v1/projects/${project.id}/translation-queue?review_status=ai_draft`,
       token,
     });
     assert.equal(list.status, 200);
@@ -263,7 +299,7 @@ async function verifySuccessAndReviewApi() {
     assert.equal(listedItem.system_issue_key, issue.backlog_issue_key);
 
     const detail = await requestJson(server, {
-      pathname: `/api/v1/translation-queue/${items[0].id}`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${items[0].id}`,
       token,
     });
     assert.equal(detail.status, 200);
@@ -271,7 +307,7 @@ async function verifySuccessAndReviewApi() {
 
     const approve = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${items[0].id}/approve`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${items[0].id}/approve`,
       token,
       body: { review_notes: "ok" },
     });
@@ -285,7 +321,7 @@ async function verifySuccessAndReviewApi() {
 
     const edit = await requestJson(server, {
       method: "PUT",
-      pathname: `/api/v1/translation-queue/${items[1].id}/draft`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${items[1].id}/draft`,
       token,
       body: {
         draft_text: "Ban dich da chinh sua.",
@@ -299,7 +335,7 @@ async function verifySuccessAndReviewApi() {
 
     const approveEditedDraft = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${items[1].id}/approve`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${items[1].id}/approve`,
       token,
       body: { review_notes: "approve edited draft" },
     });
@@ -308,13 +344,36 @@ async function verifySuccessAndReviewApi() {
     assert.equal(CisApi.getIssueById({ config, issueId: issue.id }).fields_json.description.cis, "Ban dich da chinh sua.");
     assert.equal(getIssueStatus(config, issue.id), "approved");
 
-    const rejectTarget = createIssueWithTranslations(config, 1).items[0];
+    const rejectSetup = createIssueWithTranslations(config, 1);
+    const rejectTarget = rejectSetup.items[0];
     enqueueTranslate(config, rejectTarget);
     await SyncApi.runWorkerOnce({ config, workerId: "translation-verify" });
 
+    const projectQueue = await requestJson(server, {
+      pathname: `/api/v1/projects/${project.id}/translation-queue`,
+      token,
+    });
+    assert.equal(projectQueue.status, 200);
+    assert.equal(projectQueue.body.data.some((item) => item.id === rejectTarget.id), false);
+    const beforeCrossProjectDb = createConnection({ config });
+    const journalBeforeCrossProject = beforeCrossProjectDb.prepare("SELECT COUNT(*) AS total FROM sync_journal").get().total;
+    beforeCrossProjectDb.close();
+    const crossProjectDraft = await requestJson(server, {
+      method: "PUT",
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${rejectTarget.id}/draft`,
+      token,
+      body: { draft_text: "Must not cross projects" },
+    });
+    assert.equal(crossProjectDraft.status, 404);
+    assert.equal(crossProjectDraft.body.error.code, "RESOURCE_NOT_FOUND");
+    assert.notEqual(getTranslation(config, rejectTarget.id).ai_draft, "Must not cross projects");
+    const afterCrossProjectDb = createConnection({ config });
+    assert.equal(afterCrossProjectDb.prepare("SELECT COUNT(*) AS total FROM sync_journal").get().total, journalBeforeCrossProject);
+    afterCrossProjectDb.close();
+
     const reject = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${rejectTarget.id}/reject`,
+      pathname: `/api/v1/projects/${rejectSetup.project.id}/translation-queue/${rejectTarget.id}/reject`,
       token,
       body: { review_notes: "retry please" },
     });
@@ -323,12 +382,15 @@ async function verifySuccessAndReviewApi() {
 
     const retranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${rejectTarget.id}/retranslate`,
+      pathname: `/api/v1/projects/${rejectSetup.project.id}/translation-queue/${rejectTarget.id}/retranslate`,
       token,
     });
     assert.equal(retranslate.status, 202);
     assert.equal(retranslate.body.data.item.review_status, "pending");
     assert.equal(retranslate.body.data.job.job_type, "translate");
+
+    const legacyQueue = await requestJson(server, { pathname: ["", "api", "v1", "translation-queue"].join("/"), token });
+    assert.equal(legacyQueue.status, 404);
 
     const retranslateWorker = await SyncApi.runWorkerOnce({ config, workerId: "translation-verify" });
     assert.equal(retranslateWorker.job.status, "success");
@@ -362,7 +424,7 @@ async function verifyManualEntryPointGate() {
     email: "translation-entry-gate@example.test",
     password: "verify-password",
   });
-  const { issue, items } = createIssueWithTranslations(config, 1);
+  const { issue, items, project } = createIssueWithTranslations(config, 1);
   const active = enqueueTranslate(config, items[0]);
   const locked = createSyncJobRepository({ config }).lockById({
     jobId: active.id,
@@ -383,7 +445,7 @@ async function verifyManualEntryPointGate() {
     const token = login.body.data.token;
     const issueTranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translations/issues/${issue.id}/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/translations/translate`,
       token,
     });
     assert.equal(issueTranslate.status, 202);
@@ -392,7 +454,7 @@ async function verifyManualEntryPointGate() {
 
     const retranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${items[0].id}/retranslate`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${items[0].id}/retranslate`,
       token,
     });
     assert.equal(retranslate.status, 202);
@@ -415,7 +477,7 @@ async function verifyDirectFailureFeedback() {
     email: "translation-direct-failure@example.test",
     password: "verify-password",
   });
-  const { issue } = createIssueWithTranslations(config, 1);
+  const { issue, project } = createIssueWithTranslations(config, 1);
   const app = createApp({ config });
   await withServer(app, async (server) => {
     const login = await requestJson(server, {
@@ -428,7 +490,7 @@ async function verifyDirectFailureFeedback() {
     });
     const response = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translations/issues/${issue.id}/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/translations/translate`,
       token: login.body.data.token,
     });
     assert.equal(response.status, 502);
@@ -472,7 +534,7 @@ async function verifyDeepSeekProvider() {
       auto_translate: true,
     },
   });
-  const { items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
+  const { issue, items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
   enqueueTranslate(config, items[0]);
 
   const originalFetch = global.fetch;
@@ -491,7 +553,7 @@ async function verifyDeepSeekProvider() {
             {
               message: {
                 content: JSON.stringify({
-                  translated_text: "[vi] ban dich deepseek",
+                  translated_text: `【${issue.backlog_issue_key}】[vi] ban dich deepseek【${issue.backlog_issue_key}】`,
                   confidence: 0.91,
                   warnings: [],
                   preserved_blocks: true,
@@ -519,7 +581,7 @@ async function verifyDeepSeekProvider() {
   assert.equal(item.ai_transport, "openai_compatible");
   assert.equal(item.model_or_command, "deepseek-v4-flash");
   assert.equal(item.provider_request_id, "deepseek-test-request");
-  assert.equal(item.ai_draft, "[vi] ban dich deepseek");
+  assert.equal(item.ai_draft, `【${issue.backlog_issue_key}】[vi] ban dich deepseek`);
 }
 
 async function verifyDeepSeekAnthropicTransport() {
@@ -585,7 +647,7 @@ async function verifyDeepSeekAnthropicTransport() {
   assert.equal(item.ai_transport, "anthropic_compatible");
   assert.equal(item.model_or_command, "deepseek-v4-pro");
   assert.equal(item.provider_request_id, "deepseek-anthropic-test-request");
-  assert.equal(item.ai_draft, "[vi] ban dich anthropic");
+  assert.equal(item.ai_draft, `【${CisApi.getIssueById({ config, issueId: item.issue_id }).backlog_issue_key}】[vi] ban dich anthropic`);
 }
 
 async function verifyStaleQueueUsesCurrentProjectAiConfig() {
@@ -649,10 +711,11 @@ async function verifyStaleQueueUsesCurrentProjectAiConfig() {
   assert.equal(item.ai_transport, "openai_compatible");
   assert.equal(item.model_or_command, "deepseek-v4-flash");
   assert.equal(item.provider_request_id, "deepseek-refreshed-config-request");
-  assert.equal(item.ai_draft, "[vi] refreshed config");
+  assert.equal(item.ai_draft, `【${CisApi.getIssueById({ config, issueId: item.issue_id }).backlog_issue_key}】[vi] refreshed config`);
 }
 
 async function main() {
+  verifyAtomicBatchRollback();
   await verifySuccessAndReviewApi();
   await verifyManualEntryPointGate();
   await verifyDirectFailureFeedback();

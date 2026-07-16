@@ -34,12 +34,13 @@ Module read-model nhẹ phục vụ reporting và vận hành. Nó tổng hợp 
 |----------|-------|
 | Public surface | `src/modules/Dashboard/DashboardApi.js`, `src/modules/Dashboard/http/routes.js` |
 | Owned behavior | reporting aggregation, operations alert view |
-| Read scope | issues, projects, sync jobs, translation queue, anomaly log |
+| Read scope | issues, sync jobs, translation queue, anomaly log; mọi subquery dùng cùng Project context từ path |
 | Write ownership | none đối với business state chính |
 
 ## Rules / constraints
 
 - Dashboard chỉ là consumer read.
+- Summary và alerts bắt buộc scope theo `project_id`; không trả global Project count trong workspace response.
 - Không được cài business orchestration mới trong dashboard controllers.
 - Nếu cần write, phải đi qua owner module tương ứng.
 

@@ -16,7 +16,7 @@ function createDashboardRepository({ config }) {
   }
 
   return {
-    summary() {
+    summary(projectId) {
       return withDb((db) => ({
         health: {
           status: "ok",
@@ -25,62 +25,65 @@ function createDashboardRepository({ config }) {
         counts: {
           pull_jobs_pending: count(
             db,
-            "SELECT COUNT(*) AS total FROM sync_jobs WHERE job_type = 'manual_pull' AND status = 'pending'"
+            "SELECT COUNT(*) AS total FROM sync_jobs WHERE project_id = ? AND job_type = 'manual_pull' AND status = 'pending'",
+            [projectId]
           ),
           pull_jobs_failed: count(
             db,
-            "SELECT COUNT(*) AS total FROM sync_jobs WHERE job_type = 'manual_pull' AND status = 'failed'"
+            "SELECT COUNT(*) AS total FROM sync_jobs WHERE project_id = ? AND job_type = 'manual_pull' AND status = 'failed'",
+            [projectId]
           ),
           translation_pending: count(
             db,
-            "SELECT COUNT(*) AS total FROM translation_queue WHERE review_status IN ('pending', 'ai_draft')"
+            "SELECT COUNT(*) AS total FROM translation_queue WHERE project_id = ? AND review_status IN ('pending', 'ai_draft')",
+            [projectId]
           ),
           issue_pending_mapping: count(
             db,
             `SELECT COUNT(DISTINCT issue_id) AS total
              FROM anomaly_log
-             WHERE anomaly_type = 'mapping_gap'
-               AND status IN ('open', 'investigating')`
+             WHERE project_id = ?
+               AND anomaly_type = 'mapping_gap'
+               AND status IN ('open', 'investigating')`,
+            [projectId]
           ),
           sync_jobs_failed: count(
             db,
-            "SELECT COUNT(*) AS total FROM sync_jobs WHERE status = 'failed'"
+            "SELECT COUNT(*) AS total FROM sync_jobs WHERE project_id = ? AND status = 'failed'",
+            [projectId]
           ),
           anomaly_open: count(
             db,
-            "SELECT COUNT(*) AS total FROM anomaly_log WHERE status IN ('open', 'investigating')"
+            "SELECT COUNT(*) AS total FROM anomaly_log WHERE project_id = ? AND status IN ('open', 'investigating')",
+            [projectId]
           ),
-          projects_enabled: count(
-            db,
-            "SELECT COUNT(*) AS total FROM projects WHERE enabled = 1"
-          ),
-          issues_total: count(db, "SELECT COUNT(*) AS total FROM issues"),
+          issues_total: count(db, "SELECT COUNT(*) AS total FROM issues WHERE project_id = ?", [projectId]),
         },
       }));
     },
 
-    alerts() {
+    alerts(projectId) {
       return withDb((db) => {
         const failedJobs = db
           .prepare(
             `SELECT id, project_id, issue_id, job_type, last_error, updated_at
              FROM sync_jobs
-             WHERE status = 'failed'
+             WHERE project_id = ? AND status = 'failed'
              ORDER BY updated_at DESC
              LIMIT 10`
           )
-          .all()
+          .all(projectId)
           .map((row) => ({ type: "sync_job_failed", severity: "warning", ...row }));
 
         const anomalies = db
           .prepare(
             `SELECT id, project_id, issue_id, anomaly_type, severity, status, created_at
              FROM anomaly_log
-             WHERE status IN ('open', 'investigating')
+             WHERE project_id = ? AND status IN ('open', 'investigating')
              ORDER BY created_at DESC
              LIMIT 10`
           )
-          .all()
+          .all(projectId)
           .map((row) => ({ type: "anomaly_open", ...row }));
 
         return [...failedJobs, ...anomalies].slice(0, 20);

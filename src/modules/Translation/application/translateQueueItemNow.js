@@ -10,6 +10,12 @@ const { translationAdapterFor } = require("./translationAdapterFor");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
 const { hashText } = require("../support/hashText");
 
+function translatedText(item, issue, text) {
+  return item.comment_id || item.target_type !== "issue" || item.target_field !== "summary"
+    ? text
+    : CisApi.normalizeCanonicalSummary({ issue, summary: text });
+}
+
 async function translateWithImmediateRetry({ config, item, request, maxAttempts }) {
   let lastError = null;
 
@@ -82,7 +88,7 @@ async function translateQueueItemNow({
       maxAttempts: maxImmediateAttempts,
     });
     const updated = repository.markAiDraft(item.id, {
-      ai_draft: result.translated_text,
+      ai_draft: translatedText(item, issue, result.translated_text),
       provider: result.provider || item.provider,
       model_or_command: result.model_or_command || item.model_or_command,
       provider_request_id: result.provider_request_id,

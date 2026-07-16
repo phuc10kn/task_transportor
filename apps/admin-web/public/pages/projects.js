@@ -35,7 +35,7 @@
           <div class="col-md-4"><label class="form-label" for="translation_ai_transport">Transport</label><select class="form-select" id="translation_ai_transport" name="translation_ai_transport"></select></div>
           <div class="col-md-4"><label class="form-label" for="translation_ai_model">Model</label><select class="form-select" id="translation_ai_model" name="translation_ai_model"></select></div>
         </div><div id="ai-notice" class="mt-2"></div></fieldset>
-        <fieldset class="mt-4"><legend class="h3">Operating policy</legend><div class="row g-2">${flags.map(([name, label]) => `<div class="col-sm-6 col-xl-4"><label class="form-check form-switch policy-switch"><input class="form-check-input" name="${name}" type="checkbox" ${value[name] ? "checked" : ""}><span class="form-check-label">${label}</span></label></div>`).join("")}</div></fieldset>
+        <fieldset class="mt-4"><legend class="h3">Operating policy</legend><div class="row g-2">${flags.map(([name, label]) => `<div class="col-sm-6 col-xl-4"><label class="form-check form-switch policy-switch"><input class="form-check-input" name="${name}" type="checkbox" ${value[name] ? "checked" : ""} ${name === "scheduled_pull_enabled" ? "disabled" : ""}><span class="form-check-label">${label}${name === "scheduled_pull_enabled" ? ' <span class="badge bg-secondary-lt ms-1">Disabled</span>' : ""}</span></label></div>`).join("")}</div><div class="text-secondary small mt-2">Project pull and scheduled pull are disabled; use Pull one or candidate actions.</div></fieldset>
         <div class="row g-3 mt-2">
           <div class="col-xl-6"><details class="card" open><summary class="card-header" aria-label="Backlog connection"><span class="card-title">Backlog source</span></summary><div class="card-body"><div class="row g-3">${backlogFields.map((field) => `<div class="col-sm-6">${input(field, value[field[0]])}</div>`).join("")}</div></div></details></div>
           <div class="col-xl-6"><details class="card" open><summary class="card-header" aria-label="Jira connection"><span class="card-title">Jira target</span></summary><div class="card-body"><div class="row g-3">${jiraFields.map((field) => `<div class="col-sm-6">${input(field, value[field[0]])}</div>`).join("")}</div></div></details></div>
@@ -76,9 +76,7 @@
     document.querySelectorAll("[data-open-project]").forEach((button) => button.addEventListener("click", () => {
       const id = Number(button.dataset.openProject);
       sessionStorage.setItem(CIS.PROJECT_KEY, String(id));
-      const next = CIS.safePath(params.get("next"));
-      const separator = next.includes("?") ? "&" : "?";
-      location.assign(`${next}${separator}project_id=${id}`);
+      location.assign(CIS.workspacePath(params.get("next"), id));
     }));
     const form = document.querySelector("#project-form");
     if (!form) return;
@@ -107,8 +105,7 @@
         creating = false;
         if (submitter.value === "1" && saved.enabled !== false) {
           sessionStorage.setItem(CIS.PROJECT_KEY, String(saved.id));
-          const next = CIS.safePath(params.get("next"));
-          location.assign(`${next}${next.includes("?") ? "&" : "?"}project_id=${saved.id}`);
+          location.assign(CIS.workspacePath(params.get("next"), saved.id));
           return;
         }
         history.replaceState(null, "", `/projects?project_id=${saved.id}`);

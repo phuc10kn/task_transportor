@@ -206,7 +206,7 @@ async function verifyJiraMappingUserPullKeepsHiddenUsers() {
   });
 }
 
-function createProject(config, suffix) {
+function createProject(config, suffix, options = {}) {
   return ProjectsApi.createProject({
     config,
     input: {
@@ -216,8 +216,8 @@ function createProject(config, suffix) {
       backlog_project_key: suffix,
       backlog_issue_key_prefix: suffix,
       backlog_api_key_env: "BACKLOG_API_KEY",
-      jira_site_url: "https://jira.example.test",
-      jira_project_key: "DMP",
+      jira_site_url: options.jira_site_url || "https://jira.example.test",
+      jira_project_key: options.jira_project_key || "DMP",
       jira_email_env: "JIRA_EMAIL_TEST",
       jira_api_token_env: "JIRA_API_TOKEN_TEST",
       source_language: "ja",
@@ -473,7 +473,10 @@ async function verifyEndpointAndCreateFlow() {
   const name = "jira-outbound-create";
   const config = setupConfig(name);
   writeFakeState(config);
-  const project = createProject(config, "PH6A");
+  const project = createProject(config, "PH6A", {
+    jira_site_url: "https://10kn-developer.atlassian.net",
+    jira_project_key: "WEC1",
+  });
   seedRequiredMappings(config, project);
   const ready = createReadyIssue(config, project, {
     summary: "Canonical summary",
@@ -488,21 +491,22 @@ async function verifyEndpointAndCreateFlow() {
     const token = await login(server, name);
     const dryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${ready.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${ready.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(dryRun.status, 200);
     assert.equal(dryRun.body.data.can_sync, true);
-    assert.equal(dryRun.body.data.payload.fields.summary, "VI: Canonical summary");
+    assert.equal(dryRun.body.data.payload.fields.summary, `【${ready.issue.backlog_issue_key}】VI: Canonical summary`);
     assert.equal(dryRun.body.data.payload.fields.description, "VI: Canonical plain text");
     assert.equal(dryRun.body.data.payload.fields.assignee.accountId, "jira-account-1");
     assert.equal(dryRun.body.data.payload.fields.duedate, "2026-07-31");
+    assert.equal(dryRun.body.data.payload.fields.customfield_10038, 1);
     assert.ok(!Object.prototype.hasOwnProperty.call(dryRun.body.data.payload.fields, "labels"));
     assert.ok(dryRun.body.data.canonical_hash.startsWith("sha256:"));
 
     const syncResponse = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${ready.issue.id}/sync/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${ready.issue.id}/sync/jira`,
       token,
     });
     assert.equal(syncResponse.status, 202);
@@ -521,11 +525,12 @@ async function verifyEndpointAndCreateFlow() {
     const fakeState = readFakeState(config);
     assert.equal(fakeState.issues.length, 1);
     assert.equal(fakeState.issues[0].key, savedIssue.jira_issue_key);
-    assert.equal(fakeState.issues[0].summary, "VI: Canonical summary");
+    assert.equal(fakeState.issues[0].summary, `【${ready.issue.backlog_issue_key}】VI: Canonical summary`);
     assert.equal(fakeState.issues[0].description, "VI: Canonical plain text");
     assert.deepEqual(fakeState.issues[0].labels, []);
     assert.equal(fakeState.issues[0].assignee, "jira-account-1");
     assert.equal(fakeState.issues[0].due_date, "2026-07-31");
+    assert.equal(fakeState.issues[0].story_point, 1);
 
     const commentJob = SyncApi.listJobs({ config, filters: { status: "pending" } })
       .find((job) => job.job_type === "push_comment" && job.issue_id === ready.issue.id);
@@ -782,7 +787,7 @@ async function verifyRetryAndCancelApi() {
     const token = await login(server, name);
     const firstDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${ready.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${ready.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(firstDryRun.status, 200);
@@ -790,7 +795,7 @@ async function verifyRetryAndCancelApi() {
 
     const firstSync = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${ready.issue.id}/sync/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${ready.issue.id}/sync/jira`,
       token,
     });
     assert.equal(firstSync.status, 202);
@@ -801,7 +806,7 @@ async function verifyRetryAndCancelApi() {
 
     const retried = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/sync-jobs/${failedJobId}/retry`,
+      pathname: `/api/v1/projects/${project.id}/sync-jobs/${failedJobId}/retry`,
       token,
     });
     assert.equal(retried.status, 200);
@@ -810,7 +815,7 @@ async function verifyRetryAndCancelApi() {
     const queuedIssue = createReadyIssue(config, project, { include_comment: false });
     const queuedDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${queuedIssue.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${queuedIssue.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(queuedDryRun.status, 200);
@@ -818,14 +823,14 @@ async function verifyRetryAndCancelApi() {
 
     const queued = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${queuedIssue.issue.id}/sync/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${queuedIssue.issue.id}/sync/jira`,
       token,
     });
     assert.equal(queued.status, 202);
 
     const cancelled = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/sync-jobs/${queued.body.data.id}/cancel`,
+      pathname: `/api/v1/projects/${project.id}/sync-jobs/${queued.body.data.id}/cancel`,
       token,
     });
     assert.equal(cancelled.status, 200);

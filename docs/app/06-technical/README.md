@@ -43,6 +43,7 @@ Persistence/schema:
 - Bảng lõi gồm `admin_users`, `projects`, `issues`, `issue_revisions`, `issue_comments`, `issue_attachments`, `issue_worklogs`, `translation_queue`, `translation_glossary_concepts`, `translation_glossary_terms`, `mapping_rules`, `anomaly_log`, `sync_jobs`, `sync_journal`, `pull_state`, `webhook_events`.
 - `issues.fields_json` là field-level source tracking với các nhánh `backlog`, `cis`, `jira`.
 - Nhánh `fields_json.<field>.cis` là canonical branch vận hành cho Issue Editor và Jira outbound.
+- `fields_json.story_point.cis` là số không âm, effective default `1` và tham gia canonical hash. Với `10kn-developer.atlassian.net/WEC1` issue type `Task`, Jira payload dùng `customfield_10038`; metadata được xác nhận bằng Jira REST GET là field `Story Points`, schema `number/float`, operation `set` và required trên Task.
 - `webhook_events` đã có schema nhưng webhook route chưa là đường Lite chính.
 
 API contract:
@@ -50,18 +51,23 @@ API contract:
 - Success detail trả envelope `{ "data": ... }`.
 - Error response dùng `error.code`, `error.message`, `error.details`, `error.correlation_id`.
 - Auth dùng Bearer JWT với `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`.
-- Endpoint group hiện đang mount: dashboard, projects, issues/CIS, Backlog pull/attachments, sync jobs/journal, translation queue, mapping, anomaly, Jira dry-run/sync.
-- CIS API có `POST /api/v1/issues` và `POST /api/v1/issues/:issueId/external-identities`.
-- Candidate sync dùng `POST /api/v1/projects/:projectId/backlog/issues/:backlogIssueKey/sync-to-cis`; body `{ "with_translation": true }` giữ parent `manual_pull` payload, còn active translate job được guard atomically theo `translation_queue_id`. Parent/child trace dùng `requested_by`, `request_correlation_id` và `parent_sync_job_id`; SQLite busy/locked và Sync transient giữ `retryable` để parent retry.
+- Endpoint global chỉ gồm health, auth và Project CRUD/config. Mọi workspace data-plane endpoint dùng prefix `/api/v1/projects/:projectId`, gồm Dashboard, issues/CIS, Backlog pull/attachments, sync jobs/journal, translation queue/glossary, mapping, anomaly và Jira dry-run/sync.
+- CIS manual create và external identity link dùng `POST /api/v1/projects/:projectId/issues` và `POST /api/v1/projects/:projectId/issues/:issueId/external-identities`.
+- `GET /api/v1/projects/:projectId/issues` trả `{ items, pagination }`, cố định `page_size = 20`; query search duy nhất là `q`, contains canonical Summary không phân biệt hoa thường. Priority và Assignee trong từng item đọc riêng `fields_json.<field>.cis` để hiển thị.
+- Kết quả AI dịch issue `Summary` được chuẩn hóa ngay khi lưu draft thành `【<source issue key>】<translated summary>`. Trước khi owner-write ghi `summary.cis`, CIS chuẩn hóa lần hai: xóa marker trùng của đúng source key và đặt đúng một marker ở đầu; marker khác như `【WEB】` được giữ nguyên.
+- `POST /api/v1/projects/:projectId/issues/:issueId/translations/translate` nhận tùy chọn `target_field = summary|description`; khi có field, endpoint chỉ tạo/reuse và dịch item của field đó. Issue Editor dùng contract này cho placeholder card, không dùng bulk action.
+- Project middleware trả `404 PROJECT_NOT_FOUND`, `409 PROJECT_DISABLED` hoặc `422 PROJECT_SCOPE_MISMATCH`; owner lookup sai Project trả `404 RESOURCE_NOT_FOUND`. Route workspace global cũ không còn được mount.
+- Candidate sync dùng `POST /api/v1/projects/:projectId/backlog/issues/:backlogIssueKey/sync-to-cis`; body `{ "with_translation": true }` tạo Translation flow, còn `{ "with_translation": true, "push_to_jira": true }` tạo auto-delivery flow. HTTP chỉ chuẩn hóa key cục bộ, kiểm tra readiness/CIS hiện có và enqueue/reuse/promote; `handleManualPullJob` mới gọi provider. Parent/child trace dùng `requested_by`, `request_correlation_id` và `parent_sync_job_id`.
 - Pull mapping values của Backlog/Jira giữ contract text cũ (`issue_type`, `status`, `priority`, `user`, `component`, `user_labels`) và bổ sung sibling `*_directory` `{ id, value, name, email?, display_order? }`; Jira user tách `accountId` ở `id` khỏi email/text legacy ở `value`. Directory không được copy sang CIS mapping values. Mappings là touchpoint duy nhất gọi pull/refresh snapshot. Backlog API CIS có action-readiness, `filter-options` và candidate GET theo created range cùng Status/`not_closed`/người được gán tùy chọn; `filter-options` chỉ đọc `status_directory`/`user_directory` đã lưu trong cấu hình project, nên mở màn không gọi Backlog. Candidate chỉ chạy sau `Find issues` và dùng ID snapshot để query Backlog. Khi cùng có `status_id` và `not_closed`, module lấy giao hai tập Status. Tất cả route public đều scope theo project và browse path không ghi database. Chỉ `BacklogClient` gọi endpoint `/api/v2/*` của Backlog.
 - Webhook endpoint không là contract Lite hiện tại khi code chưa mount.
 
 Technical guardrail:
 
-- Backlog manual/project pull đi qua job/audit path.
+- Backlog Pull one/candidate sync đi qua job/audit path; project/scheduled pull trả disabled và không enqueue batch job.
 - Pull one issue được phép run ngay để Admin UI nhận kết quả.
-- Candidate Sync to CIS chỉ enqueue khi project/manual-pull/sync/worker gate đều sẵn sàng và atomically reuse active manual-pull job theo project + canonical Backlog key.
+- Candidate Sync to CIS chỉ enqueue khi project/manual-pull/sync/worker gate đều sẵn sàng và atomically reuse active manual-pull job theo project + normalized requested Backlog key. Candidate GET overlay snapshot tối thiểu `active_job` từ pending/running `manual_pull`; Admin UI dùng snapshot này để khóa row và resume polling sau reload.
 - Candidate Sync + Translate chỉ tạo queue current-source `summary`/`description`; worker `manual_pull` enqueue child `translate`, không gọi AI trong HTTP. Worker và các manual Translation entry point dùng cùng active-job gate theo `translation_queue_id`.
+- Candidate Sync + Translate + Jira enqueue/promote thành job `sync_translate_jira`. Một worker xử lý tuần tự Backlog ingest -> direct translation -> staged Jira dry-run -> atomic approve/apply -> direct Jira delivery; không có child queue. Snapshot translation/canonical được khôi phục khi handler lỗi, và job chỉ success sau khi Jira delivery hoàn tất.
 
 ### Translation Glossary
 

@@ -136,8 +136,8 @@ async function main() {
       pathname: "/api/v1/projects/not-an-id/translation-glossary",
       token,
     });
-    assert.equal(invalidId.status, 422);
-    assert.equal(invalidId.body.error.details.field, "projectId");
+    assert.equal(invalidId.status, 404);
+    assert.equal(invalidId.body.error.code, "PROJECT_NOT_FOUND");
 
     const deleted = await requestJson(server, {
       method: "DELETE",

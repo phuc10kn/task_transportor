@@ -7,7 +7,7 @@ entity_type: Process
 layer: 01-business
 concern: 04-behavior
 status: active
-summary: Operator kéo danh sách issue của project Backlog đã cấu hình vào hàng đợi CIS để xử lý riêng từng issue.
+summary: Project batch pull được giữ làm business trace nhưng hiện bị disable.
 theory_basis:
   - TH-HUBFLOW
   - TH-OPS-TRACE
@@ -17,15 +17,15 @@ theory_basis:
 
 ## Summary
 
-Operator kéo danh sách issue của project Backlog đã cấu hình vào hàng đợi CIS để xử lý riêng từng issue.
+Project batch pull được giữ làm business trace nhưng hiện bị disable.
 
 ## Meaning
 
-Project pull là đường ingest chính của Lite cùng manual one-issue pull. Nó tạo candidate jobs vào CIS, không publish trực tiếp sang Jira.
+Project pull không phải đường ingest active; operator dùng Pull one hoặc sync từng candidate.
 
 ## Trigger
 
-Operator chủ động yêu cầu pull một project Backlog đã enable manual/project pull.
+Không có trigger active trong Lite hiện tại.
 
 ## Participants
 
@@ -33,24 +33,19 @@ Operator chủ động yêu cầu pull một project Backlog đã enable manual/
 
 ## Steps
 
-1. Operator chọn project đã cấu hình và yêu cầu project pull.
-2. CIS xác nhận project và nguồn Backlog đủ điều kiện pull.
-3. CIS lấy candidate issues theo phạm vi pull hiện hành.
-4. CIS tạo một ingest job riêng cho từng issue hợp lệ.
-5. Operator theo dõi outcome của các job để review hoặc recovery khi cần.
+1. UI hiển thị Pull project ở trạng thái disabled.
+2. API manual từ chối request bằng lỗi có chủ ý.
+3. Operator dùng candidate browser và sync từng issue.
 
 ## Outcomes
 
-- Candidate issue được enqueue riêng vào đường `Backlog -> CIS`.
-- Issue không có key hợp lệ không tạo job.
-- Project pull không sync trực tiếp sang Jira.
-- Failure của một issue được theo dõi theo job, không biến toàn bộ project pull thành direct outbound flow.
+- Không query Backlog hoặc enqueue batch job.
+- Candidate action riêng vẫn đi qua `Backlog -> CIS`.
 
 ## Rules
 
-- Project pull phải đi qua CIS.
-- Scheduled pull không thuộc Process này.
-- Mỗi candidate issue có outcome truy vết được.
+- Chỉ được bật lại sau khi có thiết kế queue-only được review.
+- Scheduled pull cũng bị disable trong scope hiện tại.
 
 ## Relations
 

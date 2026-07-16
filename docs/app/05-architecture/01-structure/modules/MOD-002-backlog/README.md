@@ -28,7 +28,7 @@ Module integration inbound cho Backlog. Nó kéo dữ liệu từ Backlog, norma
 
 ## Responsibility
 
-- Manual pull issue, project pull, scheduled pull scan.
+- Pull one/candidate ingest; project pull và scheduled pull scan giữ disabled contract.
 - Pull mapping values phía Backlog.
 - Download và retry attachment download.
 - Đóng vai adapter inbound, không sở hữu canonical state.

@@ -9,7 +9,7 @@
   let error = "";
   const collapsedGroups = new Set();
 
-  const settingsPath = () => `/api/v1/mapping-settings?project_id=${project.id}&source_system=${encodeURIComponent(source)}&target_system=${encodeURIComponent(target)}`;
+  const settingsPath = () => `/mapping-settings?source_system=${encodeURIComponent(source)}&target_system=${encodeURIComponent(target)}`;
 
   function header() {
     return `<div class="page-heading"><div><div class="route-kicker">Canonical governance</div><h1>Mappings</h1><p class="text-secondary mb-0">Review explicit System → CIS and CIS → System vocabulary.</p></div><div class="flow-rail"><span>${CIS.escape(source.toUpperCase())}</span><strong>→ CIS →</strong><span>${CIS.escape(target.toUpperCase())}</span></div></div>`;
@@ -58,7 +58,7 @@
   async function load() {
     root.innerHTML = `<div class="container-xl">${header()}<section class="card state-card" aria-busy="true"><div class="card-body"><span class="spinner-border spinner-border-sm me-2"></span>Loading mapping settings…</div></section></div>`;
     try {
-      settings = await CIS.api(settingsPath());
+      settings = await CIS.projectApi(project.id, settingsPath());
       error = "";
       render();
     } catch (failure) {
@@ -76,7 +76,7 @@
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Refreshing…';
     notice.textContent = "";
     try {
-      const result = await CIS.api(path, { method: "POST", body: path.includes("/cis/") ? { target_system: target } : undefined });
+      const result = await CIS.projectApi(project.id, path, { method: "POST", body: path.includes("/cis/") ? { target_system: target } : undefined });
       const warnings = result?.warnings || [];
       notice.innerHTML = CIS.alert(warnings.length ? `${success} ${warnings.length} catalog warning(s) require review.` : success, warnings.length ? "warning" : "success");
     } catch (failure) {
@@ -89,9 +89,9 @@
   }
 
   function bind() {
-    root.querySelector("#pull-backlog").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/backlog/mapping-values/pull`, "Backlog catalog refreshed."));
-    root.querySelector("#pull-jira").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/jira/mapping-values/pull`, "Jira catalog refreshed."));
-    root.querySelector("#sync-cis").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/cis/mapping-values/sync`, "CIS catalog synchronized."));
+    root.querySelector("#pull-backlog").addEventListener("click", (event) => refreshCatalog(event.currentTarget, "/backlog/mapping-values/pull", "Backlog catalog refreshed."));
+    root.querySelector("#pull-jira").addEventListener("click", (event) => refreshCatalog(event.currentTarget, "/jira/mapping-values/pull", "Jira catalog refreshed."));
+    root.querySelector("#sync-cis").addEventListener("click", (event) => refreshCatalog(event.currentTarget, "/cis/mapping-values/sync", "CIS catalog synchronized."));
     bindFlowControls();
   }
 
@@ -128,14 +128,14 @@
         evidence.textContent = "";
         try {
           const body = { to_value: select.value };
-          const path = item.existing_rule ? `/api/v1/mapping-rules/${item.existing_rule.id}` : "/api/v1/mapping-rules";
-          if (!item.existing_rule) Object.assign(body, { project_id: item.project_id, mapping_type: item.mapping_type, direction_from: item.direction_from, direction_to: item.direction_to, from_value: item.from_value });
-          let saved = await CIS.api(path, { method: item.existing_rule ? "PATCH" : "POST", body });
+          const path = item.existing_rule ? `/mapping-rules/${item.existing_rule.id}` : "/mapping-rules";
+          if (!item.existing_rule) Object.assign(body, { mapping_type: item.mapping_type, direction_from: item.direction_from, direction_to: item.direction_to, from_value: item.from_value });
+          let saved = await CIS.projectApi(project.id, path, { method: item.existing_rule ? "PATCH" : "POST", body });
           item.existing_rule = saved;
           item.to_value = saved.to_value;
           select.dataset.initialValue = saved.to_value;
           element.classList.remove("is-dirty");
-          if (saved.approval_status !== "approved") saved = await CIS.api(`/api/v1/mapping-rules/${saved.id}/approve`, { method: "POST" });
+          if (saved.approval_status !== "approved") saved = await CIS.projectApi(project.id, `/mapping-rules/${saved.id}/approve`, { method: "POST" });
           item.existing_rule = saved;
           item.to_value = saved.to_value;
           status.innerHTML = CIS.badge(saved.approval_status);

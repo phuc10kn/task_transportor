@@ -6,8 +6,8 @@ const {
   issueTranslationTargets,
 } = require("../support/issueTranslationTargets");
 
-function getIssueTranslationTargets({ config, issueId }) {
-  const repository = createCisRepository({ config });
+function getIssueTranslationTargets({ config, issueId, db = null }) {
+  const repository = createCisRepository({ config, db });
   const issue = repository.getIssueById(issueId);
 
   if (!issue) {

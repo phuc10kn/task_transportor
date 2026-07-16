@@ -30,7 +30,7 @@ Những path nặng, batch hoặc cần retry nên đi qua `Sync`.
 
 ## Statement
 
-Project pull, scheduled pull, translate job và outbound push dùng execution path có hàng đợi và journal thay vì nhồi toàn bộ vào request lifecycle.
+Translate job và outbound push dùng execution path có hàng đợi và journal thay vì nhồi toàn bộ vào request lifecycle. Project/scheduled pull hiện bị disable và chỉ được bật lại với execution path queue-only.
 
 ## Scope
 

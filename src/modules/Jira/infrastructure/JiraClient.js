@@ -3,6 +3,7 @@ const path = require("path");
 
 const { AppError } = require("../../../http/errors/AppError");
 const { markdownToAdf } = require("../support/jiraAdf");
+const { jiraStoryPointFieldId } = require("../support/jiraDryRunPayload");
 const { isRealJiraUserProfile, labelForJiraUser } = require("../support/realJiraUser");
 
 function messageFromBody(body, fallback) {
@@ -362,6 +363,7 @@ class FakeJiraClient {
       assignee: payload.fields.assignee && (payload.fields.assignee.accountId || payload.fields.assignee.name) || null,
       reporter: payload.fields.reporter && (payload.fields.reporter.accountId || payload.fields.reporter.name) || null,
       due_date: payload.fields.duedate || null,
+      story_point: payload.fields[jiraStoryPointFieldId(this.project, payload.fields.issuetype && payload.fields.issuetype.name)] ?? null,
       status: "Created",
       comments: [],
     };
@@ -394,6 +396,7 @@ class FakeJiraClient {
     issue.assignee = payload.fields.assignee && (payload.fields.assignee.accountId || payload.fields.assignee.name) || issue.assignee;
     issue.reporter = payload.fields.reporter && (payload.fields.reporter.accountId || payload.fields.reporter.name) || issue.reporter;
     issue.due_date = payload.fields.duedate || issue.due_date || null;
+    issue.story_point = payload.fields[jiraStoryPointFieldId(this.project, payload.fields.issuetype && payload.fields.issuetype.name)] ?? issue.story_point ?? null;
     saveFakeState(container);
     return { key: issue.key };
   }

@@ -1,7 +1,7 @@
 const { createDashboardRepository } = require("../infrastructure/DashboardRepository");
 
-function listDashboardAlerts({ config }) {
-  return createDashboardRepository({ config }).alerts();
+function listDashboardAlerts({ config, projectId }) {
+  return createDashboardRepository({ config }).alerts(projectId);
 }
 
 module.exports = {

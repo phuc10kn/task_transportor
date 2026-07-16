@@ -12,6 +12,9 @@ const {
 } = require("../../../shared/translationModels");
 const { materializeCisFields, mergeSourceFields } = require("../support/materializeCisFields");
 
+const CIS_PRIORITY_SQL = "json_extract(issues.fields_json, '$.priority.cis')";
+const CIS_ASSIGNEE_SQL = "json_extract(issues.fields_json, '$.assignee.cis')";
+
 function parseJson(value, fallback) {
   if (!value) {
     return fallback;
@@ -82,20 +85,9 @@ function buildIssueFilters(filters = {}) {
     values.push(filters.project_id);
   }
 
-  if (filters.status) {
-    clauses.push("issues.sync_status = ?");
-    values.push(filters.status);
-  }
-
   if (filters.q) {
-    const text = `%${filters.q}%`;
-    clauses.push(
-      `(issues.backlog_issue_key LIKE ?
-        OR issues.jira_issue_key LIKE ?
-        OR issue_revisions.summary LIKE ?
-        OR issue_revisions.description LIKE ?)`
-    );
-    values.push(text, text, text, text);
+    clauses.push("instr(normalize_text_key(COALESCE(issue_revisions.summary, '')), normalize_text_key(?)) > 0");
+    values.push(filters.q);
   }
 
   return {
@@ -112,6 +104,7 @@ function sourceFieldSnapshot(input) {
     priority: input.priority,
     assignee: input.assignee,
     due_date: input.due_date,
+    story_point: input.story_point,
   };
 }
 
@@ -133,6 +126,51 @@ function revisionFieldsJson(existingFieldsJson, input) {
   }
 
   return materializeCisFields(fields);
+}
+
+function updateCanonicalIssueInDb(db, input) {
+  const issue = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(input.issue_id));
+  if (!issue) return null;
+  const nextRevision = input.revision_snapshot
+    ? Number(issue.current_revision || 0) + 1
+    : null;
+
+  if (input.revision_snapshot) {
+    const revisionFields = input.revision_snapshot.fields_json ||
+      revisionFieldsJson(input.fields_json || issue.fields_json, {
+        source_system: "manual",
+        summary: input.revision_snapshot.summary,
+        description: input.revision_snapshot.description,
+        issue_type: input.revision_snapshot.issue_type,
+        priority: input.revision_snapshot.priority,
+        assignee: input.revision_snapshot.assignee,
+      });
+    db.prepare(
+      `INSERT INTO issue_revisions (
+        issue_id, revision, source_system, source_event_id, summary, description,
+        issue_type, priority, assignee, fields_json, attachments_json
+      ) VALUES (?, ?, 'manual', ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      issue.id,
+      nextRevision,
+      input.source_event_id || null,
+      input.revision_snapshot.summary,
+      input.revision_snapshot.description || null,
+      input.revision_snapshot.issue_type || null,
+      input.revision_snapshot.priority || null,
+      input.revision_snapshot.assignee || null,
+      JSON.stringify(revisionFields),
+      JSON.stringify(input.revision_snapshot.attachments_json || [])
+    );
+  }
+
+  db.prepare(
+    `UPDATE issues
+     SET fields_json = ?, sync_status = ?, current_revision = COALESCE(?, current_revision),
+         updated_at = datetime('now')
+     WHERE id = ?`
+  ).run(JSON.stringify(input.fields_json || {}), input.sync_status, nextRevision, issue.id);
+  return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issue.id));
 }
 
 function createCisRepository({ config, db: providedDb = null }) {
@@ -281,8 +319,14 @@ function createCisRepository({ config, db: providedDb = null }) {
     listIssues(filters = {}) {
       return withDb((db) => {
         const { values, where } = buildIssueFilters(filters);
-
-        return db
+        const page = Number(filters.page) || 1;
+        const pageSize = Number(filters.page_size) || 20;
+        const join = `FROM issues
+             JOIN projects ON projects.id = issues.project_id
+             LEFT JOIN issue_revisions
+               ON issue_revisions.issue_id = issues.id
+              AND issue_revisions.revision = issues.current_revision`;
+        const items = db
           .prepare(
             `SELECT
                issues.*,
@@ -290,8 +334,8 @@ function createCisRepository({ config, db: providedDb = null }) {
                issue_revisions.summary AS current_summary,
                issue_revisions.description AS current_description,
                issue_revisions.issue_type AS current_issue_type,
-               issue_revisions.priority AS current_priority,
-               issue_revisions.assignee AS current_assignee,
+               ${CIS_PRIORITY_SQL} AS current_priority,
+               ${CIS_ASSIGNEE_SQL} AS current_assignee,
                (
                  SELECT COUNT(*)
                  FROM translation_queue
@@ -304,16 +348,23 @@ function createCisRepository({ config, db: providedDb = null }) {
                  WHERE anomaly_log.issue_id = issues.id
                    AND anomaly_log.status IN ('open', 'investigating')
                ) AS open_anomaly_count
-             FROM issues
-             JOIN projects ON projects.id = issues.project_id
-             LEFT JOIN issue_revisions
-               ON issue_revisions.issue_id = issues.id
-              AND issue_revisions.revision = issues.current_revision
+             ${join}
              ${where}
-             ORDER BY issues.updated_at DESC, issues.created_at DESC`
+             ORDER BY issues.updated_at DESC, issues.created_at DESC
+             LIMIT ? OFFSET ?`
           )
-          .all(...values)
+          .all(...values, pageSize, (page - 1) * pageSize)
           .map(rowToIssue);
+        const total = db.prepare(`SELECT COUNT(*) AS total ${join} ${where}`).get(...values).total;
+        return {
+          items,
+          pagination: {
+            page,
+            page_size: pageSize,
+            total,
+            total_pages: Math.max(1, Math.ceil(total / pageSize)),
+          },
+        };
       });
     },
 
@@ -710,9 +761,11 @@ function createCisRepository({ config, db: providedDb = null }) {
       });
     },
 
-    getIssueById(issueId) {
+    getIssueById(issueId, projectId) {
       return withDb((db) => rowToIssue(
-        db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId)
+        projectId
+          ? db.prepare("SELECT * FROM issues WHERE id = ? AND project_id = ?").get(issueId, projectId)
+          : db.prepare("SELECT * FROM issues WHERE id = ?").get(issueId)
       ));
     },
 
@@ -735,9 +788,16 @@ function createCisRepository({ config, db: providedDb = null }) {
       );
     },
 
-    getAttachmentById(attachmentId) {
+    getAttachmentById(attachmentId, projectId) {
       return withDb((db) => rowToAttachment(
-        db.prepare("SELECT * FROM issue_attachments WHERE id = ?").get(attachmentId)
+        projectId
+          ? db.prepare(
+            `SELECT issue_attachments.*
+             FROM issue_attachments
+             JOIN issues ON issues.id = issue_attachments.issue_id
+             WHERE issue_attachments.id = ? AND issues.project_id = ?`
+          ).get(attachmentId, projectId)
+          : db.prepare("SELECT * FROM issue_attachments WHERE id = ?").get(attachmentId)
       ));
     },
 
@@ -784,6 +844,7 @@ function createCisRepository({ config, db: providedDb = null }) {
             status: input.status ? { jira: input.status } : undefined,
             assignee: input.assignee ? { jira: input.assignee } : undefined,
             due_date: input.due_date ? { jira: input.due_date } : undefined,
+            story_point: input.story_point !== undefined && input.story_point !== null ? { jira: input.story_point } : undefined,
           }, "jira");
 
           db
@@ -812,6 +873,7 @@ function createCisRepository({ config, db: providedDb = null }) {
           status: input.status ? { jira: input.status } : undefined,
           assignee: input.assignee ? { jira: input.assignee } : undefined,
           due_date: input.due_date ? { jira: input.due_date } : undefined,
+          story_point: input.story_point !== undefined && input.story_point !== null ? { jira: input.story_point } : undefined,
         }, "jira");
         db.prepare("UPDATE issues SET fields_json = ?, updated_at = datetime('now') WHERE id = ?")
           .run(JSON.stringify(fieldsJson), issueId);
@@ -835,6 +897,7 @@ function createCisRepository({ config, db: providedDb = null }) {
             status: input.status ? { jira: input.status } : undefined,
             assignee: input.assignee ? { jira: input.assignee } : undefined,
             due_date: input.due_date ? { jira: input.due_date } : undefined,
+            story_point: input.story_point !== undefined && input.story_point !== null ? { jira: input.story_point } : undefined,
             reporter: input.reporter ? { jira: input.reporter } : undefined,
           }, "jira");
 
@@ -916,77 +979,11 @@ function createCisRepository({ config, db: providedDb = null }) {
     },
 
     updateCanonicalIssue(input) {
-      return withDb((db) =>
-        runInTransaction(db, () => {
-          const issue = rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(input.issue_id));
-          if (!issue) {
-            return null;
-          }
+      return withDb((db) => runInTransaction(db, () => updateCanonicalIssueInDb(db, input)));
+    },
 
-          const nextRevision = input.revision_snapshot
-            ? Number(issue.current_revision || 0) + 1
-            : null;
-
-          if (input.revision_snapshot) {
-            const revisionFields = input.revision_snapshot.fields_json ||
-              revisionFieldsJson(input.fields_json || issue.fields_json, {
-                source_system: "manual",
-                summary: input.revision_snapshot.summary,
-                description: input.revision_snapshot.description,
-                issue_type: input.revision_snapshot.issue_type,
-                priority: input.revision_snapshot.priority,
-                assignee: input.revision_snapshot.assignee,
-              });
-            db
-              .prepare(
-                `INSERT INTO issue_revisions (
-                  issue_id,
-                  revision,
-                  source_system,
-                  source_event_id,
-                  summary,
-                  description,
-                  issue_type,
-                  priority,
-                  assignee,
-                  fields_json,
-                  attachments_json
-                )
-                VALUES (?, ?, 'manual', ?, ?, ?, ?, ?, ?, ?, ?)`
-              )
-              .run(
-                issue.id,
-                nextRevision,
-                input.source_event_id || null,
-                input.revision_snapshot.summary,
-                input.revision_snapshot.description || null,
-                input.revision_snapshot.issue_type || null,
-                input.revision_snapshot.priority || null,
-                input.revision_snapshot.assignee || null,
-                JSON.stringify(revisionFields),
-                JSON.stringify(input.revision_snapshot.attachments_json || [])
-              );
-          }
-
-          db
-            .prepare(
-              `UPDATE issues
-               SET fields_json = ?,
-                   sync_status = ?,
-                   current_revision = COALESCE(?, current_revision),
-                   updated_at = datetime('now')
-               WHERE id = ?`
-            )
-            .run(
-              JSON.stringify(input.fields_json || {}),
-              input.sync_status,
-              nextRevision,
-              issue.id
-            );
-
-          return rowToIssue(db.prepare("SELECT * FROM issues WHERE id = ?").get(issue.id));
-        })
-      );
+    updateCanonicalIssueInTransaction(input) {
+      return withDb((db) => updateCanonicalIssueInDb(db, input));
     },
 
     markAttachmentDownloaded(attachmentId, input) {

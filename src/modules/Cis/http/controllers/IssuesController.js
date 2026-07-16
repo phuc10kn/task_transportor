@@ -1,15 +1,39 @@
 const CisApi = require("../../CisApi");
 const TranslationApi = require("../../../Translation/TranslationApi");
 const { success } = require("../../../../http/response/envelope");
+const { AppError } = require("../../../../http/errors/AppError");
+
+function textFilter(value, field, maxLength = 200) {
+  const text = String(value || "").trim();
+  if (text.length > maxLength) {
+    throw new AppError({ code: "VALIDATION_ERROR", message: `${field} is too long.`, status: 422, details: { field } });
+  }
+  return text || undefined;
+}
+
+function pageFilter(value) {
+  const page = value === undefined ? 1 : Number(value);
+  if (!Number.isSafeInteger(page) || page < 1) {
+    throw new AppError({ code: "VALIDATION_ERROR", message: "page must be a positive integer.", status: 422, details: { field: "page" } });
+  }
+  return page;
+}
 
 function filtersFromRequest(req) {
   return {
-    project_id: req.params.projectId ? Number(req.params.projectId) : (
-      req.query.project_id ? Number(req.query.project_id) : undefined
-    ),
-    status: req.query.status,
-    q: req.query.q,
+    project_id: req.project.id,
+    q: textFilter(req.query.q, "q"),
+    page: pageFilter(req.query.page),
+    page_size: 20,
   };
+}
+
+function assertIssueInProject(req) {
+  return CisApi.getIssueById({
+    config: req.app.locals.config,
+    issueId: req.params.issueId,
+    projectId: req.project.id,
+  });
 }
 
 function list(req, res, next) {
@@ -27,7 +51,7 @@ function create(req, res, next) {
   try {
     success(res, CisApi.createManualIssue({
       config: req.app.locals.config,
-      input: req.body || {},
+      input: { ...(req.body || {}), project_id: req.project.id },
       executedBy: req.user && req.user.id,
       correlationId: req.correlationId,
     }), 201);
@@ -38,6 +62,7 @@ function create(req, res, next) {
 
 async function linkExternalIdentities(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, await CisApi.linkExternalIdentities({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -52,6 +77,7 @@ async function linkExternalIdentities(req, res, next) {
 
 function show(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, CisApi.getIssueDetail({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -63,6 +89,7 @@ function show(req, res, next) {
 
 function editor(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, CisApi.getIssueEditor({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -74,6 +101,7 @@ function editor(req, res, next) {
 
 function updateCanonical(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, CisApi.updateCanonicalIssue({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -86,32 +114,33 @@ function updateCanonical(req, res, next) {
   }
 }
 
-// TODO compatibility wrapper: Translation owns this use case.
-// Route kept for backward-compatible URL only.
 async function translate(req, res, next) {
   try {
-    success(res, await TranslationApi.requestIssueTranslations({
+    assertIssueInProject(req);
+    const result = await TranslationApi.requestIssueTranslations({
       config: req.app.locals.config,
       issueId: req.params.issueId,
+      targetField: req.body && req.body.target_field || null,
       executedBy: req.user && req.user.id,
       correlationId: req.correlationId,
-    }));
+    });
+    success(res, result, result.execution_status === "completed" ? 200 : 202);
   } catch (error) {
     next(error);
   }
 }
 
-// TODO compatibility wrapper: Translation owns this use case.
-// Route kept for backward-compatible URL only.
 async function translateQueueItem(req, res, next) {
   try {
-    success(res, await TranslationApi.translateIssueTranslationNow({
+    assertIssueInProject(req);
+    const result = await TranslationApi.translateIssueTranslationNow({
       config: req.app.locals.config,
       issueId: req.params.issueId,
       queueId: Number(req.params.queueId),
       executedBy: req.user && req.user.id,
       correlationId: req.correlationId,
-    }));
+    });
+    success(res, result, result.execution_status === "completed" ? 200 : 202);
   } catch (error) {
     next(error);
   }
@@ -119,6 +148,7 @@ async function translateQueueItem(req, res, next) {
 
 function history(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, CisApi.listIssueHistory({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -130,6 +160,7 @@ function history(req, res, next) {
 
 function worklogs(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, CisApi.listIssueWorklogs({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -141,6 +172,7 @@ function worklogs(req, res, next) {
 
 function attachments(req, res, next) {
   try {
+    assertIssueInProject(req);
     const detail = CisApi.getIssueDetail({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -153,6 +185,7 @@ function attachments(req, res, next) {
 
 function forceApprove(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, CisApi.forceApproveIssue({
       config: req.app.locals.config,
       issueId: req.params.issueId,
@@ -164,6 +197,7 @@ function forceApprove(req, res, next) {
 
 function markDuplicate(req, res, next) {
   try {
+    assertIssueInProject(req);
     success(res, CisApi.markDuplicateIssue({
       config: req.app.locals.config,
       issueId: req.params.issueId,

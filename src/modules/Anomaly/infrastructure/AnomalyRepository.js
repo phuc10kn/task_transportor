@@ -85,10 +85,10 @@ function createAnomalyRepository({ config }) {
       });
     },
 
-    findById(anomalyId) {
-      return withDb((db) =>
-        rowToAnomaly(db.prepare("SELECT * FROM anomaly_log WHERE id = ?").get(anomalyId))
-      );
+    findById(anomalyId, projectId) {
+      return withDb((db) => rowToAnomaly(projectId === undefined
+        ? db.prepare("SELECT * FROM anomaly_log WHERE id = ?").get(anomalyId)
+        : db.prepare("SELECT * FROM anomaly_log WHERE id = ? AND project_id = ?").get(anomalyId, projectId)));
     },
 
     findBlockingForIssue(issueId) {

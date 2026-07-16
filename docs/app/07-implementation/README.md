@@ -37,11 +37,14 @@ Implementation flow theo code hiện tại:
 - Backlog candidate `Sync to CIS + Translate` ghi `with_translation` vào parent payload; `handleManualPullJob` gọi capability public `TranslationApi.enqueueIssueTranslations`, tạo/reuse current-source queue và child `translate` jobs. `SyncApi.enqueueTranslateJobIfNoneActive` là atomic gate theo `translation_queue_id`.
 - Backlog/Jira client pull mapping values trả text legacy cho Mapping và directory `{ id, value, name }` cho toàn bộ catalog `issue_type`, `status`, `priority`, `user`, `component`; Jira user giữ `accountId` riêng với email/text legacy. Application pull replace directory snapshot nhưng giữ behavior text cũ; Jira sanitizer lọc user directory bằng cùng policy lọc user text. Mappings là UI duy nhất gọi Pull fields. Backlog candidate browse dùng `BacklogApi.listIssueCandidates`, batch read qua `CisApi`, không persist và chỉ chạy sau submit form. `BacklogApi.listIssueCandidateFilterOptions` chỉ đọc snapshot `status_directory`/`user_directory` khi UI mở. Browse dùng ID snapshot để query Backlog; `not_closed` resolve Status ID trừ `Closed`/`Close` rồi intersect với Status do Admin chọn nếu có. Directory không phải mapping business và không được copy sang CIS mapping values. Per-row action dùng `SyncApi.enqueueManualPullIfNoneActive` rồi worker chạy shared handler.
 - CIS manual create và external identity link là owner actions; Backlog/Jira chỉ expose public remote lookup trả canonical provider key/project identity.
-- Translation: Issue Editor có route dịch trực tiếp cho summary/description, vẫn lưu `translation_queue`; route Translate issue, Translate item và Translation Queue Retranslate đều enqueue/reuse translate job chung. AI và operator cùng ghi `ai_draft`; `PUT /translation-queue/:id/draft` chỉ lưu draft, còn Approve mới apply `ai_draft` vào canonical CIS branch.
+- Translation: Issue Editor luôn dựng read-model card Summary/Description, dùng placeholder không persistence khi chưa có queue item và không còn nút bulk `Translate issue`. Retranslate card đã có item chạy AI đồng bộ qua item route, không tạo sync job; placeholder gọi issue translation route với `target_field`, tạo đúng một `manual_immediate` translate job rồi chạy ngay khi lock được. Cả hai chỉ cập nhật `ai_draft` và không apply canonical. Chỉ action `Approve` riêng mới apply draft vào canonical; `PUT /translation-queue/:id/draft` vẫn chỉ lưu draft.
 - Mapping/anomaly: Jira dry-run dùng approved mapping qua CIS và tạo/đọc anomaly để quyết định `can_sync`.
 - Jira outbound: dry-run chạy qua API và ghi journal; sync thật enqueue `push_issue`, worker gọi Jira client khi gate pass.
 
 Issue Editor contract:
+
+- Canonical `story_point` dùng effective default `1`, cho phép sửa dạng số không âm và được đưa vào dry-run/hash. Jira adapter chỉ map đúng site/project/issue type đã xác minh là `10kn-developer.atlassian.net / WEC1 / Task` sang `customfield_10038`; project khác không nhận custom field ID này.
+- Nợ kỹ thuật đã ghi nhận: Story Point phải chuyển thành Project custom field, được discover bởi Pull Jira fields và map tại Mappings; xem [khoản nợ Story Point Project Custom Field](../08-quality/07-maintainability/story-point-project-custom-field-debt.md). Chưa triển khai target này.
 
 - Source branch `backlog` và `jira` không bị ghi đè bởi manual edit.
 - Translation modal chỉ dùng target `summary` và `description`.
@@ -56,6 +59,7 @@ Implementation verification hiện có:
 - `npm run verify:phase00` đến `npm run verify:phase07` map với các phase Lite đã triển khai.
 - `npm run verify:issue-editor` gom verify API và dry-run/sync của Issue Editor.
 - `npm run verify:system-issues` kiểm tra candidate browse/readiness, manual create, identity scope và candidate sync.
+- `npm run verify:project-scope` chạy static cutover gate rồi kiểm tra middleware, cross-project resource isolation, Dashboard A/B, Project disabled và legacy 404.
 - `npm test` chạy toàn bộ verify phase00-07.
 - Khi sửa Translation AI, kiểm tra module Translation không tự gọi `fetch`, `child_process`, `spawn`, `spawnSync`.
 

@@ -1,5 +1,5 @@
 const { createConnection } = require("../../../infrastructure/database/connection");
-const { pullProject } = require("./pullProject");
+const { PROJECT_PULL_ENABLED, pullProject } = require("./pullProject");
 
 function projectsApi() {
   return require("../../Projects/ProjectsApi");
@@ -57,6 +57,15 @@ function upsertPullState(config, projectId) {
 }
 
 async function runScheduledPullScan({ config }) {
+  if (!PROJECT_PULL_ENABLED) {
+    return {
+      disabled: true,
+      reason: "BACKLOG_PROJECT_PULL_DISABLED",
+      scanned_projects: 0,
+      results: [],
+    };
+  }
+
   const states = listPullState(config);
   const projects = projectsApi().listProjects({ config })
     .filter((project) =>

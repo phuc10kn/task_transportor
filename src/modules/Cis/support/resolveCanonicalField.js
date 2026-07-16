@@ -1,4 +1,5 @@
 const { adfToPlainText } = require("./adfPlainText");
+const { DEFAULT_CANONICAL_VALUES } = require("./canonicalIssueFields");
 
 const SOURCE_PRIORITY = Object.freeze(["cis", "backlog", "jira"]);
 
@@ -39,6 +40,13 @@ function resolveCanonicalField(fieldsJson, field, fallbackValue) {
         source,
       };
     }
+  }
+
+  if (fallbackValue === undefined && Object.prototype.hasOwnProperty.call(DEFAULT_CANONICAL_VALUES, field)) {
+    return {
+      value: DEFAULT_CANONICAL_VALUES[field],
+      source: "default",
+    };
   }
 
   return {

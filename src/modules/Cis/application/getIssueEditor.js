@@ -152,6 +152,19 @@ function decorateIssueTranslations(translations, issue) {
   for (const field of ["summary", "description"]) {
     const candidates = decorated.filter((item) => item.target_field === field);
     if (!candidates.length) {
+      picked.push({
+        id: null,
+        project_id: issue.project_id,
+        issue_id: issue.id,
+        target_type: "issue",
+        target_field: field,
+        source_text: translationSources[field] || "",
+        current_source_text: translationSources[field] || "",
+        ai_draft: null,
+        review_status: "pending",
+        is_source_stale: false,
+        is_placeholder: true,
+      });
       continue;
     }
 

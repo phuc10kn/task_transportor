@@ -106,10 +106,10 @@ async function main() {
   await withServer(app, async (server) => {
     const token = await login(server);
 
-    // Happy case 1: canonical Translation route — translate all issue targets
+    // Happy case 1: Project-scoped issue route — translate all issue targets
     const canonicalTranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translations/issues/${issue.id}/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/translations/translate`,
       token,
     });
     assert.equal(canonicalTranslate.status, 200, "canonical translate status");
@@ -120,26 +120,28 @@ async function main() {
       ["description", "summary"]
     );
     assert.ok(canonicalTranslate.body.data.translations.every((item) => item.review_status === "ai_draft"));
-    assert.ok(canonicalTranslate.body.data.translations.every((item) => item.ai_draft.startsWith("[vi] ")));
+    assert.ok(canonicalTranslate.body.data.translations.every((item) => item.ai_draft.includes("[vi] ")));
 
     const summaryItem = canonicalTranslate.body.data.translations.find((item) => item.target_field === "summary");
 
-    // Happy case 2: canonical Translation route — retranslate one queue item
+    // Happy case 2: Project-scoped issue route — retranslate one queue item
     const canonicalRetranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translations/issues/${issue.id}/items/${summaryItem.id}/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/translations/${summaryItem.id}/translate`,
       token,
     });
     assert.equal(canonicalRetranslate.status, 200, "canonical retranslate status");
     assert.equal(canonicalRetranslate.body.data.item.id, summaryItem.id);
     assert.equal(canonicalRetranslate.body.data.item.review_status, "ai_draft");
-    assert.ok(canonicalRetranslate.body.data.item.ai_draft.startsWith("[vi] "));
+    assert.ok(canonicalRetranslate.body.data.item.ai_draft.startsWith("【TR-1】[vi] "));
+    assert.equal(canonicalRetranslate.body.data.job, null);
+    assert.equal(readIssue(config, issue.id).fields_json.summary.cis, "Backlog summary for translate");
 
     // Happy case 3: draft save does not apply canonical; approval does.
     const descriptionItem = canonicalTranslate.body.data.translations.find((item) => item.target_field === "description");
     const manualEdit = await requestJson(server, {
       method: "PUT",
-      pathname: `/api/v1/translation-queue/${descriptionItem.id}/draft`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${descriptionItem.id}/draft`,
       token,
       body: {
         draft_text: "Ban dich da chinh sua happy case",
@@ -153,35 +155,43 @@ async function main() {
     assert.notEqual(afterManualEdit.fields_json.description.cis, "Ban dich da chinh sua happy case");
     const approveDraft = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/translation-queue/${descriptionItem.id}/approve`,
+      pathname: `/api/v1/projects/${project.id}/translation-queue/${descriptionItem.id}/approve`,
       token,
       body: { review_notes: "translation-routes-approve-draft" },
     });
     assert.equal(approveDraft.status, 200);
     assert.equal(readIssue(config, issue.id).fields_json.description.cis, "Ban dich da chinh sua happy case");
 
-    // Happy case 4: compat CIS route alias still works
+    // Happy case 4: another issue in the same Project remains supported
     const compatTranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${compatIssue.id}/translations/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${compatIssue.id}/translations/translate`,
       token,
     });
-    assert.equal(compatTranslate.status, 200, "compat translate status");
+    assert.equal(compatTranslate.status, 200, "second issue translate status");
     assert.equal(compatTranslate.body.data.translated_items.length, 2);
     assert.ok(compatTranslate.body.data.translations.every((item) => item.review_status === "ai_draft"));
 
     const compatSummary = compatTranslate.body.data.translations.find((item) => item.target_field === "summary");
     const compatRetranslate = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${compatIssue.id}/translations/${compatSummary.id}/translate`,
+      pathname: `/api/v1/projects/${project.id}/issues/${compatIssue.id}/translations/${compatSummary.id}/translate`,
       token,
     });
-    assert.equal(compatRetranslate.status, 200, "compat retranslate status");
+    assert.equal(compatRetranslate.status, 200, "second issue retranslate status");
     assert.equal(compatRetranslate.body.data.item.review_status, "ai_draft");
+    assert.equal(readIssue(config, compatIssue.id).fields_json.summary.cis, "Backlog summary for translate");
+
+    const legacyTranslate = await requestJson(server, {
+      method: "POST",
+      pathname: ["", "api", "v1", "translations", "issues", issue.id, "translate"].join("/"),
+      token,
+    });
+    assert.equal(legacyTranslate.status, 404);
 
     // Happy case 5: editor read model still returns translation block
     const editor = await requestJson(server, {
-      pathname: `/api/v1/issues/${issue.id}/editor`,
+      pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/editor`,
       token,
     });
     assert.equal(editor.status, 200);

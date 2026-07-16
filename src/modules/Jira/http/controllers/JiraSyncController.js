@@ -1,8 +1,10 @@
 const JiraApi = require("../../JiraApi");
+const CisApi = require("../../../Cis/CisApi");
 const { success } = require("../../../../http/response/envelope");
 
 async function sync(req, res, next) {
   try {
+    CisApi.getIssueById({ config: req.app.locals.config, issueId: req.params.issueId, projectId: req.project.id });
     success(
       res,
       await JiraApi.requestJiraSync({

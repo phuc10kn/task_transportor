@@ -25,8 +25,8 @@ Trong Lite hiện tại:
 - Backlog là hệ thống nguồn ưu tiên.
 - CIS là Central Issue Store, giữ raw snapshot/payload, canonical data, mapping, translation review state, anomaly và audit trail.
 - Jira là hệ thống đích ưu tiên.
-- Manual pull và project pull là đường inbound chính từ Backlog vào CIS.
-- Scheduled pull là optional sau khi manual/project pull ổn định.
+- Pull one và sync từng candidate là đường inbound chính từ Backlog vào CIS.
+- Project pull và scheduled pull đang bị disable; không query project hoặc enqueue batch job.
 - Webhook Backlog/Jira và Jira -> CIS đầy đủ chưa là đường vận hành chính của Lite.
 - CIS -> Jira phải đi qua dry-run/pre-check trước khi ghi thật.
 - Backlog không được gọi Jira trực tiếp; mọi dữ liệu phải vào CIS trước.

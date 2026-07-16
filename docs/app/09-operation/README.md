@@ -62,11 +62,12 @@ Backup/recovery Lite:
 
 Deployment/cutover runbook canonical:
 
-1. Từ exact release SHA, chạy `npm ci`, `npm --prefix apps/admin-web ci`, `npm run admin:ci`, `npm test` và `npm run verify:docs`.
-2. Tạo backup SQLite khi API/worker đã dừng: `storage/backups/cis-YYYYMMDD-HHMMSS.sqlite`; ghi checksum trước release swap.
-3. Start API tại `3001`, rồi start Tabler MPA với `NODE_ENV=production`, `CIS_API_ORIGIN=http://127.0.0.1:3001` và `npm run admin:start -- --port 8001`.
-4. Xác nhận root, login, protected deep-link, route document thật và `/api/v1/auth/me` qua MPA proxy; hai endpoint static UI cũ phải 404. Chỉ một UI listener được phép ở `8001`.
-5. Nếu smoke fail, dừng release mới, khôi phục release pointer/unit trước đó rồi kiểm tra lại health; không hot-fix trực tiếp production.
+1. Từ exact release SHA, chạy `npm ci`, `npm --prefix apps/admin-web ci`, `npm run admin:ci`, `npm test`, `npm run verify:admin-ui-e2e` và `npm run verify:docs`.
+2. Dừng API/worker/Admin Web và xác nhận không còn writer. Copy `DATABASE_PATH` sang `storage/backups/cis-YYYYMMDD-HHMMSS.sqlite`, ghi SHA-256 và giữ nguyên artifact cũ.
+3. Deploy Backend + Admin Web từ cùng một artifact; không đổi riêng một phía của Project-scoped API contract.
+4. Start API tại `3001`, rồi start Tabler MPA với `NODE_ENV=production`, `CIS_API_ORIGIN=http://127.0.0.1:3001` và `npm run admin:start -- --port 8001`.
+5. Smoke test qua MPA proxy: health, login, chọn Project A/B, Dashboard counts/links, Issue Save, Mapping Save, ba mapping pull/sync buttons, job retry và protected deep-link sai Project. Xác nhận Project disabled bị chặn và route workspace legacy trả 404.
+6. Nếu smoke fail, dừng toàn bộ release mới, giữ DB lỗi để điều tra, restore SQLite backup, rollback cả Backend + Admin Web về cùng artifact cũ rồi kiểm tra `/api/v1/health`; không rollback riêng một phía hoặc hot-fix trực tiếp production.
 
 Path, account, service unit, credential và backup destination cụ thể là inventory môi trường ngoài repo; xác nhận chúng trong maintenance window trước cutover.
 

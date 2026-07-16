@@ -213,7 +213,7 @@ async function login(server, name) {
 async function createAndApproveMapping(server, token, projectId, mappingType, from, cis, jira) {
   const backlogToCis = await requestJson(server, {
     method: "POST",
-    pathname: "/api/v1/mapping-rules",
+    pathname: `/api/v1/projects/${projectId}/mapping-rules`,
     token,
     body: {
       project_id: projectId,
@@ -231,7 +231,7 @@ async function createAndApproveMapping(server, token, projectId, mappingType, fr
 
   const approveBacklogToCis = await requestJson(server, {
     method: "POST",
-    pathname: `/api/v1/mapping-rules/${backlogToCis.body.data.id}/approve`,
+    pathname: `/api/v1/projects/${projectId}/mapping-rules/${backlogToCis.body.data.id}/approve`,
     token,
   });
   assert.equal(approveBacklogToCis.status, 200);
@@ -239,7 +239,7 @@ async function createAndApproveMapping(server, token, projectId, mappingType, fr
 
   const cisToJira = await requestJson(server, {
     method: "POST",
-    pathname: "/api/v1/mapping-rules",
+    pathname: `/api/v1/projects/${projectId}/mapping-rules`,
     token,
     body: {
       project_id: projectId,
@@ -257,7 +257,7 @@ async function createAndApproveMapping(server, token, projectId, mappingType, fr
 
   const approveCisToJira = await requestJson(server, {
     method: "POST",
-    pathname: `/api/v1/mapping-rules/${cisToJira.body.data.id}/approve`,
+    pathname: `/api/v1/projects/${projectId}/mapping-rules/${cisToJira.body.data.id}/approve`,
     token,
   });
   assert.equal(approveCisToJira.status, 200);
@@ -267,7 +267,7 @@ async function createAndApproveMapping(server, token, projectId, mappingType, fr
 async function verifyApprovedMappingSave(server, token, projectId) {
   const created = await requestJson(server, {
     method: "POST",
-    pathname: "/api/v1/mapping-rules",
+    pathname: `/api/v1/projects/${projectId}/mapping-rules`,
     token,
     body: {
       project_id: projectId,
@@ -286,7 +286,7 @@ async function verifyApprovedMappingSave(server, token, projectId) {
 
   const updated = await requestJson(server, {
     method: "PATCH",
-    pathname: `/api/v1/mapping-rules/${created.body.data.id}`,
+    pathname: `/api/v1/projects/${projectId}/mapping-rules/${created.body.data.id}`,
     token,
     body: {
       to_value: "closed",
@@ -336,7 +336,7 @@ async function verifyPhase05() {
     await createAndApproveMapping(server, token, optionalTranslationProject.id, "priority", "High", "high", "High");
     const optionalTranslationDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${optionalTranslationIssue.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${optionalTranslationProject.id}/issues/${optionalTranslationIssue.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(optionalTranslationDryRun.status, 200);
@@ -402,7 +402,7 @@ async function verifyPhase05() {
 
     const unreviewedDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${unreviewed.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${unreviewed.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(unreviewedDryRun.status, 200);
@@ -426,7 +426,7 @@ async function verifyPhase05() {
 
     const missingMappingDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${missingMapping.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(missingMappingDryRun.status, 200);
@@ -448,14 +448,14 @@ async function verifyPhase05() {
 
     const passDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${missingMapping.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(passDryRun.status, 200);
     assert.equal(passDryRun.body.data.can_sync, true);
     assert.equal(passDryRun.body.data.payload.fields.project.key, project.jira_project_key);
     assert.equal(passDryRun.body.data.payload.fields.issuetype.name, "Task");
-    assert.equal(passDryRun.body.data.payload.fields.summary, "VI: ログイン画面を確認してください");
+    assert.equal(passDryRun.body.data.payload.fields.summary, "【DRY-2】VI: ログイン画面を確認してください");
     assert.ok(!Object.prototype.hasOwnProperty.call(passDryRun.body.data.payload.fields, "labels"));
     assert.equal(passDryRun.body.data.payload.fields.assignee.accountId, "jira-assignee-1");
     assert.equal(passDryRun.body.data.field_sources.summary, "cis");
@@ -463,7 +463,7 @@ async function verifyPhase05() {
 
     const critical = await requestJson(server, {
       method: "POST",
-      pathname: "/api/v1/anomalies",
+      pathname: `/api/v1/projects/${project.id}/anomalies`,
       token,
       body: {
         project_id: project.id,
@@ -477,7 +477,7 @@ async function verifyPhase05() {
 
     const blockedDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${missingMapping.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(blockedDryRun.body.data.can_sync, false);
@@ -485,7 +485,7 @@ async function verifyPhase05() {
 
     const ignored = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/anomalies/${critical.body.data.id}/ignore`,
+      pathname: `/api/v1/projects/${project.id}/anomalies/${critical.body.data.id}/ignore`,
       token,
     });
     assert.equal(ignored.status, 200);
@@ -493,14 +493,14 @@ async function verifyPhase05() {
 
     const afterIgnoreDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${missingMapping.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(afterIgnoreDryRun.body.data.can_sync, true);
 
     const secondCritical = await requestJson(server, {
       method: "POST",
-      pathname: "/api/v1/anomalies",
+      pathname: `/api/v1/projects/${project.id}/anomalies`,
       token,
       body: {
         project_id: project.id,
@@ -514,7 +514,7 @@ async function verifyPhase05() {
 
     const resolved = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/anomalies/${secondCritical.body.data.id}/resolve`,
+      pathname: `/api/v1/projects/${project.id}/anomalies/${secondCritical.body.data.id}/resolve`,
       token,
     });
     assert.equal(resolved.status, 200);
@@ -528,7 +528,7 @@ async function verifyPhase05() {
     });
     const attachmentDryRun = await requestJson(server, {
       method: "POST",
-      pathname: `/api/v1/issues/${missingMapping.issue.id}/dry-run/jira`,
+      pathname: `/api/v1/projects/${project.id}/issues/${missingMapping.issue.id}/dry-run/jira`,
       token,
     });
     assert.equal(attachmentDryRun.body.data.can_sync, true);
@@ -538,17 +538,103 @@ async function verifyPhase05() {
     );
 
     const listMappings = await requestJson(server, {
-      pathname: `/api/v1/mapping-rules?project_id=${project.id}&approval_status=approved`,
+      pathname: `/api/v1/projects/${project.id}/mapping-rules?approval_status=approved`,
       token,
     });
     assert.equal(listMappings.status, 200);
     assert.ok(listMappings.body.data.length >= 6);
 
     const mappingSettings = await requestJson(server, {
-      pathname: `/api/v1/mapping-settings?project_id=${project.id}&source_system=backlog&target_system=jira`,
+      pathname: `/api/v1/projects/${project.id}/mapping-settings?source_system=backlog&target_system=jira`,
       token,
     });
     assert.equal(mappingSettings.status, 200);
+
+    const otherProject = createProject(config, "OTHER");
+    const otherRule = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${otherProject.id}/mapping-rules`,
+      token,
+      body: {
+        mapping_type: "status",
+        direction_from: "backlog",
+        direction_to: "cis",
+        from_value: "Other",
+        to_value: "open",
+      },
+    });
+    assert.equal(otherRule.status, 201);
+    const isolatedMappings = await requestJson(server, {
+      pathname: `/api/v1/projects/${project.id}/mapping-rules`,
+      token,
+    });
+    assert.equal(isolatedMappings.body.data.some((rule) => rule.id === otherRule.body.data.id), false);
+    const beforeCrossProjectDb = createConnection({ config });
+    const crossProjectCounts = {
+      jobs: beforeCrossProjectDb.prepare("SELECT COUNT(*) AS total FROM sync_jobs").get().total,
+      journal: beforeCrossProjectDb.prepare("SELECT COUNT(*) AS total FROM sync_journal").get().total,
+    };
+    beforeCrossProjectDb.close();
+    const crossProjectUpdate = await requestJson(server, {
+      method: "PATCH",
+      pathname: `/api/v1/projects/${project.id}/mapping-rules/${otherRule.body.data.id}`,
+      token,
+      body: { to_value: "done" },
+    });
+    assert.equal(crossProjectUpdate.status, 404);
+    assert.equal(crossProjectUpdate.body.error.code, "RESOURCE_NOT_FOUND");
+    const afterCrossProjectDb = createConnection({ config });
+    assert.equal(afterCrossProjectDb.prepare("SELECT to_value FROM mapping_rules WHERE id = ?").get(otherRule.body.data.id).to_value, "open");
+    assert.equal(afterCrossProjectDb.prepare("SELECT COUNT(*) AS total FROM sync_jobs").get().total, crossProjectCounts.jobs);
+    assert.equal(afterCrossProjectDb.prepare("SELECT COUNT(*) AS total FROM sync_journal").get().total, crossProjectCounts.journal);
+    afterCrossProjectDb.close();
+    const legacyMappings = await requestJson(server, { pathname: ["", "api", "v1", "mapping-rules"].join("/"), token });
+    assert.equal(legacyMappings.status, 404);
+
+    const otherAnomaly = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${otherProject.id}/anomalies`,
+      token,
+      body: { anomaly_type: "routing_mismatch", severity: "warning", details_json: { source: "other-project" } },
+    });
+    assert.equal(otherAnomaly.status, 201);
+    const otherIssue = CisApi.createManualIssue({ config, input: { project_id: otherProject.id, summary: "Other anomaly issue" } }).issue;
+    const anomalyCountBeforeDb = createConnection({ config });
+    const anomalyCountBeforeCrossCreate = anomalyCountBeforeDb.prepare("SELECT COUNT(*) AS total FROM anomaly_log").get().total;
+    anomalyCountBeforeDb.close();
+    const crossIssueAnomaly = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/anomalies`,
+      token,
+      body: { issue_id: otherIssue.id, anomaly_type: "routing_mismatch", severity: "warning", details_json: {} },
+    });
+    assert.equal(crossIssueAnomaly.status, 404);
+    assert.equal(crossIssueAnomaly.body.error.code, "RESOURCE_NOT_FOUND");
+    const anomalyCountDb = createConnection({ config });
+    assert.equal(anomalyCountDb.prepare("SELECT COUNT(*) AS total FROM anomaly_log").get().total, anomalyCountBeforeCrossCreate);
+    anomalyCountDb.close();
+    const isolatedAnomalies = await requestJson(server, { pathname: `/api/v1/projects/${project.id}/anomalies`, token });
+    assert.equal(isolatedAnomalies.body.data.some((item) => item.id === otherAnomaly.body.data.id), false);
+    const anomalyCountsDb = createConnection({ config });
+    const anomalySideEffects = {
+      jobs: anomalyCountsDb.prepare("SELECT COUNT(*) AS total FROM sync_jobs").get().total,
+      journal: anomalyCountsDb.prepare("SELECT COUNT(*) AS total FROM sync_journal").get().total,
+    };
+    anomalyCountsDb.close();
+    const crossProjectResolve = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/anomalies/${otherAnomaly.body.data.id}/resolve`,
+      token,
+    });
+    assert.equal(crossProjectResolve.status, 404);
+    assert.equal(crossProjectResolve.body.error.code, "RESOURCE_NOT_FOUND");
+    const afterAnomalyDb = createConnection({ config });
+    assert.equal(afterAnomalyDb.prepare("SELECT status FROM anomaly_log WHERE id = ?").get(otherAnomaly.body.data.id).status, "open");
+    assert.equal(afterAnomalyDb.prepare("SELECT COUNT(*) AS total FROM sync_jobs").get().total, anomalySideEffects.jobs);
+    assert.equal(afterAnomalyDb.prepare("SELECT COUNT(*) AS total FROM sync_journal").get().total, anomalySideEffects.journal);
+    afterAnomalyDb.close();
+    const legacyAnomalies = await requestJson(server, { pathname: ["", "api", "v1", "anomalies"].join("/"), token });
+    assert.equal(legacyAnomalies.status, 404);
     assert.ok(
       mappingSettings.body.data.flows.systems_to_cis.some((row) =>
         row.mapping_type === "issue_type" && row.from_value === "Task"
@@ -581,7 +667,7 @@ async function verifyPhase05() {
     ));
 
     const listAnomalyResponse = await requestJson(server, {
-      pathname: `/api/v1/anomalies?issue_id=${missingMapping.issue.id}`,
+      pathname: `/api/v1/projects/${project.id}/anomalies?issue_id=${missingMapping.issue.id}`,
       token,
     });
     assert.equal(listAnomalyResponse.status, 200);

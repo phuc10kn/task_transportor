@@ -21,8 +21,9 @@ function rowToTranslation(row) {
   };
 }
 
-function createTranslationRepository({ config }) {
+function createTranslationRepository({ config, db: providedDb = null }) {
   function withDb(callback) {
+    if (providedDb) return callback(providedDb);
     const db = createConnection({ config });
 
     try {
@@ -61,10 +62,10 @@ function createTranslationRepository({ config }) {
       });
     },
 
-    findById(queueId) {
-      return withDb((db) =>
-        rowToTranslation(db.prepare("SELECT * FROM translation_queue WHERE id = ?").get(queueId))
-      );
+    findById(queueId, projectId) {
+      return withDb((db) => rowToTranslation(projectId === undefined
+        ? db.prepare("SELECT * FROM translation_queue WHERE id = ?").get(queueId)
+        : db.prepare("SELECT * FROM translation_queue WHERE id = ? AND project_id = ?").get(queueId, projectId)));
     },
 
     deleteQueueItems(queueIds) {
@@ -190,6 +191,66 @@ function createTranslationRepository({ config }) {
           return rowToTranslation(db.prepare("SELECT * FROM translation_queue WHERE id = ?").get(queueId));
         })
       );
+    },
+
+    approveBatchInTransaction(queueIds, input = {}) {
+      if (!Array.isArray(queueIds) || queueIds.length === 0) return [];
+      return withDb((db) => {
+        const placeholders = queueIds.map(() => "?").join(", ");
+        const rows = db.prepare(
+          `SELECT * FROM translation_queue WHERE id IN (${placeholders}) ORDER BY id ASC`
+        ).all(...queueIds);
+        if (rows.length !== queueIds.length || rows.some((item) => !item.ai_draft)) return [];
+        db.prepare(
+          `UPDATE translation_queue
+           SET reviewed_text = NULL,
+               review_status = 'approved',
+               review_notes = ?,
+               reviewed_at = datetime('now'),
+               reviewed_by = ?,
+               updated_at = datetime('now')
+           WHERE id IN (${placeholders})`
+        ).run(input.review_notes || null, input.reviewed_by || null, ...queueIds);
+        return db.prepare(
+          `SELECT * FROM translation_queue WHERE id IN (${placeholders}) ORDER BY id ASC`
+        ).all(...queueIds).map(rowToTranslation);
+      });
+    },
+
+    restoreBatchInTransaction(snapshots) {
+      if (!Array.isArray(snapshots) || snapshots.length === 0) return [];
+      return withDb((db) => {
+        const statement = db.prepare(
+          `UPDATE translation_queue
+           SET ai_draft = ?, reviewed_text = ?, review_status = ?, provider = ?,
+               ai_transport = ?, model_or_command = ?, provider_request_id = ?, confidence = ?,
+               provider_error = ?, review_notes = ?, reviewed_at = ?, reviewed_by = ?,
+               updated_at = datetime('now')
+           WHERE id = ?`
+        );
+        for (const item of snapshots) {
+          statement.run(
+            item.ai_draft || null,
+            item.reviewed_text || null,
+            item.review_status,
+            item.provider,
+            item.ai_transport || null,
+            item.model_or_command || null,
+            item.provider_request_id || null,
+            item.confidence === undefined ? null : item.confidence,
+            item.provider_error || null,
+            item.review_notes || null,
+            item.reviewed_at || null,
+            item.reviewed_by || null,
+            item.id
+          );
+        }
+        const ids = snapshots.map((item) => item.id);
+        const placeholders = ids.map(() => "?").join(", ");
+        return db.prepare(`SELECT * FROM translation_queue WHERE id IN (${placeholders}) ORDER BY id ASC`)
+          .all(...ids)
+          .map(rowToTranslation);
+      });
     },
 
     reject(queueId, input = {}) {

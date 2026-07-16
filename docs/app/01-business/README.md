@@ -26,7 +26,7 @@ Stakeholder/chủ thể chính:
 Business flow Lite:
 
 ```text
-Backlog manual/project pull
+Backlog one-issue/candidate pull
   -> CIS
   -> optional translation draft
   -> human review khi cần
@@ -39,7 +39,7 @@ Business rules còn hiệu lực:
 
 - Backlog là nguồn yêu cầu từ khách hàng; Jira là nơi dev làm việc chính.
 - CIS là điểm kiểm soát trung gian, không phải cache phụ.
-- Manual pull và project pull là đường vận hành chính của Lite; scheduled pull là optional; webhook chưa là dependency vận hành Lite.
+- Pull one và sync từng candidate là đường vận hành chính của Lite; project pull và scheduled pull đang bị disable; webhook chưa là dependency vận hành Lite.
 - Translation là trợ lý AI; human review/admin giữ quyết định cuối.
 - Mapping required phải được approve, critical/open anomaly phải xử lý và Jira dry-run phải pass trước sync thật.
 - Retry là recovery có chủ đích sau khi hiểu nguyên nhân.
@@ -50,7 +50,7 @@ Workflow Lite còn sống:
 
 - Admin login -> project config -> project sync control.
 - Admin mở Backlog Issues theo một project, nhập khoảng ngày tạo bắt buộc và số lượng; có thể lọc thêm Status, Not closed hoặc người được gán từ snapshot Backlog đã lưu trong cấu hình project. Mở màn không query Backlog; CIS chỉ browse sau action của Admin, hiển thị candidate chưa có trong cùng project và không lưu kết quả browse.
-- Backlog one-issue ingest -> CIS review entry; project ingest -> candidate queue; không sync thẳng Jira.
+- Backlog one-issue/candidate ingest -> CIS review entry; project batch ingest và scheduled scan không khả dụng; không sync thẳng Jira.
 - Backlog candidate explicit action `Sync to CIS + Translate` -> shared `manual_pull` -> Translation Queue -> AI draft worker -> human review; candidate request không gọi AI trực tiếp.
 - Admin có thể tạo CIS issue thủ công và gán Backlog/Jira identity còn trống sau khi hệ thống external xác nhận tồn tại, đúng project và chưa thuộc CIS issue khác trong cùng project.
 - Translation review -> AI/operator cùng chỉnh một draft -> Save Draft chỉ lưu queue -> human approve mới áp vào canonical, hoặc reject/retranslate.
