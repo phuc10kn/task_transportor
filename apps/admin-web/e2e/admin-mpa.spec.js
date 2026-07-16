@@ -75,12 +75,32 @@ test("backlog explains empty candidate results and clears only optional filters"
 });
 
 test("mappings group values by field inside one compact flow table", async ({ page }) => {
-  await page.route("**/api/v1/mapping-settings**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { flows: { systems_to_cis: [
-    { project_id: 1, mapping_type: "issue_type", mapping_label: "Issue type", from_value: "bug", from_label: "Bug", to_value: "task", required_for_jira: true, issue_count: 3, cis_values: [{ value: "task", label: "Task" }, { value: "bug", label: "Bug" }] },
-    { project_id: 1, mapping_type: "issue_type", mapping_label: "Issue type", from_value: "feature", from_label: "Feature", to_value: "task", required_for_jira: true, issue_count: 2, cis_values: [{ value: "task", label: "Task" }] },
+  let settingsRequests = 0;
+  let savedMapping;
+  let finishSave;
+  let finishBacklogPull;
+  await page.route("**/api/v1/mapping-settings**", (route) => {
+    settingsRequests += 1;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { flows: { systems_to_cis: [
+    { project_id: 1, mapping_type: "issue_type", mapping_label: "Issue type", direction_from: "backlog", direction_to: "cis", from_value: "bug", from_label: "Bug", to_value: "task", required_for_jira: true, issue_count: 3, cis_values: [{ value: "task", label: "Task" }, { value: "bug", label: "Bug" }], existing_rule: { id: 41, to_value: "task", approval_status: "approved" } },
+    { project_id: 1, mapping_type: "issue_type", mapping_label: "Issue type", from_value: "feature", from_label: "Feature", to_value: "task", required_for_jira: true, issue_count: 2, cis_values: [{ value: "task", label: "Task" }, { value: "bug", label: "Bug" }], existing_rule: { id: 43, to_value: "task", approval_status: "approved" } },
     { project_id: 1, mapping_type: "priority", mapping_label: "Priority", from_value: "high", from_label: "High", to_value: "high", required_for_jira: true, issue_count: 1, cis_values: [{ value: "high", label: "High" }] },
-  ], cis_to_system: [] } } }) }));
+    ], cis_to_system: [] } } }) });
+  });
+  await page.route("**/api/v1/mapping-rules/41", async (route) => {
+    savedMapping = route.request().postDataJSON();
+    await new Promise((resolve) => { finishSave = resolve; });
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: 41, ...savedMapping, approval_status: "approved" } }) });
+  });
+  await page.route("**/api/v1/projects/1/backlog/mapping-values/pull", async (route) => {
+    await new Promise((resolve) => { finishBacklogPull = resolve; });
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { warnings: [] } }) });
+  });
+  for (const path of ["jira/mapping-values/pull", "cis/mapping-values/sync"]) {
+    await page.route(`**/api/v1/projects/1/${path}`, (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { warnings: [] } }) }));
+  }
   await enter(page, "/mappings?project_id=1");
+  await page.locator(".page-heading").evaluate((element) => { element.dataset.stable = "true"; });
   const sourceFlow = page.locator('[data-mapping-flow="source"]');
   await expect(sourceFlow.locator("table")).toHaveCount(1);
   await expect(sourceFlow.locator("[data-mapping-group]")).toHaveCount(2);
@@ -91,9 +111,43 @@ test("mappings group values by field inside one compact flow table", async ({ pa
   await issueTypeGroup.getByRole("button", { name: /Issue type/ }).click();
   await expect(issueTypeGroup.locator("[data-mapping]:visible")).toHaveCount(2);
   const bug = page.locator('[data-mapping="source:issue_type:bug"]');
+  const feature = page.locator('[data-mapping="source:issue_type:feature"]');
   await expect(bug.getByRole("button", { name: "Save" })).toBeDisabled();
   await bug.getByRole("combobox").selectOption("bug");
+  await feature.getByRole("combobox").selectOption("bug");
   await expect(bug.getByRole("button", { name: "Save" })).toBeEnabled();
+  await bug.getByRole("button", { name: "Save" }).click();
+  await expect(bug).toHaveAttribute("aria-busy", "true");
+  await expect(bug.getByRole("button", { name: "Saving…" })).toBeDisabled();
+  await expect(feature.getByRole("combobox")).toHaveValue("bug");
+  await expect(feature.locator("[data-status]")).toContainText("Unsaved");
+  await expect(feature.getByRole("button", { name: "Save" })).toBeEnabled();
+  await expect.poll(() => typeof finishSave).toBe("function");
+  finishSave();
+  await expect(bug.locator("[data-status]")).toContainText("approved");
+  await expect(bug.getByRole("button", { name: "Save" })).toBeDisabled();
+  expect(savedMapping).toEqual({ to_value: "bug" });
+  expect(settingsRequests).toBe(1);
+  await expect(page.locator(".page-heading")).toHaveAttribute("data-stable", "true");
+
+  const pullBacklog = page.locator("#pull-backlog");
+  await pullBacklog.click();
+  await expect(pullBacklog).toHaveText(/Refreshing/);
+  await expect(pullBacklog).toBeDisabled();
+  await expect(feature.getByRole("combobox")).toHaveValue("bug");
+  await expect.poll(() => typeof finishBacklogPull).toBe("function");
+  finishBacklogPull();
+  await expect(page.locator("#mapping-notice")).toContainText("Backlog catalog refreshed.");
+
+  for (const [name, notice] of [["Pull Jira fields", "Jira catalog refreshed."], ["Sync CIS catalog from Jira", "CIS catalog synchronized."]]) {
+    await page.getByRole("button", { name }).click();
+    await expect(page.locator("#mapping-notice")).toContainText(notice);
+    await expect(page.locator(".page-heading")).toHaveAttribute("data-stable", "true");
+    await expect(feature.getByRole("combobox")).toHaveValue("bug");
+    await expect(feature.locator("[data-status]")).toContainText("Unsaved");
+  }
+  expect(settingsRequests).toBe(1);
+  await expect(page).toHaveURL(/\/mappings\?project_id=1$/);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(issueTypeGroup.getByRole("button", { name: /Issue type/ })).toBeVisible();
   await expect(bug.getByRole("combobox")).toBeVisible();

@@ -13,6 +13,7 @@ dist/
 .DS_Store
 Thumbs.db
 /backlog2jira
+/.codegraph/
 server.md
 server_2.md
 /apps/admin-web/.next-verify/

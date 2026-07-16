@@ -29,6 +29,7 @@ UI tối thiểu phải hỗ trợ:
 - Translation Glossary lazy-load theo Project khi operator mở màn hoặc đổi Project; table có Group, Concept key, danh sách term theo language kèm nhãn Canonical, Note, Actions; Add/Edit/View dùng modal language sections, radio canonical và nút add/remove variant/language, có filter Group, search, loading/empty/error/retry và confirm delete.
 - Mỗi term dùng language code động, không hard-code cột ngôn ngữ; lỗi validation/conflict giữ form và hiển thị rõ.
 - Mapping review/approval trước outbound; mỗi direction dùng một bảng liên tục, nhóm các value bằng field band compact theo `mapping_type`. Tên field, required marker và tổng value/issue chỉ hiện một lần trên band; operator có thể thu gọn từng field mà không tạo card lồng nhau.
+- Mappings lưu từng mapping bằng `fetch` và cập nhật đúng row tại chỗ. Mỗi action chỉ hiển thị loading và khóa control trên đúng row/button khởi phát; không replace flow table hoặc `page-body`, nên draft chưa lưu ở item khác phải được giữ nguyên. Pull Backlog fields, Pull Jira fields và Sync CIS catalog from Jira cập nhật snapshot backend rồi thông báo kết quả; operator dùng refresh route hiện có khi muốn nạp snapshot mới vào bảng.
 - Anomaly list/detail để resolve, ignore, keep open theo rủi ro.
 - Jira sync modal chạy dry-run, hiển thị `can_sync`, warning, payload preview và hành động sync thật khi gate pass.
 - Sync Jobs, Journal và Attachment retry để operator phục hồi có chủ đích.

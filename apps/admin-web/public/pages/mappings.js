@@ -9,6 +9,8 @@
   let error = "";
   const collapsedGroups = new Set();
 
+  const settingsPath = () => `/api/v1/mapping-settings?project_id=${project.id}&source_system=${encodeURIComponent(source)}&target_system=${encodeURIComponent(target)}`;
+
   function header() {
     return `<div class="page-heading"><div><div class="route-kicker">Canonical governance</div><h1>Mappings</h1><p class="text-secondary mb-0">Review explicit System → CIS and CIS → System vocabulary.</p></div><div class="flow-rail"><span>${CIS.escape(source.toUpperCase())}</span><strong>→ CIS →</strong><span>${CIS.escape(target.toUpperCase())}</span></div></div>`;
   }
@@ -56,7 +58,7 @@
   async function load() {
     root.innerHTML = `<div class="container-xl">${header()}<section class="card state-card" aria-busy="true"><div class="card-body"><span class="spinner-border spinner-border-sm me-2"></span>Loading mapping settings…</div></section></div>`;
     try {
-      settings = await CIS.api(`/api/v1/mapping-settings?project_id=${project.id}&source_system=${encodeURIComponent(source)}&target_system=${encodeURIComponent(target)}`);
+      settings = await CIS.api(settingsPath());
       error = "";
       render();
     } catch (failure) {
@@ -68,58 +70,88 @@
 
   async function refreshCatalog(button, path, success) {
     const notice = document.querySelector("#mapping-notice");
+    const content = button.innerHTML;
     button.disabled = true;
-    notice.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Refreshing server catalog…';
+    button.setAttribute("aria-busy", "true");
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Refreshing…';
+    notice.textContent = "";
     try {
       const result = await CIS.api(path, { method: "POST", body: path.includes("/cis/") ? { target_system: target } : undefined });
       const warnings = result?.warnings || [];
-      await load();
-      const region = document.querySelector("#mapping-notice");
-      if (region) region.innerHTML = CIS.alert(warnings.length ? `${success} ${warnings.length} catalog warning(s) require review.` : success, warnings.length ? "warning" : "success");
+      notice.innerHTML = CIS.alert(warnings.length ? `${success} ${warnings.length} catalog warning(s) require review.` : success, warnings.length ? "warning" : "success");
     } catch (failure) {
       notice.innerHTML = CIS.alert(failure.message);
+    } finally {
       button.disabled = false;
+      button.removeAttribute("aria-busy");
+      button.innerHTML = content;
     }
   }
 
   function bind() {
-    document.querySelector("#pull-backlog").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/backlog/mapping-values/pull`, "Backlog catalog refreshed."));
-    document.querySelector("#pull-jira").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/jira/mapping-values/pull`, "Jira catalog refreshed."));
-    document.querySelector("#sync-cis").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/cis/mapping-values/sync`, "CIS catalog synchronized."));
-    document.querySelectorAll("[data-mapping-group]").forEach((group) => group.querySelector("[data-toggle-mapping-group]").addEventListener("click", (event) => {
+    root.querySelector("#pull-backlog").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/backlog/mapping-values/pull`, "Backlog catalog refreshed."));
+    root.querySelector("#pull-jira").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/jira/mapping-values/pull`, "Jira catalog refreshed."));
+    root.querySelector("#sync-cis").addEventListener("click", (event) => refreshCatalog(event.currentTarget, `/api/v1/projects/${project.id}/cis/mapping-values/sync`, "CIS catalog synchronized."));
+    bindFlowControls();
+  }
+
+  function bindFlowControls() {
+    root.querySelectorAll("[data-mapping-group]").forEach((group) => group.querySelector("[data-toggle-mapping-group]").addEventListener("click", (event) => {
       const collapsed = event.currentTarget.getAttribute("aria-expanded") === "true";
       event.currentTarget.setAttribute("aria-expanded", String(!collapsed));
       group.querySelectorAll("[data-mapping]").forEach((item) => { item.hidden = collapsed; });
       if (collapsed) collapsedGroups.add(group.dataset.mappingGroup); else collapsedGroups.delete(group.dataset.mappingGroup);
     }));
     const itemsByKey = new Map([...(settings.flows?.systems_to_cis || []).map((item) => [`source:${item.mapping_type}:${item.from_value}`, item]), ...(settings.flows?.cis_to_system || []).map((item) => [`target:${item.mapping_type}:${item.from_value}`, item])]);
-    document.querySelectorAll("[data-mapping]").forEach((element) => {
+    root.querySelectorAll("[data-mapping]").forEach((element) => {
       const item = itemsByKey.get(element.dataset.mapping);
       const evidence = element.querySelector(".job-evidence");
       const select = element.querySelector("select");
       const save = element.querySelector("[data-save]");
       const status = element.querySelector("[data-status]");
-      const savedStatus = item.existing_rule?.approval_status || "not set";
       select.addEventListener("change", () => {
         const dirty = select.value !== select.dataset.initialValue;
         const canApprove = Boolean(select.value) && item.existing_rule?.approval_status !== "approved";
         element.classList.toggle("is-dirty", dirty);
-        status.innerHTML = dirty ? CIS.badge("Unsaved", "yellow") : CIS.badge(savedStatus);
+        status.innerHTML = dirty ? CIS.badge("Unsaved", "yellow") : CIS.badge(item.existing_rule?.approval_status || "not set");
         save.disabled = !dirty && !canApprove;
         save.classList.toggle("btn-primary", dirty || canApprove);
         save.classList.toggle("btn-outline-secondary", !dirty && !canApprove);
       });
       save.addEventListener("click", async (event) => {
-        event.currentTarget.disabled = true;
+        const button = event.currentTarget;
+        button.disabled = true;
+        select.disabled = true;
+        button.textContent = "Saving…";
+        element.setAttribute("aria-busy", "true");
+        status.innerHTML = CIS.badge("Saving", "azure");
+        evidence.textContent = "";
         try {
           const body = { to_value: select.value };
           const path = item.existing_rule ? `/api/v1/mapping-rules/${item.existing_rule.id}` : "/api/v1/mapping-rules";
           if (!item.existing_rule) Object.assign(body, { project_id: item.project_id, mapping_type: item.mapping_type, direction_from: item.direction_from, direction_to: item.direction_to, from_value: item.from_value });
-          const saved = await CIS.api(path, { method: item.existing_rule ? "PATCH" : "POST", body });
-          if (saved.approval_status !== "approved") await CIS.api(`/api/v1/mapping-rules/${saved.id}/approve`, { method: "POST" });
-          await load();
+          let saved = await CIS.api(path, { method: item.existing_rule ? "PATCH" : "POST", body });
+          item.existing_rule = saved;
+          item.to_value = saved.to_value;
+          select.dataset.initialValue = saved.to_value;
+          element.classList.remove("is-dirty");
+          if (saved.approval_status !== "approved") saved = await CIS.api(`/api/v1/mapping-rules/${saved.id}/approve`, { method: "POST" });
+          item.existing_rule = saved;
+          item.to_value = saved.to_value;
+          status.innerHTML = CIS.badge(saved.approval_status);
+          button.classList.remove("btn-primary");
+          button.classList.add("btn-outline-secondary");
           CIS.toast("Mapping saved.");
-        } catch (failure) { evidence.innerHTML = `<span class="text-danger">${CIS.escape(failure.message)}</span>`; event.currentTarget.disabled = false; }
+        } catch (failure) {
+          const dirty = select.value !== select.dataset.initialValue;
+          status.innerHTML = dirty ? CIS.badge("Unsaved", "yellow") : CIS.badge(item.existing_rule?.approval_status || "not set");
+          evidence.innerHTML = `<span class="text-danger">${CIS.escape(failure.message)}</span>`;
+          button.disabled = false;
+        } finally {
+          button.textContent = "Save";
+          select.disabled = false;
+          element.removeAttribute("aria-busy");
+        }
       });
     });
   }
