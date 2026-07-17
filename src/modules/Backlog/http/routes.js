@@ -13,6 +13,8 @@ function createBacklogRouter({ authenticate, requireProjectWorkspace }) {
   router.get("/:projectId/backlog/issues/action-readiness", BacklogPullController.actionReadiness);
   router.get("/:projectId/backlog/issues/filter-options", BacklogPullController.candidateFilterOptions);
   router.get("/:projectId/backlog/issues/candidates", BacklogPullController.candidates);
+  router.post("/:projectId/backlog/manual-pulls/count", BacklogPullController.countFilteredManualPulls);
+  router.post("/:projectId/backlog/manual-pulls/pages/:page", BacklogPullController.enqueueFilteredManualPullPage);
   router.post("/:projectId/backlog/issues/:backlogIssueKey/sync-to-cis", BacklogPullController.syncCandidateToCis);
   router.post("/:projectId/backlog/issues/:backlogIssueKey/pull", BacklogPullController.pullIssue);
 

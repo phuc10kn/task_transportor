@@ -26,6 +26,29 @@ async function candidateFilterOptions(req, res, next) {
   } catch (error) { next(error); }
 }
 
+async function countFilteredManualPulls(req, res, next) {
+  try {
+    success(res, await BacklogApi.countFilteredManualPulls({
+      config: req.app.locals.config,
+      projectId: req.params.projectId,
+      filters: req.body || {},
+    }));
+  } catch (error) { next(error); }
+}
+
+async function enqueueFilteredManualPullPage(req, res, next) {
+  try {
+    success(res, await BacklogApi.enqueueFilteredManualPullPage({
+      config: req.app.locals.config,
+      projectId: req.params.projectId,
+      page: req.params.page,
+      filters: req.body || {},
+      executedBy: req.user && req.user.id,
+      correlationId: req.correlationId,
+    }), 202);
+  } catch (error) { next(error); }
+}
+
 async function syncCandidateToCis(req, res, next) {
   try {
     const hasTranslationFlag = req.body && Object.prototype.hasOwnProperty.call(req.body, "with_translation");
@@ -91,6 +114,8 @@ module.exports = {
   actionReadiness,
   candidateFilterOptions,
   candidates,
+  countFilteredManualPulls,
+  enqueueFilteredManualPullPage,
   pullMappingValues,
   pullIssue,
   pullProject,

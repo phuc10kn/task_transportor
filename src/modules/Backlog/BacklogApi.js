@@ -9,8 +9,12 @@ const { getIssueActionReadiness } = require("./application/getIssueActionReadine
 const { listIssueCandidates } = require("./application/listIssueCandidates");
 const { listIssueCandidateFilterOptions } = require("./application/listIssueCandidateFilterOptions");
 const { syncCandidateToCis } = require("./application/syncCandidateToCis");
+const { countFilteredManualPulls } = require("./application/countFilteredManualPulls");
+const { enqueueFilteredManualPullPage } = require("./application/enqueueFilteredManualPullPage");
 
 module.exports = {
+  countFilteredManualPulls,
+  enqueueFilteredManualPullPage,
   handleManualPullJob,
   getIssueActionReadiness,
   listIssueCandidates,

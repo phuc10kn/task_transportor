@@ -10,6 +10,7 @@ const BACKLOG_OPERATIONS = Object.freeze({
   "backlog.project.get": operation("GET", "/api/v2/projects/:projectIdOrKey", ({ projectIdOrKey }) => `/api/v2/projects/${part(projectIdOrKey)}`),
   "backlog.project.statuses.list": operation("GET", "/api/v2/projects/:projectIdOrKey/statuses", ({ projectIdOrKey }) => `/api/v2/projects/${part(projectIdOrKey)}/statuses`),
   "backlog.project.users.list": operation("GET", "/api/v2/projects/:projectIdOrKey/users", ({ projectIdOrKey }) => `/api/v2/projects/${part(projectIdOrKey)}/users`),
+  "backlog.issues.count": operation("GET", "/api/v2/issues/count", () => "/api/v2/issues/count"),
   "backlog.issues.list": operation("GET", "/api/v2/issues", () => "/api/v2/issues"),
   "backlog.project.issue-types.list": operation("GET", "/api/v2/projects/:projectKey/issueTypes", ({ projectKey }) => `/api/v2/projects/${part(projectKey)}/issueTypes`),
   "backlog.priorities.list": operation("GET", "/api/v2/priorities", () => "/api/v2/priorities"),

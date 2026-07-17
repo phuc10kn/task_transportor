@@ -1,6 +1,7 @@
 const SyncApi = require("../../SyncApi");
 const CisApi = require("../../../Cis/CisApi");
 const { success } = require("../../../../http/response/envelope");
+const { AppError } = require("../../../../http/errors/AppError");
 
 function list(req, res, next) {
   try {
@@ -18,6 +19,13 @@ function list(req, res, next) {
 
 function create(req, res, next) {
   try {
+    if (req.body && req.body.payload_json && Object.prototype.hasOwnProperty.call(req.body.payload_json, "backlog_issue_snapshot")) {
+      throw new AppError({
+        code: "SYNC_JOB_PAYLOAD_RESERVED",
+        message: "backlog_issue_snapshot is reserved for internal Backlog ingestion.",
+        status: 422,
+      });
+    }
     if (req.body.issue_id) {
       CisApi.getIssueById({ config: req.app.locals.config, issueId: req.body.issue_id, projectId: req.project.id });
     }

@@ -6,6 +6,7 @@ const { downloadAttachmentToCis } = require("./downloadAttachmentToCis");
 const { normalizeBacklogIssue } = require("../support/normalizeBacklogIssue");
 const { applyApprovedBacklogMappings } = require("../support/applyBacklogMappings");
 const { runCandidateJiraWorkflow } = require("./runCandidateJiraWorkflow");
+const { validateBacklogIssueSnapshot } = require("../support/backlogIssueSnapshot");
 
 function projectsApi() {
   return require("../../Projects/ProjectsApi");
@@ -47,17 +48,23 @@ async function handleManualPullJob(job, { config, externalAccessScope }) {
   const client = createBacklogClient({ config, projectId: project.id, externalAccessScope });
 
   try {
-    const [backlogProject, issue] = await Promise.all([
-      client.getProject(project.backlog_project_key),
-      client.getIssue(backlogIssueKey),
-    ]);
-
-    if (Number(issue.projectId) !== Number(backlogProject.id)) {
-      throw new AppError({
-        code: "BACKLOG_ROUTING_MISMATCH",
-        message: "Backlog issue belongs to a different project.",
-        status: 422,
-      });
+    let issue;
+    const snapshot = job.payload_json && job.payload_json.backlog_issue_snapshot;
+    if (snapshot) {
+      issue = validateBacklogIssueSnapshot(snapshot, { backlogIssueKey, project });
+    } else {
+      const [backlogProject, fetchedIssue] = await Promise.all([
+        client.getProject(project.backlog_project_key),
+        client.getIssue(backlogIssueKey),
+      ]);
+      if (Number(fetchedIssue.projectId) !== Number(backlogProject.id)) {
+        throw new AppError({
+          code: "BACKLOG_ROUTING_MISMATCH",
+          message: "Backlog issue belongs to a different project.",
+          status: 422,
+        });
+      }
+      issue = fetchedIssue;
     }
 
     const [comments, attachments] = await Promise.all([

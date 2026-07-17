@@ -78,7 +78,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .card-header .filter-evidence { justify-content: flex-start; }
 .backlog-not-closed { min-height: 2.75rem; margin: 0 0 .05rem; align-items: center; }
 .backlog-not-closed .form-check-label small { display: block; color: var(--tblr-secondary); }
-.backlog-search-actions { display: flex; gap: .5rem; justify-content: flex-end; }
+.backlog-search-actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
 .table { margin-bottom: 0; }
 .table th { font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .table td { vertical-align: middle; }
@@ -203,7 +203,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .backlog-window-grid, .backlog-options-grid { grid-template-columns: 1fr; }
   .snapshot-grid { grid-template-columns: 1fr; }
   .filter-picker__menu { position: static; width: 100%; margin-top: .4rem; }
-  .backlog-search-actions .btn { flex: 1; }
+  .backlog-search-actions .btn { flex: 1 1 100%; }
+  .backlog-search-actions .btn-ghost-secondary { flex: 0 0 auto; }
   .markdown-editor__header { align-items: flex-start; flex-direction: column; }
   .markdown-editor__header .btn-group { width: 100%; }
   .markdown-editor__header .btn { flex: 1; }

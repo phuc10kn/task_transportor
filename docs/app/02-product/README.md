@@ -24,8 +24,11 @@ Lite in scope:
 - Admin chọn hoặc tạo đúng một Project trước khi vào workspace nghiệp vụ; Dashboard, issue, translation, mapping, anomaly, job và journal chỉ đọc/ghi Project đã chọn bằng Project-scoped API. Đổi Project chỉ thực hiện tại Project Config.
 - `BE-PROJECT-SCOPE-01/02` đã đóng: Backend enforce object isolation theo Project path, Dashboard đã mở cho active Project, route workspace legacy đã bị xóa và Project `enabled=false` chặn toàn bộ workspace.
 - Backlog manual pull một issue vào CIS; resync áp dụng lại approved Backlog→CIS mappings cho Issue type, Priority, Status và Assignee mà không tạo source revision mới khi payload Backlog không đổi.
-- Backlog project pull và scheduled pull bị disable; API không query Backlog hoặc enqueue batch job.
-- Backlog Issues browser theo project + khoảng ngày tạo, Status/Not closed/người được gán tùy chọn từ snapshot cấu hình Backlog của project; chỉ query candidate sau action của Admin, loại issue đã có trong CIS và overlay active `manual_pull` job lên đúng candidate row khi tải lại màn.
+- Manual project pull cũ và scheduled pull bị disable; các API disabled đó không query Backlog hoặc enqueue job.
+- Backlog Issues browser theo project + khoảng ngày tạo, Status/Not closed/người được gán tùy chọn từ snapshot cấu hình Backlog của project; chỉ `Find candidates` query candidate sau action của Admin, loại issue đã có trong CIS và overlay active `manual_pull` job lên đúng candidate row khi tải lại màn. Candidate browse vẫn read-only và không lưu kết quả.
+- Action explicit `Pull all matching issues` gọi Backlog Count rồi để Admin Web gọi tuần tự từng Page, page size `100`; mỗi issue chưa có trong CIS tạo hoặc reuse đúng job `manual_pull` hiện có. Flow không tạo batch/coordinator job, job type hoặc bảng batch mới; Count dùng browse readiness, còn Page enqueue dùng readiness của `sync_to_cis`.
+- `manual_pull` tạo từ Page dùng internal Issue List snapshot nên child handler không gọi lại Backlog Project/Issue cho chính issue đó; comments và attachments vẫn được đọc theo từng issue trước khi ghi CIS.
+- Progress `Page N/Total · X queued` chỉ là enqueue progress trong phiên browser. Refresh làm mất progress và dừng vòng Page nhưng các job đã enqueue vẫn bền; Count/offset scan là best-effort khi dữ liệu Backlog thay đổi trong lúc chạy, không phải remote snapshot guarantee.
 - Sync từng Backlog candidate vào CIS qua shared manual-pull job; HTTP chỉ validate cục bộ/enqueue rồi trả `202`, provider/project verification thuộc worker và không đi thẳng Jira.
 - Sync từng Backlog candidate kèm Translation Queue qua action explicit `Sync to CIS + Translate`; chỉ tạo queue cho Backlog `summary`/`description`, AI chạy bất đồng bộ và vẫn cần human review.
 - Action explicit `Sync + Translate + Jira` là operator authorization cho auto-delivery: enqueue job riêng `sync_translate_jira`; worker ingest Backlog, dịch trực tiếp đủ batch `summary`/`description`, chạy Jira dry-run trên staged values, rồi mới approve/apply cả batch trong một transaction và create/update Jira. Job này không tạo child `translate`/`push_issue`; một bước lỗi phải rollback cả batch local và không chạy bước tiếp theo.
@@ -41,7 +44,7 @@ Lite in scope:
 - CIS -> Jira create/update issue/comment khi pre-check pass.
 - Admin UI tối thiểu cho dashboard, project config, issue editor, translation, mapping, anomaly, jobs và journal.
 - Translation Glossary là màn riêng; Translation Queue vẫn là màn review độc lập.
-- Admin UI tách CIS Issues và Backlog Issues; Pull one nằm ở Backlog Issues, còn Pull project hiển thị disabled để operator dùng action theo từng candidate.
+- Admin UI tách CIS Issues và Backlog Issues; Pull one nằm ở Backlog Issues, Pull project hiển thị disabled, còn operator có thể dùng action theo từng candidate hoặc action explicit `Pull all matching issues` theo bộ lọc hiện tại.
 
 Lite out of scope nếu chưa có decision mới:
 

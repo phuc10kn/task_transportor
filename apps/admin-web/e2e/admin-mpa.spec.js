@@ -168,9 +168,74 @@ test("backlog: explicit browse and async Sync to CIS + Translate", async ({ page
   await expect(statusFilter.locator("summary")).toContainText("Open, Resolved");
   await expect(page.getByRole("cell", { name: "BLG-7" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Pull project" })).toBeDisabled();
-  await expect(page.getByText("Sync selected candidates individually while batch pull is unavailable.")).toBeVisible();
+  await expect(page.getByText("Full project pull remains disabled. Use filtered pull or candidate actions.")).toBeVisible();
   await page.getByRole("button", { name: "Sync + Translate", exact: true }).click();
   await expect(page.getByText(/Job job-7: success.*Review Translation Queue/)).toBeVisible();
+});
+
+test("backlog filtered pull queues pages sequentially and retries only the failed page", async ({ page }) => {
+  let countRequests = 0;
+  let countBody;
+  let totalPages = 3;
+  let activePageRequests = 0;
+  let maxActivePageRequests = 0;
+  let failPageTwo = true;
+  const requestedPages = [];
+  const pageBodies = [];
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false }, sync_to_cis: { enabled: true }, sync_translate_jira: { enabled: true } } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { statuses: [{ id: 1, name: "Open" }], assignees: [] } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/candidates**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [{ backlog_issue_key: "BLG-11", summary: "Keep this candidate visible", status: "Open" }], meta: { returned_count: 1, source_rows_scanned: 1, stop_reason: "source_exhausted" } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/manual-pulls/count", (route) => {
+    countRequests += 1;
+    countBody = route.request().postDataJSON();
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { source_count: totalPages * 100, page_size: 100, total_pages: totalPages } }) });
+  });
+  await page.route("**/api/v1/projects/1/backlog/manual-pulls/pages/*", async (route) => {
+    const pageNumber = Number(new URL(route.request().url()).pathname.split("/").pop());
+    requestedPages.push(pageNumber);
+    pageBodies.push(route.request().postDataJSON());
+    activePageRequests += 1;
+    maxActivePageRequests = Math.max(maxActivePageRequests, activePageRequests);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    activePageRequests -= 1;
+    if (pageNumber === 2 && failPageTwo) {
+      failPageTwo = false;
+      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: { code: "BACKLOG_TEMPORARY", message: "Backlog page temporarily unavailable." } }) });
+    }
+    const newlyQueued = pageNumber === 1 ? 2 : pageNumber === 2 ? 1 : 3;
+    return route.fulfill({ status: 202, contentType: "application/json", body: JSON.stringify({ data: { page: pageNumber, source_rows: 100, newly_queued: newlyQueued, reused_active: 0, already_in_cis: 100 - newlyQueued, invalid_rows: 0 } }) });
+  });
+
+  await enter(page, "/backlog-issues?submitted=1&created_from=2026-07-01&created_to=2026-07-16&limit=20&status_id=1");
+  await page.getByRole("button", { name: "Pull all matching issues" }).click();
+  await expect(page.getByText("Backlog page temporarily unavailable.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "BLG-11" })).toBeVisible();
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.getByText("Queueing completed · 6 issues queued.")).toBeVisible();
+  expect(countRequests).toBe(1);
+  expect(countBody).toEqual({ created_from: "2026-07-01", created_to: "2026-07-16", status_ids: ["1"], assignee_ids: [], not_closed: false });
+  expect(Object.prototype.hasOwnProperty.call(countBody, "limit")).toBe(false);
+  expect(requestedPages).toEqual([1, 2, 2, 3]);
+  expect(pageBodies.every((body) => JSON.stringify(body) === JSON.stringify(countBody))).toBe(true);
+  expect(maxActivePageRequests).toBe(1);
+
+  totalPages = 0;
+  await page.getByRole("button", { name: "Pull all matching issues" }).click();
+  await expect(page.getByText("Queueing completed · 0 issues queued.")).toBeVisible();
+  expect(countRequests).toBe(2);
+  expect(requestedPages).toEqual([1, 2, 2, 3]);
+  await expect(page.getByRole("cell", { name: "BLG-11" })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const name of ["Reset", "Pull all matching issues", "Find candidates"]) {
+    const button = page.getByRole(name === "Reset" ? "link" : "button", { name });
+    await expect(button).toBeVisible();
+    expect(await button.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.left >= 0 && rect.right <= window.innerWidth;
+    })).toBe(true);
+  }
 });
 
 test("backlog: Sync + Translate + Jira queues the full workflow", async ({ page }) => {

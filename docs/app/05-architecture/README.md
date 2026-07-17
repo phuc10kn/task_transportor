@@ -39,6 +39,8 @@ Cách app áp dụng custom modular monolith hiện tại:
 - Không import sâu vào `application/`, `infrastructure`, `support` của module khác.
 - CIS sở hữu canonical issue state và source snapshot.
 - Sync sở hữu job state và journal, nhưng không chiếm business ownership của module khác.
+- Manual filtered multi-pull được Admin Web điều phối bằng một Count request rồi các Page request tuần tự; mỗi Page chỉ enqueue/reuse `manual_pull` hiện có. Không có batch/coordinator job, job type hoặc persistent batch state mới.
+- Page handler tạo internal Issue List snapshot cho child `manual_pull`; child bỏ `getProject`/`getIssue` nhưng vẫn đọc comments/attachments theo issue trước khi đi qua normalizer, mapping và CIS owner-write.
 - Jira outbound phải đi qua dry-run/readiness/pre-check trước khi ghi thật.
 - Translation sở hữu review lifecycle; AI transport/protocol nằm ở `src/infrastructure/ai`.
 - HTTP egress Backlog/Jira chỉ tồn tại dưới `src/infrastructure/external/<provider>`. Module adapter gọi named operation đã đăng ký; scope authoritative được mint từ `projectId`, snapshot Project qua `ProjectsApi`, và deny mặc định khi capability/operation/endpoint không hợp lệ. AI transport tiếp tục là boundary độc lập.
@@ -54,6 +56,8 @@ Workflow architecture chính:
 - `AF-005-canonical-issue-edit`
 - `AF-006-jira-dry-run`
 - `AF-007-cis-to-jira-sync`
+
+Manual filtered multi-pull là orchestration additive quanh execution `manual_pull` của `AF-001`, không kích hoạt lại `AF-002` hoặc `AF-003`; Count/offset pagination chỉ có best-effort source coverage và enqueue progress thuộc phiên Admin Web.
 
 ## Architecture Clean Baseline Và Canonical Relation Slice
 

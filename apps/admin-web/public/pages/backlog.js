@@ -8,6 +8,7 @@
   let options;
   let result = null;
   let browseError = "";
+  const filteredPull = { running: false, payload: null, currentPage: 0, totalPages: null, queuedTotal: 0, error: "", completed: false };
 
   const selected = (name) => params.getAll(name);
   const actionReady = (name) => Boolean(readiness?.actions?.[name]?.enabled);
@@ -92,14 +93,15 @@
             ${filterPicker("Status", options?.statuses, "status_id", "Any status")}
             ${filterPicker("Assignee", options?.assignees, "assignee_id", "Anyone")}
             <label class="form-check form-switch backlog-not-closed"><input class="form-check-input" name="not_closed" type="checkbox" value="true" ${params.get("not_closed") === "true" ? "checked" : ""}><span class="form-check-label"><strong>Exclude closed</strong><small>Only active work</small></span></label>
-            <div class="backlog-search-actions"><a class="btn btn-ghost-secondary" href="${CIS.attr(CIS.projectPath("/backlog-issues", project.id))}">Reset</a><button class="btn btn-primary" type="submit" ${browseReady ? "" : "disabled"}>Find candidates</button></div>
+            <div class="backlog-search-actions"><a class="btn btn-ghost-secondary" href="${CIS.attr(CIS.projectPath("/backlog-issues", project.id))}">Reset</a><button class="btn btn-outline-primary" id="pull-filtered" type="button" ${actionReady("sync_to_cis") ? "" : "disabled"}>Pull all matching issues</button><button class="btn btn-primary" type="submit" ${browseReady ? "" : "disabled"}>Find candidates</button></div>
           </div></div>
         </form>
+        <div class="job-evidence mt-2" id="pull-filtered-state" aria-live="polite"></div>
         ${browseReady ? "" : `<div class="text-secondary small mt-3">Blocked by: ${CIS.escape(reasons("browse").join(", ") || "project readiness")}</div>`}
       </div></section>
       <section class="card mb-3"><div class="card-header"><h2 class="card-title">Inbound actions</h2><div class="ms-auto">${CIS.badge(actionReady("pull_one") ? "Actions ready" : "Actions blocked", actionReady("pull_one") ? "green" : "yellow")}</div></div><div class="card-body"><div id="action-error"></div><div class="row g-3">
         <div class="col-lg-6"><div class="input-group"><span class="input-group-text">Issue key</span><input class="form-control" id="pull-one-key" aria-label="Pull one issue key" value="${CIS.attr(project.backlog_issue_key_prefix ? `${project.backlog_issue_key_prefix}-1` : "")}"><button class="btn btn-primary" id="pull-one" type="button" ${actionReady("pull_one") ? "" : "disabled"}>Pull one</button></div><div class="job-evidence" id="pull-one-state" aria-live="polite"></div></div>
-        <div class="col-lg-6"><div class="d-flex align-items-center justify-content-between gap-3 h-100"><div><strong>Pull project <span class="badge bg-secondary-lt ms-1">Disabled</span></strong><div class="text-secondary small" id="pull-project-disabled-reason">Sync selected candidates individually while batch pull is unavailable.</div></div><button class="btn btn-outline-secondary" type="button" aria-describedby="pull-project-disabled-reason" disabled>Pull project</button></div></div>
+        <div class="col-lg-6"><div class="d-flex align-items-center justify-content-between gap-3 h-100"><div><strong>Pull project <span class="badge bg-secondary-lt ms-1">Disabled</span></strong><div class="text-secondary small" id="pull-project-disabled-reason">Full project pull remains disabled. Use filtered pull or candidate actions.</div></div><button class="btn btn-outline-secondary" type="button" aria-describedby="pull-project-disabled-reason" disabled>Pull project</button></div></div>
       </div></div></section>
       <div id="candidate-results">${results()}</div>
     </div>`;
@@ -136,6 +138,79 @@
     bindCandidateActions();
     resumeCandidateJobs();
     document.querySelector("#retry-browse")?.addEventListener("click", browse);
+  }
+
+  function filteredPullPayload(form) {
+    const data = new FormData(form);
+    return {
+      created_from: String(data.get("created_from") || ""),
+      created_to: String(data.get("created_to") || ""),
+      status_ids: data.getAll("status_id").map(String),
+      assignee_ids: data.getAll("assignee_id").map(String),
+      not_closed: data.get("not_closed") === "true",
+    };
+  }
+
+  function renderFilteredPullState() {
+    const button = document.querySelector("#pull-filtered");
+    const state = document.querySelector("#pull-filtered-state");
+    if (!button || !state) return;
+    button.disabled = filteredPull.running || !actionReady("sync_to_cis");
+    button.textContent = filteredPull.running && filteredPull.totalPages !== null
+      ? `Page ${filteredPull.currentPage}/${filteredPull.totalPages} · ${filteredPull.queuedTotal} queued`
+      : filteredPull.running ? "Counting matching issues…" : "Pull all matching issues";
+    if (filteredPull.error) {
+      state.innerHTML = `<span class="text-danger">${CIS.escape(filteredPull.error)}</span> <button class="btn btn-sm btn-outline-danger ms-2" id="retry-filtered-pull" type="button">Retry</button>`;
+      document.querySelector("#retry-filtered-pull").addEventListener("click", runFilteredPull);
+    } else if (filteredPull.completed) {
+      state.textContent = `Queueing completed · ${filteredPull.queuedTotal} issues queued.`;
+    } else if (filteredPull.running) {
+      state.textContent = filteredPull.totalPages === null
+        ? "Counting matching Backlog issues…"
+        : `Queueing page ${Math.min(filteredPull.currentPage + 1, filteredPull.totalPages)} of ${filteredPull.totalPages}.`;
+    } else {
+      state.textContent = "";
+    }
+  }
+
+  async function runFilteredPull() {
+    if (filteredPull.running) return;
+    const form = document.querySelector("#candidate-filter");
+    if (!filteredPull.payload) {
+      const from = form.elements.created_from;
+      const to = form.elements.created_to;
+      from.setCustomValidity(from.value > to.value ? "Created from must not be after Created to." : "");
+      if (!form.reportValidity()) return;
+      filteredPull.payload = filteredPullPayload(form);
+      filteredPull.currentPage = 0;
+      filteredPull.totalPages = null;
+      filteredPull.queuedTotal = 0;
+    }
+    filteredPull.running = true;
+    filteredPull.error = "";
+    filteredPull.completed = false;
+    renderFilteredPullState();
+    try {
+      if (filteredPull.totalPages === null) {
+        const count = await CIS.api(`/api/v1/projects/${project.id}/backlog/manual-pulls/count`, { method: "POST", body: filteredPull.payload });
+        filteredPull.totalPages = count.total_pages;
+        renderFilteredPullState();
+      }
+      while (filteredPull.currentPage < filteredPull.totalPages) {
+        const page = filteredPull.currentPage + 1;
+        const response = await CIS.api(`/api/v1/projects/${project.id}/backlog/manual-pulls/pages/${page}`, { method: "POST", body: filteredPull.payload });
+        filteredPull.queuedTotal += Number(response.newly_queued || 0);
+        filteredPull.currentPage = page;
+        renderFilteredPullState();
+      }
+      filteredPull.completed = true;
+      filteredPull.payload = null;
+    } catch (error) {
+      filteredPull.error = error.message;
+    } finally {
+      filteredPull.running = false;
+      renderFilteredPullState();
+    }
   }
 
   async function runJob(button, endpoint, target, body) {
@@ -245,6 +320,7 @@
       if (!key) return document.querySelector("#pull-one-key").focus();
       await runJob(event.currentTarget, `/api/v1/projects/${project.id}/backlog/issues/${encodeURIComponent(key)}/pull`, document.querySelector("#pull-one-state"));
     });
+    document.querySelector("#pull-filtered")?.addEventListener("click", runFilteredPull);
     bindCandidateActions();
     document.querySelector("#retry-browse")?.addEventListener("click", browse);
   }

@@ -16,8 +16,9 @@
 | --- | --- | --- |
 | Dùng mô hình `System -> CIS -> System` | accepted | Không sync point-to-point Backlog -> Jira trực tiếp. |
 | Lite ưu tiên `Backlog -> CIS` và `CIS -> Jira` | accepted | Jira -> CIS đầy đủ để Medium/phase sau. |
-| Pull one/candidate sync là inbound chính; project/scheduled pull bị disable | accepted | Không query/enqueue batch project pull; webhook vẫn không bắt buộc trong Lite. |
-| Backlog candidate browse là read-only | accepted | Filter/result không lưu DB; issue chỉ vào CIS sau action Sync to CIS riêng. |
+| Pull one/candidate/filtered manual sync là inbound; manual project/scheduled pull bị disable | accepted | Action filtered explicit chỉ tạo/reuse `manual_pull`; các route project/scheduled disabled không query/enqueue và webhook vẫn không bắt buộc trong Lite. |
+| Backlog candidate browse là read-only | accepted | `Find candidates` và result không lưu DB; filtered Page enqueue là action write riêng và không biến candidate browse thành persistence flow. |
+| Manual filtered multi-pull dùng Count + sequential Pages, không có batch state | accepted | Admin Web giữ `Page N/Total · X queued` trong phiên, mỗi eligible issue tạo/reuse `manual_pull`; refresh mất progress nhưng không mất job, và Count/offset scan chỉ best-effort khi source thay đổi. |
 | External identity unique theo project và system column | accepted | Backlog chỉ so backlog key, Jira chỉ so Jira key; canonical key lấy từ provider API. |
 | Scheduled pull bị disable | accepted | Chỉ xem xét bật lại cùng thiết kế project pull queue-only mới. |
 | Admin UI là bắt buộc | accepted | Operator phải review, approve, retry và xử lý anomaly bằng UI. |

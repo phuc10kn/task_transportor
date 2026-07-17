@@ -82,6 +82,10 @@ class BacklogClient {
     return this.gateway.execute("backlog.issues.list", { query: params, options });
   }
 
+  async countIssues(params = {}, options) {
+    return this.gateway.execute("backlog.issues.count", { query: params, options });
+  }
+
   async pullMappingValues() {
     const projectKey = this.project.backlog_project_key;
     const [issueTypes, statuses, priorities, users, categories] = await Promise.all([
@@ -186,7 +190,7 @@ class FixtureBacklogClient {
     };
   }
 
-  async listIssues(params = {}) {
+  filterIssues(params = {}) {
     let issues = [...(this.fixture.issueCandidates || this.fixture.issues || [this.fixture.issue].filter(Boolean))]
       .map((issue) => ({ ...issue, projectId: issue.projectId || this.fixture.projectId || 1 }));
     const projectIds = params["projectId[]"] === undefined ? [] : [params["projectId[]"]].flat().map(Number);
@@ -199,9 +203,18 @@ class FixtureBacklogClient {
     if (params.createdUntil) issues = issues.filter((issue) => String(issue.created || "").slice(0, 10) <= params.createdUntil);
     if (params.sort === "created") issues.sort((a, b) => String(a.created || "").localeCompare(String(b.created || "")));
     if (params.order === "desc") issues.reverse();
+    return issues;
+  }
+
+  async listIssues(params = {}) {
+    const issues = this.filterIssues(params);
     const offset = Number(params.offset || 0);
     const count = Number(params.count || 20);
     return issues.slice(offset, offset + count);
+  }
+
+  async countIssues(params = {}) {
+    return { count: this.filterIssues(params).length };
   }
 
   async getProjectStatuses() {
@@ -293,6 +306,7 @@ const BACKLOG_METHOD_OPERATIONS = Object.freeze({
   getProject: ["backlog.project.get"],
   getProjectStatuses: ["backlog.project.statuses.list"],
   getProjectUsers: ["backlog.project.users.list"],
+  countIssues: ["backlog.issues.count"],
   listIssues: ["backlog.issues.list"],
   pullMappingValues: [
     "backlog.project.issue-types.list",

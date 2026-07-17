@@ -106,7 +106,8 @@ async function main() {
   assert.equal(reloaded.last_error_details.retryable, false);
 
   assert.equal(BACKLOG_OPERATIONS["backlog.issue.get"].method, "GET");
-  assert.equal(Object.keys(BACKLOG_OPERATIONS).length, 11);
+  assert.equal(BACKLOG_OPERATIONS["backlog.issues.count"].method, "GET");
+  assert.equal(Object.keys(BACKLOG_OPERATIONS).length, 12);
   assert.equal(BACKLOG_OPERATIONS["backlog.issue.get"].path({ issueKey: "A/../?B" }), "/api/v2/issues/A%2F..%2F%3FB");
   assert.equal(JIRA_OPERATIONS["jira.issue.create"].method, "POST");
   assert.equal(Object.keys(JIRA_OPERATIONS).length, 15);

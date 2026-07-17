@@ -16,11 +16,14 @@
 Lite được coi là đạt ở mức product khi:
 
 - Backlog manual pull tạo inbound job `backlog -> cis`.
+- Action explicit `Pull all matching issues` gọi Count với browse readiness rồi gọi tuần tự từng Page `100` với `sync_to_cis` readiness; mỗi issue chưa có trong CIS chỉ tạo/reuse `manual_pull`. Không có batch/coordinator job, job type hoặc bảng batch, và gate fail không enqueue.
+- Page-created `manual_pull` dùng internal Issue List snapshot nên không gọi lại Backlog Project/Issue; comments và attachments vẫn được đọc theo từng issue, mapping/CIS ingest và retry/failure isolation giữ semantics hiện tại.
+- Progress `Page N/Total · X queued` chỉ đếm enqueue trong phiên browser và mất khi refresh; các job đã enqueue không mất. Count/offset scan được nghiệm thu theo best-effort semantics khi Backlog thay đổi, không được mô tả như remote snapshot chính xác.
 - Issue Editor resync áp dụng lại approved Backlog→CIS mappings cho canonical Issue type, Priority, Status và Assignee; source payload không đổi không tạo revision giả. UI refresh đúng bốn field tại chỗ và giữ nguyên Summary/Description chưa lưu.
 - Candidate `Sync to CIS`/`Sync to CIS + Translate` trả `202` sau local gate + enqueue, còn provider/project verification chạy trong worker. Candidate browse overlay pending/running parent job để reload khóa đúng row và resume polling mà không enqueue lại; đúng queue `summary`/`description`, child `translate` jobs bất đồng bộ và parent/child journal trace được giữ; retry/re-click không tạo active job trùng.
 - Candidate `Sync + Translate + Jira` auto-approves chỉ khi operator chọn action explicit; request tạo/promote job `sync_translate_jira` và không tạo child queue. Một translation item hoặc dry-run fail phải rollback draft/canonical/approval của toàn batch và chặn Jira; job chỉ success sau direct Jira delivery, còn reload giữa workflow vẫn overlay đúng row.
 - Manual project pull trả `409 BACKLOG_PROJECT_PULL_DISABLED`; scheduled scan trả disabled, không query Backlog, không enqueue job và không cập nhật pull state.
-- Pull mapping values giữ các mảng text legacy cho Mapping/dry-run và đồng thời materialize directory provider ID cho toàn catalog; Jira user directory giữ được `accountId` nhưng CIS mapping vẫn chỉ nhận text. Candidate browse chỉ chạy sau action Admin; `filter-options` chỉ đọc Status/người được gán snapshot đã lưu trong project config, còn browse dùng ID snapshot để query Backlog theo created range cùng Status/Not closed/người được gán tùy chọn. Luồng không tạo database write, loại Backlog key đã thuộc CIS cùng project và over-fetch tới limit/source bound.
+- Pull mapping values giữ các mảng text legacy cho Mapping/dry-run và đồng thời materialize directory provider ID cho toàn catalog; Jira user directory giữ được `accountId` nhưng CIS mapping vẫn chỉ nhận text. Candidate browse chỉ chạy sau action Admin; `filter-options` chỉ đọc Status/người được gán snapshot đã lưu trong project config, còn browse dùng ID snapshot để query Backlog theo created range cùng Status/Not closed/người được gán tùy chọn. Candidate browse không tạo database write, loại Backlog key đã thuộc CIS cùng project và over-fetch tới limit/source bound; filtered Page enqueue là action write riêng.
 - Manual CIS issue có revision đầu tiên + journal; external identity verify tồn tại/project và duplicate theo `project_id + đúng system column`.
 - CIS lưu raw/source snapshot, canonical issue, comments, attachments metadata, job và journal.
 - Translation option tạo draft Nhật -> Việt; AI/operator cùng chỉnh một draft, Save Draft không đổi canonical, Approve mới apply, và vẫn có reject/retranslate.
@@ -67,7 +70,7 @@ Verification command:
 Manual acceptance Lite còn sống:
 
 - Admin login được.
-- Admin trigger `Pull one issue` và resync issue từ Backlog.
+- Admin trigger `Pull one issue`, `Pull all matching issues` và resync issue từ Backlog; filtered pull hiển thị page/total cùng số mới enqueue trong phiên browser mà không làm mất candidate table.
 - Issue Editor hiển thị canonical CIS, source Backlog/CIS/Jira và trạng thái issue.
 - Translation modal translate/retranslate, Markdown Edit/Preview, Save Draft, Approve riêng và reject được; hai màn CIS Issue/Translation Queue cùng đọc `ai_draft`.
 - Checklist glossary: Project-scoped CRUD, mỗi language đúng một canonical và không normalized duplicate, concept thiếu pair không vào runtime context, không còn legacy Project JSON và Translation Queue vẫn pass.
