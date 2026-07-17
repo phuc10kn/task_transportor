@@ -20,6 +20,7 @@ const expectedInstanceIds = new Set([
 ]);
 const expectedCanonicalEdges = new Set([
   "AF-001|involves|MOD-002",
+  "AF-001|involves|MOD-004",
   "AF-001|involves|MOD-008",
   "AF-001|involves|MOD-006",
   "AF-001|involves|MOD-001",

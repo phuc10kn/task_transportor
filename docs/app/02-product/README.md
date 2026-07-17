@@ -23,7 +23,7 @@ Lite in scope:
 - Admin login và project config tối thiểu.
 - Admin chọn hoặc tạo đúng một Project trước khi vào workspace nghiệp vụ; Dashboard, issue, translation, mapping, anomaly, job và journal chỉ đọc/ghi Project đã chọn bằng Project-scoped API. Đổi Project chỉ thực hiện tại Project Config.
 - `BE-PROJECT-SCOPE-01/02` đã đóng: Backend enforce object isolation theo Project path, Dashboard đã mở cho active Project, route workspace legacy đã bị xóa và Project `enabled=false` chặn toàn bộ workspace.
-- Backlog manual pull một issue vào CIS.
+- Backlog manual pull một issue vào CIS; resync áp dụng lại approved Backlog→CIS mappings cho Issue type, Priority, Status và Assignee mà không tạo source revision mới khi payload Backlog không đổi.
 - Backlog project pull và scheduled pull bị disable; API không query Backlog hoặc enqueue batch job.
 - Backlog Issues browser theo project + khoảng ngày tạo, Status/Not closed/người được gán tùy chọn từ snapshot cấu hình Backlog của project; chỉ query candidate sau action của Admin, loại issue đã có trong CIS và overlay active `manual_pull` job lên đúng candidate row khi tải lại màn.
 - Sync từng Backlog candidate vào CIS qua shared manual-pull job; HTTP chỉ validate cục bộ/enqueue rồi trả `202`, provider/project verification thuộc worker và không đi thẳng Jira.

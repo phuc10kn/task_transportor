@@ -442,6 +442,46 @@ test("issue-editor: canonical surface and blocked Jira dry-run", async ({ page }
   expect(mobileMain.y).toBeGreaterThan(mobileRail.y + mobileRail.height);
 });
 
+test("issue-editor: Backlog resync refreshes mapped CIS fields without reloading drafts", async ({ page }) => {
+  const base = {
+    issue: { id: "issue-resync", project_id: 1, backlog_issue_key: "WEC-1", sync_status: "ingested", current_revision: 1 },
+    canonical: {
+      summary: { value: "Unsaved-safe summary", source: "cis" },
+      description: { value: "Original description", source: "cis" },
+      issue_type: { value: "Sub-task", source: "cis" },
+      priority: { value: "Medium", source: "cis" },
+      status: { value: "To Do", source: "cis" },
+      assignee: { value: "old-user", source: "cis" },
+      story_point: { value: 1, source: "default" },
+    },
+    sources: {},
+    field_meta: { catalogs: { issue_type: ["Sub-task", "Task"], priority: ["Medium", "High"], status: ["To Do", "Done"], assignee: ["old-user", "new-user"] } },
+    translations: [], translation: { total: 0 }, sync: { canonical_hash: "resync-hash" },
+  };
+  const remapped = { ...base, canonical: { ...base.canonical, issue_type: { value: "Task", source: "cis" }, priority: { value: "High", source: "cis" }, status: { value: "Done", source: "cis" }, assignee: { value: "new-user", source: "cis" } } };
+  let editorRequests = 0;
+  await page.route("**/api/v1/projects/1/issues/issue-resync/editor", (route) => {
+    editorRequests += 1;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: editorRequests > 1 ? remapped : base }) });
+  });
+  await page.route("**/api/v1/projects/1/issues/issue-resync/attachments", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [] }) }));
+  await page.route("**/api/v1/projects/1/issues/issue-resync/history", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { manual_edits: [] } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/WEC-1/pull", (route) => route.fulfill({ status: 202, contentType: "application/json", body: JSON.stringify({ data: { id: "resync-job", status: "success" } }) }));
+  await page.route("**/api/v1/projects/1/sync-jobs/resync-job", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: "resync-job", status: "success" } }) }));
+
+  await enter(page, "/cis-issues/issue-resync");
+  await page.locator("#canonical-summary").fill("Local unsaved summary");
+  await page.getByRole("button", { name: "Resync Backlog" }).click();
+  await expect(page.locator("#resync-state")).toContainText("CIS mappings refreshed");
+  await expect(page.locator("#canonical-issue_type")).toHaveValue("Task");
+  await expect(page.locator("#canonical-priority")).toHaveValue("High");
+  await expect(page.locator("#canonical-status")).toHaveValue("Done");
+  await expect(page.locator("#canonical-assignee")).toHaveValue("new-user");
+  await expect(page.locator("#canonical-summary")).toHaveValue("Local unsaved summary");
+  expect(editorRequests).toBe(2);
+  await expect(page).toHaveURL(/\/project\/1\/cis-issues\/issue-resync$/);
+});
+
 test("Jira gate publishes operator-reviewed fields after a successful dry-run", async ({ page }) => {
   const editor = { issue: { id: "issue-2", project_id: 1, sync_status: "ready", current_revision: 1 }, canonical: { summary: { value: "Canonical", source: "manual" }, story_point: { value: 1, source: "default" } }, sources: {}, field_meta: { catalogs: {}, catalogs_by_system: { jira: { issue_type: ["Task", "Bug"], priority: ["High", "Medium"], status: ["To Do", "Done"], assignee: [{ value: "account-123", label: "Tuan Anh" }, { value: "account-456", label: "Mai Hoang" }] } } }, translations: [], translation: { total: 0 }, sync: { canonical_hash: "abcdef1234567890" } };
   await page.route("**/api/v1/projects/1/issues/issue-2/editor", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: editor }) }));

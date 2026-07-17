@@ -14,6 +14,7 @@ theory_basis:
 relations:
   involves:
     - MOD-002
+    - MOD-004
     - MOD-008
     - MOD-006
     - MOD-001
@@ -41,7 +42,7 @@ Admin gọi route Pull one hoặc một trong ba candidate action Sync to CIS/Tr
 
 ## Path
 
-Candidate path: `Admin -> Backlog HTTP -> local readiness/CIS check -> SyncApi enqueue/reuse manual_pull -> HTTP 202 -> worker -> BacklogClient provider/project verification -> normalizer -> CisApi.upsertBacklogIssue(...)`.
+Candidate path: `Admin -> Backlog HTTP -> local readiness/CIS check -> SyncApi enqueue/reuse manual_pull -> HTTP 202 -> worker -> BacklogClient provider/project verification -> normalizer -> approved Backlog→CIS mapping lookup/apply -> CisApi.upsertBacklogIssue(...)`.
 
 Jira branch tiếp tục trong cùng parent lifecycle: `translation staging children -> atomic batch approval -> Jira dry-run/gate -> push_issue child -> parent success`.
 
@@ -51,6 +52,7 @@ Pull-one compatibility path vẫn tạo `manual_pull` rồi chạy job ngay tron
 
 - Request vào qua `Backlog` vì đây là source-specific boundary.
 - Normalization ở `Backlog` để payload external không đi thẳng vào core.
+- Approved mapping được đọc qua public API của `Mapping` và áp dụng trước owner write; resync vì vậy có thể cập nhật lại canonical Issue type, Priority, Status và Assignee dù source payload không đổi.
 - Write cuối cùng đi qua `CisApi` vì `Cis` là owner của canonical issue state.
 - Candidate action luôn chốt queue trước khi gọi provider; reload đọc active job theo Project + Backlog key và không làm đứt execution của worker.
 - Provider/project verification nằm trong worker để HTTP không giữ external request lifecycle và mọi failure được lưu trên job.
@@ -71,6 +73,7 @@ Không bypass owner state, không thực hiện side effect ngoài guardrail tư
 ## Related Entities
 
 - Canonical relation: [MOD-002-backlog](../../../01-structure/modules/MOD-002-backlog/README.md)
+- Canonical relation: [MOD-004-mapping](../../../01-structure/modules/MOD-004-mapping/README.md)
 - Canonical relation: [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md)
 - Canonical relation: [MOD-006-sync](../../../01-structure/modules/MOD-006-sync/README.md)
 - Context/evidence: [DF-001-backlog-to-cis-canonicalization](../../../05-data/data-flows/DF-001-backlog-to-cis-canonicalization/README.md)
@@ -84,10 +87,12 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 
 - `src/modules/Backlog/application/pullIssue.js`
 - `src/modules/Backlog/application/handleManualPullJob.js`
+- `src/modules/Backlog/support/applyBacklogMappings.js`
 - `src/modules/Backlog/application/syncCandidateToCis.js`
 
 ## Validation Notes
 
 - Instance đã được chuẩn hóa về `entity-instance/v1` trong Architecture Clean Baseline.
 - Evidence đã được refresh cho per-row candidate enqueue/reuse shared manual-pull flow.
+- Edge `AF-001 --involves--> MOD-004` materialize participant thực thi inbound approved mapping, dựa trên worker và mapping helper nêu trong Evidence.
 - Không suy diễn relation canonical mới từ prose hiện có.

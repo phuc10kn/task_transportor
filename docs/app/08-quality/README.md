@@ -16,6 +16,7 @@
 Lite được coi là đạt ở mức product khi:
 
 - Backlog manual pull tạo inbound job `backlog -> cis`.
+- Issue Editor resync áp dụng lại approved Backlog→CIS mappings cho canonical Issue type, Priority, Status và Assignee; source payload không đổi không tạo revision giả. UI refresh đúng bốn field tại chỗ và giữ nguyên Summary/Description chưa lưu.
 - Candidate `Sync to CIS`/`Sync to CIS + Translate` trả `202` sau local gate + enqueue, còn provider/project verification chạy trong worker. Candidate browse overlay pending/running parent job để reload khóa đúng row và resume polling mà không enqueue lại; đúng queue `summary`/`description`, child `translate` jobs bất đồng bộ và parent/child journal trace được giữ; retry/re-click không tạo active job trùng.
 - Candidate `Sync + Translate + Jira` auto-approves chỉ khi operator chọn action explicit; request tạo/promote job `sync_translate_jira` và không tạo child queue. Một translation item hoặc dry-run fail phải rollback draft/canonical/approval của toàn batch và chặn Jira; job chỉ success sau direct Jira delivery, còn reload giữa workflow vẫn overlay đúng row.
 - Manual project pull trả `409 BACKLOG_PROJECT_PULL_DISABLED`; scheduled scan trả disabled, không query Backlog, không enqueue job và không cập nhật pull state.

@@ -9,6 +9,12 @@ function currentIssueSource(config, item) {
   return CisApi.getIssueTranslationTargets({ config, issueId: item.issue_id }).target_map[item.target_field] || null;
 }
 
+function normalizedDraft(config, item, draftText) {
+  if (item.comment_id || item.target_type !== "issue" || item.target_field !== "description") return draftText;
+  const issue = CisApi.getIssueById({ config, issueId: item.issue_id });
+  return CisApi.normalizeCanonicalDescription({ config, issue, description: draftText });
+}
+
 function saveTranslationDraft({ config, queueId, draftText, editedBy, reviewNotes, correlationId }) {
   if (typeof draftText !== "string" || !draftText.trim()) {
     throw new AppError({
@@ -29,7 +35,7 @@ function saveTranslationDraft({ config, queueId, draftText, editedBy, reviewNote
   }
 
   const item = repository.saveDraft(queueId, {
-    draft_text: draftText,
+    draft_text: normalizedDraft(config, existing, draftText),
     source_text: currentIssueSource(config, existing),
     review_notes: reviewNotes,
   });

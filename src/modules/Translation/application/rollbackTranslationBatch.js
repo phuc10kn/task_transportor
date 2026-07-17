@@ -29,6 +29,7 @@ function rollbackTranslationBatch({ config, issueId, snapshots, canonical, execu
             message: "Translation batch rolled back after workflow failure.",
             details_json: { parent_sync_job_id: parentSyncJobId || null },
           },
+          normalizeDescriptionSourceReference: false,
         });
       }
     });

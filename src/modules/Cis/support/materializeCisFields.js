@@ -70,7 +70,7 @@ function mergeSourceFields(existingFieldsJson, incomingFieldsJson, sourceSystem)
 
     for (const [source, value] of Object.entries(incoming)) {
       if (source === "cis" && hasValue(current.cis)) {
-        if (sourceSystem === "backlog" && hasValue(current.backlog) && current.cis === current.backlog) {
+        if (sourceSystem === "backlog") {
           current.cis = value;
         }
         continue;

@@ -41,10 +41,12 @@ function createProject(config) {
       name: "Translation Routes Verify",
       enabled: true,
       sync_enabled: true,
+      backlog_space_url: "https://cdrive.backlog.com",
       backlog_project_key: "TR",
       backlog_issue_key_prefix: "TR",
       backlog_api_key_env: "BACKLOG_API_KEY",
       jira_project_key: "TRD",
+      jira_site_url: "https://translation-routes.atlassian.net",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_TOKEN",
       translation_provider: "codex_exec",
@@ -99,6 +101,14 @@ async function login(server) {
 async function main() {
   const config = setupConfig();
   const project = createProject(config);
+  assert.equal(
+    CisApi.normalizeCanonicalDescription({
+      config,
+      issue: { project_id: project.id, source_system: "jira", jira_issue_key: "TRD-9" },
+      description: "Translated Jira description",
+    }),
+    "https://translation-routes.atlassian.net/browse/TRD-9\n\nTranslated Jira description"
+  );
   const issue = createUntranslatedIssue(config, project);
   const compatIssue = createUntranslatedIssue(config, project, "TR-2");
   const app = createApp({ config });
@@ -139,6 +149,8 @@ async function main() {
 
     // Happy case 3: draft save does not apply canonical; approval does.
     const descriptionItem = canonicalTranslate.body.data.translations.find((item) => item.target_field === "description");
+    const sourceLink = `https://cdrive.backlog.com/view/${issue.backlog_issue_key}`;
+    assert.ok(descriptionItem.ai_draft.startsWith(`${sourceLink}\n\n[vi] `));
     const manualEdit = await requestJson(server, {
       method: "PUT",
       pathname: `/api/v1/projects/${project.id}/translation-queue/${descriptionItem.id}/draft`,
@@ -150,6 +162,7 @@ async function main() {
     });
     assert.equal(manualEdit.status, 200);
     assert.equal(manualEdit.body.data.review_status, "ai_draft");
+    assert.equal(manualEdit.body.data.ai_draft, `${sourceLink}\n\nBan dich da chinh sua happy case`);
 
     const afterManualEdit = readIssue(config, issue.id);
     assert.notEqual(afterManualEdit.fields_json.description.cis, "Ban dich da chinh sua happy case");
@@ -160,7 +173,7 @@ async function main() {
       body: { review_notes: "translation-routes-approve-draft" },
     });
     assert.equal(approveDraft.status, 200);
-    assert.equal(readIssue(config, issue.id).fields_json.description.cis, "Ban dich da chinh sua happy case");
+    assert.equal(readIssue(config, issue.id).fields_json.description.cis, `${sourceLink}\n\nBan dich da chinh sua happy case`);
 
     // Happy case 4: another issue in the same Project remains supported
     const compatTranslate = await requestJson(server, {
@@ -199,7 +212,7 @@ async function main() {
     assert.ok(editor.body.data.translations.some((item) => item.target_field === "description"));
     assert.equal(
       editor.body.data.translations.find((item) => item.target_field === "description").ai_draft,
-      "Ban dich da chinh sua happy case"
+      `${sourceLink}\n\nBan dich da chinh sua happy case`
     );
   });
 

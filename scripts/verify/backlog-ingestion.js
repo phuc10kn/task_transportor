@@ -9,6 +9,7 @@ const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const BacklogApi = require("../../src/modules/Backlog/BacklogApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
+const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { requestJson, withServer } = require("./helpers/http");
@@ -64,6 +65,18 @@ async function main() {
   });
 
   const project = createBacklogProject(config);
+  const issueTypeMapping = MappingApi.createMappingRule({
+    config,
+    input: {
+      project_id: project.id,
+      mapping_type: "issue_type",
+      direction_from: "backlog",
+      direction_to: "cis",
+      from_value: "Bug",
+      to_value: "bug",
+    },
+  });
+  MappingApi.approveMappingRule({ config, ruleId: issueTypeMapping.id, approvedBy: 1 });
   const app = createApp({ config });
 
   await withServer(app, async (server) => {
@@ -98,6 +111,7 @@ async function main() {
     assert.equal(issue.status, "ingested");
     assert.equal(issue.current_revision, 1);
     assert.equal(issue.fields_json.summary.backlog, "Login screen fails");
+    assert.equal(issue.fields_json.issue_type.cis, "bug");
     const completedPullJob = SyncApi.getJob({
       config,
       jobId: pullIssue.body.data.id,
@@ -117,6 +131,19 @@ async function main() {
     assert.match(children.attachments[0].sha256, /^[a-f0-9]{64}$/);
     assert.ok(fs.existsSync(path.join(config.storage.attachments, children.attachments[0].stored_path)));
     assert.equal(children.translations.length, 0);
+
+    MappingApi.updateMappingRule({ config, ruleId: issueTypeMapping.id, input: { to_value: "defect" } });
+    MappingApi.approveMappingRule({ config, ruleId: issueTypeMapping.id, approvedBy: 1 });
+    const resync = await requestJson(server, {
+      method: "POST",
+      pathname: `/api/v1/projects/${project.id}/backlog/issues/WEC-1/pull`,
+      token,
+    });
+    assert.equal(resync.status, 202);
+    assert.equal(resync.body.data.status, "success");
+    const remapped = CisApi.getIssueByBacklogKey({ config, projectId: project.id, backlogIssueKey: "WEC-1" });
+    assert.equal(remapped.fields_json.issue_type.cis, "defect");
+    assert.equal(remapped.current_revision, 1);
 
     CisApi.markAttachmentDownloadFailed({
       config,

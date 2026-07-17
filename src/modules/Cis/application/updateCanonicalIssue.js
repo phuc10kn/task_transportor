@@ -11,7 +11,7 @@ const {
 const { hashCanonicalIssue } = require("../support/hashCanonicalIssue");
 const { resolveCanonicalField } = require("../support/resolveCanonicalField");
 const { buildCanonicalSnapshot, pickAssigneeMeta } = require("./getIssueEditor");
-const { normalizeCanonicalSummary } = require("./normalizeCanonicalSummary");
+const { normalizeCanonicalDescription, normalizeCanonicalSummary } = require("./normalizeCanonicalSummary");
 
 const META_ALLOWED_KEYS = new Set(["jira_account_id"]);
 
@@ -160,7 +160,7 @@ function revisionSnapshotFromCanonical(canonical, previousRevision, fieldsJson) 
   };
 }
 
-function updateCanonicalIssue({ config, issueId, payload, executedBy, correlationId, db = null, audit = {} }) {
+function updateCanonicalIssue({ config, issueId, payload, executedBy, correlationId, db = null, audit = {}, normalizeDescriptionSourceReference = true }) {
   const repository = createCisRepository({ config, db });
   const issue = repository.getIssueById(issueId);
 
@@ -193,6 +193,8 @@ function updateCanonicalIssue({ config, issueId, payload, executedBy, correlatio
       ? normalizeStoryPoint(payload[field])
       : field === "summary"
         ? normalizeCanonicalSummary({ issue, summary: payload[field] })
+        : field === "description" && normalizeDescriptionSourceReference
+          ? normalizeCanonicalDescription({ config, issue, description: payload[field] })
         : payload[field];
     const current = resolveCanonicalField(fieldsJson, field, revision && revision[field]);
 

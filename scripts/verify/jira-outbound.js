@@ -485,6 +485,7 @@ async function verifyEndpointAndCreateFlow() {
     assignee_account_id: "jira-account-1",
     due_date: "2026-07-31",
   });
+  const expectedDescription = `https://backlog.example.test/view/${ready.issue.backlog_issue_key}\n\nVI: Canonical plain text`;
   const app = createApp({ config });
 
   await withServer(app, async (server) => {
@@ -497,7 +498,7 @@ async function verifyEndpointAndCreateFlow() {
     assert.equal(dryRun.status, 200);
     assert.equal(dryRun.body.data.can_sync, true);
     assert.equal(dryRun.body.data.payload.fields.summary, `【${ready.issue.backlog_issue_key}】VI: Canonical summary`);
-    assert.equal(dryRun.body.data.payload.fields.description, "VI: Canonical plain text");
+    assert.equal(dryRun.body.data.payload.fields.description, expectedDescription);
     assert.equal(dryRun.body.data.payload.fields.assignee.accountId, "jira-account-1");
     assert.equal(dryRun.body.data.payload.fields.duedate, "2026-07-31");
     assert.equal(dryRun.body.data.payload.fields.customfield_10038, 1);
@@ -526,7 +527,7 @@ async function verifyEndpointAndCreateFlow() {
     assert.equal(fakeState.issues.length, 1);
     assert.equal(fakeState.issues[0].key, savedIssue.jira_issue_key);
     assert.equal(fakeState.issues[0].summary, `【${ready.issue.backlog_issue_key}】VI: Canonical summary`);
-    assert.equal(fakeState.issues[0].description, "VI: Canonical plain text");
+    assert.equal(fakeState.issues[0].description, expectedDescription);
     assert.deepEqual(fakeState.issues[0].labels, []);
     assert.equal(fakeState.issues[0].assignee, "jira-account-1");
     assert.equal(fakeState.issues[0].due_date, "2026-07-31");
@@ -574,6 +575,32 @@ async function verifyUpdateWithoutDuplicate() {
   assert.equal(state.issues.length, 1);
   assert.equal(state.issues[0].key, afterFirst.jira_issue_key);
   assert.ok(listJournal(config, secondJob.id).some((entry) => entry.action === "update"));
+}
+
+async function verifyIssueTypeOverrideRecomputesStoryPoint() {
+  const config = setupConfig("jira-outbound-story-point-override");
+  writeFakeState(config);
+  const project = createProject(config, "PH6SP", {
+    jira_site_url: "https://10kn-developer.atlassian.net",
+    jira_project_key: "WEC1",
+  });
+  createApprovedMapping(config, project.id, "issue_type", "Sub-task", "sub-task", "Sub-task");
+  createApprovedMapping(config, project.id, "issue_type", "Task", "task", "Task");
+  createApprovedMapping(config, project.id, "status", "Resolved", "resolved", "Done");
+  createApprovedMapping(config, project.id, "priority", "Normal", "normal", "Medium");
+  const ready = createReadyIssue(config, project, { include_comment: false, issue_type: "Sub-task" });
+  const dryRun = JiraApi.runJiraDryRun({ config, issueId: ready.issue.id, executedBy: 1 });
+  assert.equal(dryRun.can_sync, true);
+  assert.equal(dryRun.target_fields.story_point, null);
+
+  const job = await JiraApi.requestJiraSync({
+    config,
+    issueId: ready.issue.id,
+    executedBy: 1,
+    jiraFields: { issue_type: "Task" },
+  });
+  assert.equal(job.payload_json.jira_payload_override.fields.issuetype.name, "Task");
+  assert.equal(job.payload_json.jira_payload_override.fields.customfield_10038, 1);
 }
 
 async function verifyLinkExistingTrace() {
@@ -842,6 +869,7 @@ async function main() {
   verifyMarkdownToAdf();
   await verifyJiraMappingUserPullKeepsHiddenUsers();
   await verifyEndpointAndCreateFlow();
+  await verifyIssueTypeOverrideRecomputesStoryPoint();
   await verifyUpdateWithoutDuplicate();
   await verifyLinkExistingTrace();
   await verifyTraceConflict();

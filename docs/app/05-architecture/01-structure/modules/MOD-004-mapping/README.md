@@ -7,7 +7,7 @@ entity_type: Module
 layer: 05-architecture
 concern: 01-structure
 status: active
-summary: Sở hữu mapping rule approved dùng cho outbound value translation.
+summary: Sở hữu mapping rule approved dùng cho inbound canonicalization và outbound value translation.
 theory_basis:
   - TH-MOD-01
   - TH-MOD-06
@@ -20,18 +20,18 @@ relations:
 
 ## Summary
 
-Sở hữu mapping rule đã review hoặc approved cho outbound value translation.
+Sở hữu mapping rule đã review hoặc approved cho inbound canonicalization và outbound value translation.
 
 ## Meaning
 
-Module giữ mapping rules đã review hoặc approved để outbound sync và dry-run có thể dịch giá trị giữa các hệ thống.
+Module giữ mapping rules đã review hoặc approved để inbound canonicalization, outbound dry-run và sync có thể dịch giá trị giữa external model và CIS.
 
 ## Responsibility
 
 - CRUD mapping rules.
 - Approve hoặc reject rule.
 - Expose lookup cho approved mapping rule.
-- Cung cấp mapping settings phục vụ validation và dry-run.
+- Cung cấp mapping settings phục vụ inbound canonicalization, validation và dry-run.
 
 ## Key properties
 
@@ -39,18 +39,20 @@ Module giữ mapping rules đã review hoặc approved để outbound sync và d
 |----------|-------|
 | Public surface | `src/modules/Mapping/MappingApi.js`, `src/modules/Mapping/http/routes.js` |
 | Owned state | `mapping_rules`, mapping settings |
-| Main consumers | `Jira`, `Projects`, admin UI |
+| Main consumers | `Backlog`, `Jira`, `Projects`, admin UI |
 | Main risk | mapping gap có thể chặn sync |
 
 ## Rules / constraints
 
 - Mapping ownership không nằm trong `Jira` dù được dùng mạnh ở outbound.
+- Consumer inbound chỉ được đọc approved mapping qua public API; không sở hữu hoặc ghi trực tiếp mapping state.
 - Rule chưa approve không được coi là canonical mapping.
 - Missing mapping có thể tạo anomaly thay vì bypass âm thầm.
 
 ## Related Entities
 
 - Context/evidence: [MOD-005-anomaly](../../modules/MOD-005-anomaly/README.md) - phản ánh mapping gap
+- Context/evidence: [MOD-002-backlog](../../modules/MOD-002-backlog/README.md) - consumer approved mapping khi canonicalize inbound issue
 - Context/evidence: [MOD-007-jira](../../modules/MOD-007-jira/README.md) - consumer chính của approved mapping
 - Canonical relation: [SO-005-mapping-approval-state](../../../04-state/state-owners/SO-005-mapping-approval-state/README.md) - state owner tương ứng
 
@@ -64,6 +66,7 @@ Module giữ mapping rules đã review hoặc approved để outbound sync và d
 - `src/modules/Mapping/MappingApi.js`
 - `src/modules/Mapping/application/findApprovedMappingRule.js`
 - `src/modules/Mapping/application/getMappingSettings.js`
+- `src/modules/Backlog/support/applyBacklogMappings.js`
 
 ## Validation Notes
 

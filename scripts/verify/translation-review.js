@@ -40,10 +40,12 @@ function createProject(config, suffix = "TRAN") {
     input: {
       name: `Translation Verify ${suffix}`,
       sync_enabled: true,
+      backlog_space_url: "https://cdrive.backlog.com",
       backlog_project_key: suffix,
       backlog_issue_key_prefix: suffix,
       backlog_api_key_env: "BACKLOG_API_KEY",
       jira_project_key: suffix,
+      jira_site_url: "https://translation-verify.atlassian.net",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_API_TOKEN",
       translation_ai_provider: "codex_exec",
@@ -241,6 +243,9 @@ async function verifySuccessAndReviewApi() {
 
   const secondWorker = await SyncApi.runWorkerOnce({ config, workerId: "translation-verify" });
   assert.equal(secondWorker.job.status, "success");
+  const second = getTranslation(config, items[1].id);
+  const sourceLink = `https://cdrive.backlog.com/view/${issue.backlog_issue_key}`;
+  assert.ok(second.ai_draft.startsWith(`${sourceLink}\n\n[vi]`));
   assert.equal(getIssueStatus(config, issue.id), "pending_review");
   assertJournalHas(config, "translation_ai_draft", issue.id);
 
@@ -330,7 +335,7 @@ async function verifySuccessAndReviewApi() {
     });
     assert.equal(edit.status, 200);
     assert.equal(edit.body.data.review_status, "ai_draft");
-    assert.equal(edit.body.data.ai_draft, "Ban dich da chinh sua.");
+    assert.equal(edit.body.data.ai_draft, `${sourceLink}\n\nBan dich da chinh sua.`);
     assert.notEqual(CisApi.getIssueById({ config, issueId: issue.id }).fields_json.description.cis, "Ban dich da chinh sua.");
 
     const approveEditedDraft = await requestJson(server, {
@@ -341,7 +346,10 @@ async function verifySuccessAndReviewApi() {
     });
     assert.equal(approveEditedDraft.status, 200);
     assert.equal(approveEditedDraft.body.data.review_status, "approved");
-    assert.equal(CisApi.getIssueById({ config, issueId: issue.id }).fields_json.description.cis, "Ban dich da chinh sua.");
+    assert.equal(
+      CisApi.getIssueById({ config, issueId: issue.id }).fields_json.description.cis,
+      `${sourceLink}\n\nBan dich da chinh sua.`
+    );
     assert.equal(getIssueStatus(config, issue.id), "approved");
 
     const rejectSetup = createIssueWithTranslations(config, 1);

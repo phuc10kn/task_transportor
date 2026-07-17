@@ -46,17 +46,19 @@ Luồng biến raw Backlog issue thành canonical issue state trong CIS.
 Backlog payload
   -> BacklogClient fetch
   -> normalizeBacklogIssue(...)
+  -> applyApprovedBacklogMappings(...)
   -> CisApi.upsertBacklogIssue(...)
   -> issue / revision / related canonical state
 ```
 
 ## Transformation
 
-Backlog payload được normalize và map về field shape nội bộ trước khi upsert vào `Cis`.
+Backlog payload được normalize về field shape nội bộ, sau đó approved Backlog→CIS mappings được áp dụng cho Issue type, Priority, Status và Assignee trước khi upsert vào `Cis`. Khi resync, các mapped canonical value này được refresh kể cả khi raw source snapshot không đổi; revision nguồn chỉ tăng khi source payload thực sự thay đổi.
 
 ## Boundary and ownership
 
 - `Backlog` sở hữu inbound adaptation, source fetch và normalization logic.
+- `Mapping` sở hữu approved mapping state và chỉ expose lookup qua public API; flow không ghi trực tiếp mapping state.
 - `Cis` sở hữu owner write của canonical issue state sau khi dữ liệu đi qua boundary.
 - Luồng này không chuyển ownership ngược từ `Cis` về `Backlog`.
 
@@ -91,6 +93,7 @@ Không để external/raw payload trở thành canonical state, không bypass ow
 ## Evidence
 
 - `src/modules/Backlog/support/normalizeBacklogIssue.js`
+- `src/modules/Backlog/support/applyBacklogMappings.js`
 - `src/modules/Cis/application/upsertBacklogIssue.js`
 - `src/modules/Backlog/application/pullIssue.js`
 - `src/modules/Backlog/application/handleManualPullJob.js`
@@ -98,6 +101,7 @@ Không để external/raw payload trở thành canonical state, không bypass ow
 ## Related Entities
 
 - Context/evidence: [MOD-002-backlog](../../../01-structure/modules/MOD-002-backlog/README.md) - owner của inbound adaptation
+- Context/evidence: [MOD-004-mapping](../../../01-structure/modules/MOD-004-mapping/README.md) - owner của approved mapping state được flow đọc
 - Context/evidence: [MOD-001-cis](../../../01-structure/modules/MOD-001-cis/README.md) - owner của canonical issue state
 - Context/evidence: [AF-001-backlog-manual-pull](../../../03-interactions/interaction-flows/AF-001-backlog-manual-pull/README.md) - flow thao tác đơn issue
 - Context/evidence: [MB-001-cis-canonical-ownership](../../../02-boundaries/module-boundaries/MB-001-cis-canonical-ownership/README.md) - boundary write được bảo vệ

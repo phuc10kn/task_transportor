@@ -22,21 +22,21 @@ Baseline bao phủ 43 instance hiện có thuộc 7 entity type đã promote:
 - Mỗi instance có `## Summary`, `## Meaning`, `## Relations`, `## Validation Notes` cùng section do entity type yêu cầu.
 - Verifier chặn thiếu/thừa instance ngoài đúng 43 ID trong Scope.
 - Mọi edge canonical trong frontmatter pass entity type relation slot, valid triple và target instance type.
-- Verifier chặn thiếu/thừa relation ngoài đúng 128 edge trong Core Relation Baseline.
+- Verifier chặn thiếu/thừa relation ngoài đúng 129 edge trong Core Relation Baseline.
 - Mỗi Markdown link trong `Related Entities` được phân loại `Canonical relation` hoặc `Context/evidence`; nhãn canonical phải có direct edge incident trong frontmatter, direction vẫn theo source YAML và prose không tự thành edge.
-- Core graph giữ đúng 128 edge đã được materialize; baseline không tự thêm edge khác.
+- Core graph giữ đúng 129 edge đã được materialize; baseline không tự thêm edge khác.
 - `npm run verify:architecture-baseline` pass.
 - `npm run verify:architecture-trace` pass.
 
 ## Core Relation Baseline
 
-Core graph có 128 edge: 37 edge từ InteractionFlow, 20 edge từ ModuleBoundary, 7 ownership edge từ Module, 15 edge từ DataFlow/StateOwner, 10 edge từ DeploymentUnit và 39 edge từ CrossCuttingRule.
+Core graph có 129 edge: 38 edge từ InteractionFlow, 20 edge từ ModuleBoundary, 7 ownership edge từ Module, 15 edge từ DataFlow/StateOwner, 10 edge từ DeploymentUnit và 39 edge từ CrossCuttingRule.
 
 ### InteractionFlow
 
 | Source | `involves` Module | `changes` StateOwner |
 | --- | --- | --- |
-| AF-001 | MOD-002, MOD-008, MOD-006, MOD-001 | SO-003, SO-001 |
+| AF-001 | MOD-002, MOD-004, MOD-008, MOD-006, MOD-001 | SO-003, SO-001 |
 | AF-002 | MOD-002, MOD-008, MOD-006 | SO-003 |
 | AF-003 | MOD-002, MOD-008, MOD-006 | SO-003 |
 | AF-004 | MOD-003, MOD-001, MOD-006 | SO-002, SO-001, SO-003 |

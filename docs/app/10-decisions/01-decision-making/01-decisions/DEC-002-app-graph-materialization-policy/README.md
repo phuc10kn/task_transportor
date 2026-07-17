@@ -88,7 +88,7 @@ Slice này ghi canonical edge cho:
 
 Link Boundary-to-Flow và dependency Module-to-Module giữ `Context/evidence` khi không có contract canonical tương ứng. Mọi link trong `Related Entities` đã được phân loại; chỉ frontmatter `relations:` mới tạo canonical edge.
 
-Sau review core graph, policy này materialize toàn bộ fact đã có evidence cho `InteractionFlow`, `Module`, `ModuleBoundary`, `StateOwner`, `DataFlow`, `DeploymentUnit` và `CrossCuttingRule`: participant flow, state có thể thay đổi, constraint, ownership, state input expose, data destination, deployable host và rule constraint. [Architecture clean baseline](architecture-clean-baseline.md) giữ scope 42 instance và 127 edge đã được chốt.
+Sau review core graph, policy này materialize toàn bộ fact đã có evidence cho `InteractionFlow`, `Module`, `ModuleBoundary`, `StateOwner`, `DataFlow`, `DeploymentUnit` và `CrossCuttingRule`: participant flow, state có thể thay đổi, constraint, ownership, state input expose, data destination, deployable host và rule constraint. [Architecture clean baseline](architecture-clean-baseline.md) giữ scope 43 instance và 129 edge đã được chốt.
 
 ## Theory Basis
 

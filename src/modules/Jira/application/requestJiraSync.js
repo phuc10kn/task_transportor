@@ -4,7 +4,7 @@ const AnomalyApi = require("../../Anomaly/AnomalyApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
 const { evaluateDryRunFreshness, evaluateJiraSyncReadiness } = require("./runJiraDryRun");
-const { jiraUserField } = require("../support/jiraDryRunPayload");
+const { jiraStoryPointFieldId, jiraUserField } = require("../support/jiraDryRunPayload");
 
 function buildPrecheckError(result) {
   const first = result.validation.errors[0] || {
@@ -211,9 +211,24 @@ async function requestJiraSync({ config, issueId, executedBy, correlationId, jir
     });
   }
   const hasJiraFieldOverrides = Object.keys(normalizedJiraFields).length > 0;
+  const effectiveIssueType = hasOwn(normalizedJiraFields, "issue_type")
+    ? normalizedJiraFields.issue_type
+    : readiness.payload.fields.issuetype && readiness.payload.fields.issuetype.name;
+  const effectiveStoryPointFieldId = jiraStoryPointFieldId(readiness.project, effectiveIssueType);
   const jiraPayloadOverride = hasJiraFieldOverrides
     ? buildPayloadOverride(readiness.payload, normalizedJiraFields, readiness.target_fields)
     : null;
+  if (jiraPayloadOverride) {
+    const previousStoryPointFieldId = readiness.target_fields.story_point;
+    if (previousStoryPointFieldId && previousStoryPointFieldId !== effectiveStoryPointFieldId) {
+      delete jiraPayloadOverride.fields[previousStoryPointFieldId];
+    }
+    if (effectiveStoryPointFieldId) {
+      jiraPayloadOverride.fields[effectiveStoryPointFieldId] = hasOwn(normalizedJiraFields, "story_point")
+        ? normalizedJiraFields.story_point
+        : readiness.canonical.story_point.value;
+    }
+  }
   const activeJob = SyncApi.hasActiveIssueJob({ config, issueId: readiness.issue.id, jobType: "push_issue" });
   if (activeJob) {
     const sameHash = activeJob.payload_json && activeJob.payload_json.canonical_hash === readiness.canonical_hash;

@@ -200,9 +200,25 @@
       } catch (error) { notice.innerHTML = CIS.alert(error.message); button.disabled = false; }
     });
     document.querySelector("#resync").addEventListener("click", async (event) => {
-      const target = document.querySelector("#resync-state"); event.currentTarget.disabled = true;
-      try { const job = await CIS.projectApi(project.id, `/backlog/issues/${encodeURIComponent(editor.issue.backlog_issue_key)}/pull`, { method: "POST" }); target.textContent = `Job ${job.id}: ${job.status}`; await CIS.pollJob(project.id, job.id, (current) => { target.textContent = `Job ${current.id}: ${current.status}`; }); }
-      catch (error) { target.innerHTML = `<span class="text-danger">${CIS.escape(error.message)}</span>`; } finally { event.currentTarget.disabled = false; }
+      const button = event.currentTarget; const target = document.querySelector("#resync-state"); const label = button.textContent; button.disabled = true; button.setAttribute("aria-busy", "true"); button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Resyncing…';
+      try {
+        const job = await CIS.projectApi(project.id, `/backlog/issues/${encodeURIComponent(editor.issue.backlog_issue_key)}/pull`, { method: "POST" });
+        target.textContent = `Job ${job.id}: ${job.status}`;
+        const final = await CIS.pollJob(project.id, job.id, (current) => { target.textContent = `Job ${current.id}: ${current.status}`; });
+        if (final.status !== "success") throw new Error(final.last_error || `Backlog resync ended with status ${final.status}.`);
+        const refreshed = await CIS.projectApi(project.id, `/issues/${encodeURIComponent(issueId)}/editor`);
+        for (const name of ["issue_type", "priority", "status", "assignee"]) {
+          const control = canonical.elements[name]; const value = refreshed.canonical?.[name]?.value ?? "";
+          if (!control) continue;
+          if (control.tagName === "SELECT" && value && ![...control.options].some((option) => option.value === String(value))) control.add(new Option(`${value} (current)`, value));
+          control.value = value;
+        }
+        editor.canonical = refreshed.canonical;
+        editor.issue = refreshed.issue;
+        target.textContent = `Job ${final.id}: success · CIS mappings refreshed`;
+        CIS.toast("Backlog resynced and CIS mappings refreshed.");
+      }
+      catch (error) { target.innerHTML = `<span class="text-danger">${CIS.escape(error.message)}</span>`; } finally { button.disabled = false; button.removeAttribute("aria-busy"); button.textContent = label; }
     });
     document.querySelectorAll("[data-translation]").forEach((card) => card.querySelectorAll("[data-translation-action]").forEach((button) => button.addEventListener("click", async () => {
       const action = button.dataset.translationAction; const evidence = card.querySelector(".job-evidence"); const label = button.innerHTML; button.disabled = true; button.setAttribute("aria-busy", "true");

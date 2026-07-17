@@ -37,12 +37,14 @@ Operator chủ động chọn thao tác pull/resync một issue Backlog.
 1. Operator chọn project và issue nguồn cần thu nhận.
 2. CIS xác nhận issue thuộc project được cấu hình cho nguồn đó.
 3. CIS thu nhận issue, comment và metadata attachment hiện tại.
-4. CIS cập nhật source snapshot và canonical review entry.
-5. CIS ghi outcome để operator có thể phân biệt ingest mới, update hoặc snapshot không đổi.
+4. CIS áp dụng lại các Backlog→CIS mapping đã approved cho Issue type, Priority, Status và Assignee.
+5. CIS cập nhật source snapshot và canonical review entry.
+6. CIS ghi outcome để operator có thể phân biệt ingest mới, update hoặc snapshot không đổi.
 
 ## Outcomes
 
 - Issue có review entry trong CIS.
+- Resync cập nhật lại các canonical field có approved mapping, kể cả khi source snapshot không đổi.
 - Snapshot thay đổi tạo revision mới; snapshot không đổi không tạo duplicate revision.
 - Attachment download failure được ghi riêng và có recovery path; issue ingest không bị hủy chỉ vì lỗi download đó.
 - Không có external write sang Jira trong process này.
@@ -50,6 +52,7 @@ Operator chủ động chọn thao tác pull/resync một issue Backlog.
 ## Rules
 
 - Flow phải đi qua CIS.
+- Chỉ mapping đã approved mới được áp dụng vào canonical field khi pull/resync.
 - Routing mismatch phải dừng ingest.
 - Attachment failure được tách khỏi kết quả ingest issue.
 
