@@ -1,9 +1,9 @@
 const { AppError } = require("../../../http/errors/AppError");
 const {
   DEFAULT_TRANSLATION_AI_TRANSPORT,
-  DEFAULT_TRANSLATION_AI_MODEL,
   TRANSLATION_AI_PROVIDERS,
   TRANSLATION_AI_TRANSPORTS,
+  defaultTranslationAiModelFor,
   isTranslationAiModelAllowed,
   isTranslationAiTransportAllowed,
   normalizeTranslationAiModel,
@@ -459,15 +459,14 @@ function normalizeProjectInput(input, { partial = false } = {}) {
       : null;
   }
 
-  if (
-    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
-    !normalized.translation_ai_model
-  ) {
-    normalized.translation_ai_model = DEFAULT_TRANSLATION_AI_MODEL;
+  const defaultAiModel = defaultTranslationAiModelFor(normalized.translation_ai_provider);
+  if (defaultAiModel && !normalized.translation_ai_model) {
+    normalized.translation_ai_model = defaultAiModel;
   }
 
   if (
-    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    normalized.translation_ai_provider &&
+    normalized.translation_ai_provider !== TRANSLATION_AI_PROVIDERS.CODEX_EXEC &&
     !normalized.translation_ai_transport
   ) {
     normalized.translation_ai_transport = DEFAULT_TRANSLATION_AI_TRANSPORT;
@@ -496,15 +495,14 @@ function normalizeProjectInput(input, { partial = false } = {}) {
   }
 
   if (
-    normalized.translation_ai_provider &&
-    normalized.translation_ai_provider !== TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC &&
     (!partial || hasExplicitAiProvider || hasExplicitAiModel)
   ) {
     normalized.translation_ai_model = null;
   }
 
   if (
-    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    normalized.translation_ai_provider !== TRANSLATION_AI_PROVIDERS.CODEX_EXEC &&
     normalized.translation_ai_model &&
     !isTranslationAiModelAllowed(
       normalized.translation_ai_provider,

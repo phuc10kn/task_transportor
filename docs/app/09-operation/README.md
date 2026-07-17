@@ -28,6 +28,7 @@ Runtime env tối thiểu:
 - `JWT_SECRET` phải đặt cho môi trường thật.
 - `DATABASE_PATH` chỉ rõ DB runtime khi không dùng default.
 - `DEEPSEEK_API_KEY` cần khi project dùng translation AI default DeepSeek.
+- Project dùng OpenAI cần `OPENAI_API_KEY`; local dev có thể đặt thêm `OPENAI_BASE_URL=https://api.openai.com/v1` và `OPENAI_REQUEST_TIMEOUT_SECONDS=60` trong `.env`. Operator chọn model theo nhu cầu: `gpt-5.6-luna` ưu tiên chi phí, `gpt-5.6-terra` cân bằng, `gpt-5.6-sol` ưu tiên chất lượng; `gpt-5.4-mini` và default tương thích `gpt-4.1-mini` là lựa chọn nhẹ hơn. Key không được nhập vào Project UI hoặc commit vào repository.
 - Backlog/Jira credential thật không commit; project config hiện lưu credential trong DB, env compat chỉ dùng cho import/migration.
 
 Worker operation:

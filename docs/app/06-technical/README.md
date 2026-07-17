@@ -36,6 +36,7 @@ Translation AI config:
 - Config canonical là `translation_ai_provider`, `translation_ai_transport`, `translation_ai_model`.
 - Default hiện tại là `deepseek`, `openai_compatible`, `deepseek-v4-flash`.
 - DeepSeek dùng `DEEPSEEK_API_KEY`, `DEEPSEEK_OPENAI_BASE_URL`, alias cũ `DEEPSEEK_BASE_URL`, `DEEPSEEK_ANTHROPIC_BASE_URL`, `DEEPSEEK_REQUEST_TIMEOUT_SECONDS`.
+- OpenAI là provider tùy chọn theo Project, dùng `openai_compatible`; model mặc định tương thích là `gpt-4.1-mini`, đồng thời cho phép chọn `gpt-5.4-mini`, `gpt-5.6-luna`, `gpt-5.6-terra` hoặc `gpt-5.6-sol`. Credential server-side là `OPENAI_API_KEY`; base URL/timeout tùy chọn là `OPENAI_BASE_URL`, `OPENAI_REQUEST_TIMEOUT_SECONDS`. Request OpenAI không gửi field `thinking` riêng của DeepSeek; model họ GPT-5 dùng `temperature = 1` theo giới hạn provider, model khác giữ `0.2`.
 - Module Translation không gọi HTTP/process trực tiếp; transport thật nằm ở `src/infrastructure/ai`.
 - `codex_exec` là process transport/legacy command, không phải provider chính của Translation.
 

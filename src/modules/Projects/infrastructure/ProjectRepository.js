@@ -1,4 +1,8 @@
 const { createConnection } = require("../../../infrastructure/database/connection");
+const {
+  TRANSLATION_AI_PROVIDERS,
+  defaultTranslationAiModelFor,
+} = require("../../../shared/translationModels");
 const { PROJECT_DEFAULTS } = require("../support/defaultProjectConfig");
 
 const PROJECT_COLUMNS = [
@@ -88,9 +92,9 @@ function rowToProject(row) {
 
   const translationAiProvider = row.translation_ai_provider || row.translation_provider || PROJECT_DEFAULTS.translation_ai_provider;
   const translationAiTransport = row.translation_ai_transport || PROJECT_DEFAULTS.translation_ai_transport;
-  const translationAiModel = translationAiProvider === "deepseek"
-    ? (row.translation_ai_model || row.translation_model || PROJECT_DEFAULTS.translation_ai_model)
-    : null;
+  const translationAiModel = translationAiProvider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
+    ? null
+    : (row.translation_ai_model || row.translation_model || defaultTranslationAiModelFor(translationAiProvider));
 
   return {
     ...row,

@@ -108,6 +108,9 @@ function loadConfig(env = process.env) {
       deepSeekAnthropicBaseUrl: env.DEEPSEEK_ANTHROPIC_BASE_URL || "https://api.deepseek.com/anthropic",
       deepSeekBaseUrl: env.DEEPSEEK_OPENAI_BASE_URL || env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
       deepSeekRequestTimeoutSeconds: numberFromEnv(env.DEEPSEEK_REQUEST_TIMEOUT_SECONDS, 60),
+      openAiApiKey: env.OPENAI_API_KEY || "",
+      openAiBaseUrl: env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+      openAiRequestTimeoutSeconds: numberFromEnv(env.OPENAI_REQUEST_TIMEOUT_SECONDS, 60),
       lowConfidenceThreshold: numberFromEnv(env.TRANSLATION_LOW_CONFIDENCE_THRESHOLD, 0.7),
     },
   };

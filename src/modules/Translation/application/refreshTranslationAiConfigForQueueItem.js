@@ -5,6 +5,7 @@ const {
   DEFAULT_TRANSLATION_AI_TRANSPORT,
   TRANSLATION_AI_PROVIDERS,
   TRANSLATION_AI_TRANSPORTS,
+  defaultTranslationAiModelFor,
   normalizeTranslationAiModel,
   normalizeTranslationAiProvider,
   normalizeTranslationAiTransport,
@@ -37,6 +38,7 @@ function projectAiConfig(project) {
     provider,
     project.translation_ai_model ||
     project.translation_model ||
+    defaultTranslationAiModelFor(provider) ||
     DEFAULT_TRANSLATION_AI_MODEL
   );
 

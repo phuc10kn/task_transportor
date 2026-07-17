@@ -7,6 +7,7 @@ const {
   DEFAULT_TRANSLATION_AI_TRANSPORT,
   TRANSLATION_AI_PROVIDERS,
   TRANSLATION_AI_TRANSPORTS,
+  defaultTranslationAiModelFor,
   normalizeTranslationAiModel,
   normalizeTranslationAiProvider,
   normalizeTranslationAiTransport,
@@ -14,7 +15,30 @@ const {
 const { createProcessTranslationAdapter } = require("../infrastructure/ProcessTranslationAdapter");
 const { createTranslationAdapter } = require("../infrastructure/TranslationAdapter");
 
-function createConfiguredChatClient({ config, transport }) {
+function unsupportedTransport(source, transport) {
+  const error = new AppError({
+    code: "TRANSLATION_AI_TRANSPORT_UNSUPPORTED",
+    message: "Translation AI transport is not supported for the selected provider.",
+    status: 422,
+    details: { ai_provider: source, transport },
+  });
+  error.retryable = false;
+  return error;
+}
+
+function createConfiguredChatClient({ config, source, transport }) {
+  if (source === TRANSLATION_AI_PROVIDERS.OPENAI) {
+    if (transport !== TRANSLATION_AI_TRANSPORTS.OPENAI_COMPATIBLE) {
+      throw unsupportedTransport(source, transport);
+    }
+    return createOpenAiCompatibleChatClient({
+      apiKey: config.translation.openAiApiKey,
+      baseUrl: config.translation.openAiBaseUrl,
+      timeoutSeconds: config.translation.openAiRequestTimeoutSeconds,
+      includeThinking: false,
+    });
+  }
+
   if (transport === TRANSLATION_AI_TRANSPORTS.OPENAI_COMPATIBLE) {
     return createOpenAiCompatibleChatClient({
       apiKey: config.translation.deepSeekApiKey,
@@ -31,14 +55,7 @@ function createConfiguredChatClient({ config, transport }) {
     });
   }
 
-  const error = new AppError({
-    code: "TRANSLATION_AI_TRANSPORT_UNSUPPORTED",
-    message: "Translation AI transport is not supported for DeepSeek.",
-    status: 422,
-    details: { transport },
-  });
-  error.retryable = false;
-  throw error;
+  throw unsupportedTransport(source, transport);
 }
 
 function translationAdapterFor({ config, aiProvider, aiTransport, modelOrCommand }) {
@@ -57,10 +74,13 @@ function translationAdapterFor({ config, aiProvider, aiTransport, modelOrCommand
     });
   }
 
-  if (source === TRANSLATION_AI_PROVIDERS.DEEPSEEK) {
-    const model = normalizeTranslationAiModel(source, modelOrCommand || DEFAULT_TRANSLATION_AI_MODEL);
+  if ([TRANSLATION_AI_PROVIDERS.DEEPSEEK, TRANSLATION_AI_PROVIDERS.OPENAI].includes(source)) {
+    const model = normalizeTranslationAiModel(
+      source,
+      modelOrCommand || defaultTranslationAiModelFor(source) || DEFAULT_TRANSLATION_AI_MODEL
+    );
     return createTranslationAdapter({
-      aiClient: createConfiguredChatClient({ config, transport }),
+      aiClient: createConfiguredChatClient({ config, source, transport }),
       aiSource: source,
       model,
     });

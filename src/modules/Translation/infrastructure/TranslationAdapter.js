@@ -21,28 +21,35 @@ function createPrompt(request) {
   ].join("\n");
 }
 
-function mapAiError(error, request, selectedModel) {
+function aiErrorIdentity(aiSource) {
+  return aiSource === "openai"
+    ? { code: "OPENAI", label: "OpenAI", key: "OPENAI_API_KEY" }
+    : { code: "DEEPSEEK", label: "DeepSeek", key: "DEEPSEEK_API_KEY" };
+}
+
+function mapAiError(error, request, selectedModel, aiSource) {
+  const identity = aiErrorIdentity(aiSource);
   const code = error && error.code === "AI_API_KEY_MISSING"
-    ? "DEEPSEEK_API_KEY_MISSING"
+    ? `${identity.code}_API_KEY_MISSING`
     : error && error.code === "FETCH_UNAVAILABLE"
       ? "FETCH_UNAVAILABLE"
       : error && String(error.code || "").includes("TIMEOUT")
-        ? "DEEPSEEK_TIMEOUT"
+        ? `${identity.code}_TIMEOUT`
         : error && String(error.code || "").includes("HTTP_ERROR")
-          ? "DEEPSEEK_HTTP_ERROR"
-          : "DEEPSEEK_REQUEST_ERROR";
+          ? `${identity.code}_HTTP_ERROR`
+          : `${identity.code}_REQUEST_ERROR`;
 
   const appError = new AppError({
     code,
-    message: code === "DEEPSEEK_API_KEY_MISSING"
-      ? "DEEPSEEK_API_KEY is required for DeepSeek translation."
+    message: code === `${identity.code}_API_KEY_MISSING`
+      ? `${identity.key} is required for ${identity.label} translation.`
       : code === "FETCH_UNAVAILABLE"
-        ? "Global fetch is required for DeepSeek translation."
-        : code === "DEEPSEEK_TIMEOUT"
-          ? "DeepSeek translation timed out."
-          : code === "DEEPSEEK_HTTP_ERROR"
-            ? "DeepSeek translation returned an error response."
-            : "DeepSeek translation request failed.",
+        ? `Global fetch is required for ${identity.label} translation.`
+        : code === `${identity.code}_TIMEOUT`
+          ? `${identity.label} translation timed out.`
+          : code === `${identity.code}_HTTP_ERROR`
+            ? `${identity.label} translation returned an error response.`
+            : `${identity.label} translation request failed.`,
     status: error && error.status ? error.status : 502,
     details: {
       ...(error && error.details ? error.details : {}),
@@ -68,7 +75,7 @@ function createTranslationAdapter({ aiClient, aiSource, model }) {
         thinking: { type: "disabled" },
       });
     } catch (error) {
-      throw mapAiError(error, request, model);
+      throw mapAiError(error, request, model, aiSource);
     }
 
     try {
@@ -81,13 +88,14 @@ function createTranslationAdapter({ aiClient, aiSource, model }) {
         duration_ms: Date.now() - startedAt,
       };
     } catch (error) {
+      const identity = aiErrorIdentity(aiSource);
       error.code = error.code === "CODEX_EXEC_PARSE_ERROR"
-        ? "DEEPSEEK_PARSE_ERROR"
+        ? `${identity.code}_PARSE_ERROR`
         : error.code === "CODEX_EXEC_INVALID_OUTPUT"
-          ? "DEEPSEEK_INVALID_OUTPUT"
+          ? `${identity.code}_INVALID_OUTPUT`
           : error.code;
-      error.message = error.code === "DEEPSEEK_PARSE_ERROR"
-        ? "DeepSeek translation output was not valid JSON."
+      error.message = error.code === `${identity.code}_PARSE_ERROR`
+        ? `${identity.label} translation output was not valid JSON.`
         : error.message;
       error.retryable = true;
       throw error;

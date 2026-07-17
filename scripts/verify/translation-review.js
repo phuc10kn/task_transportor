@@ -582,6 +582,7 @@ async function verifyDeepSeekProvider() {
   }
 
   assert.equal(capturedBody.model, "deepseek-v4-flash");
+  assert.equal(capturedBody.temperature, 0.2);
   assert.equal(capturedBody.thinking.type, "disabled");
   assert.equal(Object.prototype.hasOwnProperty.call(capturedBody, "reasoning_effort"), false);
   const item = getTranslation(config, items[0].id);
@@ -658,6 +659,97 @@ async function verifyDeepSeekAnthropicTransport() {
   assert.equal(item.ai_draft, `【${CisApi.getIssueById({ config, issueId: item.issue_id }).backlog_issue_key}】[vi] ban dich anthropic`);
 }
 
+async function verifyOpenAiProvider() {
+  const config = setupConfig("translation-openai", "success", {
+    OPENAI_API_KEY: "test-openai-key",
+  });
+  const project = ProjectsApi.createProject({
+    config,
+    input: {
+      name: "Translation Verify OpenAI",
+      sync_enabled: true,
+      backlog_project_key: "OAI",
+      backlog_issue_key_prefix: "OAI",
+      jira_project_key: "OAI",
+      translation_ai_provider: "openai",
+      translation_ai_transport: "openai_compatible",
+      translation_ai_model: "gpt-5.6-terra",
+      auto_translate: true,
+    },
+  });
+  const { issue, items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
+  enqueueTranslate(config, items[0]);
+
+  const originalFetch = global.fetch;
+  let capturedBody = null;
+  global.fetch = async (url, options) => {
+    assert.equal(url, "https://api.openai.com/v1/chat/completions");
+    assert.equal(options.headers.authorization, "Bearer test-openai-key");
+    capturedBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          id: "openai-test-request",
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                translated_text: "[vi] ban dich openai",
+                confidence: 0.94,
+                warnings: [],
+                preserved_blocks: true,
+              }),
+            },
+          }],
+        };
+      },
+    };
+  };
+
+  try {
+    const result = await SyncApi.runWorkerOnce({ config, workerId: "translation-openai" });
+    assert.equal(result.job.status, "success");
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.equal(capturedBody.model, "gpt-5.6-terra");
+  assert.equal(capturedBody.temperature, 1);
+  assert.equal(Object.prototype.hasOwnProperty.call(capturedBody, "thinking"), false);
+  const item = getTranslation(config, items[0].id);
+  assert.equal(item.provider, "openai");
+  assert.equal(item.ai_transport, "openai_compatible");
+  assert.equal(item.model_or_command, "gpt-5.6-terra");
+  assert.equal(item.provider_request_id, "openai-test-request");
+  assert.equal(item.ai_draft, `【${issue.backlog_issue_key}】[vi] ban dich openai`);
+}
+
+async function verifyOpenAiMissingKey() {
+  const config = setupConfig("translation-openai-missing-key", "success");
+  const project = ProjectsApi.createProject({
+    config,
+    input: {
+      name: "Translation Verify OpenAI Missing Key",
+      sync_enabled: true,
+      backlog_project_key: "OAIM",
+      backlog_issue_key_prefix: "OAIM",
+      jira_project_key: "OAIM",
+      translation_ai_provider: "openai",
+      translation_ai_transport: "openai_compatible",
+      translation_ai_model: "gpt-4.1-mini",
+      auto_translate: true,
+    },
+  });
+  const { items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
+  enqueueTranslate(config, items[0], { max_attempts: 1 });
+
+  const result = await SyncApi.runWorkerOnce({ config, workerId: "translation-openai-missing-key" });
+  assert.equal(result.job.status, "failed");
+  assert.match(result.job.last_error, /OPENAI_API_KEY is required/);
+  assert.equal(getTranslation(config, items[0].id).provider_error, "OPENAI_API_KEY_MISSING");
+}
+
 async function verifyStaleQueueUsesCurrentProjectAiConfig() {
   const config = setupConfig("translation-stale-ai-config", "success", {
     DEEPSEEK_API_KEY: "test-deepseek-key",
@@ -732,6 +824,8 @@ async function main() {
   await verifyLowConfidenceAnomaly();
   await verifyDeepSeekProvider();
   await verifyDeepSeekAnthropicTransport();
+  await verifyOpenAiProvider();
+  await verifyOpenAiMissingKey();
   await verifyStaleQueueUsesCurrentProjectAiConfig();
 
   console.log("Translation review verification passed.");

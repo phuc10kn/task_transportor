@@ -8,6 +8,7 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig, makeTempEnv } = require("./helpers/tempConfig");
 const { loadConfig } = require("../../src/config/env");
+const { translationAiModelsFor } = require("../../src/shared/translationModels");
 const {
   syncProjectCredentialsFromEnv,
 } = require("../../src/infrastructure/database/syncProjectCredentialsFromEnv");
@@ -127,6 +128,40 @@ async function main() {
     assert.equal(defaultTranslationProject.body.data.translation_ai_transport, "openai_compatible");
     assert.equal(defaultTranslationProject.body.data.translation_ai_model, "deepseek-v4-flash");
 
+    const openAiProject = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/projects",
+      token,
+      body: {
+        name: "OpenAI Translation Provider",
+        translation_ai_provider: "openai",
+        translation_ai_transport: "openai_compatible",
+        translation_ai_model: "gpt-4.1-mini",
+      },
+    });
+    assert.equal(openAiProject.status, 201);
+    assert.equal(openAiProject.body.data.translation_ai_provider, "openai");
+    assert.equal(openAiProject.body.data.translation_ai_transport, "openai_compatible");
+    assert.equal(openAiProject.body.data.translation_ai_model, "gpt-4.1-mini");
+    assert.deepEqual(
+      translationAiModelsFor("openai", "openai_compatible").map((model) => model.value),
+      ["gpt-4.1-mini", "gpt-5.4-mini", "gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"]
+    );
+
+    const openAiTerraProject = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/projects",
+      token,
+      body: {
+        name: "OpenAI Terra Translation Provider",
+        translation_ai_provider: "openai",
+        translation_ai_transport: "openai_compatible",
+        translation_ai_model: "gpt-5.6-terra",
+      },
+    });
+    assert.equal(openAiTerraProject.status, 201);
+    assert.equal(openAiTerraProject.body.data.translation_ai_model, "gpt-5.6-terra");
+
     const created = await requestJson(server, {
       method: "POST",
       pathname: "/api/v1/projects",
@@ -193,6 +228,20 @@ async function main() {
     });
     assert.equal(invalidTransport.status, 422);
     assert.equal(invalidTransport.body.error.code, "VALIDATION_ERROR");
+
+    const invalidOpenAiTransport = await requestJson(server, {
+      method: "POST",
+      pathname: "/api/v1/projects",
+      token,
+      body: {
+        name: "Invalid OpenAI Transport",
+        translation_ai_provider: "openai",
+        translation_ai_transport: "anthropic_compatible",
+        translation_ai_model: "gpt-4.1-mini",
+      },
+    });
+    assert.equal(invalidOpenAiTransport.status, 422);
+    assert.equal(invalidOpenAiTransport.body.error.code, "VALIDATION_ERROR");
 
     const projectId = created.body.data.id;
     assertProjectCredentialsAreStored(config, projectId);

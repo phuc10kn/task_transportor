@@ -15,6 +15,14 @@ function extractContent(responseBody) {
   return typeof content === "string" ? content.trim() : "";
 }
 
+function temperatureFor(model, requestedTemperature) {
+  if (/^gpt-5(?:[.-]|$)/i.test(String(model || ""))) {
+    return 1;
+  }
+
+  return requestedTemperature === undefined ? 0.2 : requestedTemperature;
+}
+
 function createAiClientError({ code, message, status, retryable, details, cause }) {
   const error = new Error(message);
   error.code = code;
@@ -27,7 +35,7 @@ function createAiClientError({ code, message, status, retryable, details, cause 
   return error;
 }
 
-function createOpenAiCompatibleChatClient({ apiKey, baseUrl, timeoutSeconds = 60 }) {
+function createOpenAiCompatibleChatClient({ apiKey, baseUrl, timeoutSeconds = 60, includeThinking = true }) {
   async function createJsonChatCompletion(input) {
     if (!apiKey) {
       throw createAiClientError({
@@ -68,8 +76,8 @@ function createOpenAiCompatibleChatClient({ apiKey, baseUrl, timeoutSeconds = 60
           ],
           response_format: { type: "json_object" },
           stream: false,
-          temperature: input.temperature === undefined ? 0.2 : input.temperature,
-          thinking: input.thinking || { type: "disabled" },
+          temperature: temperatureFor(input.model, input.temperature),
+          ...(includeThinking ? { thinking: input.thinking || { type: "disabled" } } : {}),
           ...(input.reasoning_effort ? { reasoning_effort: input.reasoning_effort } : {}),
         }),
       });
@@ -99,6 +107,7 @@ function createOpenAiCompatibleChatClient({ apiKey, baseUrl, timeoutSeconds = 60
         details: {
           http_status: response.status,
           provider_error_code: body && body.error ? body.error.code : null,
+          provider_error_param: body && body.error ? body.error.param : null,
         },
       });
     }

@@ -21,6 +21,13 @@
   const jiraFields = [["jira_site_url", "Jira URL"], ["jira_project_key", "Jira project key"], ["jira_email", "Jira email"], ["jira_api_token", "Jira API token", "password"]];
   const flags = [["enabled", "Enabled"], ["sync_enabled", "Sync enabled"], ["auto_translate", "Auto translate"], ["require_translation_review", "Translation review required"], ["require_mapping_approval", "Mapping approval required"], ["manual_pull_enabled", "Manual pull"], ["scheduled_pull_enabled", "Scheduled pull"]];
   const externalFlags = ["backlog_external_read_enabled", "jira_external_read_enabled", "jira_external_write_enabled"];
+  const openAiModels = [
+    ["gpt-4.1-mini", "gpt-4.1-mini · compatible default"],
+    ["gpt-5.4-mini", "gpt-5.4-mini · efficient"],
+    ["gpt-5.6-luna", "gpt-5.6-luna · cost-sensitive"],
+    ["gpt-5.6-terra", "gpt-5.6-terra · balanced"],
+    ["gpt-5.6-sol", "gpt-5.6-sol · highest quality"],
+  ];
 
   const selected = () => projects.find((item) => item.id === selectedId) || null;
   const input = ([name, label, type = "text", required = false], value) => `<div><label class="form-label" for="${name}">${label}</label><input class="form-control" id="${name}" name="${name}" type="${type}" value="${CIS.attr(value ?? "")}" ${required ? "required" : ""}></div>`;
@@ -33,7 +40,7 @@
         <div id="project-error"></div>
         <fieldset><legend class="h3">General</legend><div class="row g-3">${textFields.map((field) => `<div class="col-md-4">${input(field, value[field[0]])}</div>`).join("")}</div></fieldset>
         <fieldset class="mt-4"><legend class="h3">Translation AI</legend><div class="row g-3">
-          <div class="col-md-4"><label class="form-label" for="translation_ai_provider">Provider</label><select class="form-select" id="translation_ai_provider" name="translation_ai_provider"><option value="deepseek" ${value.translation_ai_provider === "deepseek" ? "selected" : ""}>DeepSeek</option><option value="codex_exec" ${value.translation_ai_provider === "codex_exec" ? "selected" : ""}>Codex exec</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="translation_ai_provider">Provider</label><select class="form-select" id="translation_ai_provider" name="translation_ai_provider"><option value="deepseek" ${value.translation_ai_provider === "deepseek" ? "selected" : ""}>DeepSeek</option><option value="openai" ${value.translation_ai_provider === "openai" ? "selected" : ""}>OpenAI</option><option value="codex_exec" ${value.translation_ai_provider === "codex_exec" ? "selected" : ""}>Codex exec</option></select></div>
           <div class="col-md-4"><label class="form-label" for="translation_ai_transport">Transport</label><select class="form-select" id="translation_ai_transport" name="translation_ai_transport"></select></div>
           <div class="col-md-4"><label class="form-label" for="translation_ai_model">Model</label><select class="form-select" id="translation_ai_model" name="translation_ai_model"></select></div>
         </div><div id="ai-notice" class="mt-2"></div></fieldset>
@@ -65,13 +72,16 @@
     const model = document.querySelector("#translation_ai_model");
     if (!provider) return;
     const deepseek = provider.value === "deepseek";
-    transport.innerHTML = deepseek ? '<option value="openai_compatible">OpenAI compatible</option><option value="anthropic_compatible">Anthropic compatible</option>' : '<option value="process_exec">Process exec</option>';
-    transport.value = deepseek && ["openai_compatible", "anthropic_compatible"].includes(saved.transport) ? saved.transport : deepseek ? "openai_compatible" : "process_exec";
-    model.innerHTML = deepseek ? '<option value="deepseek-v4-flash">deepseek-v4-flash</option><option value="deepseek-v4-pro">deepseek-v4-pro</option><option value="deepseek-chat">deepseek-chat (deprecated soon)</option>' : '<option value="">Not applicable</option>';
-    model.disabled = !deepseek;
+    const openai = provider.value === "openai";
+    const remote = deepseek || openai;
+    transport.innerHTML = deepseek ? '<option value="openai_compatible">OpenAI compatible</option><option value="anthropic_compatible">Anthropic compatible</option>' : openai ? '<option value="openai_compatible">OpenAI compatible</option>' : '<option value="process_exec">Process exec</option>';
+    transport.value = deepseek && ["openai_compatible", "anthropic_compatible"].includes(saved.transport) ? saved.transport : remote ? "openai_compatible" : "process_exec";
+    model.innerHTML = deepseek ? '<option value="deepseek-v4-flash">deepseek-v4-flash</option><option value="deepseek-v4-pro">deepseek-v4-pro</option><option value="deepseek-chat">deepseek-chat (deprecated soon)</option>' : openai ? openAiModels.map(([value, label]) => `<option value="${value}">${label}</option>`).join("") : '<option value="">Not applicable</option>';
+    model.disabled = !remote;
     if (deepseek && ["deepseek-v4-flash", "deepseek-v4-pro", "deepseek-chat"].includes(saved.model)) model.value = saved.model;
+    if (openai && openAiModels.some(([value]) => value === saved.model)) model.value = saved.model;
     const notice = document.querySelector("#ai-notice");
-    notice.innerHTML = !deepseek ? CIS.alert("Codex exec uses process execution; no model is sent.", "warning") : model.value === "deepseek-chat" ? CIS.alert("Deprecated soon: choose a DeepSeek v4 model for new configuration.", "warning") : "";
+    notice.innerHTML = openai ? '<div class="text-secondary small" role="status">OpenAI credentials are read from <code>OPENAI_API_KEY</code> on the API server and are never stored in this Project.</div>' : !deepseek ? CIS.alert("Codex exec uses process execution; no model is sent.", "warning") : model.value === "deepseek-chat" ? CIS.alert("Deprecated soon: choose a DeepSeek v4 model for new configuration.", "warning") : "";
   }
 
   function bind() {

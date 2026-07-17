@@ -46,6 +46,17 @@ test("Project form exposes provider-specific external access gates", async ({ pa
   await expect(page.getByRole("checkbox", { name: "Allow external reads" }).first()).toBeChecked();
   await expect(page.getByRole("checkbox", { name: "Allow external reads" }).nth(1)).toBeChecked();
   await expect(page.getByRole("checkbox", { name: "Allow external writes" })).not.toBeChecked();
+  await page.getByLabel("Provider").selectOption("openai");
+  await expect(page.getByLabel("Transport")).toHaveValue("openai_compatible");
+  await expect(page.getByLabel("Model")).toHaveValue("gpt-4.1-mini");
+  await expect(page.getByLabel("Model").locator("option")).toHaveCount(5);
+  await expect(page.getByLabel("Model")).toHaveText(/gpt-5\.4-mini/);
+  await expect(page.getByLabel("Model")).toHaveText(/gpt-5\.6-luna/);
+  await expect(page.getByLabel("Model")).toHaveText(/gpt-5\.6-terra/);
+  await expect(page.getByLabel("Model")).toHaveText(/gpt-5\.6-sol/);
+  await page.getByLabel("Model").selectOption("gpt-5.6-terra");
+  await expect(page.getByLabel("Model")).toHaveValue("gpt-5.6-terra");
+  await expect(page.getByText(/OPENAI_API_KEY/)).toBeVisible();
 });
 
 test("dashboard renders only the active Project workload and actionable links", async ({ page }) => {

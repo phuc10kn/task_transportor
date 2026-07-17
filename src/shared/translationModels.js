@@ -1,5 +1,6 @@
 const TRANSLATION_AI_PROVIDERS = {
   DEEPSEEK: "deepseek",
+  OPENAI: "openai",
   CODEX_EXEC: "codex_exec",
 };
 
@@ -12,6 +13,7 @@ const TRANSLATION_AI_TRANSPORTS = {
 const DEFAULT_TRANSLATION_AI_PROVIDER = TRANSLATION_AI_PROVIDERS.DEEPSEEK;
 const DEFAULT_TRANSLATION_AI_TRANSPORT = TRANSLATION_AI_TRANSPORTS.OPENAI_COMPATIBLE;
 const DEFAULT_TRANSLATION_AI_MODEL = "deepseek-v4-flash";
+const DEFAULT_OPENAI_TRANSLATION_AI_MODEL = "gpt-4.1-mini";
 const TRANSLATION_AI_MODEL_WARNINGS = {
   "deepseek-chat": "Deprecated soon: deepseek-chat is scheduled to retire on 2026-07-24 15:59 UTC.",
 };
@@ -27,6 +29,13 @@ const TRANSLATION_AI_MODEL_OPTIONS = {
       warning: TRANSLATION_AI_MODEL_WARNINGS["deepseek-chat"],
     },
   ],
+  [TRANSLATION_AI_PROVIDERS.OPENAI]: [
+    { value: DEFAULT_OPENAI_TRANSLATION_AI_MODEL, label: DEFAULT_OPENAI_TRANSLATION_AI_MODEL, api_model: DEFAULT_OPENAI_TRANSLATION_AI_MODEL },
+    { value: "gpt-5.4-mini", label: "gpt-5.4-mini", api_model: "gpt-5.4-mini" },
+    { value: "gpt-5.6-luna", label: "gpt-5.6-luna", api_model: "gpt-5.6-luna" },
+    { value: "gpt-5.6-terra", label: "gpt-5.6-terra", api_model: "gpt-5.6-terra" },
+    { value: "gpt-5.6-sol", label: "gpt-5.6-sol", api_model: "gpt-5.6-sol" },
+  ],
 };
 
 const TRANSLATION_AI_MODEL_ALIASES = {
@@ -36,12 +45,18 @@ const TRANSLATION_AI_MODEL_ALIASES = {
     deepseekv4: "deepseek-v4-flash",
     deepseekv4flash: "deepseek-v4-flash",
   },
+  [TRANSLATION_AI_PROVIDERS.OPENAI]: {
+    gpt41mini: DEFAULT_OPENAI_TRANSLATION_AI_MODEL,
+  },
 };
 
 const TRANSLATION_AI_PROVIDER_TRANSPORTS = {
   [TRANSLATION_AI_PROVIDERS.DEEPSEEK]: [
     TRANSLATION_AI_TRANSPORTS.OPENAI_COMPATIBLE,
     TRANSLATION_AI_TRANSPORTS.ANTHROPIC_COMPATIBLE,
+  ],
+  [TRANSLATION_AI_PROVIDERS.OPENAI]: [
+    TRANSLATION_AI_TRANSPORTS.OPENAI_COMPATIBLE,
   ],
   [TRANSLATION_AI_PROVIDERS.CODEX_EXEC]: [
     TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC,
@@ -64,9 +79,16 @@ function normalizeTranslationAiTransport(value) {
   return allowed.includes(transport) ? transport : transport;
 }
 
+function defaultTranslationAiModelFor(provider) {
+  const normalizedProvider = normalizeTranslationAiProvider(provider);
+  if (normalizedProvider === TRANSLATION_AI_PROVIDERS.DEEPSEEK) return DEFAULT_TRANSLATION_AI_MODEL;
+  if (normalizedProvider === TRANSLATION_AI_PROVIDERS.OPENAI) return DEFAULT_OPENAI_TRANSLATION_AI_MODEL;
+  return null;
+}
+
 function normalizeProviderModel(provider, value) {
   const normalizedProvider = normalizeTranslationAiProvider(provider);
-  const raw = String(value || DEFAULT_TRANSLATION_AI_MODEL).trim();
+  const raw = String(value || defaultTranslationAiModelFor(normalizedProvider) || "").trim();
   const compactValue = compact(raw);
   const aliases = TRANSLATION_AI_MODEL_ALIASES[normalizedProvider] || {};
   if (aliases[compactValue]) {
@@ -105,7 +127,7 @@ function translationAiModelsFor(provider, transport) {
   const normalizedProvider = normalizeTranslationAiProvider(provider);
   const normalizedTransport = normalizeTranslationAiTransport(transport);
   if (
-    normalizedProvider === TRANSLATION_AI_PROVIDERS.DEEPSEEK &&
+    TRANSLATION_AI_MODEL_OPTIONS[normalizedProvider] &&
     isTranslationAiTransportAllowed(normalizedProvider, normalizedTransport)
   ) {
     return TRANSLATION_AI_MODEL_OPTIONS[normalizedProvider] || [];
@@ -124,6 +146,7 @@ module.exports = {
   DEFAULT_TRANSLATION_AI_PROVIDER,
   DEFAULT_TRANSLATION_AI_TRANSPORT,
   DEFAULT_TRANSLATION_AI_MODEL,
+  DEFAULT_OPENAI_TRANSLATION_AI_MODEL,
   DEFAULT_TRANSLATION_PROVIDER: DEFAULT_TRANSLATION_AI_PROVIDER,
   TRANSLATION_AI_PROVIDERS,
   TRANSLATION_AI_MODEL_OPTIONS,
@@ -131,6 +154,7 @@ module.exports = {
   TRANSLATION_AI_TRANSPORTS,
   TRANSLATION_AI_PROVIDER_TRANSPORTS,
   TRANSLATION_PROVIDERS: TRANSLATION_AI_PROVIDERS,
+  defaultTranslationAiModelFor,
   isTranslationAiModelAllowed,
   isTranslationAiTransportAllowed,
   normalizeProvider: normalizeTranslationAiProvider,

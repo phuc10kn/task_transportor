@@ -5,10 +5,10 @@ const { runImmediateTransaction, runInTransaction } = require("../../../infrastr
 const { ISSUE_STATUSES } = require("../../../shared/stateConstants");
 const {
   DEFAULT_TRANSLATION_AI_PROVIDER,
-  DEFAULT_TRANSLATION_AI_MODEL,
   DEFAULT_TRANSLATION_AI_TRANSPORT,
   TRANSLATION_AI_PROVIDERS,
   TRANSLATION_AI_TRANSPORTS,
+  defaultTranslationAiModelFor,
 } = require("../../../shared/translationModels");
 const { materializeCisFields, mergeSourceFields } = require("../support/materializeCisFields");
 
@@ -396,7 +396,7 @@ function createCisRepository({ config, db: providedDb = null }) {
           project.translation_ai_model ||
           project.translation_model ||
           project.translation_command_profile ||
-          (provider === TRANSLATION_AI_PROVIDERS.DEEPSEEK ? DEFAULT_TRANSLATION_AI_MODEL : null);
+          defaultTranslationAiModelFor(provider);
         const result = db
           .prepare(
             `INSERT INTO translation_queue (
