@@ -70,9 +70,10 @@
       ${candidates.length ? `<div class="table-responsive"><table class="table table-vcenter responsive-table"><thead><tr><th>Backlog</th><th>Summary</th><th>Status</th><th>Assignee</th><th>Created</th><th>Actions</th></tr></thead><tbody>${candidates.map((item) => {
         const activeJob = jobIsActive(item.active_job) ? item.active_job : null;
         const disabled = !actionReady("sync_to_cis") || Boolean(activeJob);
+        const jiraDisabled = !actionReady("sync_translate_jira") || Boolean(activeJob);
         const jobAttributes = activeJob ? ` data-active-job-id="${CIS.attr(activeJob.id)}" data-active-job-translate="${activeJob.with_translation === true}" data-active-job-jira="${activeJob.push_to_jira === true}"` : "";
         const evidence = activeJob ? `Job ${CIS.escape(activeJob.id)}: ${CIS.escape(activeJob.status)}${activeJob.push_to_jira ? " · Jira delivery requested" : activeJob.with_translation ? " · Translation requested" : ""}` : "";
-        return `<tr data-candidate="${CIS.attr(item.backlog_issue_key)}"${jobAttributes}><td data-label="Backlog"><code>${CIS.escape(item.backlog_issue_key)}</code></td><td data-label="Summary">${CIS.escape(item.summary || "—")}</td><td data-label="Status">${CIS.badge(item.status || "unknown")}</td><td data-label="Assignee">${CIS.escape(item.assignee?.name || "Unassigned")}</td><td data-label="Created">${CIS.escape(CIS.formatDate(item.created_at_source))}</td><td data-label="Actions"><div class="table-actions"><button class="btn btn-sm btn-primary" data-sync="plain" type="button" ${disabled ? "disabled" : ""}>Sync to CIS</button><button class="btn btn-sm btn-outline-primary" data-sync="translate" type="button" ${disabled ? "disabled" : ""}>Sync + Translate</button><button class="btn btn-sm btn-outline-primary" data-sync="jira" type="button" title="Pull, translate atomically, run Jira dry-run, then deliver" ${disabled ? "disabled" : ""}>Sync + Translate + Jira</button></div><div class="job-evidence" aria-live="polite">${evidence}</div></td></tr>`;
+        return `<tr data-candidate="${CIS.attr(item.backlog_issue_key)}"${jobAttributes}><td data-label="Backlog"><code>${CIS.escape(item.backlog_issue_key)}</code></td><td data-label="Summary">${CIS.escape(item.summary || "—")}</td><td data-label="Status">${CIS.badge(item.status || "unknown")}</td><td data-label="Assignee">${CIS.escape(item.assignee?.name || "Unassigned")}</td><td data-label="Created">${CIS.escape(CIS.formatDate(item.created_at_source))}</td><td data-label="Actions"><div class="table-actions"><button class="btn btn-sm btn-primary" data-sync="plain" type="button" ${disabled ? "disabled" : ""}>Sync to CIS</button><button class="btn btn-sm btn-outline-primary" data-sync="translate" type="button" ${disabled ? "disabled" : ""}>Sync + Translate</button><button class="btn btn-sm btn-outline-primary" data-sync="jira" type="button" title="${jiraDisabled ? CIS.attr(reasons("sync_translate_jira").join(", ") || "Jira delivery unavailable") : "Pull, translate atomically, run Jira dry-run, then deliver"}" ${jiraDisabled ? "disabled" : ""}>Sync + Translate + Jira</button></div><div class="job-evidence" aria-live="polite">${evidence}</div></td></tr>`;
       }).join("")}</tbody></table></div>` : `<div class="card-body text-center py-6"><h2 class="h3">${CIS.escape(emptyTitle)}</h2><p class="text-secondary">${CIS.escape(emptyCopy)}</p>${filterEvidence(filters)}${filters.length ? `<a class="btn btn-outline-primary mt-3" href="${CIS.attr(clearOptionalFiltersHref())}">Clear optional filters and search</a>` : ""}</div>`}
     </section>`;
   }
@@ -181,7 +182,7 @@
           }
           else evidence.innerHTML = `<span class="text-danger">${CIS.escape(error.message)}</span>`;
         } finally {
-          if (!requestAccepted) row.querySelectorAll("button").forEach((item) => { item.disabled = !actionReady("sync_to_cis"); });
+          if (!requestAccepted) row.querySelectorAll("button").forEach((item) => { item.disabled = item.dataset.sync === "jira" ? !actionReady("sync_translate_jira") : !actionReady("sync_to_cis"); });
         }
       }));
     });
@@ -190,13 +191,14 @@
   function updateCandidateJob(row, job, wantsTranslation, wantsJira) {
     if (!row.isConnected) return;
     const evidence = row.querySelector(".job-evidence");
-    evidence.textContent = `Job ${job.id}: ${job.status}${job.last_error ? ` — ${job.last_error}` : ""}`;
+    const failure = job.last_error ? `${job.last_error_code ? `${job.last_error_code}: ` : ""}${job.last_error}` : "";
+    evidence.textContent = `Job ${job.id}: ${job.status}${failure ? ` — ${failure}` : ""}`;
     if (jobIsActive(job) && wantsJira) evidence.textContent += " · Translating, validating, then delivering to Jira";
     else if (jobIsActive(job) && wantsTranslation) evidence.textContent += " · Translation requested";
     if (job.status === "success" && wantsJira) evidence.textContent += " · Jira delivery complete";
     else if (job.status === "success" && wantsTranslation) evidence.textContent += " · Review Translation Queue";
     const allowRetry = ["failed", "cancelled"].includes(job.status);
-    row.querySelectorAll("[data-sync]").forEach((button) => { button.disabled = !allowRetry || !actionReady("sync_to_cis"); });
+    row.querySelectorAll("[data-sync]").forEach((button) => { button.disabled = !allowRetry || !(button.dataset.sync === "jira" ? actionReady("sync_translate_jira") : actionReady("sync_to_cis")); });
   }
 
   async function watchCandidateJob(row, jobId, wantsTranslation, wantsJira) {

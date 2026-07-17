@@ -40,7 +40,7 @@ function replaceMappingValues(existing, pulled) {
 
 async function pullJiraMappingValues({ config, projectId }) {
   const project = projectsApi().getProject({ config, projectId });
-  const client = createJiraClient({ config, project });
+  const client = createJiraClient({ config, projectId: project.id });
   const pulled = await client.pullMappingValues();
   const jiraMappingValues = sanitizeJiraMappingValues({
     mappingValues: replaceMappingValues(project.jira_mapping_values_json, pulled),

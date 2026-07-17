@@ -40,6 +40,7 @@ Implementation flow theo code hiện tại:
 - Translation: Issue Editor luôn dựng read-model card Summary/Description, dùng placeholder không persistence khi chưa có queue item và không còn nút bulk `Translate issue`. Retranslate card đã có item chạy AI đồng bộ qua item route, không tạo sync job; placeholder gọi issue translation route với `target_field`, tạo đúng một `manual_immediate` translate job rồi chạy ngay khi lock được. Cả hai chỉ cập nhật `ai_draft` và không apply canonical. Chỉ action `Approve` riêng mới apply draft vào canonical; `PUT /translation-queue/:id/draft` vẫn chỉ lưu draft.
 - Mapping/anomaly: Jira dry-run dùng approved mapping qua CIS và tạo/đọc anomaly để quyết định `can_sync`.
 - Jira outbound: dry-run chạy qua API và ghi journal; sync thật enqueue `push_issue`, worker gọi Jira client khi gate pass.
+- External provider gateway: application chỉ cấp `projectId`; worker mint một scope Project ở đầu handler và dùng lại cho Backlog/Jira. Fake/fixture cũng chạy capability guard trước adapter. Lỗi gate là non-retryable `EXTERNAL_GATE_BLOCKED`; `job_failed.details_json` giữ evidence đã sanitize và Sync Job read model expose `last_error_code`/`last_error_details` sau reload.
 
 Issue Editor contract:
 
@@ -60,6 +61,7 @@ Implementation verification hiện có:
 - `npm run verify:issue-editor` gom verify API và dry-run/sync của Issue Editor.
 - `npm run verify:system-issues` kiểm tra candidate browse/readiness, manual create, identity scope và candidate sync.
 - `npm run verify:project-scope` chạy static cutover gate rồi kiểm tra middleware, cross-project resource isolation, Dashboard A/B, Project disabled và legacy 404.
+- `npm run verify:external-provider-gateways` kiểm tra capability, scope authenticity/cross-project, fake guard, enqueue/worker/reload evidence và operation contract; `npm run verify:external-egress-boundary` cấm network primitive trong `src/modules/**`.
 - `npm test` chạy toàn bộ verify phase00-07.
 - Khi sửa Translation AI, kiểm tra module Translation không tự gọi `fetch`, `child_process`, `spawn`, `spawnSync`.
 

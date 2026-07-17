@@ -2,6 +2,7 @@ const { AppError } = require("../../../http/errors/AppError");
 const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { getIssueActionReadiness } = require("./getIssueActionReadiness");
+const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
 
 function validateBoolean(value, field) {
   if (value !== undefined && typeof value !== "boolean") {
@@ -30,6 +31,12 @@ function normalizeBacklogIssueKey(value) {
 async function syncCandidateToCis({ config, projectId, backlogIssueKey, executedBy, correlationId, withTranslation, pushToJira }) {
   validateBoolean(withTranslation, "with_translation");
   validateBoolean(pushToJira, "push_to_jira");
+  const scope = createExternalAccessScope({ config, projectId: Number(projectId) });
+  assertScopeOperation(scope, projectId, "backlog", "backlog.issue.get");
+  if (pushToJira === true) {
+    assertScopeOperation(scope, projectId, "jira", "jira.issues.search");
+    assertScopeOperation(scope, projectId, "jira", "jira.issue.create");
+  }
   const readiness = getIssueActionReadiness({ config, projectId });
   if (!readiness.actions.sync_to_cis.enabled) {
     const reasons = readiness.actions.sync_to_cis.disabled_reasons;

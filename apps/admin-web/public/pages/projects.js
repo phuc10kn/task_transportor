@@ -11,6 +11,7 @@
     name: "", source_language: "ja", target_language: "vi", enabled: true, sync_enabled: false,
     auto_translate: true, require_translation_review: true, require_mapping_approval: true,
     manual_pull_enabled: true, scheduled_pull_enabled: false,
+    backlog_external_read_enabled: true, jira_external_read_enabled: true, jira_external_write_enabled: false,
     translation_ai_provider: "deepseek", translation_ai_transport: "openai_compatible", translation_ai_model: "deepseek-v4-flash",
   };
   const textFields = [
@@ -19,6 +20,7 @@
   const backlogFields = [["backlog_space_url", "Backlog URL"], ["backlog_project_key", "Backlog project key"], ["backlog_issue_key_prefix", "Backlog issue prefix"], ["backlog_api_key", "Backlog API key", "password"]];
   const jiraFields = [["jira_site_url", "Jira URL"], ["jira_project_key", "Jira project key"], ["jira_email", "Jira email"], ["jira_api_token", "Jira API token", "password"]];
   const flags = [["enabled", "Enabled"], ["sync_enabled", "Sync enabled"], ["auto_translate", "Auto translate"], ["require_translation_review", "Translation review required"], ["require_mapping_approval", "Mapping approval required"], ["manual_pull_enabled", "Manual pull"], ["scheduled_pull_enabled", "Scheduled pull"]];
+  const externalFlags = ["backlog_external_read_enabled", "jira_external_read_enabled", "jira_external_write_enabled"];
 
   const selected = () => projects.find((item) => item.id === selectedId) || null;
   const input = ([name, label, type = "text", required = false], value) => `<div><label class="form-label" for="${name}">${label}</label><input class="form-control" id="${name}" name="${name}" type="${type}" value="${CIS.attr(value ?? "")}" ${required ? "required" : ""}></div>`;
@@ -37,8 +39,8 @@
         </div><div id="ai-notice" class="mt-2"></div></fieldset>
         <fieldset class="mt-4"><legend class="h3">Operating policy</legend><div class="row g-2">${flags.map(([name, label]) => `<div class="col-sm-6 col-xl-4"><label class="form-check form-switch policy-switch"><input class="form-check-input" name="${name}" type="checkbox" ${value[name] ? "checked" : ""} ${name === "scheduled_pull_enabled" ? "disabled" : ""}><span class="form-check-label">${label}${name === "scheduled_pull_enabled" ? ' <span class="badge bg-secondary-lt ms-1">Disabled</span>' : ""}</span></label></div>`).join("")}</div><div class="text-secondary small mt-2">Project pull and scheduled pull are disabled; use Pull one or candidate actions.</div></fieldset>
         <div class="row g-3 mt-2">
-          <div class="col-xl-6"><details class="card" open><summary class="card-header" aria-label="Backlog connection"><span class="card-title">Backlog source</span></summary><div class="card-body"><div class="row g-3">${backlogFields.map((field) => `<div class="col-sm-6">${input(field, value[field[0]])}</div>`).join("")}</div></div></details></div>
-          <div class="col-xl-6"><details class="card" open><summary class="card-header" aria-label="Jira connection"><span class="card-title">Jira target</span></summary><div class="card-body"><div class="row g-3">${jiraFields.map((field) => `<div class="col-sm-6">${input(field, value[field[0]])}</div>`).join("")}</div></div></details></div>
+          <div class="col-xl-6"><details class="card" open><summary class="card-header" aria-label="Backlog connection"><span class="card-title">Backlog source</span></summary><div class="card-body"><div class="row g-3">${backlogFields.map((field) => `<div class="col-sm-6">${input(field, value[field[0]])}</div>`).join("")}</div><div class="border-top mt-4 pt-3"><label class="form-check form-switch policy-switch"><input class="form-check-input" name="backlog_external_read_enabled" type="checkbox" ${value.backlog_external_read_enabled ? "checked" : ""}><span class="form-check-label">Allow external reads</span></label><div class="text-secondary small mt-1">Network access gate; Manual pull remains a separate business policy.</div></div></div></details></div>
+          <div class="col-xl-6"><details class="card" open><summary class="card-header" aria-label="Jira connection"><span class="card-title">Jira target</span></summary><div class="card-body"><div class="row g-3">${jiraFields.map((field) => `<div class="col-sm-6">${input(field, value[field[0]])}</div>`).join("")}</div><div class="border-top mt-4 pt-3 d-flex flex-column gap-2"><label class="form-check form-switch policy-switch"><input class="form-check-input" name="jira_external_read_enabled" type="checkbox" ${value.jira_external_read_enabled ? "checked" : ""}><span class="form-check-label">Allow external reads</span></label><label class="form-check form-switch policy-switch"><input class="form-check-input" name="jira_external_write_enabled" type="checkbox" ${value.jira_external_write_enabled ? "checked" : ""}><span class="form-check-label">Allow external writes</span></label><div class="text-secondary small">Network access gates; Sync enabled remains a separate business policy.</div></div></div></details></div>
         </div>
       </div>
       <div class="card-footer d-flex justify-content-end gap-2"><a class="btn btn-ghost-secondary" href="/projects">Cancel</a><button class="btn btn-primary" type="submit">${project ? "Save Project" : "Create Project"}</button>${project ? "" : '<button class="btn btn-primary" name="open_after" value="1" type="submit">Create and open workspace</button>'}</div>
@@ -93,6 +95,7 @@
       const submitter = event.submitter;
       const raw = CIS.formJson(form);
       flags.forEach(([name]) => { raw[name] = form.elements[name].checked; });
+      externalFlags.forEach((name) => { raw[name] = form.elements[name].checked; });
       const id = Number(form.dataset.projectId) || null;
       const errorRegion = document.querySelector("#project-error");
       errorRegion.innerHTML = "";

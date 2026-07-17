@@ -15,7 +15,7 @@ const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
-const { createJiraClient } = require("../../src/modules/Jira/infrastructure/JiraClient");
+const { JiraClient } = require("../../src/modules/Jira/infrastructure/JiraClient");
 const { markdownToAdf } = require("../../src/modules/Jira/support/jiraAdf");
 const { makeTempConfig } = require("./helpers/tempConfig");
 const { requestJson, withServer } = require("./helpers/http");
@@ -162,18 +162,27 @@ function withMockJiraServer(callback) {
 async function verifyJiraMappingUserPullKeepsHiddenUsers() {
   await withMockJiraServer(async (server) => {
     const { port } = server.address();
-    const client = createJiraClient({
-      config: {
-        jira: {
-          fakeMode: "",
-          requestTimeoutSeconds: 5,
-        },
-      },
+    const origin = `http://127.0.0.1:${port}`;
+    const paths = {
+      "jira.project.statuses.list": ({ projectKey }) => `/rest/api/3/project/${encodeURIComponent(projectKey)}/statuses`,
+      "jira.priorities.list": () => "/rest/api/3/priority",
+      "jira.project.components.list": ({ projectKey }) => `/rest/api/3/project/${encodeURIComponent(projectKey)}/components`,
+      "jira.users.assignable.list": () => "/rest/api/3/user/assignable/search",
+      "jira.users.assignable.multi-project.list": () => "/rest/api/3/user/assignable/multiProjectSearch",
+      "jira.project.roles.list": ({ projectKey }) => `/rest/api/3/project/${encodeURIComponent(projectKey)}/role`,
+      "jira.project.role-actors.list": ({ projectKey, roleId }) => `/rest/api/3/project/${encodeURIComponent(projectKey)}/role/${encodeURIComponent(roleId)}`,
+    };
+    const client = new JiraClient({
       project: {
-        jira_site_url: `http://127.0.0.1:${port}`,
         jira_project_key: "DMP",
-        jira_email: "admin@example.test",
-        jira_api_token: "token",
+      },
+      gateway: {
+        async execute(operation, { pathParams = {}, query = {} } = {}) {
+          const url = new URL(paths[operation](pathParams), origin);
+          Object.entries(query).forEach(([key, value]) => url.searchParams.set(key, value));
+          const response = await fetch(url);
+          return { body: await response.json(), headers: response.headers };
+        },
       },
     });
     const values = await client.pullMappingValues();
@@ -212,6 +221,8 @@ function createProject(config, suffix, options = {}) {
     input: {
       name: `Jira Outbound ${suffix}`,
       sync_enabled: true,
+      jira_external_read_enabled: true,
+      jira_external_write_enabled: true,
       backlog_space_url: "https://backlog.example.test",
       backlog_project_key: suffix,
       backlog_issue_key_prefix: suffix,
@@ -679,6 +690,8 @@ async function verifyMissingCredentialFailure() {
   const project = ProjectsApi.createProject({
     config,
     input: {
+      jira_external_read_enabled: true,
+      jira_external_write_enabled: true,
       name: "Missing Credential",
       sync_enabled: true,
       backlog_project_key: "PH6E",

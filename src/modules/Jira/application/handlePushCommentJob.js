@@ -4,7 +4,7 @@ const SyncApi = require("../../Sync/SyncApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
 const { createJiraSyncRepository } = require("../infrastructure/JiraSyncRepository");
 
-async function handlePushCommentJob(job, { config }) {
+async function handlePushCommentJob(job, { config, externalAccessScope }) {
   const repository = createJiraSyncRepository({ config });
   const bundle = repository.getIssueBundle(job.issue_id);
   if (!bundle) {
@@ -51,7 +51,8 @@ async function handlePushCommentJob(job, { config }) {
   try {
     const client = createJiraClient({
       config,
-      project: bundle.project,
+      projectId: bundle.project.id,
+      externalAccessScope,
     });
     const created = await client.addComment(bundle.issue.jira_issue_key, comment.content_translated);
     const synced = CisApi.markCommentJiraSynced({

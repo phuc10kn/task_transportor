@@ -6,12 +6,12 @@ function projectsApi() {
   return require("../../Projects/ProjectsApi");
 }
 
-async function downloadAttachmentToCis({ config, attachment, project, backlogIssueKey }) {
+async function downloadAttachmentToCis({ config, attachment, project, backlogIssueKey, externalAccessScope }) {
   const resolvedProject = project || projectsApi().getProject({
     config,
     projectId: attachment.project_id,
   });
-  const client = createBacklogClient({ config, project: resolvedProject });
+  const client = createBacklogClient({ config, projectId: resolvedProject.id, externalAccessScope });
   const storage = createAttachmentStorage({ config });
 
   try {

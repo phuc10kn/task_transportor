@@ -36,6 +36,9 @@ const PROJECT_COLUMNS = [
   "jira_mapping_values_json",
   "manual_pull_enabled",
   "scheduled_pull_enabled",
+  "backlog_external_read_enabled",
+  "jira_external_read_enabled",
+  "jira_external_write_enabled",
   "scheduled_pull_interval_minutes",
   "pull_updated_since_window_minutes",
   "scheduled_pull_filter_json",
@@ -49,6 +52,9 @@ const BOOLEAN_COLUMNS = new Set([
   "require_mapping_approval",
   "manual_pull_enabled",
   "scheduled_pull_enabled",
+  "backlog_external_read_enabled",
+  "jira_external_read_enabled",
+  "jira_external_write_enabled",
 ]);
 
 function serializeValue(column, value) {
@@ -100,6 +106,9 @@ function rowToProject(row) {
     require_mapping_approval: Boolean(row.require_mapping_approval),
     manual_pull_enabled: Boolean(row.manual_pull_enabled),
     scheduled_pull_enabled: Boolean(row.scheduled_pull_enabled),
+    backlog_external_read_enabled: Boolean(row.backlog_external_read_enabled),
+    jira_external_read_enabled: Boolean(row.jira_external_read_enabled),
+    jira_external_write_enabled: Boolean(row.jira_external_write_enabled),
     scheduled_pull_filter_json: JSON.parse(row.scheduled_pull_filter_json),
     cis_mapping_values_json: JSON.parse(row.cis_mapping_values_json || "{}"),
     backlog_mapping_values_json: JSON.parse(row.backlog_mapping_values_json || "{}"),

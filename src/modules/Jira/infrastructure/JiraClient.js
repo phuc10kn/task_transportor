@@ -2,30 +2,16 @@ const fs = require("fs");
 const path = require("path");
 
 const { AppError } = require("../../../http/errors/AppError");
+const { JiraRequestGateway } = require("../../../infrastructure/external/jira/JiraRequestGateway");
+const {
+  assertScopeOperation,
+  createExternalAccessScope,
+  scopeState,
+} = require("../../../infrastructure/external/createExternalAccessScope");
+const { isExternalBoundaryError } = require("../../../infrastructure/external/policy");
 const { markdownToAdf } = require("../support/jiraAdf");
 const { jiraStoryPointFieldId } = require("../support/jiraDryRunPayload");
 const { isRealJiraUserProfile, labelForJiraUser } = require("../support/realJiraUser");
-
-function messageFromBody(body, fallback) {
-  if (!body || typeof body !== "object") {
-    return fallback;
-  }
-
-  if (Array.isArray(body.errorMessages) && body.errorMessages.length > 0) {
-    return body.errorMessages.join(" ");
-  }
-
-  if (body.errors && typeof body.errors === "object") {
-    const pairs = Object.entries(body.errors)
-      .map(([key, value]) => `${key}: ${value}`)
-      .filter(Boolean);
-    if (pairs.length > 0) {
-      return pairs.join(" ");
-    }
-  }
-
-  return fallback;
-}
 
 function jiraError(code, message, status, details = {}) {
   const error = new AppError({
@@ -76,29 +62,6 @@ function asIssueRecord(issue) {
     labels: issue.fields && Array.isArray(issue.fields.labels) ? issue.fields.labels : [],
     status: issue.fields && issue.fields.status && issue.fields.status.name || null,
   };
-}
-
-function parseRetryAfter(value) {
-  if (!value) {
-    return null;
-  }
-
-  const seconds = Number(value);
-  if (Number.isFinite(seconds) && seconds > 0) {
-    return seconds;
-  }
-
-  const date = Date.parse(value);
-  if (!Number.isFinite(date)) {
-    return null;
-  }
-
-  const diffSeconds = Math.ceil((date - Date.now()) / 1000);
-  return diffSeconds > 0 ? diffSeconds : null;
-}
-
-function normalizeSiteUrl(siteUrl) {
-  return String(siteUrl || "").replace(/\/+$/, "");
 }
 
 function ensureParentDir(filePath) {
@@ -465,136 +428,13 @@ class FakeJiraClient {
 }
 
 class JiraClient {
-  constructor({ config, project }) {
-    this.config = config;
+  constructor({ project, gateway }) {
     this.project = project;
-    this.siteUrl = normalizeSiteUrl(project.jira_site_url);
-    this.email = project.jira_email || "";
-    this.apiToken = project.jira_api_token || "";
-
-    if (!this.siteUrl) {
-      throw jiraError("JIRA_CONFIG_REQUIRED", "Jira site URL is required.", 422, {
-        field: "jira_site_url",
-      });
-    }
-
-    if (!this.email) {
-      throw jiraError("JIRA_CREDENTIAL_REQUIRED", "Jira email is not configured.", 422, {
-        field: "jira_email",
-      });
-    }
-
-    if (!this.apiToken) {
-      throw jiraError("JIRA_CREDENTIAL_REQUIRED", "Jira API token is not configured.", 422, {
-        field: "jira_api_token",
-      });
-    }
-  }
-
-  authorizationHeader() {
-    return `Basic ${Buffer.from(`${this.email}:${this.apiToken}`).toString("base64")}`;
-  }
-
-  async request(method, pathname, { query = {}, body } = {}) {
-    const url = new URL(pathname, `${this.siteUrl}/`);
-    for (const [key, value] of Object.entries(query)) {
-      if (value === undefined || value === null || value === "") {
-        continue;
-      }
-
-      url.searchParams.set(key, value);
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.config.jira.requestTimeoutSeconds * 1000);
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: this.authorizationHeader(),
-          Accept: "application/json",
-          ...(body ? { "Content-Type": "application/json" } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
-
-      const rawText = await response.text();
-      let parsed = null;
-      if (rawText) {
-        try {
-          parsed = JSON.parse(rawText);
-        } catch (error) {
-          parsed = {
-            raw_text: rawText,
-          };
-        }
-      }
-
-      if (!response.ok) {
-        const status = response.status;
-        const retryAfterSeconds = status === 429
-          ? parseRetryAfter(response.headers.get("retry-after"))
-          : null;
-        const error = jiraError(
-          status === 401 || status === 403
-            ? "JIRA_AUTH_FAILED"
-            : status === 404
-              ? "JIRA_RESOURCE_NOT_FOUND"
-              : status === 429
-                ? "JIRA_RATE_LIMITED"
-                : status >= 500
-                  ? "JIRA_SERVER_ERROR"
-                  : "JIRA_API_ERROR",
-          messageFromBody(parsed, `Jira API failed with status ${status}.`),
-          status >= 500 ? 502 : 422,
-          {
-            jira_status_code: status,
-            jira_path: pathname,
-          }
-        );
-        error.statusCode = status;
-        error.retryable = status === 429 || status >= 500;
-        error.retryAfterSeconds = retryAfterSeconds;
-        throw error;
-      }
-
-      return {
-        body: parsed,
-        headers: response.headers,
-      };
-    } catch (error) {
-      if (error.name === "AbortError") {
-        const timeoutError = jiraError(
-          "JIRA_REQUEST_TIMEOUT",
-          "Jira API request timed out.",
-          504,
-          { jira_path: pathname }
-        );
-        timeoutError.retryable = true;
-        throw timeoutError;
-      }
-
-      if (error instanceof AppError) {
-        throw error;
-      }
-
-      const networkError = jiraError(
-        "JIRA_NETWORK_ERROR",
-        `Jira API request failed: ${error.message}`,
-        502,
-        { jira_path: pathname }
-      );
-      networkError.retryable = true;
-      throw networkError;
-    } finally {
-      clearTimeout(timeout);
-    }
+    this.gateway = gateway;
   }
 
   async getIssue(issueKey) {
-    const response = await this.request("GET", `/rest/api/3/issue/${encodeURIComponent(issueKey)}`, {
+    const response = await this.gateway.execute("jira.issue.get", { pathParams: { issueKey },
       query: {
         fields: "summary,description,labels,status,project",
       },
@@ -603,7 +443,7 @@ class JiraClient {
   }
 
   async searchIssuesByTrace({ backlogIssueKey, issueId }) {
-    const response = await this.request("GET", "/rest/api/3/search/jql", {
+    const response = await this.gateway.execute("jira.issues.search", {
       query: {
         jql: buildTraceJql({
           projectKey: this.project.jira_project_key,
@@ -622,7 +462,7 @@ class JiraClient {
   }
 
   async createIssue(payload) {
-    const response = await this.request("POST", "/rest/api/3/issue", {
+    const response = await this.gateway.execute("jira.issue.create", {
       body: {
         fields: issueFieldsForJira(payload.fields),
       },
@@ -631,7 +471,7 @@ class JiraClient {
   }
 
   async updateIssue(issueKey, payload) {
-    await this.request("PUT", `/rest/api/3/issue/${encodeURIComponent(issueKey)}`, {
+    await this.gateway.execute("jira.issue.update", { pathParams: { issueKey },
       body: {
         fields: issueFieldsForJira(payload.fields),
       },
@@ -640,10 +480,7 @@ class JiraClient {
   }
 
   async transitionIssue(issueKey, statusName) {
-    const transitionsResponse = await this.request(
-      "GET",
-      `/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`
-    );
+    const transitionsResponse = await this.gateway.execute("jira.issue.transitions.list", { pathParams: { issueKey } });
     const transitions = transitionsResponse.body && Array.isArray(transitionsResponse.body.transitions)
       ? transitionsResponse.body.transitions
       : [];
@@ -661,7 +498,7 @@ class JiraClient {
       );
     }
 
-    await this.request("POST", `/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`, {
+    await this.gateway.execute("jira.issue.transition", { pathParams: { issueKey },
       body: {
         transition: { id: match.id },
       },
@@ -671,7 +508,7 @@ class JiraClient {
   }
 
   async addComment(issueKey, commentText) {
-    const response = await this.request("POST", `/rest/api/3/issue/${encodeURIComponent(issueKey)}/comment`, {
+    const response = await this.gateway.execute("jira.issue.comment.create", { pathParams: { issueKey },
       body: {
         body: markdownToAdf(commentText),
       },
@@ -685,7 +522,7 @@ class JiraClient {
       return value;
     }
 
-    const response = await this.request("GET", "/rest/api/3/user/search", {
+    const response = await this.gateway.execute("jira.users.search", {
       query: {
         query: value,
         maxResults: 50,
@@ -706,39 +543,39 @@ class JiraClient {
 
   async pullMappingValues() {
     const projectKey = this.project.jira_project_key;
-    const projectStatusesResponse = await this.request(
-      "GET",
-      `/rest/api/3/project/${encodeURIComponent(projectKey)}/statuses`
-    );
+    const projectStatusesResponse = await this.gateway.execute("jira.project.statuses.list", { pathParams: { projectKey } });
     const projectStatuses = Array.isArray(projectStatusesResponse.body)
       ? projectStatusesResponse.body
       : [];
-    const prioritiesResponse = await this.request("GET", "/rest/api/3/priority");
-    const componentsResponse = await this.request(
-      "GET",
-      `/rest/api/3/project/${encodeURIComponent(projectKey)}/components`
-    );
-    const assignableUsersResponse = await this.request("GET", "/rest/api/3/user/assignable/search", {
+    const prioritiesResponse = await this.gateway.execute("jira.priorities.list");
+    const componentsResponse = await this.gateway.execute("jira.project.components.list", { pathParams: { projectKey } });
+    const optional = (promise, fallback) => promise.catch((error) => {
+      if (isExternalBoundaryError(error)) throw error;
+      return fallback;
+    });
+    const assignableUsersResponse = await optional(this.gateway.execute("jira.users.assignable.list", {
       query: {
         project: projectKey,
         maxResults: 100,
       },
-    }).catch(() => ({ body: [] }));
-    const multiProjectUsersResponse = await this.request("GET", "/rest/api/3/user/assignable/multiProjectSearch", {
+    }), { body: [] });
+    const multiProjectUsersResponse = await optional(this.gateway.execute("jira.users.assignable.multi-project.list", {
       query: {
         projectKeys: projectKey,
         maxResults: 100,
       },
-    }).catch(() => ({ body: [] }));
-    const projectRolesResponse = await this.request(
-      "GET",
-      `/rest/api/3/project/${encodeURIComponent(projectKey)}/role`
-    ).catch(() => ({ body: {} }));
+    }), { body: [] });
+    const projectRolesResponse = await optional(
+      this.gateway.execute("jira.project.roles.list", { pathParams: { projectKey } }),
+      { body: {} }
+    );
     const roleUrls = Object.values(projectRolesResponse.body || {})
       .filter((value) => typeof value === "string");
-    const roleResponses = await Promise.all(roleUrls.map((url) =>
-      this.request("GET", url).catch(() => ({ body: { actors: [] } }))
-    ));
+    const roleIds = roleUrls.map((url) => String(url).match(/\/role\/(\d+)(?:$|[?#])/)?.[1]).filter(Boolean);
+    const roleResponses = await Promise.all(roleIds.map((roleId) => optional(
+      this.gateway.execute("jira.project.role-actors.list", { pathParams: { projectKey, roleId } }),
+      { body: { actors: [] } }
+    )));
     const roleUsers = roleResponses.flatMap((response) =>
       (response.body && response.body.actors || [])
         .map(roleActorUser)
@@ -780,15 +617,55 @@ class JiraClient {
   }
 }
 
-function createJiraClient({ config, project }) {
+const JIRA_METHOD_OPERATIONS = Object.freeze({
+  getIssue: ["jira.issue.get"],
+  searchIssuesByTrace: ["jira.issues.search"],
+  createIssue: ["jira.issue.create"],
+  updateIssue: ["jira.issue.update"],
+  transitionIssue: ["jira.issue.transitions.list", "jira.issue.transition"],
+  addComment: ["jira.issue.comment.create"],
+  resolveUserAccountId: ["jira.users.search"],
+  pullMappingValues: [
+    "jira.project.statuses.list",
+    "jira.priorities.list",
+    "jira.project.components.list",
+    "jira.users.assignable.list",
+    "jira.users.assignable.multi-project.list",
+    "jira.project.roles.list",
+    "jira.project.role-actors.list",
+  ],
+});
+
+function guardedClient(client, scope, projectId) {
+  return new Proxy(client, {
+    get(target, property) {
+      const value = target[property];
+      if (typeof value !== "function" || !JIRA_METHOD_OPERATIONS[property]) return value;
+      return (...args) => {
+        JIRA_METHOD_OPERATIONS[property].forEach((operation) =>
+          assertScopeOperation(scope, projectId, "jira", operation)
+        );
+        return value.apply(target, args);
+      };
+    },
+  });
+}
+
+function createJiraClient({ config, projectId, externalAccessScope }) {
+  const scope = externalAccessScope || createExternalAccessScope({ config, projectId });
+  const { project } = scopeState(scope, projectId);
   if (config.jira && config.jira.fakeMode) {
-    return new FakeJiraClient({ config, project });
+    return guardedClient(new FakeJiraClient({ config, project }), scope, projectId);
   }
 
-  return new JiraClient({ config, project });
+  return new JiraClient({
+    project,
+    gateway: new JiraRequestGateway({ scope, expectedProjectId: projectId }),
+  });
 }
 
 module.exports = {
+  JiraClient,
   buildTraceLabel,
   buildTraceJql,
   createJiraClient,

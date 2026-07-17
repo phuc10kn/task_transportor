@@ -33,7 +33,7 @@ function retryableFromError(error) {
   return false;
 }
 
-async function handleManualPullJob(job, { config }) {
+async function handleManualPullJob(job, { config, externalAccessScope }) {
   const backlogIssueKey = job.payload_json && job.payload_json.backlog_issue_key;
   if (!backlogIssueKey) {
     throw new AppError({
@@ -44,7 +44,7 @@ async function handleManualPullJob(job, { config }) {
   }
 
   const project = projectsApi().getProject({ config, projectId: job.project_id });
-  const client = createBacklogClient({ config, project });
+  const client = createBacklogClient({ config, projectId: project.id, externalAccessScope });
 
   try {
     const [backlogProject, issue] = await Promise.all([
@@ -123,6 +123,7 @@ async function handleManualPullJob(job, { config }) {
         config,
         attachment,
         project,
+        externalAccessScope,
         backlogIssueKey: normalized.backlog_issue_key,
       });
       attachmentDownloads.push({
@@ -141,6 +142,7 @@ async function handleManualPullJob(job, { config }) {
         parentJob: job,
         issueId: result.issue.id,
         translationResult,
+        externalAccessScope,
       })
       : null;
 

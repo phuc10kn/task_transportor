@@ -7,7 +7,7 @@ function projectsApi() {
 
 async function lookupJiraIssueIdentity({ config, projectId, lookupToken }) {
   const project = projectsApi().getProject({ config, projectId: Number(projectId) });
-  const client = createJiraClient({ config, project });
+  const client = createJiraClient({ config, projectId: project.id });
   try {
     const issue = await client.getIssue(String(lookupToken || "").trim());
     const remoteProjectKey = issue.fields && issue.fields.project && issue.fields.project.key;

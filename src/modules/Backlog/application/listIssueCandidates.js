@@ -127,7 +127,7 @@ async function listIssueCandidates({ config, projectId, filters }) {
       status: 422,
     });
   }
-  const client = createBacklogClient({ config, project });
+  const client = createBacklogClient({ config, projectId: project.id });
   const started = Date.now();
   const deadline = started + 30000;
   const timeout = () => Math.max(1, Math.min(10000, deadline - Date.now()));

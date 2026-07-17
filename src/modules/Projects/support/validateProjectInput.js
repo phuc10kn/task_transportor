@@ -47,6 +47,9 @@ const ALLOWED_FIELDS = [
   "jira_mapping_values_json",
   "manual_pull_enabled",
   "scheduled_pull_enabled",
+  "backlog_external_read_enabled",
+  "jira_external_read_enabled",
+  "jira_external_write_enabled",
   "scheduled_pull_interval_minutes",
   "pull_updated_since_window_minutes",
   "scheduled_pull_filter_json",
@@ -375,10 +378,39 @@ function normalizeProjectInput(input, { partial = false } = {}) {
     "require_mapping_approval",
     "manual_pull_enabled",
     "scheduled_pull_enabled",
+    "backlog_external_read_enabled",
+    "jira_external_read_enabled",
+    "jira_external_write_enabled",
   ]) {
     if (Object.prototype.hasOwnProperty.call(merged, field)) {
       normalized[field] = toBoolean(merged[field], PROJECT_DEFAULTS[field]);
     }
+  }
+
+  for (const field of ["backlog_space_url", "jira_site_url"]) {
+    if (!Object.prototype.hasOwnProperty.call(merged, field)) continue;
+    const value = String(merged[field] || "").trim();
+    normalized[field] = value;
+    if (!value) continue;
+
+    let url;
+    try {
+      url = new URL(value);
+    } catch (_error) {
+      url = null;
+    }
+    if (
+      !url || url.protocol !== "https:" || !url.hostname || url.username || url.password
+      || url.search || url.hash || (url.pathname && url.pathname !== "/")
+    ) {
+      throw new AppError({
+        code: "VALIDATION_ERROR",
+        message: `${field} must be an HTTPS origin without credentials, path, query or fragment.`,
+        status: 422,
+        details: { field },
+      });
+    }
+    normalized[field] = url.origin;
   }
 
   for (const field of ["scheduled_pull_interval_minutes", "pull_updated_since_window_minutes"]) {

@@ -41,6 +41,13 @@ test("real URL navigation: login, Project gate and full-document routes", async 
   await expect.poll(() => page.locator(".navbar-vertical").evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightSidebar);
 });
 
+test("Project form exposes provider-specific external access gates", async ({ page }) => {
+  await enter(page, "/projects?project_id=1");
+  await expect(page.getByRole("checkbox", { name: "Allow external reads" }).first()).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Allow external reads" }).nth(1)).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Allow external writes" })).not.toBeChecked();
+});
+
 test("dashboard renders only the active Project workload and actionable links", async ({ page }) => {
   let summaryRequests = 0;
   let alertRequests = 0;
@@ -145,7 +152,7 @@ test("dashboard does not fetch without an enabled active Project", async ({ page
 });
 
 test("backlog: explicit browse and async Sync to CIS + Translate", async ({ page }) => {
-  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false, disabled_reasons: ["PROJECT_PULL_DISABLED"] }, sync_to_cis: { enabled: true } } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false, disabled_reasons: ["PROJECT_PULL_DISABLED"] }, sync_to_cis: { enabled: true }, sync_translate_jira: { enabled: true } } } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { statuses: [{ id: 1, name: "Open" }, { id: 2, name: "Resolved" }], assignees: [{ id: 10, name: "Chanaka" }, { id: 11, name: "D.M.Phuc" }] } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/candidates**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [{ backlog_issue_key: "BLG-7", summary: "New customer issue", status: "Open", assignee: null, created_at_source: "2026-07-16T00:00:00Z" }], meta: { returned_count: 1, source_rows_scanned: 1, stop_reason: "source_exhausted" } } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/BLG-7/sync-to-cis", (route) => route.fulfill({ status: 202, contentType: "application/json", body: JSON.stringify({ data: { outcome: "queued", with_translation: true, job: { id: "job-7", status: "pending" } } }) }));
@@ -168,7 +175,7 @@ test("backlog: explicit browse and async Sync to CIS + Translate", async ({ page
 
 test("backlog: Sync + Translate + Jira queues the full workflow", async ({ page }) => {
   let requestBody;
-  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false }, sync_to_cis: { enabled: true } } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false }, sync_to_cis: { enabled: true }, sync_translate_jira: { enabled: true } } } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { statuses: [], assignees: [] } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/candidates**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [{ backlog_issue_key: "BLG-10", summary: "Deliver to Jira", status: "Open", active_job: null }], meta: { returned_count: 1, source_rows_scanned: 1, stop_reason: "source_exhausted" } } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/BLG-10/sync-to-cis", (route) => {
@@ -186,7 +193,7 @@ test("backlog: Sync + Translate + Jira queues the full workflow", async ({ page 
 test("backlog restores active candidate jobs after reload", async ({ page }) => {
   let syncRequests = 0;
   let jobReads = 0;
-  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false, disabled_reasons: ["PROJECT_PULL_DISABLED"] }, sync_to_cis: { enabled: true } } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false, disabled_reasons: ["PROJECT_PULL_DISABLED"] }, sync_to_cis: { enabled: true }, sync_translate_jira: { enabled: true } } } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { statuses: [], assignees: [] } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/candidates**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [{ backlog_issue_key: "BLG-8", summary: "Queued before reload", status: "Open", assignee: null, created_at_source: "2026-07-16T00:00:00Z", active_job: { id: "job-8", status: "pending", with_translation: true, push_to_jira: true } }, { backlog_issue_key: "BLG-9", summary: "Independent candidate", status: "Open", assignee: null, created_at_source: "2026-07-16T00:00:00Z", active_job: null }], meta: { returned_count: 2, source_rows_scanned: 2, stop_reason: "source_exhausted" } } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/BLG-8/sync-to-cis", (route) => {
@@ -229,7 +236,7 @@ test("project and scheduled pull controls stay disabled", async ({ page }) => {
 });
 
 test("backlog explains empty candidate results and clears only optional filters", async ({ page }) => {
-  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false, disabled_reasons: ["PROJECT_PULL_DISABLED"] }, sync_to_cis: { enabled: true } } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false, disabled_reasons: ["PROJECT_PULL_DISABLED"] }, sync_to_cis: { enabled: true }, sync_translate_jira: { enabled: true } } } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { statuses: [{ id: 2, name: "STG化OK" }], assignees: [{ id: 11, name: "D.M.Phuc" }] } }) }));
   await page.route("**/api/v1/projects/1/backlog/issues/candidates**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [], meta: { returned_count: 0, source_rows_scanned: 0, excluded_existing_cis_count: 0, stop_reason: "source_exhausted" } } }) }));
   await enter(page, "/backlog-issues?submitted=1&created_from=2026-05-01&created_to=2026-07-15&limit=20&status_id=2&assignee_id=11&not_closed=true");

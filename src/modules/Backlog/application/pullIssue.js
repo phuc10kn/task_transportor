@@ -1,5 +1,6 @@
 const { AppError } = require("../../../http/errors/AppError");
 const SyncApi = require("../../Sync/SyncApi");
+const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
 
 function projectsApi() {
   return require("../../Projects/ProjectsApi");
@@ -18,6 +19,8 @@ function assertPullEnabled(project) {
 function pullIssue({ config, projectId, backlogIssueKey, executedBy, correlationId, trigger = "manual" }) {
   const project = projectsApi().getProject({ config, projectId: Number(projectId) });
   assertPullEnabled(project);
+  const scope = createExternalAccessScope({ config, projectId: project.id });
+  assertScopeOperation(scope, project.id, "backlog", "backlog.issue.get");
 
   return SyncApi.enqueueJob({
     config,

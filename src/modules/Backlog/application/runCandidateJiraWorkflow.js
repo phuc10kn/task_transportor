@@ -7,7 +7,7 @@ function stagedCanonical(items) {
   return Object.fromEntries(items.map((item) => [item.target_field, item.ai_draft]));
 }
 
-async function runCandidateJiraWorkflow({ config, parentJob, issueId, translationResult }) {
+async function runCandidateJiraWorkflow({ config, parentJob, issueId, translationResult, externalAccessScope }) {
   const queueIds = translationResult.current_items.map((item) => item.id);
   const snapshots = translationResult.current_items.map((item) => ({ ...item }));
   const actor = parentJob.payload_json?.requested_by || null;
@@ -78,7 +78,7 @@ async function runCandidateJiraWorkflow({ config, parentJob, issueId, translatio
         canonical_hash: dryRun.canonical_hash,
         suppress_comment_jobs: true,
       },
-    }, { config });
+    }, { config, externalAccessScope });
 
     return {
       translation_batch: batch,

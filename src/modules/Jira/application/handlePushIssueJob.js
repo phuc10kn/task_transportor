@@ -104,7 +104,7 @@ async function payloadWithResolvedUsers(client, payload) {
   return resolved;
 }
 
-async function handlePushIssueJob(job, { config }) {
+async function handlePushIssueJob(job, { config, externalAccessScope }) {
   const repository = createJiraSyncRepository({ config });
   const readiness = evaluateJiraSyncReadiness({ config, issueId: job.issue_id });
   if (!readiness.can_sync) {
@@ -153,7 +153,8 @@ async function handlePushIssueJob(job, { config }) {
       : readiness.payload;
     const client = createJiraClient({
       config,
-      project: readiness.project,
+      projectId: readiness.project.id,
+      externalAccessScope,
     });
     const resolution = await resolveTargetIssueKey(client, readiness);
     if (job.payload_json && job.payload_json.target_action) {

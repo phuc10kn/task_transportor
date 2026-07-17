@@ -3,6 +3,7 @@ const CisApi = require("../../Cis/CisApi");
 const AnomalyApi = require("../../Anomaly/AnomalyApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
+const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
 const { evaluateDryRunFreshness, evaluateJiraSyncReadiness } = require("./runJiraDryRun");
 const { jiraStoryPointFieldId, jiraUserField } = require("../support/jiraDryRunPayload");
 
@@ -113,7 +114,7 @@ function buildPayloadOverride(basePayload, jiraFields, targetFields = {}) {
 }
 
 async function resolveTargetAtRequest({ config, readiness, executedBy, correlationId }) {
-  const client = createJiraClient({ config, project: readiness.project });
+  const client = createJiraClient({ config, projectId: readiness.project.id });
   if (readiness.issue.jira_issue_key) {
     try {
       const linked = await client.getIssue(readiness.issue.jira_issue_key);
@@ -172,6 +173,9 @@ async function resolveTargetAtRequest({ config, readiness, executedBy, correlati
 
 async function requestJiraSync({ config, issueId, executedBy, correlationId, jiraFields, parentSyncJobId = null }) {
   const readiness = evaluateJiraSyncReadiness({ config, issueId });
+  const scope = createExternalAccessScope({ config, projectId: readiness.project.id });
+  assertScopeOperation(scope, readiness.project.id, "jira", "jira.issues.search");
+  assertScopeOperation(scope, readiness.project.id, "jira", "jira.issue.create");
 
   if (!readiness.can_sync) {
     throw buildPrecheckError(readiness);

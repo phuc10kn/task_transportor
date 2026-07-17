@@ -64,6 +64,8 @@ async function main() {
       name: "Project 1 only",
       enabled: true,
       sync_enabled: true,
+      jira_external_read_enabled: true,
+      jira_external_write_enabled: true,
       manual_pull_enabled: true,
       backlog_space_url: "https://example.backlog.com",
       backlog_project_key: "WEC",

@@ -7,7 +7,7 @@ function projectsApi() {
 
 async function lookupBacklogIssueIdentity({ config, projectId, lookupToken }) {
   const project = projectsApi().getProject({ config, projectId: Number(projectId) });
-  const client = createBacklogClient({ config, project });
+  const client = createBacklogClient({ config, projectId: project.id });
   try {
     const [remoteProject, issue] = await Promise.all([
       client.getProject(project.backlog_project_key),

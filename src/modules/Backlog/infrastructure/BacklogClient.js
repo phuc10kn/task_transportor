@@ -1,104 +1,16 @@
 const fs = require("fs");
-const https = require("https");
 const path = require("path");
 
 const { AppError } = require("../../../http/errors/AppError");
+const { BacklogRequestGateway } = require("../../../infrastructure/external/backlog/BacklogRequestGateway");
+const {
+  assertScopeOperation,
+  createExternalAccessScope,
+  scopeState,
+} = require("../../../infrastructure/external/createExternalAccessScope");
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
-
-function retryAfterSeconds(value) {
-  const seconds = Number(value);
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
-}
-
-function requestJson(url, { timeoutMs = 10000, notFoundCode = "BACKLOG_API_ERROR" } = {}) {
-  return new Promise((resolve, reject) => {
-    const request = https.get(url, (res) => {
-        let body = "";
-
-        res.setEncoding("utf8");
-        res.on("data", (chunk) => {
-          body += chunk;
-        });
-        res.on("end", () => {
-          if (res.statusCode >= 400) {
-            const code = res.statusCode === 404
-              ? notFoundCode
-              : res.statusCode === 429
-                ? "BACKLOG_RATE_LIMITED"
-                : res.statusCode === 401 || res.statusCode === 403
-                  ? "BACKLOG_AUTH_FAILED"
-                  : res.statusCode >= 500 ? "BACKLOG_SERVER_ERROR" : "BACKLOG_API_ERROR";
-            const error = new AppError({
-              code,
-              message: `Backlog API failed with ${res.statusCode}.`,
-              status: res.statusCode === 429 ? 429 : res.statusCode >= 500 ? 502 : 422,
-              details: {
-                backlog_status_code: res.statusCode,
-              },
-            });
-            error.statusCode = res.statusCode;
-            error.retryable = res.statusCode === 429 || res.statusCode >= 500;
-            error.retryAfterSeconds = retryAfterSeconds(res.headers["retry-after"]);
-            reject(error);
-            return;
-          }
-
-          try {
-            resolve(JSON.parse(body));
-          } catch (error) {
-            reject(error);
-          }
-        });
-      });
-    request.setTimeout(Math.max(1, timeoutMs), () => {
-      const error = new AppError({ code: "BACKLOG_REQUEST_TIMEOUT", message: "Backlog API request timed out.", status: 504 });
-      error.retryable = true;
-      request.destroy(error);
-    });
-    request.on("error", (error) => {
-      if (error instanceof AppError) return reject(error);
-      const network = new AppError({ code: "BACKLOG_NETWORK_ERROR", message: "Backlog API network request failed.", status: 502 });
-      network.retryable = true;
-      network.cause = error;
-      reject(network);
-    });
-  });
-}
-
-function requestBuffer(url) {
-  return new Promise((resolve, reject) => {
-    https
-      .get(url, (res) => {
-        const chunks = [];
-
-        res.on("data", (chunk) => {
-          chunks.push(chunk);
-        });
-        res.on("end", () => {
-          const body = Buffer.concat(chunks);
-          if (res.statusCode >= 400) {
-            reject(new AppError({
-              code: res.statusCode >= 500 ? "BACKLOG_SERVER_ERROR" : "BACKLOG_API_ERROR",
-              message: `Backlog API failed with ${res.statusCode}.`,
-              status: res.statusCode >= 500 ? 502 : 422,
-              details: {
-                backlog_status_code: res.statusCode,
-              },
-            }));
-            return;
-          }
-
-          resolve({
-            body,
-            contentType: res.headers["content-type"] || null,
-          });
-        });
-      })
-      .on("error", reject);
-  });
 }
 
 function backlogDirectory(rows, { valueFor, nameFor, includeDisplayOrder = false } = {}) {
@@ -130,90 +42,57 @@ function userDirectory(rows) {
 }
 
 class BacklogClient {
-  constructor({ project }) {
+  constructor({ project, gateway }) {
     this.project = project;
-    this.apiKey = project.backlog_api_key || "";
-
-    if (!this.apiKey) {
-      throw new AppError({
-        code: "BACKLOG_CREDENTIAL_REQUIRED",
-        message: "Backlog API key is not configured.",
-        status: 422,
-      });
-    }
-
-    if (!project.backlog_space_url) {
-      throw new AppError({
-        code: "BACKLOG_CONFIG_REQUIRED",
-        message: "Backlog space URL is required.",
-        status: 422,
-      });
-    }
-  }
-
-  buildUrl(pathname, params = {}) {
-    const url = new URL(pathname, this.project.backlog_space_url);
-    url.searchParams.set("apiKey", this.apiKey);
-
-    for (const [key, value] of Object.entries(params)) {
-      if (value === undefined || value === null || value === "") {
-        continue;
-      }
-
-      if (Array.isArray(value)) {
-        value.forEach((item) => url.searchParams.append(key, item));
-      } else {
-        url.searchParams.set(key, value);
-      }
-    }
-
-    return url;
+    this.gateway = gateway;
   }
 
   async getIssue(backlogIssueKey, options) {
-    return requestJson(this.buildUrl(`/api/v2/issues/${encodeURIComponent(backlogIssueKey)}`), { ...options, notFoundCode: "BACKLOG_ISSUE_NOT_FOUND" });
+    return this.gateway.execute("backlog.issue.get", { pathParams: { issueKey: backlogIssueKey }, options: { ...options, notFoundCode: "BACKLOG_ISSUE_NOT_FOUND" } });
   }
 
   async getIssueComments(backlogIssueKey) {
-    return requestJson(this.buildUrl(`/api/v2/issues/${encodeURIComponent(backlogIssueKey)}/comments`));
+    return this.gateway.execute("backlog.issue.comments.list", { pathParams: { issueKey: backlogIssueKey } });
   }
 
   async getIssueAttachments(backlogIssueKey) {
-    return requestJson(this.buildUrl(`/api/v2/issues/${encodeURIComponent(backlogIssueKey)}/attachments`));
+    return this.gateway.execute("backlog.issue.attachments.list", { pathParams: { issueKey: backlogIssueKey } });
   }
 
   async downloadAttachment(backlogIssueKey, backlogAttachmentId) {
-    return requestBuffer(
-      this.buildUrl(
-        `/api/v2/issues/${encodeURIComponent(backlogIssueKey)}/attachments/${encodeURIComponent(backlogAttachmentId)}`
-      )
-    );
+    return this.gateway.execute("backlog.issue.attachment.download", {
+      pathParams: { issueKey: backlogIssueKey, attachmentId: backlogAttachmentId },
+      responseType: "buffer",
+    });
   }
 
   async getProject(projectIdOrKey, options) {
-    return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}`), { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" });
+    return this.gateway.execute("backlog.project.get", { pathParams: { projectIdOrKey }, options: { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" } });
   }
 
   async getProjectStatuses(projectIdOrKey, options) {
-    return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}/statuses`), { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" });
+    return this.gateway.execute("backlog.project.statuses.list", { pathParams: { projectIdOrKey }, options: { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" } });
   }
 
   async getProjectUsers(projectIdOrKey, options) {
-    return requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectIdOrKey)}/users`), { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" });
+    return this.gateway.execute("backlog.project.users.list", { pathParams: { projectIdOrKey }, options: { ...options, notFoundCode: "BACKLOG_PROJECT_NOT_FOUND" } });
   }
 
   async listIssues(params = {}, options) {
-    return requestJson(this.buildUrl("/api/v2/issues", params), options);
+    return this.gateway.execute("backlog.issues.list", { query: params, options });
   }
 
   async pullMappingValues() {
     const projectKey = this.project.backlog_project_key;
     const [issueTypes, statuses, priorities, users, categories] = await Promise.all([
-      requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectKey)}/issueTypes`)),
-      requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectKey)}/statuses`)),
-      requestJson(this.buildUrl("/api/v2/priorities")),
-      requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectKey)}/users`)),
-      requestJson(this.buildUrl(`/api/v2/projects/${encodeURIComponent(projectKey)}/categories`)).catch(() => []),
+      this.gateway.execute("backlog.project.issue-types.list", { pathParams: { projectKey } }),
+      this.gateway.execute("backlog.project.statuses.list", { pathParams: { projectIdOrKey: projectKey } }),
+      this.gateway.execute("backlog.priorities.list"),
+      this.gateway.execute("backlog.project.users.list", { pathParams: { projectIdOrKey: projectKey } }),
+      this.gateway.execute("backlog.project.categories.list", { pathParams: { projectKey } }).catch((error) => {
+        if (String(error.code || "").startsWith("EXTERNAL_")) throw error;
+        return [];
+      }),
     ]);
 
     return {
@@ -406,14 +285,52 @@ class FixtureBacklogClient {
   }
 }
 
-function createBacklogClient({ config, project }) {
+const BACKLOG_METHOD_OPERATIONS = Object.freeze({
+  getIssue: ["backlog.issue.get"],
+  getIssueComments: ["backlog.issue.comments.list"],
+  getIssueAttachments: ["backlog.issue.attachments.list"],
+  downloadAttachment: ["backlog.issue.attachment.download"],
+  getProject: ["backlog.project.get"],
+  getProjectStatuses: ["backlog.project.statuses.list"],
+  getProjectUsers: ["backlog.project.users.list"],
+  listIssues: ["backlog.issues.list"],
+  pullMappingValues: [
+    "backlog.project.issue-types.list",
+    "backlog.project.statuses.list",
+    "backlog.priorities.list",
+    "backlog.project.users.list",
+    "backlog.project.categories.list",
+  ],
+});
+
+function guardedClient(client, scope, projectId) {
+  return new Proxy(client, {
+    get(target, property) {
+      const value = target[property];
+      if (typeof value !== "function" || !BACKLOG_METHOD_OPERATIONS[property]) return value;
+      return (...args) => {
+        BACKLOG_METHOD_OPERATIONS[property].forEach((operation) =>
+          assertScopeOperation(scope, projectId, "backlog", operation)
+        );
+        return value.apply(target, args);
+      };
+    },
+  });
+}
+
+function createBacklogClient({ config, projectId, externalAccessScope }) {
+  const scope = externalAccessScope || createExternalAccessScope({ config, projectId });
+  const { project } = scopeState(scope, projectId);
   if (config.backlog && config.backlog.fakeFixturePath) {
-    return new FixtureBacklogClient({
+    return guardedClient(new FixtureBacklogClient({
       fixturePath: path.resolve(config.backlog.fakeFixturePath),
-    });
+    }), scope, projectId);
   }
 
-  return new BacklogClient({ project });
+  return new BacklogClient({
+    project,
+    gateway: new BacklogRequestGateway({ scope, expectedProjectId: projectId }),
+  });
 }
 
 module.exports = {

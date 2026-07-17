@@ -1,6 +1,9 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { createSyncJobRepository } = require("../infrastructure/SyncJobRepository");
 const { getHandler } = require("./handlerRegistry");
+const { createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
+
+const EXTERNAL_JOB_TYPES = new Set(["manual_pull", "sync_translate_jira", "push_issue", "push_comment"]);
 
 async function runLockedJob({ config, job, repository }) {
   const handler = getHandler(job.job_type);
@@ -18,7 +21,10 @@ async function runLockedJob({ config, job, repository }) {
   }
 
   try {
-    const result = await handler(job, { config });
+    const externalAccessScope = EXTERNAL_JOB_TYPES.has(job.job_type)
+      ? createExternalAccessScope({ config, projectId: job.project_id })
+      : undefined;
+    const result = await handler(job, { config, externalAccessScope });
     return {
       processed: true,
       job: repository.markSuccess(job.id, { handler_result: result }),

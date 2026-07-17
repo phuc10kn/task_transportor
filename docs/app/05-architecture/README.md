@@ -41,6 +41,7 @@ Cách app áp dụng custom modular monolith hiện tại:
 - Sync sở hữu job state và journal, nhưng không chiếm business ownership của module khác.
 - Jira outbound phải đi qua dry-run/readiness/pre-check trước khi ghi thật.
 - Translation sở hữu review lifecycle; AI transport/protocol nằm ở `src/infrastructure/ai`.
+- HTTP egress Backlog/Jira chỉ tồn tại dưới `src/infrastructure/external/<provider>`. Module adapter gọi named operation đã đăng ký; scope authoritative được mint từ `projectId`, snapshot Project qua `ProjectsApi`, và deny mặc định khi capability/operation/endpoint không hợp lệ. AI transport tiếp tục là boundary độc lập.
 - Dashboard và Jira có read exception có kiểm soát.
 - Cross-module write mặc định bị cấm.
 

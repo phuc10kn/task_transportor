@@ -33,6 +33,7 @@ function rowToJob(row) {
     issue_backlog_issue_key,
     issue_jira_issue_key,
     project_name,
+    last_error_details_json,
     ...job
   } = row;
   const payload = parseJson(row.payload_json, {});
@@ -55,6 +56,26 @@ function rowToJob(row) {
     source_issue_key: issueKeyForSystem(job.direction_from, keys),
     target_issue_key: issueKeyForSystem(job.direction_to, keys),
     payload_json: payload,
+    last_error_details: parseJson(last_error_details_json, null),
+    last_error_code: parseJson(last_error_details_json, {}).error_code || null,
+  };
+}
+
+function sanitizedErrorEvidence(error, job, retryable) {
+  const source = error && error.details && typeof error.details === "object" ? error.details : {};
+  const allowed = [
+    "provider",
+    "capability",
+    "operation",
+    "endpoint_template",
+    "expected_project_id",
+    "actual_project_id",
+  ];
+  return {
+    error_code: error && error.code || "SYNC_JOB_FAILED",
+    retryable,
+    job_id: job.id,
+    ...Object.fromEntries(allowed.filter((key) => source[key] !== undefined).map((key) => [key, source[key]])),
   };
 }
 
@@ -87,6 +108,14 @@ function syncJobSelectSql(where = "") {
             ) AS inferred_issue_id,
             issues.backlog_issue_key AS issue_backlog_issue_key,
             issues.jira_issue_key AS issue_jira_issue_key,
+            (
+              SELECT details_json
+              FROM sync_journal
+              WHERE sync_journal.sync_job_id = sync_jobs.id
+                AND sync_journal.action = 'job_failed'
+              ORDER BY sync_journal.id DESC
+              LIMIT 1
+            ) AS last_error_details_json,
             (
               SELECT MAX(sync_journal.created_at)
               FROM sync_journal
@@ -537,6 +566,7 @@ function createSyncJobRepository({ config }) {
           const retryOffset = retryAfterSeconds && retryAfterSeconds > 0
             ? `+${retryAfterSeconds} seconds`
             : `+${backoff} minutes`;
+          const evidence = sanitizedErrorEvidence(error, existing, retryable);
 
           db
             .prepare(
@@ -558,16 +588,20 @@ function createSyncJobRepository({ config }) {
             trigger: "system",
             error_message: errorMessage,
             details_json: {
-              retryable,
+              ...evidence,
               backoff_minutes: shouldRetry && !(retryAfterSeconds && retryAfterSeconds > 0) ? backoff : null,
               retry_after_seconds: shouldRetry && retryAfterSeconds && retryAfterSeconds > 0
                 ? retryAfterSeconds
                 : null,
             },
             attempt_count: existing.attempt_count,
+            correlation_id: parseJson(existing.payload_json, {}).request_correlation_id || null,
           }));
 
-          return rowToJob(job);
+          return rowToJob({
+            ...job,
+            last_error_details_json: shouldRetry ? null : stringifyJson(evidence),
+          });
         })
       );
     },
