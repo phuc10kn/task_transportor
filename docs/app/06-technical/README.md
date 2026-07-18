@@ -30,6 +30,15 @@ Runtime config:
 - Project credential có cột DB cho `backlog_api_key`, `jira_email`, `jira_api_token`.
 - Project lưu `backlog_external_read_enabled`, `jira_external_read_enabled` và `jira_external_write_enabled`. Project mới mặc định `true/true/false`; migration giữ Project cũ ở `true/true/true`. Provider URL có giá trị phải là HTTPS origin-only; Project chưa cấu hình được phép để trống.
 - Các biến `*_env` còn phục vụ import/compat, command import là `npm run migrate:credentials-from-env`.
+- Logging dùng Pino với `LOG_LEVEL` (mặc định `info`, test mặc định `silent`), `LOG_STORAGE_PATH` (mặc định `storage/logs`), `LOG_RETENTION_DAYS` (mặc định `7`) và `LOG_STDOUT_ENABLED` (mặc định tắt). Không dùng `pino-http`, pretty transport hoặc worker transport riêng.
+
+Observability contract:
+
+- HTTP ghi progressive event `request.start` trước body parser, `request.body` sau parser, `request.resolved` sau auth/Project resolution và `request.end` với response body trước khi gửi. `x-correlation-id` hợp lệ được giữ lại; response luôn trả `x-correlation-id` và `x-request-id`.
+- Sync job lưu bền `trace_id` và `correlation_id` trong `sync_jobs`; journal có `trace_id`. Event gồm `job.enqueued`/`job.reused`, `job.start`, `job.retry` và terminal `job.end`, nên worker restart vẫn tiếp tục cùng trace.
+- External HTTP ghi file riêng cho `backlog`, `jira`, `deepseek`, `openai`. `request` và `response` là hai record nối bằng `external_request_id`; response có status, duration, optional provider request ID và body. Timeout/network ghi `error` riêng không giả lập response.
+- JSON/text body được giữ sau recursive redaction; credential/header/token/password bị thay bằng `[REDACTED]`. Binary không ghi body và đặt `binary_omitted=true`.
+- File là NDJSON theo UTC day tại `storage/logs/app/<service>-YYYY-MM-DD.ndjson` và `storage/logs/external/<provider>/<provider>-YYYY-MM-DD.ndjson`; retention cleanup chạy khi logger khởi tạo channel. `sync_journal` vẫn là audit trail nghiệp vụ độc lập.
 
 Translation AI config:
 
@@ -41,7 +50,7 @@ Translation AI config:
 
 Persistence/schema:
 
-- Bảng lõi gồm `admin_users`, `projects`, `issues`, `issue_revisions`, `issue_comments`, `issue_attachments`, `issue_worklogs`, `translation_queue`, `translation_glossary_concepts`, `translation_glossary_terms`, `mapping_rules`, `anomaly_log`, `sync_jobs`, `sync_journal`, `pull_state`, `webhook_events`.
+- Bảng lõi gồm `admin_users`, `projects`, `issues`, `issue_revisions`, `issue_comments`, `issue_attachments`, `issue_worklogs`, `translation_queue`, `translation_glossary_concepts`, `translation_glossary_terms`, `mapping_rules`, `anomaly_log`, `sync_jobs`, `sync_journal`, `pull_state`, `webhook_events`. Migration `019_observability_trace.sql` thêm trace identity bền cho job/journal.
 - `issues.fields_json` là field-level source tracking với các nhánh `backlog`, `cis`, `jira`.
 - Nhánh `fields_json.<field>.cis` là canonical branch vận hành cho Issue Editor và Jira outbound.
 - `fields_json.story_point.cis` là số không âm, effective default `1` và tham gia canonical hash. Với `10kn-developer.atlassian.net/WEC1` issue type `Task`, Jira payload dùng `customfield_10038`; metadata được xác nhận bằng Jira REST GET là field `Story Points`, schema `number/float`, operation `set` và required trên Task.

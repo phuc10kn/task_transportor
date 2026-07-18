@@ -33,6 +33,7 @@ Lite được coi là đạt ở mức product khi:
 - Sync thật không gọi Jira nếu pre-check fail.
 - Sync thật create/update Jira khi pre-check pass.
 - Backlog/Jira egress phải khớp named operation + capability Project; gate off tại action không enqueue, gate off trước worker tạo terminal `failed` non-retryable với `EXTERNAL_GATE_BLOCKED` và phục hồi được code/evidence sau reload. Fake/fixture tuân cùng gate và verify không gọi provider thật.
+- Operational trace phải nối được HTTP → enqueue → worker → external call bằng trace/correlation bền; từng provider có request/response riêng, body JSON/text sau redaction, binary omission và network error rõ. Log không được chứa canary credential và không thay thế `sync_journal`.
 - Attachment download failure không block issue ingest/sync, nhưng hiển thị trạng thái lỗi và có retry riêng.
 - Job lỗi retry theo policy, hết retry chuyển `failed`, admin retry được.
 - Dashboard/Admin UI hiển thị pending review, missing mapping, failed job và open anomaly.
@@ -60,6 +61,7 @@ Verification command:
 - `npm run verify:external-provider-gateways`: contract/gate/worker evidence local.
 - `npm run verify:external-http-transport`: HTTP transport giữ nguyên status, text/binary body và timeout mapping.
 - `npm run verify:external-egress-boundary`: static guard chống module tự gọi network.
+- `npm run verify:observability`: schema/event order, durable trace, provider routing, body/redaction và error/binary contract.
 - `npm run verify:phase07`: Admin UI acceptance.
 - `npm run admin:ci`: kiểm tra cú pháp JavaScript, asset/route foundation và chặn dependency Next/React/TypeScript/Tailwind trong Admin Web.
 - `npm run verify:admin-ui-e2e`: Playwright behavior của Tabler MPA; kiểm tra login/Project gate, URL document route, Backlog job, Issue Editor/Jira gate, Translation Queue và Glossary.

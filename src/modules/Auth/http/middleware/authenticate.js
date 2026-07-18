@@ -1,5 +1,6 @@
 const { AppError } = require("../../../../http/errors/AppError");
 const { verifyJwt } = require("../../../../infrastructure/security/jwt");
+const { updateTraceContext } = require("../../../../infrastructure/observability/traceContext");
 const AuthApi = require("../../AuthApi");
 
 function createAuthenticateAdmin() {
@@ -33,6 +34,7 @@ function createAuthenticateAdmin() {
         config: req.app.locals.config,
         adminId: Number(payload.sub),
       });
+      updateTraceContext({ user_id: req.user.id });
       next();
     } catch (error) {
       next(error);

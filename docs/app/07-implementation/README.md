@@ -18,6 +18,7 @@ Source organization:
 - Server start nằm ở `src/server.js`.
 - Admin Web source nằm ở `apps/admin-web`; `server.js` dùng Node HTTP chuẩn để phục vụ document/assets và proxy API, `views/layout.js` render shell Tabler, `public/shared.js` giữ auth/workspace/API primitives và `public/pages/*.js` giữ controller theo màn. `scripts/admin-dev.js` và `npm run admin:start -- --port <port>` chạy cùng MPA server; Express không còn source UI/static server.
 - Config loader nằm ở `src/config/env.js`.
+- Pino logger, AsyncLocalStorage trace context và external lifecycle nằm ở `src/infrastructure/observability`; request middleware nằm ở `src/http/middleware/requestObservability.js`.
 - Database connection/migration nằm ở `src/infrastructure/database`.
 - SQL migrations nằm ở `src/db/migrations`.
 - Module app nằm dưới `src/modules/<ModuleName>`.
@@ -41,6 +42,7 @@ Implementation flow theo code hiện tại:
 - Mapping/anomaly: Jira dry-run dùng approved mapping qua CIS và tạo/đọc anomaly để quyết định `can_sync`.
 - Jira outbound: dry-run chạy qua API và ghi journal; sync thật enqueue `push_issue`, worker gọi Jira client khi gate pass.
 - External provider gateway: application chỉ cấp `projectId`; worker mint một scope Project ở đầu handler và dùng lại cho Backlog/Jira. `external/core` giữ scope/policy, `external/providers` giữ provider operation/auth/error mapping và `external/transports` giữ HTTP/protocol mechanics. Fake/fixture cũng chạy capability guard trước adapter. Lỗi gate là non-retryable `EXTERNAL_GATE_BLOCKED`; `job_failed.details_json` giữ evidence đã sanitize và Sync Job read model expose `last_error_code`/`last_error_details` sau reload.
+- Observability: Express phát request lifecycle theo từng record; enqueue ghi trace vào SQLite, worker phục hồi context từ job; shared HTTP transport phát request/response/error vào file provider tương ứng. Admin Web proxy chuyển tiếp `x-correlation-id`, ghi proxy metadata và trả correlation trong `API_PROXY_ERROR`.
 
 Issue Editor contract:
 
@@ -62,6 +64,7 @@ Implementation verification hiện có:
 - `npm run verify:system-issues` kiểm tra candidate browse/readiness, manual create, identity scope và candidate sync.
 - `npm run verify:project-scope` chạy static cutover gate rồi kiểm tra middleware, cross-project resource isolation, Dashboard A/B, Project disabled và legacy 404.
 - `npm run verify:external-provider-gateways` kiểm tra capability, scope authenticity/cross-project, fake guard, enqueue/worker/reload evidence và operation contract; `npm run verify:external-http-transport` kiểm tra HTTP status/text/binary/timeout; `npm run verify:external-egress-boundary` cấm network primitive trong `src/modules/**`.
+- `npm run verify:observability` kiểm tra progressive HTTP events, response body, durable job trace, provider file routing, request/response pairing, binary omission và redaction canary.
 - `npm test` chạy toàn bộ verify phase00-07.
 - Khi sửa Translation AI, kiểm tra module Translation không tự gọi `fetch`, `child_process`, `spawn`, `spawnSync`.
 

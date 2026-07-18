@@ -35,7 +35,17 @@ function createAiClientError({ code, message, status, retryable, details, cause 
   return error;
 }
 
-function createOpenAiCompatibleChatClient({ apiKey, baseUrl, timeoutSeconds = 60, includeThinking = true }) {
+function createOpenAiCompatibleChatClient({
+  apiKey,
+  baseUrl,
+  timeoutSeconds = 60,
+  includeThinking = true,
+  config,
+  provider = "deepseek",
+  httpTransport,
+}) {
+  const transport = httpTransport || createHttpTransport();
+
   async function createJsonChatCompletion(input) {
     if (!apiKey) {
       throw createAiClientError({
@@ -46,56 +56,57 @@ function createOpenAiCompatibleChatClient({ apiKey, baseUrl, timeoutSeconds = 60
       });
     }
 
-    if (typeof fetch !== "function") {
-      throw createAiClientError({
-        code: "FETCH_UNAVAILABLE",
-        message: "Global fetch is required for AI chat requests.",
-        status: 500,
-        retryable: false,
-      });
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1000);
     let response;
     let body;
+    const requestBody = {
+      model: input.model,
+      messages: [
+        { role: "system", content: input.system },
+        { role: "user", content: input.user },
+      ],
+      response_format: { type: "json_object" },
+      stream: false,
+      temperature: temperatureFor(input.model, input.temperature),
+      ...(includeThinking ? { thinking: input.thinking || { type: "disabled" } } : {}),
+      ...(input.reasoning_effort ? { reasoning_effort: input.reasoning_effort } : {}),
+    };
 
     try {
-      response = await fetch(chatCompletionsUrl(baseUrl), {
+      response = await transport.request({
+        url: chatCompletionsUrl(baseUrl),
         method: "POST",
         headers: {
           "authorization": `Bearer ${apiKey}`,
           "content-type": "application/json",
         },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: input.model,
-          messages: [
-            { role: "system", content: input.system },
-            { role: "user", content: input.user },
-          ],
-          response_format: { type: "json_object" },
-          stream: false,
-          temperature: temperatureFor(input.model, input.temperature),
-          ...(includeThinking ? { thinking: input.thinking || { type: "disabled" } } : {}),
-          ...(input.reasoning_effort ? { reasoning_effort: input.reasoning_effort } : {}),
-        }),
+        body: JSON.stringify(requestBody),
+        logBody: requestBody,
+        timeoutMs: timeoutSeconds * 1000,
+        observability: config ? { config, provider, operation: "chat.completions" } : undefined,
       });
-      body = await response.json().catch(() => null);
+      try { body = response.rawText ? JSON.parse(response.rawText) : null; }
+      catch (_error) { body = null; }
     } catch (error) {
+      if (error && error.code === "EXTERNAL_HTTP_FETCH_UNAVAILABLE") {
+        throw createAiClientError({
+          code: "FETCH_UNAVAILABLE",
+          message: "Global fetch is required for AI chat requests.",
+          status: 500,
+          retryable: false,
+          cause: error,
+        });
+      }
       throw createAiClientError({
-        code: error && error.name === "AbortError"
+        code: error && error.code === "EXTERNAL_HTTP_TIMEOUT"
           ? "AI_OPENAI_COMPATIBLE_TIMEOUT"
           : "AI_OPENAI_COMPATIBLE_REQUEST_ERROR",
-        message: error && error.name === "AbortError"
+        message: error && error.code === "EXTERNAL_HTTP_TIMEOUT"
           ? "OpenAI-compatible AI request timed out."
           : "OpenAI-compatible AI request failed.",
-        status: error && error.name === "AbortError" ? 504 : 502,
+        status: error && error.code === "EXTERNAL_HTTP_TIMEOUT" ? 504 : 502,
         retryable: true,
         cause: error,
       });
-    } finally {
-      clearTimeout(timeout);
     }
 
     if (!response.ok) {
@@ -127,3 +138,4 @@ function createOpenAiCompatibleChatClient({ apiKey, baseUrl, timeoutSeconds = 60
 module.exports = {
   createOpenAiCompatibleChatClient,
 };
+const { createHttpTransport } = require("../http/HttpTransport");

@@ -1,4 +1,5 @@
 const { AppError } = require("../errors/AppError");
+const { updateTraceContext } = require("../../infrastructure/observability/traceContext");
 const ProjectsApi = require("../../modules/Projects/ProjectsApi");
 
 function positiveInteger(value) {
@@ -34,6 +35,16 @@ function requireProjectWorkspace(req, res, next) {
     assertMatchingScope(req.query && req.query.project_id, projectId, "query");
     assertMatchingScope(req.body && req.body.project_id, projectId, "body");
     req.project = project;
+    updateTraceContext({ project_id: projectId });
+    if (req.app.locals.logger) {
+      req.app.locals.logger.info({
+        event: "request.resolved",
+        ...(req.requestId ? { request_id: req.requestId } : {}),
+        ...(req.user && req.user.id ? { user_id: req.user.id } : {}),
+        project_id: projectId,
+        action: `${req.method} ${req.originalUrl.split("?")[0]}`,
+      });
+    }
     next();
   } catch (error) {
     next(error);

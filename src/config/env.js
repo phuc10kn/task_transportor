@@ -26,6 +26,13 @@ function boolFromEnv(value, fallback = false) {
   return ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
 }
 
+function logLevelFromEnv(value, fallback) {
+  const level = String(value || fallback).toLowerCase();
+  const allowed = new Set(["trace", "debug", "info", "warn", "error", "fatal", "silent"]);
+  if (!allowed.has(level)) throw new Error(`Invalid LOG_LEVEL: ${value}`);
+  return level;
+}
+
 function resolveFromRoot(value, fallback) {
   const rawPath = value || fallback;
 
@@ -81,6 +88,11 @@ function loadConfig(env = process.env) {
     },
     http: {
       jsonLimit: env.HTTP_JSON_LIMIT || "1mb",
+    },
+    logging: {
+      level: logLevelFromEnv(env.LOG_LEVEL, env.NODE_ENV === "test" ? "silent" : "info"),
+      retentionDays: numberFromEnv(env.LOG_RETENTION_DAYS, 7),
+      stdoutEnabled: boolFromEnv(env.LOG_STDOUT_ENABLED, false),
     },
     worker: {
       enabled: boolFromEnv(env.WORKER_ENABLED, false),

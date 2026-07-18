@@ -4,10 +4,22 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { renderDocument } = require("./views/layout");
+const { getLogger } = require("../../src/infrastructure/observability/logger");
+const { createId, correlationIdFrom, withTraceContext } = require("../../src/infrastructure/observability/traceContext");
 
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
 const TABLER = path.join(ROOT, "node_modules", "@tabler", "core", "dist");
+const PROJECT_ROOT = path.resolve(ROOT, "../..");
+const proxyLogConfig = {
+  storage: { logs: path.resolve(PROJECT_ROOT, process.env.LOG_STORAGE_PATH || "storage/logs") },
+  logging: {
+    level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "test" ? "silent" : "info"),
+    retentionDays: Number(process.env.LOG_RETENTION_DAYS || 7),
+    stdoutEnabled: ["1", "true", "yes", "on"].includes(String(process.env.LOG_STDOUT_ENABLED || "").toLowerCase()),
+  },
+};
+const proxyLogger = getLogger(proxyLogConfig, { service: "admin-web" });
 
 const routes = [
   { match: /^\/login\/?$/, page: "login", title: "Sign in", script: "auth.js" },
@@ -74,7 +86,13 @@ async function serveAsset(res, pathname) {
   return true;
 }
 
-async function proxyApi(req, res, url) {
+function proxyBodyForLog(body) {
+  if (!body) return null;
+  const text = body.toString("utf8");
+  try { return JSON.parse(text); } catch (_error) { return text; }
+}
+
+async function proxyApi(req, res, url, { logger = proxyLogger, fetchImpl = globalThis.fetch } = {}) {
   const origin = (process.env.CIS_API_ORIGIN || "http://127.0.0.1:3000").replace(/\/$/, "");
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
@@ -82,32 +100,61 @@ async function proxyApi(req, res, url) {
   const headers = { ...req.headers };
   delete headers.host;
   delete headers["content-length"];
+  const correlationId = correlationIdFrom(req.headers["x-correlation-id"]) || createId("cor");
+  const traceId = createId("trc");
+  headers["x-correlation-id"] = correlationId;
 
-  try {
-    const upstream = await fetch(`${origin}${url.pathname}${url.search}`, {
-      method: req.method,
-      headers,
-      body: req.method === "GET" || req.method === "HEAD" ? undefined : body,
-      signal: AbortSignal.timeout(60000),
-    });
-    const responseBody = Buffer.from(await upstream.arrayBuffer());
-    const responseHeaders = {};
-    for (const name of ["content-type", "cache-control", "x-correlation-id"]) {
-      const value = upstream.headers.get(name);
-      if (value) responseHeaders[name] = value;
+  return withTraceContext({ trace_id: traceId, correlation_id: correlationId }, async () => {
+    const startedAt = Date.now();
+    logger.info({ event: "proxy.start", request_id: correlationId, method: req.method, path: `${url.pathname}${url.search}` });
+    try {
+      const upstream = await fetchImpl(`${origin}${url.pathname}${url.search}`, {
+        method: req.method,
+        headers,
+        body: req.method === "GET" || req.method === "HEAD" ? undefined : body,
+        signal: AbortSignal.timeout(60000),
+      });
+      const responseBody = Buffer.from(await upstream.arrayBuffer());
+      const responseHeaders = {};
+      for (const name of ["content-type", "cache-control", "x-correlation-id"]) {
+        const value = upstream.headers.get(name);
+        if (value) responseHeaders[name] = value;
+      }
+      responseHeaders["x-correlation-id"] = responseHeaders["x-correlation-id"] || correlationId;
+      responseHeaders["content-length"] = responseBody.length;
+      logger.info({
+        event: "proxy.end",
+        request_id: correlationId,
+        status: upstream.status,
+        duration_ms: Date.now() - startedAt,
+      });
+      res.writeHead(upstream.status, responseHeaders);
+      res.end(responseBody);
+    } catch (error) {
+      const loggedBody = logger.sanitizeBody(proxyBodyForLog(body));
+      logger.error({
+        event: "proxy.error",
+        request_id: correlationId,
+        duration_ms: Date.now() - startedAt,
+        body: loggedBody.body,
+        ...(loggedBody.redacted.length ? { redacted: loggedBody.redacted } : {}),
+        error: { code: "API_PROXY_ERROR", message: error.message || "API proxy request failed." },
+      });
+      send(
+        res,
+        502,
+        JSON.stringify({ error: { code: "API_PROXY_ERROR", message: error.message, correlation_id: correlationId } }),
+        "application/json; charset=utf-8",
+        { "x-correlation-id": correlationId }
+      );
     }
-    responseHeaders["content-length"] = responseBody.length;
-    res.writeHead(upstream.status, responseHeaders);
-    res.end(responseBody);
-  } catch (error) {
-    send(res, 502, JSON.stringify({ error: { code: "API_PROXY_ERROR", message: error.message } }), "application/json; charset=utf-8");
-  }
+  });
 }
 
-function createServer() {
+function createServer({ logger = proxyLogger, fetchImpl = globalThis.fetch } = {}) {
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://admin.local");
-    if (url.pathname.startsWith("/api/v1/")) return proxyApi(req, res, url);
+    if (url.pathname.startsWith("/api/v1/")) return proxyApi(req, res, url, { logger, fetchImpl });
     if (await serveAsset(res, url.pathname)) return;
     if (url.pathname === "/") {
       res.writeHead(302, { location: "/projects" });
@@ -141,7 +188,11 @@ function portFrom(argv = process.argv, env = process.env) {
 if (require.main === module) {
   const port = portFrom();
   const host = process.env.ADMIN_WEB_HOST || "127.0.0.1";
-  createServer().listen(port, host, () => console.log(`Admin Web running on http://${host}:${port}`));
+  const server = createServer();
+  server.listen(port, host, () => proxyLogger.info({ event: "server.started", host, port }));
+  const shutdown = () => server.close(() => { void proxyLogger.close(); });
+  process.once("SIGINT", shutdown);
+  process.once("SIGTERM", shutdown);
 }
 
 module.exports = { createServer, portFrom, routeFor };

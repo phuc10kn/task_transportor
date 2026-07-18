@@ -2,7 +2,11 @@ const express = require("express");
 const cors = require("cors");
 
 const { loadConfig } = require("./config/env");
-const { createCorrelationIdMiddleware } = require("./http/middleware/correlationId");
+const { getLogger } = require("./infrastructure/observability/logger");
+const {
+  createRequestBodyLoggingMiddleware,
+  createRequestObservabilityMiddleware,
+} = require("./http/middleware/requestObservability");
 const { requireProjectWorkspace } = require("./http/middleware/requireProjectWorkspace");
 const { notFoundHandler, errorHandler } = require("./http/middleware/errorHandlers");
 const { success } = require("./http/response/envelope");
@@ -31,14 +35,17 @@ function healthPayload(config) {
 
 function createApp(options = {}) {
   const config = options.config || loadConfig();
+  const logger = options.logger || getLogger(config);
   const app = express();
 
   app.locals.config = config;
+  app.locals.logger = logger;
 
+  app.use(createRequestObservabilityMiddleware({ logger }));
   app.use(cors());
   app.use(express.json({ limit: config.http.jsonLimit }));
   app.use(express.urlencoded({ extended: true }));
-  app.use(createCorrelationIdMiddleware());
+  app.use(createRequestBodyLoggingMiddleware({ logger }));
 
   app.get("/", (req, res) => {
     success(res, {

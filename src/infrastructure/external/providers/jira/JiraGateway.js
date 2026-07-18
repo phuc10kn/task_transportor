@@ -32,6 +32,7 @@ class JiraGateway {
     this.scope = scope;
     this.expectedProjectId = expectedProjectId;
     const { config, project } = scopeState(scope, expectedProjectId);
+    this.config = config;
     this.project = project;
     this.timeoutMs = Math.max(1, Number(config.jira.requestTimeoutSeconds || 10)) * 1000;
     this.transport = transport || createHttpTransport();
@@ -59,7 +60,9 @@ class JiraGateway {
           ...(body ? { "Content-Type": "application/json" } : {}),
         },
         body: body ? JSON.stringify(body) : undefined,
+        logBody: body,
         timeoutMs: this.timeoutMs,
+        observability: { config: this.config, provider: "jira", operation },
       });
       const rawText = response.rawText;
       let parsed = null;

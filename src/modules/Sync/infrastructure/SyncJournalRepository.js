@@ -1,4 +1,5 @@
 const { createConnection } = require("../../../infrastructure/database/connection");
+const { currentTraceContext } = require("../../../infrastructure/observability/traceContext");
 const { parseJson, stringifyJson } = require("../support/json");
 
 function issueKeyForSystem(system, keys) {
@@ -63,6 +64,7 @@ function rowToJournal(row) {
 }
 
 function insertJournal(db, input) {
+  const trace = currentTraceContext();
   const result = db
     .prepare(
       `INSERT INTO sync_journal (
@@ -82,9 +84,10 @@ function insertJournal(db, input) {
         error_message,
         attempt_count,
         executed_by,
-        correlation_id
+        correlation_id,
+        trace_id
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       input.sync_job_id || null,
@@ -103,7 +106,8 @@ function insertJournal(db, input) {
       input.error_message || null,
       input.attempt_count || 0,
       input.executed_by || null,
-      input.correlation_id || null
+      input.correlation_id || trace.correlation_id || null,
+      input.trace_id || trace.trace_id || null
     );
 
   return rowToJournal(db.prepare("SELECT * FROM sync_journal WHERE id = ?").get(result.lastInsertRowid));

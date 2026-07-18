@@ -121,6 +121,9 @@ Ranh giới AI:
 - Trong nội bộ Translation, tránh dùng tên `provider` cho contract nghiệp vụ mới. Ưu tiên `adapter`, `generator`, `createConfiguredTranslationAdapter`, `aiProvider` chỉ ở lớp mapping config.
 - Prompt, parse output, validation translation draft, review state và audit thuộc module Translation.
 - URL, auth header, timeout, request/response protocol OpenAI-compatible/Anthropic-compatible thuộc `src/infrastructure/external/transports/`; chọn provider/config thuộc provider gateway.
+- Observability dùng Pino tại `src/infrastructure/observability`. HTTP inbound, sync job và external request dùng cùng `trace_id`; `sync_jobs.trace_id`/`correlation_id` phải giữ trace qua worker restart.
+- External log ghi riêng theo provider `backlog`, `jira`, `deepseek`, `openai`. Mỗi outbound call có hai event `request` và `response` ghép bằng `external_request_id`; network/timeout dùng event `error`. Body JSON/text được log sau redaction, binary chỉ ghi `binary_omitted`.
+- Không ghi credential, authorization header, cookie, password hoặc API token vào log. `sync_journal` vẫn là audit nghiệp vụ; Pino log chỉ là operational trace, không thay thế journal.
 
 Sau khi sửa AI Translation, kiểm tra:
 

@@ -39,7 +39,16 @@ function createAiClientError({ code, message, status, retryable, details, cause 
   return error;
 }
 
-function createAnthropicCompatibleMessagesClient({ apiKey, baseUrl, timeoutSeconds = 60 }) {
+function createAnthropicCompatibleMessagesClient({
+  apiKey,
+  baseUrl,
+  timeoutSeconds = 60,
+  config,
+  provider = "deepseek",
+  httpTransport,
+}) {
+  const transport = httpTransport || createHttpTransport();
+
   async function createJsonChatCompletion(input) {
     if (!apiKey) {
       throw createAiClientError({
@@ -50,60 +59,61 @@ function createAnthropicCompatibleMessagesClient({ apiKey, baseUrl, timeoutSecon
       });
     }
 
-    if (typeof fetch !== "function") {
-      throw createAiClientError({
-        code: "FETCH_UNAVAILABLE",
-        message: "Global fetch is required for AI messages requests.",
-        status: 500,
-        retryable: false,
-      });
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1000);
     let response;
     let body;
+    const requestBody = {
+      model: input.model,
+      max_tokens: input.max_tokens || 4096,
+      system: input.system,
+      messages: [
+        {
+          role: "user",
+          content: [{ type: "text", text: input.user }],
+        },
+      ],
+      stream: false,
+      temperature: input.temperature === undefined ? 0.2 : input.temperature,
+      thinking: input.thinking || { type: "disabled" },
+      ...(input.reasoning_effort ? { output_config: { effort: input.reasoning_effort } } : {}),
+    };
 
     try {
-      response = await fetch(messagesUrl(baseUrl), {
+      response = await transport.request({
+        url: messagesUrl(baseUrl),
         method: "POST",
         headers: {
           "x-api-key": apiKey,
           "anthropic-version": "2023-06-01",
           "content-type": "application/json",
         },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: input.model,
-          max_tokens: input.max_tokens || 4096,
-          system: input.system,
-          messages: [
-            {
-              role: "user",
-              content: [{ type: "text", text: input.user }],
-            },
-          ],
-          stream: false,
-          temperature: input.temperature === undefined ? 0.2 : input.temperature,
-          thinking: input.thinking || { type: "disabled" },
-          ...(input.reasoning_effort ? { output_config: { effort: input.reasoning_effort } } : {}),
-        }),
+        body: JSON.stringify(requestBody),
+        logBody: requestBody,
+        timeoutMs: timeoutSeconds * 1000,
+        observability: config ? { config, provider, operation: "messages.create" } : undefined,
       });
-      body = await response.json().catch(() => null);
+      try { body = response.rawText ? JSON.parse(response.rawText) : null; }
+      catch (_error) { body = null; }
     } catch (error) {
+      if (error && error.code === "EXTERNAL_HTTP_FETCH_UNAVAILABLE") {
+        throw createAiClientError({
+          code: "FETCH_UNAVAILABLE",
+          message: "Global fetch is required for AI messages requests.",
+          status: 500,
+          retryable: false,
+          cause: error,
+        });
+      }
       throw createAiClientError({
-        code: error && error.name === "AbortError"
+        code: error && error.code === "EXTERNAL_HTTP_TIMEOUT"
           ? "AI_ANTHROPIC_COMPATIBLE_TIMEOUT"
           : "AI_ANTHROPIC_COMPATIBLE_REQUEST_ERROR",
-        message: error && error.name === "AbortError"
+        message: error && error.code === "EXTERNAL_HTTP_TIMEOUT"
           ? "Anthropic-compatible AI request timed out."
           : "Anthropic-compatible AI request failed.",
-        status: error && error.name === "AbortError" ? 504 : 502,
+        status: error && error.code === "EXTERNAL_HTTP_TIMEOUT" ? 504 : 502,
         retryable: true,
         cause: error,
       });
-    } finally {
-      clearTimeout(timeout);
     }
 
     if (!response.ok) {
@@ -134,3 +144,4 @@ function createAnthropicCompatibleMessagesClient({ apiKey, baseUrl, timeoutSecon
 module.exports = {
   createAnthropicCompatibleMessagesClient,
 };
+const { createHttpTransport } = require("../http/HttpTransport");

@@ -20,6 +20,8 @@ function createDeepSeekGateway({ config, transport }) {
       apiKey: config.translation.deepSeekApiKey,
       baseUrl: config.translation.deepSeekOpenAiBaseUrl || config.translation.deepSeekBaseUrl,
       timeoutSeconds: config.translation.deepSeekRequestTimeoutSeconds,
+      config,
+      provider: "deepseek",
     });
   }
   if (transport === TRANSLATION_AI_TRANSPORTS.ANTHROPIC_COMPATIBLE) {
@@ -27,6 +29,8 @@ function createDeepSeekGateway({ config, transport }) {
       apiKey: config.translation.deepSeekApiKey,
       baseUrl: config.translation.deepSeekAnthropicBaseUrl,
       timeoutSeconds: config.translation.deepSeekRequestTimeoutSeconds,
+      config,
+      provider: "deepseek",
     });
   }
   throw unsupportedTransport(transport);

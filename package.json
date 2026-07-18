@@ -47,6 +47,7 @@
     "verify:external-provider-gateways": "node scripts/verify/external-provider-gateways.js",
     "verify:external-http-transport": "node scripts/verify/external-http-transport.js",
     "verify:external-egress-boundary": "node scripts/verify/external-egress-boundary.js",
+    "verify:observability": "node scripts/verify/observability.js",
     "verify:admin-ui-acceptance": "node scripts/verify/admin-ui-acceptance.js",
     "verify:cis-issue-list": "node scripts/verify/cis-issue-list.js",
     "verify:issue-editor-api": "node scripts/verify/issue-editor-api.js",
@@ -82,7 +83,7 @@
     "verify:phase05": "npm run verify:mapping-anomaly-dryrun",
     "verify:phase06": "npm run verify:jira-outbound",
     "verify:phase07": "npm run verify:admin-ui-acceptance",
-    "test": "npm run verify:phase00 && npm run verify:phase01 && npm run verify:project-scope && npm run verify:phase02 && npm run verify:phase03 && npm run verify:phase04 && npm run verify:phase05 && npm run verify:phase06 && npm run verify:external-provider-gateways && npm run verify:external-http-transport && npm run verify:external-egress-boundary && npm run verify:phase07 && npm run verify:docs && npm run verify:workbench && npm run verify:workbench:test && npm run verify:pr-change-manifest && npm run verify:docs-contract && npm run verify:entity-type-contract && npm run verify:entity-instance:architecture && npm run verify:relations:architecture && npm run verify:references:architecture && npm run verify:entity-instance:business && npm run verify:relations:business && npm run verify:references:business && npm run verify:architecture-baseline && npm run verify:architecture-trace"
+    "test": "npm run verify:phase00 && npm run verify:phase01 && npm run verify:project-scope && npm run verify:phase02 && npm run verify:phase03 && npm run verify:phase04 && npm run verify:phase05 && npm run verify:phase06 && npm run verify:external-provider-gateways && npm run verify:external-http-transport && npm run verify:external-egress-boundary && npm run verify:observability && npm run verify:phase07 && npm run verify:docs && npm run verify:workbench && npm run verify:workbench:test && npm run verify:pr-change-manifest && npm run verify:docs-contract && npm run verify:entity-type-contract && npm run verify:entity-instance:architecture && npm run verify:relations:architecture && npm run verify:references:architecture && npm run verify:entity-instance:business && npm run verify:relations:business && npm run verify:references:business && npm run verify:architecture-baseline && npm run verify:architecture-trace"
   },
   "keywords": [],
   "author": "",
@@ -92,7 +93,8 @@
     "better-sqlite3": "^12.11.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "pino": "^10.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

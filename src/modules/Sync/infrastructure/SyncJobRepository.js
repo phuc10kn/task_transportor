@@ -2,6 +2,7 @@ const crypto = require("crypto");
 
 const { createConnection } = require("../../../infrastructure/database/connection");
 const { runImmediateTransaction, runInTransaction } = require("../../../infrastructure/database/transaction");
+const { createId, currentTraceContext } = require("../../../infrastructure/observability/traceContext");
 const { SYNC_JOB_STATUSES } = require("../../../shared/stateConstants");
 const { insertJournal } = require("./SyncJournalRepository");
 const { backoffMinutesForAttempt } = require("../support/backoff");
@@ -94,6 +95,8 @@ function jobJournalInput(job, overrides) {
     direction_to: job.direction_to,
     job_type: job.job_type,
     attempt_count: job.attempt_count || 0,
+    trace_id: job.trace_id || null,
+    correlation_id: job.correlation_id || null,
     ...overrides,
   };
 }
@@ -155,12 +158,15 @@ function findActiveIssueJobInDb(db, issueId, jobType) {
 
 function insertJobInDb(db, input) {
   const id = input.id || crypto.randomUUID();
+  const trace = currentTraceContext();
+  const traceId = input.trace_id || trace.trace_id || createId("trc");
+  const correlationId = input.correlation_id || trace.correlation_id || createId("job");
   db.prepare(
     `INSERT INTO sync_jobs (
       id, project_id, issue_id, comment_id, attachment_id,
       direction_from, direction_to, job_type, payload_json,
-      dedupe_key, priority, max_attempts, run_after
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))`
+      dedupe_key, priority, max_attempts, run_after, trace_id, correlation_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')), ?, ?)`
   ).run(
     id,
     input.project_id,
@@ -174,7 +180,9 @@ function insertJobInDb(db, input) {
     input.dedupe_key || null,
     input.priority === undefined ? 100 : input.priority,
     input.max_attempts || 3,
-    input.run_after || null
+    input.run_after || null,
+    traceId,
+    correlationId
   );
   const job = db.prepare("SELECT * FROM sync_jobs WHERE id = ?").get(id);
   insertJournal(db, jobJournalInput(job, {
@@ -183,7 +191,8 @@ function insertJobInDb(db, input) {
     trigger: input.trigger || "manual",
     message: "Job enqueued.",
     executed_by: input.executed_by || null,
-    correlation_id: input.correlation_id || null,
+    trace_id: traceId,
+    correlation_id: correlationId,
   }));
   return rowToJob(job);
 }
@@ -599,7 +608,7 @@ function createSyncJobRepository({ config }) {
                 : null,
             },
             attempt_count: existing.attempt_count,
-            correlation_id: parseJson(existing.payload_json, {}).request_correlation_id || null,
+            correlation_id: existing.correlation_id || parseJson(existing.payload_json, {}).request_correlation_id || null,
           }));
 
           return rowToJob({

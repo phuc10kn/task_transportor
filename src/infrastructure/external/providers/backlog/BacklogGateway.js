@@ -12,7 +12,8 @@ class BacklogGateway {
   constructor({ scope, expectedProjectId, transport }) {
     this.scope = scope;
     this.expectedProjectId = expectedProjectId;
-    const { project } = scopeState(scope, expectedProjectId);
+    const { config, project } = scopeState(scope, expectedProjectId);
+    this.config = config;
     this.project = project;
     this.transport = transport || createHttpTransport();
   }
@@ -30,13 +31,17 @@ class BacklogGateway {
       if (Array.isArray(value)) value.forEach((item) => url.searchParams.append(key, item));
       else url.searchParams.set(key, value);
     }
-    return this.request(url, { ...options, responseType });
+    return this.request(url, { ...options, responseType, operation });
   }
 
-  async request(url, { timeoutMs = 10000, notFoundCode = "BACKLOG_API_ERROR", responseType = "json" } = {}) {
+  async request(url, { timeoutMs = 10000, notFoundCode = "BACKLOG_API_ERROR", responseType = "json", operation = "request" } = {}) {
     let response;
     try {
-      response = await this.transport.request({ url, timeoutMs });
+      response = await this.transport.request({
+        url,
+        timeoutMs,
+        observability: { config: this.config, provider: "backlog", operation },
+      });
     } catch (error) {
       if (error && error.code === "EXTERNAL_HTTP_TIMEOUT") {
         const timeout = new AppError({ code: "BACKLOG_REQUEST_TIMEOUT", message: "Backlog API request timed out.", status: 504 });

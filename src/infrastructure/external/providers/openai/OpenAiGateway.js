@@ -22,6 +22,8 @@ function createOpenAiGateway({ config, transport }) {
     baseUrl: config.translation.openAiBaseUrl,
     timeoutSeconds: config.translation.openAiRequestTimeoutSeconds,
     includeThinking: false,
+    config,
+    provider: "openai",
   });
 }
 

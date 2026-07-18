@@ -41,3 +41,4 @@ Nội dung cleanup cũ không còn là task list sống, nhưng giữ lại các
 - `Jira` outbound không được bỏ qua dry-run, readiness gate, stale preview guard và journal.
 - `Translation` được sở hữu prompt/parse/review/audit, nhưng AI transport/client/protocol thuộc `src/infrastructure/external/transports` và provider gateway thuộc `src/infrastructure/external/providers`.
 - Candidate orchestration gọi `TranslationApi.enqueueIssueTranslations` qua public boundary; Translation chỉ expose queue/review capability, còn `SyncApi` sở hữu translate job, lock, retry và journal execution.
+- Pino/trace context là shared technical infrastructure. Module được phát event tại lifecycle mà nó sở hữu, nhưng không dùng log file làm state hoặc thay `sync_journal`; external request/response logging nằm tại transport boundary để Backlog/Jira/AI không nhân bản cơ chế redaction và correlation.

@@ -18,6 +18,11 @@ function errorHandler(error, req, res, next) {
   const status = error.status || 500;
   const code = error.code || "INTERNAL_SERVER_ERROR";
   const message = status >= 500 ? "Internal server error." : error.message;
+  res.locals.requestError = {
+    code,
+    message: error.message || message,
+    retryable: Boolean(error.retryable),
+  };
 
   failure(res, {
     status,

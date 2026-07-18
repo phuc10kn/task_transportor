@@ -40,4 +40,5 @@ Concern này định nghĩa khung structure chuẩn cho custom modular monolith,
 - Code hiện tại đã có `*Api.js` cho các module chính; khi sửa module phải ưu tiên boundary này thay vì import sâu qua `application/`, `infrastructure`, `support` của module khác.
 - HTTP controller của module nằm trong `src/modules/<Domain>/http/`.
 - Shared technical capability đi vào `src/infrastructure/`. External integration dùng ba lớp cố định: `external/core` (scope/policy), `external/providers/<provider>` (operation/auth/error mapping) và `external/transports/<protocol>` (HTTP/protocol mechanics). Không tạo provider folder mới trực tiếp trong module hoặc ngoài `src/infrastructure/external/`.
+- Operational trace dùng shared capability `src/infrastructure/observability/`; provider transport phát event nhưng không sở hữu policy nghiệp vụ, job state hoặc audit.
 - Shared helper không thuộc domain đi vào `src/shared/`.

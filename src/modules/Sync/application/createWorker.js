@@ -1,22 +1,23 @@
 const { recoverStaleJobs } = require("./recoverStaleJobs");
 const { runWorkerOnce } = require("./runWorkerOnce");
+const { getLogger } = require("../../../infrastructure/observability/logger");
 
 function createWorker({ config, workerId = config.worker.id }) {
+  const logger = getLogger(config);
   let timer = null;
-  let running = false;
+  let activeTick = null;
 
-  async function tick() {
-    if (running) {
-      return;
-    }
-
-    running = true;
-    try {
-      recoverStaleJobs({ config, workerId });
-      await runWorkerOnce({ config, workerId });
-    } finally {
-      running = false;
-    }
+  function tick() {
+    if (activeTick) return activeTick;
+    activeTick = (async () => {
+      try {
+        recoverStaleJobs({ config, workerId });
+        await runWorkerOnce({ config, workerId });
+      } finally {
+        activeTick = null;
+      }
+    })();
+    return activeTick;
   }
 
   return {
@@ -24,16 +25,21 @@ function createWorker({ config, workerId = config.worker.id }) {
       await tick();
       timer = setInterval(() => {
         tick().catch((error) => {
-          console.error("Worker tick failed:", error.message);
+          logger.error({
+            event: "worker.tick_failed",
+            worker_id: workerId,
+            error: { code: error.code || "WORKER_TICK_FAILED", message: error.message },
+          });
         });
       }, config.worker.pollIntervalMs);
     },
 
-    stop() {
+    async stop() {
       if (timer) {
         clearInterval(timer);
         timer = null;
       }
+      if (activeTick) await activeTick;
     },
 
     tick,

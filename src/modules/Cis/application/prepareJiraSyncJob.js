@@ -1,6 +1,7 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { createConnection } = require("../../../infrastructure/database/connection");
 const { runImmediateTransaction } = require("../../../infrastructure/database/transaction");
+const { getLogger } = require("../../../infrastructure/observability/logger");
 const SyncApi = require("../../Sync/SyncApi");
 const { createCisRepository } = require("../infrastructure/CisRepository");
 const { buildCanonicalSyncSnapshot } = require("./buildCanonicalSyncSnapshot");
@@ -8,7 +9,7 @@ const { buildCanonicalSyncSnapshot } = require("./buildCanonicalSyncSnapshot");
 function prepareJiraSyncJob({ config, issueId, expectedHash, jiraFields, jiraPayloadOverride, targetAction, verifiedTraceKey, executedBy, correlationId, parentSyncJobId = null }) {
   const db = createConnection({ config });
   try {
-    return runImmediateTransaction(db, () => {
+    const result = runImmediateTransaction(db, () => {
       const repository = createCisRepository({ config, db });
       const issue = repository.getIssueById(issueId);
       if (!issue) throw new AppError({ code: "ISSUE_NOT_FOUND", message: "Issue not found.", status: 404 });
@@ -125,6 +126,15 @@ function prepareJiraSyncJob({ config, issueId, expectedHash, jiraFields, jiraPay
       });
       return { job: prepared.job, reused: prepared.reused, canonical_hash: h2 };
     });
+    getLogger(config).info({
+      event: result.reused ? "job.reused" : "job.enqueued",
+      job_id: result.job.id,
+      job_type: result.job.job_type,
+      ...(result.reused
+        ? { job_trace_id: result.job.trace_id, job_correlation_id: result.job.correlation_id }
+        : { trace_id: result.job.trace_id, correlation_id: result.job.correlation_id }),
+    });
+    return result;
   } finally {
     db.close();
   }

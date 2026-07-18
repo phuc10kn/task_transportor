@@ -30,6 +30,15 @@ Runtime env tối thiểu:
 - `DEEPSEEK_API_KEY` cần khi project dùng translation AI default DeepSeek.
 - Project dùng OpenAI cần `OPENAI_API_KEY`; local dev có thể đặt thêm `OPENAI_BASE_URL=https://api.openai.com/v1` và `OPENAI_REQUEST_TIMEOUT_SECONDS=60` trong `.env`. Operator chọn model theo nhu cầu: `gpt-5.6-luna` ưu tiên chi phí, `gpt-5.6-terra` cân bằng, `gpt-5.6-sol` ưu tiên chất lượng; `gpt-5.4-mini` và default tương thích `gpt-4.1-mini` là lựa chọn nhẹ hơn. Key không được nhập vào Project UI hoặc commit vào repository.
 - Backlog/Jira credential thật không commit; project config hiện lưu credential trong DB, env compat chỉ dùng cho import/migration.
+- Log mặc định ở `storage/logs`; có thể đổi bằng `LOG_STORAGE_PATH`. `LOG_LEVEL`, `LOG_RETENTION_DAYS` (mặc định 7 ngày) và `LOG_STDOUT_ENABLED` điều khiển verbosity, retention và stdout. Vì event lifecycle có body JSON/text sau redaction, môi trường triển khai phải áp dụng quyền truy cập và policy dữ liệu phù hợp cho thư mục log.
+
+Log và trace vận hành:
+
+- App/API: `storage/logs/app/cis-api-YYYY-MM-DD.ndjson`; Admin proxy: `storage/logs/app/admin-web-YYYY-MM-DD.ndjson`.
+- Provider: `storage/logs/external/{backlog|jira|deepseek|openai}/<provider>-YYYY-MM-DD.ndjson`.
+- Bắt đầu từ `correlation_id` hoặc `trace_id`, tìm `request.start`, `request.body`, `request.resolved`, các event `job.*`, rồi ghép external `request`/`response` bằng `external_request_id`. Nếu provider không trả HTTP response, tìm event `error` cùng ID.
+- `request.body` là client → CIS; `request.end.body` là CIS → client. External `request.body` là CIS → provider; external `response.body` là provider → CIS. Binary chỉ có `binary_omitted=true`.
+- File cũ quá retention được cleanup lúc channel log khởi tạo; shutdown SIGINT/SIGTERM chờ worker tick hiện tại và đóng Pino destination. Backup/restore business state vẫn dựa vào SQLite/storage, không dựa vào log.
 
 Worker operation:
 
@@ -77,7 +86,7 @@ Incident/recovery rule:
 - Không chạy destructive command như reset hard, xóa storage, ghi đè DB nếu chưa có backup rõ.
 - Nếu sync lỗi do config/credential, sửa config trước rồi retry job.
 - Không bypass dry-run/mapping/anomaly gate để publish Jira.
-- Khi có lỗi không rõ, xem dashboard, sync job, sync journal, anomaly và log trước khi retry.
+- Khi có lỗi không rõ, lấy `correlation_id` từ response/API proxy error, trace qua app/provider log, rồi đối chiếu dashboard, sync job, sync journal và anomaly trước khi retry.
 
 ## Folder Structure
 
