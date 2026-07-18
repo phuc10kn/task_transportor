@@ -47,7 +47,7 @@ function sameAiConfig(item, nextConfig) {
 }
 
 function refreshTranslationAiConfigForQueueItem({ config, repository, item }) {
-  const project = projectsApi().getProject({ config, projectId: item.project_id });
+  const project = projectsApi().getProjectConfig({ config, projectId: item.project_id });
   if (!project) {
     throw new AppError({
       code: "PROJECT_NOT_FOUND",

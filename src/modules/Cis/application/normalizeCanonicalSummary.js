@@ -14,7 +14,7 @@ function sourceIssueLink({ config, issue = {} }) {
   const key = sourceIssueKey(issue);
   const route = source === "backlog" ? "view" : source === "jira" ? "browse" : null;
   if (!key || !route) return null;
-  const project = projectsApi().getProject({ config, projectId: issue.project_id });
+  const project = projectsApi().getProjectConfig({ config, projectId: issue.project_id });
   const baseUrl = source === "backlog" ? project.backlog_space_url : project.jira_site_url;
   if (!baseUrl) return null;
 

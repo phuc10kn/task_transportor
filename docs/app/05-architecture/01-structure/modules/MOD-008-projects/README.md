@@ -30,10 +30,11 @@ Module sở hữu Project profile, dedicated Team, membership, owner/lead role v
 - CRUD project.
 - Tạo dedicated Team với creator là owner + lead trong cùng transaction.
 - Quản lý membership/Team role và enforce Project access cho mọi workspace route.
+- Công bố query actor-scoped riêng với trusted system query; không dùng optional actor để đổi trust mode.
 - Enable hoặc disable sync.
 - Giữ config tích hợp và reference env keys.
 - Giữ Project identity/language config; không sở hữu translation glossary state.
-- Trigger sync mapping values cho project.
+- Trigger sync mapping values cho project và công bố owner-write capability giới hạn cho Backlog/Jira lưu mapping state.
 
 ## Key properties
 
@@ -51,6 +52,10 @@ Module sở hữu Project profile, dedicated Team, membership, owner/lead role v
 - Env binding là part của project integration state, không phải concern của Dashboard.
 - Glossary normalized thuộc `Translation`; Project Config không nhận hoặc serialize glossary legacy.
 - Owner không thể bị xóa hoặc hạ khỏi lead; system role không bypass Team membership.
+- `listProjectsForUser` và `getProjectForUser` bắt buộc `actorUserId`; thiếu actor phải fail với `AUTH_REQUIRED`.
+- `listProjectsForScheduledPull` và `getProjectConfig` chỉ dành cho trusted in-process consumer, không được mount trực tiếp vào HTTP controller.
+- `updateProject`, `deleteProject`, `setProjectSyncEnabled` và `syncCisMappingValuesFromTarget` tự enforce owner trong application layer.
+- Cross-module không gọi general `updateProject`; mapping state chỉ được ghi qua `saveProjectMappingValues`.
 
 ## Related Entities
 
@@ -66,6 +71,8 @@ Frontmatter ghi các fact canonical đã được evidence xác nhận. Reverse 
 ## Evidence
 
 - `src/modules/Projects/ProjectsApi.js`
+- `src/modules/Projects/application/projectAccess.js`
+- `src/modules/Projects/application/saveProjectMappingValues.js`
 - `src/modules/Projects/application/setProjectSyncEnabled.js`
 - `src/modules/Projects/application/syncCisMappingValuesFromTarget.js`
 

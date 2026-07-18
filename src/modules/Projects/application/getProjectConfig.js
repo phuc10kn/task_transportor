@@ -1,7 +1,7 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { createProjectRepository } = require("../infrastructure/ProjectRepository");
 
-function getProject({ config, projectId }) {
+function getProjectConfig({ config, projectId }) {
   const project = createProjectRepository({ config }).findById(projectId);
 
   if (!project) {
@@ -16,5 +16,5 @@ function getProject({ config, projectId }) {
 }
 
 module.exports = {
-  getProject,
+  getProjectConfig,
 };

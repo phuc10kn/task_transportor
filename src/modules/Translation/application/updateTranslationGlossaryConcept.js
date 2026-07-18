@@ -10,7 +10,7 @@ const { throwGlossaryConflict } = require("./createTranslationGlossaryConcept");
 function updateTranslationGlossaryConcept({ config, projectId, conceptId, input, actorId }) {
   const normalizedProjectId = assertPositiveInteger(projectId, "projectId");
   const normalizedConceptId = assertPositiveInteger(conceptId, "conceptId");
-  ProjectsApi.getProject({ config, projectId: normalizedProjectId });
+  ProjectsApi.getProjectConfig({ config, projectId: normalizedProjectId });
   const normalized = normalizeGlossaryInput(input);
 
   try {

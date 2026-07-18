@@ -754,6 +754,7 @@ async function verifyStaleQueueUsesCurrentProjectAiConfig() {
   ProjectsApi.updateProject({
     config,
     projectId: project.id,
+    actorUserId: project.owner_user_id,
     input: {
       translation_ai_provider: "deepseek",
       translation_ai_transport: "openai_compatible",

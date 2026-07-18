@@ -4,14 +4,14 @@ const { createProjectRepository } = require("../infrastructure/ProjectRepository
 const { getProjectForUser, requireTeamLead } = require("./projectAccess");
 
 function getProjectTeam({ config, projectId, actorUserId }) {
-  getProjectForUser({ config, projectId, userId: actorUserId });
+  getProjectForUser({ config, projectId, actorUserId });
   return createProjectRepository({ config }).getTeam(projectId);
 }
 function validRole(role) {
   if (!["lead", "member"].includes(role)) throw new AppError({ code: "INVALID_TEAM_ROLE", message: "Team role must be lead or member.", status: 422 });
 }
 function addProjectTeamMember({ config, projectId, actorUserId, input }) {
-  requireTeamLead({ config, projectId, userId: actorUserId });
+  requireTeamLead({ config, projectId, actorUserId });
   validRole(input.role || "member");
   const user = AuthApi.resolveEnabledUserByEmail({ config, email: input.email });
   if (!user) throw new AppError({ code: "USER_NOT_FOUND", message: "No enabled user has this exact email.", status: 404 });
@@ -20,7 +20,7 @@ function addProjectTeamMember({ config, projectId, actorUserId, input }) {
   return result;
 }
 function updateProjectTeamMember({ config, projectId, actorUserId, memberUserId, input }) {
-  requireTeamLead({ config, projectId, userId: actorUserId });
+  requireTeamLead({ config, projectId, actorUserId });
   validRole(input.role);
   const result = createProjectRepository({ config }).updateMemberRole(projectId, memberUserId, input.role);
   if (result.ownerProtected) throw new AppError({ code: "PROJECT_OWNER_PROTECTED", message: "Project owner must remain team lead.", status: 409 });
@@ -28,7 +28,7 @@ function updateProjectTeamMember({ config, projectId, actorUserId, memberUserId,
   return getProjectTeam({ config, projectId, actorUserId });
 }
 function removeProjectTeamMember({ config, projectId, actorUserId, memberUserId }) {
-  requireTeamLead({ config, projectId, userId: actorUserId });
+  requireTeamLead({ config, projectId, actorUserId });
   const result = createProjectRepository({ config }).removeMember(projectId, memberUserId);
   if (result.ownerProtected) throw new AppError({ code: "PROJECT_OWNER_PROTECTED", message: "Project owner cannot be removed.", status: 409 });
   if (!result.removed) throw new AppError({ code: "TEAM_MEMBER_NOT_FOUND", message: "Team member not found.", status: 404 });
@@ -36,4 +36,3 @@ function removeProjectTeamMember({ config, projectId, actorUserId, memberUserId 
 }
 
 module.exports = { addProjectTeamMember, getProjectTeam, removeProjectTeamMember, updateProjectTeamMember };
-

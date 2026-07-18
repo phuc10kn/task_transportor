@@ -194,7 +194,7 @@ function getIssueEditor({ config, issueId }) {
     });
   }
 
-  const project = projectsApi().getProject({ config, projectId: issue.project_id });
+  const project = projectsApi().getProjectConfig({ config, projectId: issue.project_id });
   const revisions = repository.listRevisions(issue.id);
   const revision = latestRevision(revisions);
   const canonical = buildCanonicalSnapshot(issue, revision);

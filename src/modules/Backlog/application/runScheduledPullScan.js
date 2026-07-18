@@ -67,7 +67,7 @@ async function runScheduledPullScan({ config }) {
   }
 
   const states = listPullState(config);
-  const projects = projectsApi().listProjects({ config })
+  const projects = projectsApi().listProjectsForScheduledPull({ config })
     .filter((project) =>
       project.enabled &&
       project.sync_enabled &&

@@ -17,7 +17,7 @@ function assertPullEnabled(project) {
 }
 
 function pullIssue({ config, projectId, backlogIssueKey, executedBy, correlationId, trigger = "manual" }) {
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   assertPullEnabled(project);
   const scope = createExternalAccessScope({ config, projectId: project.id });
   assertScopeOperation(scope, project.id, "backlog", "backlog.issue.get");

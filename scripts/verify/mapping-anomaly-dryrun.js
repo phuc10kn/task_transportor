@@ -378,6 +378,7 @@ async function verifyPhase05() {
     const syncedFromJira = await ProjectsApi.syncCisMappingValuesFromTarget({
       config,
       projectId: jiraSourceProject.id,
+      actorUserId: jiraSourceProject.owner_user_id,
       targetSystem: "jira",
     });
     assert.deepEqual(syncedFromJira.cis_mapping_values_json.user, ["jira-account-1", "jira-user@example.test"]);

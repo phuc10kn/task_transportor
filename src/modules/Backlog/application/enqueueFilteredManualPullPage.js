@@ -13,7 +13,7 @@ async function enqueueFilteredManualPullPage({ config, projectId, page, filters,
   if (!/^\d+$/.test(String(page || "")) || !Number.isSafeInteger(pageNumber) || pageNumber < 1) {
     throw new AppError({ code: "VALIDATION_ERROR", message: "page must be a positive integer.", status: 422 });
   }
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   const readiness = getIssueActionReadiness({ config, projectId: project.id });
   if (!readiness.actions.sync_to_cis.enabled) {
     const code = readiness.actions.sync_to_cis.disabled_reasons[0] || "BACKLOG_PULL_DISABLED";

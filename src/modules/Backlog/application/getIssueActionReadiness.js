@@ -23,7 +23,7 @@ function writeAction({ enabled, mode, consumerReady, reasons }) {
 }
 
 function getIssueActionReadiness({ config, projectId }) {
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   const configReady = backlogConfigReady(config, project);
   const baseReasons = [!project.enabled && "PROJECT_DISABLED", !project.backlog_external_read_enabled && "BACKLOG_EXTERNAL_READ_DISABLED", !configReady && "BACKLOG_CONFIG_INCOMPLETE", !project.manual_pull_enabled && "BACKLOG_PULL_DISABLED"].filter(Boolean);
   const pullEnabled = baseReasons.length === 0;

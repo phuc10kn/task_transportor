@@ -6,7 +6,7 @@ const states = new WeakMap();
 const registries = { backlog: BACKLOG_OPERATIONS, jira: JIRA_OPERATIONS };
 
 function createExternalAccessScope({ config, projectId }) {
-  const project = require("../../../modules/Projects/ProjectsApi").getProject({ config, projectId });
+  const project = require("../../../modules/Projects/ProjectsApi").getProjectConfig({ config, projectId });
   const scope = Object.freeze({});
   states.set(scope, { config, project: Object.freeze({ ...project }) });
   return scope;

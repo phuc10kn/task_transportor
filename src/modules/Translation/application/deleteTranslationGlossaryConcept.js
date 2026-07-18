@@ -6,7 +6,7 @@ const { assertPositiveInteger } = require("../support/validateTranslationGlossar
 function deleteTranslationGlossaryConcept({ config, projectId, conceptId }) {
   const normalizedProjectId = assertPositiveInteger(projectId, "projectId");
   const normalizedConceptId = assertPositiveInteger(conceptId, "conceptId");
-  ProjectsApi.getProject({ config, projectId: normalizedProjectId });
+  ProjectsApi.getProjectConfig({ config, projectId: normalizedProjectId });
   const deleted = createTranslationGlossaryRepository({ config }).delete({
     projectId: normalizedProjectId,
     conceptId: normalizedConceptId,

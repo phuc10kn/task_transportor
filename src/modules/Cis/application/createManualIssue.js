@@ -18,7 +18,7 @@ function createManualIssue({ config, input, executedBy, correlationId }) {
   if (!Number.isInteger(projectId) || projectId <= 0) {
     throw new AppError({ code: "VALIDATION_ERROR", message: "project_id is required.", status: 422, details: { field: "project_id" } });
   }
-  projectsApi().getProject({ config, projectId });
+  projectsApi().getProjectConfig({ config, projectId });
   const summary = optionalText(input.summary);
   if (!summary) {
     throw new AppError({ code: "VALIDATION_ERROR", message: "summary is required.", status: 422, details: { field: "summary" } });

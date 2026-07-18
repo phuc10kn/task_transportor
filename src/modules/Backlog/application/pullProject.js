@@ -36,7 +36,7 @@ async function pullProject({ config, projectId, executedBy, correlationId, trigg
     });
   }
 
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   assertProjectPullConfig(project);
 
   const client = createBacklogClient({ config, projectId: project.id });

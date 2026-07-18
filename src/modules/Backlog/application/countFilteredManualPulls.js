@@ -6,7 +6,7 @@ const { issueProviderQuery, normalizeIssueSearchFilters } = require("./normalize
 function projectsApi() { return require("../../Projects/ProjectsApi"); }
 
 async function countFilteredManualPulls({ config, projectId, filters }) {
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   const readiness = getIssueActionReadiness({ config, projectId: project.id });
   if (!readiness.actions.browse.enabled) {
     throw new AppError({ code: readiness.actions.browse.disabled_reasons[0] || "BACKLOG_CONFIG_INCOMPLETE", message: "Backlog browse is unavailable for this project.", status: 422 });

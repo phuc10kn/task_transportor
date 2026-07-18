@@ -25,7 +25,7 @@ function normalizeAssignees(rows) {
 }
 
 async function listIssueCandidateFilterOptions({ config, projectId }) {
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   const readiness = getIssueActionReadiness({ config, projectId: project.id });
 
   if (!readiness.actions.browse.enabled) {

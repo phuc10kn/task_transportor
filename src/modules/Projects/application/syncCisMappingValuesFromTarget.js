@@ -1,8 +1,8 @@
 const { AppError } = require("../../../http/errors/AppError");
 const BacklogApi = require("../../Backlog/BacklogApi");
 const JiraApi = require("../../Jira/JiraApi");
-const { createProjectRepository } = require("../infrastructure/ProjectRepository");
-const { updateProject } = require("./updateProject");
+const { requireProjectOwner } = require("./projectAccess");
+const { saveProjectMappingValues } = require("./saveProjectMappingValues");
 
 const SYSTEM_FIELDS = {
   backlog: "backlog_mapping_values_json",
@@ -88,7 +88,8 @@ async function pullTargetMappingValues({ config, project, targetSystem }) {
   });
 }
 
-async function syncCisMappingValuesFromTarget({ config, projectId, targetSystem }) {
+async function syncCisMappingValuesFromTarget({ config, projectId, actorUserId, targetSystem }) {
+  const project = requireProjectOwner({ config, projectId, actorUserId });
   const normalizedTarget = String(targetSystem || "").trim().toLowerCase();
   const systemField = SYSTEM_FIELDS[normalizedTarget];
 
@@ -100,17 +101,6 @@ async function syncCisMappingValuesFromTarget({ config, projectId, targetSystem 
       details: {
         supported_systems: Object.keys(SYSTEM_FIELDS),
       },
-    });
-  }
-
-  const repository = createProjectRepository({ config });
-  const project = repository.findById(projectId);
-
-  if (!project) {
-    throw new AppError({
-      code: "PROJECT_NOT_FOUND",
-      message: "Project not found.",
-      status: 404,
     });
   }
 
@@ -134,13 +124,12 @@ async function syncCisMappingValuesFromTarget({ config, projectId, targetSystem 
   const directories = Object.fromEntries(Object.entries(pulled || {})
     .filter(([mappingType]) => mappingType.endsWith("_directory")));
   const warnings = replacementWarnings(project.cis_mapping_values_json || {}, nextValues);
-  const updatedProject = updateProject({
+  const updatedProject = saveProjectMappingValues({
     config,
     projectId,
-    input: {
-      [systemField]: { ...configuredValues, ...nextValues, ...directories },
-      cis_mapping_values_json: nextValues,
-    },
+    system: normalizedTarget,
+    systemMappingValues: { ...configuredValues, ...nextValues, ...directories },
+    cisMappingValues: nextValues,
   });
 
   return {

@@ -36,18 +36,39 @@ function enqueue(config, projectId, key) {
   });
 }
 
+function javascriptFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return javascriptFiles(entryPath);
+    return entry.isFile() && entry.name.endsWith(".js") ? [entryPath] : [];
+  });
+}
+
 function verifyStaticBoundaries() {
   const shared = fs.readFileSync(path.resolve(__dirname, "../../apps/admin-web/public/shared.js"), "utf8");
   const projectApiSource = shared.slice(shared.indexOf("function projectApi"), shared.indexOf("function state"));
   const pollJobSource = shared.slice(shared.indexOf("async function pollJob"), shared.indexOf("function setTheme"));
   const middleware = fs.readFileSync(path.resolve(__dirname, "../../src/http/middleware/requireProjectWorkspace.js"), "utf8");
+  const projectsApi = fs.readFileSync(path.resolve(__dirname, "../../src/modules/Projects/ProjectsApi.js"), "utf8");
+  const projectsApiExports = projectsApi.slice(projectsApi.indexOf("module.exports"));
+  const projectsController = fs.readFileSync(path.resolve(__dirname, "../../src/modules/Projects/http/controllers/ProjectsController.js"), "utf8");
 
   assert.match(projectApiSource, /function projectApi\(projectId, path, options/);
   assert.doesNotMatch(projectApiSource, /activeProjectId|sessionStorage/);
   assert.match(pollJobSource, /projectApi\(projectId,/);
   assert.doesNotMatch(pollJobSource, /\/api\/v1\/sync-jobs/);
-  assert.match(middleware, /ProjectsApi\.getProject/);
+  assert.match(middleware, /ProjectsApi\.getProjectForUser/);
   assert.doesNotMatch(middleware, /Repository|createConnection|sqlite/i);
+  assert.doesNotMatch(projectsApiExports, /^\s{2}(?:getProject|listProjects|requireProjectOwner|requireTeamLead),$/m);
+  assert.doesNotMatch(projectsController, /ProjectsApi\.(?:getProjectConfig|listProjectsForScheduledPull|saveProjectMappingValues|requireProjectOwner|requireTeamLead)/);
+
+  for (const file of javascriptFiles(path.resolve(__dirname, "../../src"))) {
+    const source = fs.readFileSync(file, "utf8");
+    assert.doesNotMatch(source, /(?:ProjectsApi|projectsApi\(\))\.(?:getProject|listProjects)\(/, `${file} uses an ambiguous Projects query.`);
+    if (!file.includes(`${path.sep}modules${path.sep}Projects${path.sep}`)) {
+      assert.doesNotMatch(source, /(?:ProjectsApi|projectsApi\(\))\.updateProject\(/, `${file} bypasses the Projects owner-write boundary.`);
+    }
+  }
 }
 
 async function main() {
@@ -60,6 +81,54 @@ async function main() {
   const projectA = createProject(config, owner.id, "Project A");
   const projectB = createProject(config, owner.id, "Project B");
   const projectC = createProject(config, owner.id, "Project C", false);
+  const member = AuthApi.createUser({ config, input: { email: "scope-member@example.test", password: "verify-password" } });
+  const outsideAdmin = AuthApi.createUser({ config, input: { email: "scope-outside-admin@example.test", password: "verify-password", system_role: "system_admin" } });
+  ProjectsApi.addProjectTeamMember({
+    config,
+    projectId: projectA.id,
+    actorUserId: owner.id,
+    input: { email: member.email, role: "member" },
+  });
+
+  assert.throws(() => ProjectsApi.listProjectsForUser({ config }), (error) => error.code === "AUTH_REQUIRED");
+  assert.throws(() => ProjectsApi.getProjectForUser({ config, projectId: projectA.id }), (error) => error.code === "AUTH_REQUIRED");
+  assert.throws(() => ProjectsApi.updateProject({ config, projectId: projectA.id, input: { name: "Blocked" } }), (error) => error.code === "AUTH_REQUIRED");
+  assert.throws(() => ProjectsApi.deleteProject({ config, projectId: projectA.id }), (error) => error.code === "AUTH_REQUIRED");
+  assert.throws(() => ProjectsApi.setProjectSyncEnabled({ config, projectId: projectA.id, enabled: true }), (error) => error.code === "AUTH_REQUIRED");
+  await assert.rejects(
+    () => ProjectsApi.syncCisMappingValuesFromTarget({ config, projectId: projectA.id, targetSystem: "jira" }),
+    (error) => error.code === "AUTH_REQUIRED"
+  );
+  assert.throws(
+    () => ProjectsApi.getProjectForUser({ config, projectId: projectA.id, actorUserId: outsideAdmin.id }),
+    (error) => error.code === "PROJECT_NOT_FOUND"
+  );
+  assert.throws(
+    () => ProjectsApi.updateProject({ config, projectId: projectA.id, actorUserId: member.id, input: { name: "Blocked" } }),
+    (error) => error.code === "PROJECT_OWNER_REQUIRED"
+  );
+  assert.equal(ProjectsApi.listProjectsForUser({ config, actorUserId: member.id }).length, 1);
+  assert.equal(ProjectsApi.listProjectsForScheduledPull({ config }).length, 3);
+  assert.equal(ProjectsApi.getProjectConfig({ config, projectId: projectA.id }).id, projectA.id);
+
+  const ownerUpdated = ProjectsApi.updateProject({
+    config,
+    projectId: projectA.id,
+    actorUserId: owner.id,
+    input: { sync_enabled: true },
+  });
+  assert.equal(ownerUpdated.sync_enabled, true);
+  const mappingUpdated = ProjectsApi.saveProjectMappingValues({
+    config,
+    projectId: projectA.id,
+    system: "backlog",
+    systemMappingValues: { priority: ["High"] },
+    cisMappingValues: { priority: ["High"] },
+    sync_enabled: false,
+  });
+  assert.deepEqual(mappingUpdated.backlog_mapping_values_json.priority, ["High"]);
+  assert.deepEqual(mappingUpdated.cis_mapping_values_json.priority, ["High"]);
+  assert.equal(mappingUpdated.sync_enabled, true);
   const jobA = enqueue(config, projectA.id, "A-1");
   const jobB = enqueue(config, projectB.id, "B-1");
   const failedJobB = SyncApi.enqueueJob({

@@ -1,9 +1,10 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { createProjectRepository } = require("../infrastructure/ProjectRepository");
+const { requireProjectOwner } = require("./projectAccess");
 
 function deleteProject({ config, projectId, actorUserId }) {
   const repository = createProjectRepository({ config });
-  if (actorUserId) require("./projectAccess").requireProjectOwner({ config, projectId, userId: actorUserId });
+  requireProjectOwner({ config, projectId, actorUserId });
   const deleted = repository.removeWithTeam(projectId);
 
   if (!deleted) {

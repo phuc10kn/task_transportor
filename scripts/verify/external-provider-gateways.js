@@ -71,13 +71,13 @@ async function main() {
     "EXTERNAL_OPERATION_NOT_REGISTERED"
   );
 
-  ProjectsApi.updateProject({ config, projectId: project.id, input: { jira_external_write_enabled: false } });
+  ProjectsApi.updateProject({ config, projectId: project.id, actorUserId: project.owner_user_id, input: { jira_external_write_enabled: false } });
   await rejectsCode(
     async () => createJiraClient({ config, projectId: project.id }).createIssue({ fields: { summary: "blocked" } }),
     "EXTERNAL_GATE_BLOCKED"
   );
 
-  ProjectsApi.updateProject({ config, projectId: project.id, input: { backlog_external_read_enabled: false } });
+  ProjectsApi.updateProject({ config, projectId: project.id, actorUserId: project.owner_user_id, input: { backlog_external_read_enabled: false } });
   const before = SyncApi.listJobs({ config, filters: { project_id: project.id } }).length;
   await rejectsCode(
     () => BacklogApi.syncCandidateToCis({ config, projectId: project.id, backlogIssueKey: "WEC-1" }),
@@ -85,7 +85,7 @@ async function main() {
   );
   assert.equal(SyncApi.listJobs({ config, filters: { project_id: project.id } }).length, before);
 
-  ProjectsApi.updateProject({ config, projectId: project.id, input: { backlog_external_read_enabled: true } });
+  ProjectsApi.updateProject({ config, projectId: project.id, actorUserId: project.owner_user_id, input: { backlog_external_read_enabled: true } });
   const job = SyncApi.enqueueJob({
     config,
     input: {
@@ -96,7 +96,7 @@ async function main() {
       payload_json: { backlog_issue_key: "WEC-1" },
     },
   });
-  ProjectsApi.updateProject({ config, projectId: project.id, input: { backlog_external_read_enabled: false } });
+  ProjectsApi.updateProject({ config, projectId: project.id, actorUserId: project.owner_user_id, input: { backlog_external_read_enabled: false } });
   const execution = await SyncApi.runWorkerOnce({ config, workerId: "external-gate-verifier" });
   assert.equal(execution.job.id, job.id);
   assert.equal(execution.job.status, "failed");

@@ -39,19 +39,18 @@ function replaceMappingValues(existing, pulled) {
 }
 
 async function pullJiraMappingValues({ config, projectId }) {
-  const project = projectsApi().getProject({ config, projectId });
+  const project = projectsApi().getProjectConfig({ config, projectId });
   const client = createJiraClient({ config, projectId: project.id });
   const pulled = await client.pullMappingValues();
   const jiraMappingValues = sanitizeJiraMappingValues({
     mappingValues: replaceMappingValues(project.jira_mapping_values_json, pulled),
     isRealJiraUserMappingEntry,
   });
-  const updatedProject = projectsApi().updateProject({
+  const updatedProject = projectsApi().saveProjectMappingValues({
     config,
     projectId,
-    input: {
-      jira_mapping_values_json: jiraMappingValues,
-    },
+    system: "jira",
+    systemMappingValues: jiraMappingValues,
   });
 
   return {

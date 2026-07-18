@@ -3,7 +3,7 @@ const { success } = require("../../../../http/response/envelope");
 
 function list(req, res, next) {
   try {
-    success(res, ProjectsApi.listProjects({ config: req.app.locals.config, userId: req.user.id }));
+    success(res, ProjectsApi.listProjectsForUser({ config: req.app.locals.config, actorUserId: req.user.id }));
   } catch (error) {
     next(error);
   }
@@ -32,7 +32,7 @@ function show(req, res, next) {
       ProjectsApi.getProjectForUser({
         config: req.app.locals.config,
         projectId: Number(req.params.projectId),
-        userId: req.user.id,
+        actorUserId: req.user.id,
       })
     );
   } catch (error) {
@@ -73,12 +73,12 @@ function remove(req, res, next) {
 
 function enableSync(req, res, next) {
   try {
-    ProjectsApi.requireProjectOwner({ config: req.app.locals.config, projectId: Number(req.params.projectId), userId: req.user.id });
     success(
       res,
       ProjectsApi.setProjectSyncEnabled({
         config: req.app.locals.config,
         projectId: Number(req.params.projectId),
+        actorUserId: req.user.id,
         enabled: true,
       })
     );
@@ -89,12 +89,12 @@ function enableSync(req, res, next) {
 
 function disableSync(req, res, next) {
   try {
-    ProjectsApi.requireProjectOwner({ config: req.app.locals.config, projectId: Number(req.params.projectId), userId: req.user.id });
     success(
       res,
       ProjectsApi.setProjectSyncEnabled({
         config: req.app.locals.config,
         projectId: Number(req.params.projectId),
+        actorUserId: req.user.id,
         enabled: false,
       })
     );
@@ -105,10 +105,10 @@ function disableSync(req, res, next) {
 
 async function syncCisMappingValues(req, res, next) {
   try {
-    ProjectsApi.requireProjectOwner({ config: req.app.locals.config, projectId: Number(req.params.projectId), userId: req.user.id });
     const result = await ProjectsApi.syncCisMappingValuesFromTarget({
       config: req.app.locals.config,
       projectId: Number(req.params.projectId),
+      actorUserId: req.user.id,
       targetSystem: req.body && req.body.target_system,
     });
 

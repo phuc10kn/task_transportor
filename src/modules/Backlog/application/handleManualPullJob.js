@@ -44,7 +44,7 @@ async function handleManualPullJob(job, { config, externalAccessScope }) {
     });
   }
 
-  const project = projectsApi().getProject({ config, projectId: job.project_id });
+  const project = projectsApi().getProjectConfig({ config, projectId: job.project_id });
   const client = createBacklogClient({ config, projectId: project.id, externalAccessScope });
 
   try {

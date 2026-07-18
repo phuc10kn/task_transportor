@@ -1,26 +1,27 @@
 const { createProject } = require("./application/createProject");
 const { deleteProject } = require("./application/deleteProject");
-const { getProject } = require("./application/getProject");
+const { getProjectConfig } = require("./application/getProjectConfig");
 const { importProjects } = require("./application/importProjects");
-const { listProjects } = require("./application/listProjects");
+const { listProjectsForScheduledPull, listProjectsForUser } = require("./application/listProjects");
+const { saveProjectMappingValues } = require("./application/saveProjectMappingValues");
 const { setProjectSyncEnabled } = require("./application/setProjectSyncEnabled");
 const { syncCisMappingValuesFromTarget } = require("./application/syncCisMappingValuesFromTarget");
 const { updateProject } = require("./application/updateProject");
-const { getProjectForUser, requireProjectOwner, requireTeamLead } = require("./application/projectAccess");
+const { getProjectForUser } = require("./application/projectAccess");
 const { addProjectTeamMember, getProjectTeam, removeProjectTeamMember, updateProjectTeamMember } = require("./application/team");
 
 module.exports = {
   createProject,
   addProjectTeamMember,
   deleteProject,
-  getProject,
+  getProjectConfig,
   getProjectForUser,
   getProjectTeam,
   importProjects,
-  listProjects,
+  listProjectsForScheduledPull,
+  listProjectsForUser,
   removeProjectTeamMember,
-  requireProjectOwner,
-  requireTeamLead,
+  saveProjectMappingValues,
   setProjectSyncEnabled,
   syncCisMappingValuesFromTarget,
   updateProject,

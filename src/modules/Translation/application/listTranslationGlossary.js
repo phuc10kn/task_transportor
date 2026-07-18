@@ -4,7 +4,7 @@ const { assertPositiveInteger } = require("../support/validateTranslationGlossar
 
 function listTranslationGlossary({ config, projectId, groupKey, query }) {
   const normalizedProjectId = assertPositiveInteger(projectId, "projectId");
-  ProjectsApi.getProject({ config, projectId: normalizedProjectId });
+  ProjectsApi.getProjectConfig({ config, projectId: normalizedProjectId });
   return {
     project_id: normalizedProjectId,
     concepts: createTranslationGlossaryRepository({ config }).list({

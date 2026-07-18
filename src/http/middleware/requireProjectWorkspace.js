@@ -27,7 +27,7 @@ function requireProjectWorkspace(req, res, next) {
       throw new AppError({ code: "PROJECT_NOT_FOUND", message: "Project not found.", status: 404 });
     }
 
-    const project = ProjectsApi.getProjectForUser({ config: req.app.locals.config, projectId, userId: req.user.id });
+    const project = ProjectsApi.getProjectForUser({ config: req.app.locals.config, projectId, actorUserId: req.user.id });
     if (project.enabled === false) {
       throw new AppError({ code: "PROJECT_DISABLED", message: "Project is disabled.", status: 409 });
     }

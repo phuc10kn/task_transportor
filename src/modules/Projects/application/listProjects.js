@@ -1,9 +1,15 @@
 const { createProjectRepository } = require("../infrastructure/ProjectRepository");
+const { requireActorUserId } = require("./projectAccess");
 
-function listProjects({ config, userId }) {
-  return userId ? createProjectRepository({ config }).listForUser(userId) : createProjectRepository({ config }).list();
+function listProjectsForUser({ config, actorUserId }) {
+  return createProjectRepository({ config }).listForUser(requireActorUserId(actorUserId));
+}
+
+function listProjectsForScheduledPull({ config }) {
+  return createProjectRepository({ config }).list();
 }
 
 module.exports = {
-  listProjects,
+  listProjectsForScheduledPull,
+  listProjectsForUser,
 };

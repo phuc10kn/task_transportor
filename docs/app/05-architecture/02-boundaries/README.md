@@ -37,7 +37,10 @@ Nội dung cleanup cũ không còn là task list sống, nhưng giữ lại các
 
 - Cross-module write phải gom về owner API hoặc owner use case; module khác không được ghi trực tiếp state của `Cis`, `Translation`, `Sync`, `Projects`, `Mapping`, `Anomaly`.
 - `Auth` là owner của `users` và công bố safe identity lookup; `Projects` là owner của `teams`, `team_members`, `projects.team_id` và `projects.owner_user_id`. Projects dùng `AuthApi.resolveEnabledUserByEmail` khi thêm member.
-- Mọi public route `/api/v1/projects/:projectId/**` resolve membership qua `ProjectsApi.getProjectForUser`. System admin vẫn nhận `404 PROJECT_NOT_FOUND` nếu không thuộc Team; chỉ owner được sửa/xóa/config Project và Team lead mới quản lý membership.
+- Mọi public route `/api/v1/projects/:projectId/**` resolve membership qua actor-scoped `ProjectsApi.getProjectForUser`. System admin vẫn nhận `404 PROJECT_NOT_FOUND` nếu không thuộc Team; chỉ owner được sửa/xóa/config Project và Team lead mới quản lý membership.
+- Projects actor commands bắt buộc `actorUserId` và tự enforce authorization trong application use case; controller không gọi trực tiếp `requireProjectOwner` hoặc `requireTeamLead`.
+- Trusted Projects read dùng tên rõ trust mode: `getProjectConfig` cho in-process consumer và `listProjectsForScheduledPull` cho scheduler; hai capability này không được mount trực tiếp vào HTTP controller.
+- Backlog/Jira không được gọi general `ProjectsApi.updateProject`; mapping state thuộc Projects chỉ được ghi qua owner-write capability `saveProjectMappingValues` với field scope giới hạn.
 - `Dashboard`, `Jira`, `Translation` có thể đọc chéo theo allowlist để phục vụ read model, preview hoặc translation context; mọi read exception phải được ghi rõ trong boundary docs.
 - `Sync` được điều phối job/retry/journal, nhưng business outcome vẫn thuộc owner module.
 - `Jira` outbound không được bỏ qua dry-run, readiness gate, stale preview guard và journal.

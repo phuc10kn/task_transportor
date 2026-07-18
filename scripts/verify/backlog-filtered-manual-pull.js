@@ -158,13 +158,13 @@ async function main() {
     assert.equal(snapshotRun.job.status, "success", "snapshot job must not call Backlog getIssue");
     assert.ok(CisApi.getIssueByBacklogKey({ config, projectId: project.id, backlogIssueKey: "BATCH-SNAPSHOT" }));
 
-    ProjectsApi.updateProject({ config, projectId: project.id, input: { backlog_external_read_enabled: false } });
+    ProjectsApi.updateProject({ config, projectId: project.id, actorUserId: project.owner_user_id, input: { backlog_external_read_enabled: false } });
     const jobsBeforeReadGate = SyncApi.listJobs({ config, filters: { project_id: project.id } }).length;
     const blockedRead = await count("2026-07-04");
     assert.equal(blockedRead.status, 422);
     assert.equal(blockedRead.body.error.code, "BACKLOG_EXTERNAL_READ_DISABLED");
     assert.equal(SyncApi.listJobs({ config, filters: { project_id: project.id } }).length, jobsBeforeReadGate);
-    ProjectsApi.updateProject({ config, projectId: project.id, input: { backlog_external_read_enabled: true } });
+    ProjectsApi.updateProject({ config, projectId: project.id, actorUserId: project.owner_user_id, input: { backlog_external_read_enabled: true } });
 
     config.worker.enabled = false;
     const jobsBeforeBlockedPage = SyncApi.listJobs({ config, filters: { project_id: project.id } }).length;

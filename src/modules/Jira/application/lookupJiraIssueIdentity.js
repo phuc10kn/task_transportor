@@ -6,7 +6,7 @@ function projectsApi() {
 }
 
 async function lookupJiraIssueIdentity({ config, projectId, lookupToken }) {
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   const client = createJiraClient({ config, projectId: project.id });
   try {
     const issue = await client.getIssue(String(lookupToken || "").trim());

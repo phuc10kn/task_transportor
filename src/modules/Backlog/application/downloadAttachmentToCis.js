@@ -7,7 +7,7 @@ function projectsApi() {
 }
 
 async function downloadAttachmentToCis({ config, attachment, project, backlogIssueKey, externalAccessScope }) {
-  const resolvedProject = project || projectsApi().getProject({
+  const resolvedProject = project || projectsApi().getProjectConfig({
     config,
     projectId: attachment.project_id,
   });

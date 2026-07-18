@@ -37,7 +37,7 @@ function throwGlossaryConflict(error) {
 
 function createTranslationGlossaryConcept({ config, projectId, input, actorId }) {
   const normalizedProjectId = assertPositiveInteger(projectId, "projectId");
-  ProjectsApi.getProject({ config, projectId: normalizedProjectId });
+  ProjectsApi.getProjectConfig({ config, projectId: normalizedProjectId });
   const normalized = normalizeGlossaryInput(input);
 
   try {

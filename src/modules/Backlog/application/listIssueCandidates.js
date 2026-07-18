@@ -46,7 +46,7 @@ function candidateActiveJob(job) {
 }
 
 async function listIssueCandidates({ config, projectId, filters }) {
-  const project = projectsApi().getProject({ config, projectId: Number(projectId) });
+  const project = projectsApi().getProjectConfig({ config, projectId: Number(projectId) });
   const readiness = getIssueActionReadiness({ config, projectId: project.id });
   if (!readiness.actions.browse.enabled) {
     throw new AppError({ code: "BACKLOG_CONFIG_INCOMPLETE", message: "Backlog configuration is incomplete.", status: 422 });
