@@ -23,6 +23,10 @@ function issueKeyForSystem(system, keys) {
   return "";
 }
 
+function targetIssueKey(system, keys) {
+  return system === "jira" ? issueKeyForSystem(system, keys) || null : null;
+}
+
 function rowToJob(row) {
   if (!row) {
     return null;
@@ -54,7 +58,7 @@ function rowToJob(row) {
       payload.issue_id ||
       "",
     source_issue_key: issueKeyForSystem(job.direction_from, keys),
-    target_issue_key: issueKeyForSystem(job.direction_to, keys),
+    target_issue_key: targetIssueKey(job.direction_to, keys),
     payload_json: payload,
     last_error_details: parseJson(last_error_details_json, null),
     last_error_code: parseJson(last_error_details_json, {}).error_code || null,

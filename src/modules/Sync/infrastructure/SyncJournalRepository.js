@@ -17,6 +17,10 @@ function issueKeyForSystem(system, keys) {
   return "";
 }
 
+function targetIssueKey(system, keys) {
+  return system === "jira" ? issueKeyForSystem(system, keys) || null : null;
+}
+
 function rowToJournal(row) {
   if (!row) {
     return null;
@@ -52,7 +56,7 @@ function rowToJournal(row) {
     issue_id: journal.issue_id || inferred_issue_id || job_issue_id || null,
     issue_reference: issueReference,
     source_issue_key: issueKeyForSystem(journal.direction_from, keys),
-    target_issue_key: issueKeyForSystem(journal.direction_to, keys),
+    target_issue_key: targetIssueKey(journal.direction_to, keys),
     project_name: project_name || null,
     success_at: row.status === "success" ? row.created_at : null,
   };

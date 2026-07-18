@@ -224,6 +224,7 @@ test("backlog filtered pull queues pages sequentially and retries only the faile
   await expect(page.getByRole("cell", { name: "BLG-11" })).toBeVisible();
   await page.getByRole("button", { name: "Retry" }).click();
   await expect(page.getByText("Queueing completed · 6 issues queued.")).toBeVisible();
+  await expect(page.locator("#pull-filtered-state .filtered-pull-complete")).toBeVisible();
   expect(countRequests).toBe(1);
   expect(countBody).toEqual({ created_from: "2026-07-01", created_to: "2026-07-16", status_ids: ["1"], assignee_ids: [], not_closed: false });
   expect(Object.prototype.hasOwnProperty.call(countBody, "limit")).toBe(false);
@@ -234,6 +235,7 @@ test("backlog filtered pull queues pages sequentially and retries only the faile
   totalPages = 0;
   await page.getByRole("button", { name: "Pull all matching issues" }).click();
   await expect(page.getByText("Queueing completed · 0 issues queued.")).toBeVisible();
+  await expect(page.locator("#pull-filtered-state .filtered-pull-complete")).toBeVisible();
   expect(countRequests).toBe(2);
   expect(requestedPages).toEqual([1, 2, 2, 3]);
   await expect(page.getByRole("cell", { name: "BLG-11" })).toBeVisible();
@@ -247,6 +249,47 @@ test("backlog filtered pull queues pages sequentially and retries only the faile
       return rect.left >= 0 && rect.right <= window.innerWidth;
     })).toBe(true);
   }
+});
+
+test("Find candidates updates results without reloading the document", async ({ page }) => {
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { actions: { browse: { enabled: true }, pull_one: { enabled: true }, pull_project: { enabled: false }, sync_to_cis: { enabled: true }, sync_translate_jira: { enabled: true } } } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { statuses: [], assignees: [] } }) }));
+  await page.route("**/api/v1/projects/1/backlog/issues/candidates**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { candidates: [{ backlog_issue_key: "BLG-42", summary: "Inline candidate", status: "Open" }], meta: { returned_count: 1, source_rows_scanned: 1, stop_reason: "source_exhausted" } } }) }));
+
+  await enter(page, "/backlog-issues");
+  const documentMarker = await page.evaluate(() => { document.documentElement.dataset.findCandidatesMarker = "same-document"; return document.documentElement.dataset.findCandidatesMarker; });
+  await page.getByRole("button", { name: "Find candidates" }).click();
+  await expect(page.getByRole("cell", { name: "BLG-42" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.dataset.findCandidatesMarker)).toBe(documentMarker);
+  await expect(page).toHaveURL(/submitted=1/);
+});
+
+test("CIS Issue search updates the register in place and identifies its source system", async ({ page }) => {
+  await page.route("**/api/v1/projects/1/issues**", (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const query = params.get("q");
+    const currentPage = Number(params.get("page") || "1");
+    const issue = query
+      ? { id: "issue-jira", jira_issue_key: "ABC-12", current_summary: "Jira search result", sync_status: "ingested" }
+      : currentPage === 2
+        ? { id: "issue-backlog-2", backlog_issue_key: "MAP-95", current_summary: "Second page result", sync_status: "ingested" }
+        : { id: "issue-backlog", backlog_issue_key: "MAP-94", jira_issue_key: "ABC-12", current_summary: "Backlog source result", sync_status: "ingested" };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { items: [issue], pagination: { page: currentPage, page_size: 20, total: 21, total_pages: 2 } } }) });
+  });
+
+  await enter(page, "/cis-issues");
+  const documentMarker = await page.evaluate(() => { document.documentElement.dataset.issueListMarker = "same-document"; return document.documentElement.dataset.issueListMarker; });
+  await expect(page.locator(".issue-source").first()).toHaveText("Backlog (MAP-94)");
+  await expect(page.locator(".issue-source").nth(1)).toHaveText("Jira (ABC-12)");
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(page.locator(".issue-source").first()).toHaveText("Backlog (MAP-95)");
+  await expect(page).toHaveURL(/page=2/);
+  const filters = page.locator(".cis-issue-filters");
+  await filters.getByLabel("Summary").fill("jira");
+  await filters.getByRole("button", { name: "Search issues" }).click();
+  await expect(page.locator(".issue-source").first()).toHaveText("Jira (ABC-12)");
+  expect(await page.evaluate(() => document.documentElement.dataset.issueListMarker)).toBe(documentMarker);
+  await expect(page).toHaveURL(/q=jira/);
 });
 
 test("backlog: Sync + Translate + Jira queues the full workflow", async ({ page }) => {
@@ -419,6 +462,69 @@ test("mappings group values by field inside one compact flow table", async ({ pa
   await expect(issueTypeGroup.getByRole("button", { name: /Issue type/ })).toBeVisible();
   await expect(bug.getByRole("combobox")).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("CIS to Jira fills and saves only unmapped equal targets", async ({ page }) => {
+  const created = [];
+  const approved = [];
+  await page.route("**/api/v1/projects/1/mapping-settings**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { flows: { systems_to_cis: [], cis_to_system: [
+    { mapping_type: "issue_type", mapping_label: "Issue type", direction_from: "cis", direction_to: "jira", from_value: "Bug", from_label: "Bug", system_values: [{ value: "10001", label: "Bug" }] },
+    { mapping_type: "issue_type", mapping_label: "Issue type", direction_from: "cis", direction_to: "jira", from_value: "Task", from_label: "Task", to_value: "10003", system_values: [{ value: "10003", label: "Task" }], existing_rule: { id: 4, to_value: "10003", approval_status: "approved" } },
+  ] } } }) }));
+  await page.route("**/api/v1/projects/1/mapping-rules", (route) => {
+    const body = route.request().postDataJSON();
+    created.push(body);
+    return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ data: { id: 9, ...body, approval_status: "pending" } }) });
+  });
+  await page.route("**/api/v1/projects/1/mapping-rules/9/approve", (route) => {
+    approved.push(route.request().method());
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: 9, approval_status: "approved", to_value: "10001" } }) });
+  });
+
+  await enter(page, "/mappings");
+  const targetFlow = page.locator('[data-mapping-flow="target"]');
+  await targetFlow.getByRole("button", { name: "Fill equal target" }).click();
+  await expect(targetFlow.locator('[data-mapping="target:issue_type:Bug"] [data-status]')).toContainText("approved");
+  await expect(targetFlow.locator('[data-mapping="target:issue_type:Task"] select')).toHaveValue("10003");
+  expect(created).toEqual([{ to_value: "10001", mapping_type: "issue_type", direction_from: "cis", direction_to: "jira", from_value: "Bug" }]);
+  expect(approved).toEqual(["POST"]);
+});
+
+test("Save all persists changed mappings within one field band in both flows", async ({ page }) => {
+  const updates = [];
+  const approvals = [];
+  await page.route("**/api/v1/projects/1/mapping-settings**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { flows: {
+    systems_to_cis: [{ mapping_type: "user", mapping_label: "Project user", direction_from: "backlog", direction_to: "cis", from_value: "Mai", to_value: "mai", cis_values: ["mai", "linh"], existing_rule: { id: 31, to_value: "mai", approval_status: "approved" } }],
+    cis_to_system: [{ mapping_type: "user", mapping_label: "Project user", direction_from: "cis", direction_to: "jira", from_value: "Mai", to_value: "100", system_values: [{ value: "100", label: "Mai" }, { value: "101", label: "Linh" }], existing_rule: { id: 32, to_value: "100", approval_status: "approved" } }],
+  } } }) }));
+  await page.route("**/api/v1/projects/1/mapping-rules/*", (route) => {
+    const path = new URL(route.request().url()).pathname;
+    updates.push({ path, body: route.request().postDataJSON() });
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: path.endsWith("31") ? 31 : 32, to_value: route.request().postDataJSON().to_value, approval_status: "pending" } }) });
+  });
+  await page.route("**/api/v1/projects/1/mapping-rules/*/approve", (route) => {
+    const path = new URL(route.request().url()).pathname;
+    approvals.push(path);
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: path.includes("31") ? 31 : 32, to_value: path.includes("31") ? "linh" : "101", approval_status: "approved" } }) });
+  });
+
+  await enter(page, "/mappings");
+  const sourceGroup = page.locator('[data-mapping-group="source:user"]');
+  const targetGroup = page.locator('[data-mapping-group="target:user"]');
+  await expect(sourceGroup.getByRole("button", { name: "Save all" })).toBeDisabled();
+  await sourceGroup.getByRole("combobox").selectOption("linh");
+  await targetGroup.getByRole("combobox").selectOption("101");
+  await expect(sourceGroup.getByRole("button", { name: "Save all" })).toBeEnabled();
+  await expect(targetGroup.getByRole("button", { name: "Save all" })).toBeEnabled();
+  await sourceGroup.getByRole("button", { name: "Save all" }).click();
+  await targetGroup.getByRole("button", { name: "Save all" }).click();
+  await expect(sourceGroup.locator("[data-status]")).toContainText("approved");
+  await expect(targetGroup.locator("[data-status]")).toContainText("approved");
+  expect(updates).toEqual([
+    { path: "/api/v1/projects/1/mapping-rules/31", body: { to_value: "linh" } },
+    { path: "/api/v1/projects/1/mapping-rules/32", body: { to_value: "101" } },
+  ]);
+  expect(approvals).toEqual(["/api/v1/projects/1/mapping-rules/31/approve", "/api/v1/projects/1/mapping-rules/32/approve"]);
 });
 
 test("issue-editor: canonical surface and blocked Jira dry-run", async ({ page }) => {
@@ -595,7 +701,7 @@ test("Jira gate publishes operator-reviewed fields after a successful dry-run", 
 
 test("operations keep retry and anomaly decisions local to the active row", async ({ page }) => {
   const jobs = [
-    { id: "job-failed", project_id: 1, job_type: "manual_pull", direction_from: "backlog", direction_to: "cis", status: "failed", created_at: "2026-07-16T00:00:00Z", last_error: "Provider timeout" },
+    { id: "job-failed", project_id: 1, job_type: "manual_pull", direction_from: "backlog", direction_to: "cis", source_issue_key: "MAP-89", target_issue_key: "MAP-89", status: "failed", created_at: "2026-07-16T00:00:00Z", last_error: "Provider timeout" },
     { id: "job-pending", project_id: 1, job_type: "translate", direction_from: "cis", direction_to: "cis", status: "pending", created_at: "2026-07-16T00:01:00Z" },
   ];
   let finishRetry;
@@ -609,6 +715,8 @@ test("operations keep retry and anomaly decisions local to the active row", asyn
   const failedRow = page.locator('[data-job="job-failed"]');
   const pendingRow = page.locator('[data-job="job-pending"]');
   await pendingRow.evaluate((element) => { element.dataset.stable = "true"; });
+  await expect(failedRow.locator('[data-label="Source issue"]')).toHaveText("MAP-89");
+  await expect(failedRow.locator('[data-label="Target issue"]')).toHaveText("—");
   await failedRow.getByRole("button", { name: "Retry" }).click();
   await expect(failedRow.getByRole("button", { name: "Working…" })).toBeDisabled();
   await expect(pendingRow.getByRole("button", { name: "Cancel" })).toBeEnabled();

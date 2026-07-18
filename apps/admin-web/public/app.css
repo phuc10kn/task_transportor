@@ -52,7 +52,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mapping-flow__meta { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .75rem; }
 .mapping-group-row { background: color-mix(in srgb, var(--tblr-primary) 6%, var(--tblr-bg-surface-secondary)); }
 .mapping-group-cell { padding: 0 !important; border-top: 1px solid color-mix(in srgb, var(--tblr-primary) 24%, var(--tblr-border-color)); }
+.mapping-group-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
 .mapping-group-toggle { display: grid; width: 100%; min-height: 2.75rem; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: center; gap: .55rem; padding: .55rem .75rem; border: 0; border-left: 3px solid var(--tblr-primary); background: transparent; color: inherit; text-align: left; }
+.mapping-group-save { margin-right: .75rem; white-space: nowrap; }
 .mapping-group-toggle:hover { background: color-mix(in srgb, var(--tblr-primary) 7%, transparent); }
 .mapping-group-toggle__icon { display: inline-flex; color: var(--tblr-primary); transform: rotate(0); }
 .mapping-group-toggle[aria-expanded="false"] .mapping-group-toggle__icon { transform: rotate(-90deg); }
@@ -79,10 +81,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .backlog-not-closed { min-height: 2.75rem; margin: 0 0 .05rem; align-items: center; }
 .backlog-not-closed .form-check-label small { display: block; color: var(--tblr-secondary); }
 .backlog-search-actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
+.filtered-pull-complete { display: flex; align-items: center; gap: .6rem; margin-top: .75rem; padding: .7rem .85rem; border: 1px solid color-mix(in srgb, var(--tblr-success) 34%, var(--tblr-border-color)); border-radius: var(--tblr-border-radius); background: color-mix(in srgb, var(--tblr-success) 9%, var(--tblr-bg-surface)); color: var(--tblr-success); font-size: .82rem; }
+.filtered-pull-complete__icon { display: inline-grid; place-items: center; width: 1.35rem; height: 1.35rem; border-radius: 50%; background: var(--tblr-success); color: white; font-size: .8rem; font-weight: 800; }
+.filtered-pull-complete strong:last-child { font-size: 1rem; }
 .table { margin-bottom: 0; }
 .table th { font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .table td { vertical-align: middle; }
 .table code { font-size: .72rem; }
+.issue-source { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }
+.issue-source strong { color: var(--tblr-secondary); font-size: .72rem; font-weight: 700; }
 .table-actions { display: flex; align-items: center; flex-wrap: nowrap; gap: .25rem; min-width: 7.5rem; }
 .empty-row { padding: 2.5rem !important; text-align: center; color: var(--tblr-secondary); }
 .metric-strip { display: flex; flex-wrap: wrap; gap: .75rem; }

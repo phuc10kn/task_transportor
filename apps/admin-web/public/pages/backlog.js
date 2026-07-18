@@ -2,7 +2,7 @@
 
 (() => CIS.ready(async ({ project }) => {
   const root = document.querySelector("#page-content");
-  const params = new URLSearchParams(location.search);
+  let params = new URLSearchParams(location.search);
   const today = new Date().toISOString().slice(0, 10);
   let readiness;
   let options;
@@ -163,7 +163,7 @@
       state.innerHTML = `<span class="text-danger">${CIS.escape(filteredPull.error)}</span> <button class="btn btn-sm btn-outline-danger ms-2" id="retry-filtered-pull" type="button">Retry</button>`;
       document.querySelector("#retry-filtered-pull").addEventListener("click", runFilteredPull);
     } else if (filteredPull.completed) {
-      state.textContent = `Queueing completed · ${filteredPull.queuedTotal} issues queued.`;
+      state.innerHTML = `<div class="filtered-pull-complete" role="status"><span class="filtered-pull-complete__icon" aria-hidden="true">✓</span><span><strong>Queueing completed</strong> · <strong>${filteredPull.queuedTotal}</strong> issues queued.</span></div>`;
     } else if (filteredPull.running) {
       state.textContent = filteredPull.totalPages === null
         ? "Counting matching Backlog issues…"
@@ -310,10 +310,15 @@
       picker.addEventListener("keydown", (event) => { if (event.key === "Escape") { picker.open = false; picker.querySelector("summary").focus(); } });
     });
     document.querySelector("#candidate-filter")?.addEventListener("submit", (event) => {
+      event.preventDefault();
       const from = event.currentTarget.elements.created_from;
       const to = event.currentTarget.elements.created_to;
       from.setCustomValidity(from.value > to.value ? "Created from must not be after Created to." : "");
-      if (!event.currentTarget.reportValidity()) event.preventDefault();
+      if (!event.currentTarget.reportValidity()) return;
+      params = new URLSearchParams(new FormData(event.currentTarget));
+      params.set("submitted", "1");
+      history.replaceState(null, "", `${location.pathname}?${params}`);
+      void browse();
     });
     document.querySelector("#pull-one")?.addEventListener("click", async (event) => {
       const key = document.querySelector("#pull-one-key").value.trim();

@@ -37,13 +37,14 @@
     const collapsed = collapsedGroups.has(id);
     const required = group.items.some((item) => item.required_for_jira);
     const issueCount = group.items.reduce((total, item) => total + Number(item.issue_count || 0), 0);
-    return `<tbody data-mapping-group="${CIS.attr(id)}"><tr class="mapping-group-row"><th class="mapping-group-cell" colspan="4" scope="rowgroup"><button class="mapping-group-toggle" type="button" data-toggle-mapping-group aria-expanded="${collapsed ? "false" : "true"}"><span class="mapping-group-toggle__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="mapping-group-title">${CIS.escape(group.label)}${required ? '<span class="mapping-field-required" title="Required for Jira" aria-label="Required for Jira">*</span>' : ""}</span><span class="mapping-group-meta">${group.items.length} values · ${issueCount} issues</span></button></th></tr>${group.items.map((item) => row(item, flow).replace("<tr ", `<tr ${collapsed ? "hidden " : ""}`)).join("")}</tbody>`;
+    return `<tbody data-mapping-group="${CIS.attr(id)}"><tr class="mapping-group-row"><th class="mapping-group-cell" colspan="4" scope="rowgroup"><div class="mapping-group-bar"><button class="mapping-group-toggle" type="button" data-toggle-mapping-group aria-expanded="${collapsed ? "false" : "true"}"><span class="mapping-group-toggle__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="mapping-group-title">${CIS.escape(group.label)}${required ? '<span class="mapping-field-required" title="Required for Jira" aria-label="Required for Jira">*</span>' : ""}</span><span class="mapping-group-meta">${group.items.length} values · ${issueCount} issues</span></button><button class="btn btn-sm btn-outline-primary mapping-group-save" type="button" data-save-mapping-group="${CIS.attr(id)}" disabled>Save all</button></div></th></tr>${group.items.map((item) => row(item, flow).replace("<tr ", `<tr ${collapsed ? "hidden " : ""}`)).join("")}</tbody>`;
   }
 
   function flowCard(title, description, items, flow) {
     const requiredLegend = items.some((item) => item.required_for_jira) ? '<span class="text-danger small">* Required for Jira</span>' : "";
     const fieldGroups = groups(items);
-    return `<section class="card mapping-flow" data-mapping-flow="${CIS.attr(flow)}"><div class="card-header"><div><h2 class="card-title">${title}</h2><div class="text-secondary small mt-1">${description}</div></div><div class="mapping-flow__meta ms-auto">${requiredLegend}<span class="badge bg-secondary-lt">${fieldGroups.length} fields · ${items.length} mappings</span></div></div>${items.length ? `<div class="table-responsive"><table class="table table-vcenter responsive-table mapping-table"><thead><tr><th>From</th><th>To</th><th>Status</th><th>Actions</th></tr></thead>${fieldGroups.map((group) => groupRows(group, flow)).join("")}</table></div>` : '<div class="card-body text-secondary">No mapping candidates found. Pull source fields first.</div>'}</section>`;
+    const fillEqual = flow === "target" ? '<button class="btn btn-sm btn-outline-primary" data-fill-equal-target type="button">Fill equal target</button>' : "";
+    return `<section class="card mapping-flow" data-mapping-flow="${CIS.attr(flow)}"><div class="card-header"><div><h2 class="card-title">${title}</h2><div class="text-secondary small mt-1">${description}</div></div><div class="mapping-flow__meta ms-auto">${fillEqual}${requiredLegend}<span class="badge bg-secondary-lt">${fieldGroups.length} fields · ${items.length} mappings</span></div></div>${items.length ? `<div class="table-responsive"><table class="table table-vcenter responsive-table mapping-table"><thead><tr><th>From</th><th>To</th><th>Status</th><th>Actions</th></tr></thead>${fieldGroups.map((group) => groupRows(group, flow)).join("")}</table></div>` : '<div class="card-body text-secondary">No mapping candidates found. Pull source fields first.</div>'}</section>`;
   }
 
   function render() {
@@ -103,12 +104,58 @@
       if (collapsed) collapsedGroups.add(group.dataset.mappingGroup); else collapsedGroups.delete(group.dataset.mappingGroup);
     }));
     const itemsByKey = new Map([...(settings.flows?.systems_to_cis || []).map((item) => [`source:${item.mapping_type}:${item.from_value}`, item]), ...(settings.flows?.cis_to_system || []).map((item) => [`target:${item.mapping_type}:${item.from_value}`, item])]);
-    root.querySelectorAll("[data-mapping]").forEach((element) => {
-      const item = itemsByKey.get(element.dataset.mapping);
+    async function saveMapping(element, item) {
       const evidence = element.querySelector(".job-evidence");
       const select = element.querySelector("select");
       const save = element.querySelector("[data-save]");
       const status = element.querySelector("[data-status]");
+      save.disabled = true;
+      select.disabled = true;
+      save.textContent = "Saving…";
+      element.setAttribute("aria-busy", "true");
+      status.innerHTML = CIS.badge("Saving", "azure");
+      evidence.textContent = "";
+      try {
+        const body = { to_value: select.value };
+        const path = item.existing_rule ? `/mapping-rules/${item.existing_rule.id}` : "/mapping-rules";
+        if (!item.existing_rule) Object.assign(body, { mapping_type: item.mapping_type, direction_from: item.direction_from, direction_to: item.direction_to, from_value: item.from_value });
+        let saved = await CIS.projectApi(project.id, path, { method: item.existing_rule ? "PATCH" : "POST", body });
+        item.existing_rule = saved;
+        item.to_value = saved.to_value;
+        select.dataset.initialValue = saved.to_value;
+        element.classList.remove("is-dirty");
+        if (saved.approval_status !== "approved") saved = await CIS.projectApi(project.id, `/mapping-rules/${saved.id}/approve`, { method: "POST" });
+        item.existing_rule = saved;
+        item.to_value = saved.to_value;
+        status.innerHTML = CIS.badge(saved.approval_status);
+        save.classList.remove("btn-primary");
+        save.classList.add("btn-outline-secondary");
+        return true;
+      } catch (failure) {
+        const dirty = select.value !== select.dataset.initialValue;
+        status.innerHTML = dirty ? CIS.badge("Unsaved", "yellow") : CIS.badge(item.existing_rule?.approval_status || "not set");
+        evidence.innerHTML = `<span class="text-danger">${CIS.escape(failure.message)}</span>`;
+        save.disabled = false;
+        return false;
+      } finally {
+        save.textContent = "Save";
+        select.disabled = false;
+        element.removeAttribute("aria-busy");
+      }
+    }
+
+    const mappings = [];
+    const saveable = ({ item, select }) => Boolean(select.value) && (select.value !== select.dataset.initialValue || item.existing_rule?.approval_status !== "approved");
+    function refreshGroupSaveButton(group) {
+      const button = group.querySelector("[data-save-mapping-group]");
+      button.disabled = !mappings.some((mapping) => mapping.element.closest("[data-mapping-group]") === group && saveable(mapping));
+    }
+    root.querySelectorAll("[data-mapping]").forEach((element) => {
+      const item = itemsByKey.get(element.dataset.mapping);
+      const select = element.querySelector("select");
+      const save = element.querySelector("[data-save]");
+      const status = element.querySelector("[data-status]");
+      mappings.push({ element, item, select });
       select.addEventListener("change", () => {
         const dirty = select.value !== select.dataset.initialValue;
         const canApprove = Boolean(select.value) && item.existing_rule?.approval_status !== "approved";
@@ -117,42 +164,43 @@
         save.disabled = !dirty && !canApprove;
         save.classList.toggle("btn-primary", dirty || canApprove);
         save.classList.toggle("btn-outline-secondary", !dirty && !canApprove);
+        refreshGroupSaveButton(element.closest("[data-mapping-group]"));
       });
-      save.addEventListener("click", async (event) => {
-        const button = event.currentTarget;
+      save.addEventListener("click", () => saveMapping(element, item).then((saved) => {
+        refreshGroupSaveButton(element.closest("[data-mapping-group]"));
+        if (saved) CIS.toast("Mapping saved.");
+      }));
+    });
+    root.querySelectorAll("[data-mapping-group]").forEach((group) => {
+      const button = group.querySelector("[data-save-mapping-group]");
+      refreshGroupSaveButton(group);
+      button.addEventListener("click", async () => {
+        const candidates = mappings.filter((mapping) => mapping.element.closest("[data-mapping-group]") === group && saveable(mapping));
         button.disabled = true;
-        select.disabled = true;
         button.textContent = "Saving…";
-        element.setAttribute("aria-busy", "true");
-        status.innerHTML = CIS.badge("Saving", "azure");
-        evidence.textContent = "";
-        try {
-          const body = { to_value: select.value };
-          const path = item.existing_rule ? `/mapping-rules/${item.existing_rule.id}` : "/mapping-rules";
-          if (!item.existing_rule) Object.assign(body, { mapping_type: item.mapping_type, direction_from: item.direction_from, direction_to: item.direction_to, from_value: item.from_value });
-          let saved = await CIS.projectApi(project.id, path, { method: item.existing_rule ? "PATCH" : "POST", body });
-          item.existing_rule = saved;
-          item.to_value = saved.to_value;
-          select.dataset.initialValue = saved.to_value;
-          element.classList.remove("is-dirty");
-          if (saved.approval_status !== "approved") saved = await CIS.projectApi(project.id, `/mapping-rules/${saved.id}/approve`, { method: "POST" });
-          item.existing_rule = saved;
-          item.to_value = saved.to_value;
-          status.innerHTML = CIS.badge(saved.approval_status);
-          button.classList.remove("btn-primary");
-          button.classList.add("btn-outline-secondary");
-          CIS.toast("Mapping saved.");
-        } catch (failure) {
-          const dirty = select.value !== select.dataset.initialValue;
-          status.innerHTML = dirty ? CIS.badge("Unsaved", "yellow") : CIS.badge(item.existing_rule?.approval_status || "not set");
-          evidence.innerHTML = `<span class="text-danger">${CIS.escape(failure.message)}</span>`;
-          button.disabled = false;
-        } finally {
-          button.textContent = "Save";
-          select.disabled = false;
-          element.removeAttribute("aria-busy");
+        let saved = 0;
+        for (const candidate of candidates) {
+          if (await saveMapping(candidate.element, candidate.item)) saved += 1;
         }
+        button.textContent = "Save all";
+        refreshGroupSaveButton(group);
+        CIS.toast(saved ? `${saved} mapping${saved === 1 ? "" : "s"} saved.` : "No mappings need saving.");
       });
+    });
+    root.querySelector("[data-fill-equal-target]")?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      const candidates = mappings.filter(({ item, select }) => item.direction_to === target && !item.to_value && [...select.options].find((option) => option.value && option.text.trim().toLowerCase() === String(item.from_label || item.from_value).trim().toLowerCase()));
+      if (!candidates.length) return CIS.toast("No unmapped CIS values match a Jira target.");
+      button.disabled = true;
+      button.textContent = "Filling…";
+      let saved = 0;
+      for (const candidate of candidates) {
+        candidate.select.value = [...candidate.select.options].find((option) => option.value && option.text.trim().toLowerCase() === String(candidate.item.from_label || candidate.item.from_value).trim().toLowerCase()).value;
+        if (await saveMapping(candidate.element, candidate.item)) saved += 1;
+      }
+      button.disabled = false;
+      button.textContent = "Fill equal target";
+      CIS.toast(saved ? `${saved} equal Jira mapping${saved === 1 ? "" : "s"} saved.` : "No equal Jira mappings were saved.");
     });
   }
 

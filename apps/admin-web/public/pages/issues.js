@@ -10,37 +10,83 @@
     return `<div class="page-heading"><div><div class="route-kicker">Canonical workspace</div><h1>${title}</h1><p class="text-secondary mb-0">${copy}</p></div><div class="flow-rail"><span>${rail}</span><strong>· ${CIS.escape(project.name)} #${project.id}</strong></div></div>`;
   }
 
-  function pageHref(params, page) {
-    const next = new URLSearchParams(params);
-    if (page > 1) next.set("page", String(page)); else next.delete("page");
-    return CIS.projectPath(`/cis-issues${next.size ? `?${next}` : ""}`, project.id);
-  }
-
   function pagination(meta, params) {
     if (!meta || meta.total_pages <= 1) return "";
-    return `<div class="card-footer cis-list-footer"><div class="text-secondary small">Page ${meta.page} of ${meta.total_pages} · ${meta.total} issues</div><nav aria-label="CIS issue pages"><ul class="pagination pagination-sm mb-0"><li class="page-item ${meta.page <= 1 ? "disabled" : ""}"><a class="page-link" href="${CIS.attr(pageHref(params, meta.page - 1))}" aria-label="Previous page">Previous</a></li><li class="page-item ${meta.page >= meta.total_pages ? "disabled" : ""}"><a class="page-link" href="${CIS.attr(pageHref(params, meta.page + 1))}" aria-label="Next page">Next</a></li></ul></nav></div>`;
+    return `<div class="card-footer cis-list-footer"><div class="text-secondary small">Page ${meta.page} of ${meta.total_pages} · ${meta.total} issues</div><nav aria-label="CIS issue pages"><ul class="pagination pagination-sm mb-0"><li class="page-item ${meta.page <= 1 ? "disabled" : ""}"><button class="page-link" type="button" data-issue-page="${meta.page - 1}" aria-label="Previous page" ${meta.page <= 1 ? "disabled" : ""}>Previous</button></li><li class="page-item ${meta.page >= meta.total_pages ? "disabled" : ""}"><button class="page-link" type="button" data-issue-page="${meta.page + 1}" aria-label="Next page" ${meta.page >= meta.total_pages ? "disabled" : ""}>Next</button></li></ul></nav></div>`;
+  }
+
+  function sourceIdentity(issue) {
+    const [system, key] = issue.backlog_issue_key ? ["Backlog", issue.backlog_issue_key] : issue.jira_issue_key ? ["Jira", issue.jira_issue_key] : ["CIS", "Manual"];
+    return `<span class="issue-source"><strong>${system}</strong> <code>(${CIS.escape(key)})</code></span>`;
+  }
+
+  function targetIdentity(issue) {
+    return issue.jira_issue_key
+      ? `<span class="issue-source"><strong>Jira</strong> <code>(${CIS.escape(issue.jira_issue_key)})</code></span>`
+      : '<span class="text-secondary">Not synced</span>';
+  }
+
+  function issueQuery(params) {
+    const query = new URLSearchParams();
+    for (const field of ["q", "page"]) if (params.get(field)) query.set(field, params.get(field));
+    return query;
+  }
+
+  function issueRegister(result, params) {
+    const issues = Array.isArray(result) ? result : result.items || [];
+    const meta = Array.isArray(result) ? { page: 1, page_size: 20, total: result.length, total_pages: 1 } : result.pagination;
+    const hasFilters = Boolean(params.get("q"));
+    return `<section class="card" id="issue-register"><div class="card-header"><div><h2 class="card-title">Issue register</h2><div class="text-secondary small">Canonical Summary search</div></div><span class="badge bg-secondary-lt ms-auto">${meta.total}</span></div>
+      <form class="card-body border-bottom cis-issue-filters" aria-label="CIS issue filters"><div class="row g-2 align-items-end">
+        <div class="col-12"><label class="form-label" for="issue-search">Summary</label><input class="form-control" id="issue-search" name="q" value="${CIS.attr(params.get("q") || "")}" placeholder="Mục đích sửa đổi"></div>
+        <div class="col-12 cis-filter-actions"><button class="btn btn-primary" type="submit">Search issues</button>${hasFilters ? '<button class="btn btn-link" type="button" data-issue-list-clear>Clear filters</button>' : ""}</div>
+      </div></form>
+      ${issues.length ? `<div class="table-responsive"><table class="table table-vcenter responsive-table"><thead><tr><th>Source</th><th>Target</th><th>Status</th><th>Summary</th><th>Priority</th><th>Assignee</th><th>Pending review</th><th>Anomaly</th><th></th></tr></thead><tbody>${issues.map((issue) => `<tr><td data-label="Source">${sourceIdentity(issue)}</td><td data-label="Target">${targetIdentity(issue)}</td><td data-label="Status">${CIS.badge(issue.sync_status || "unknown")}</td><td data-label="Summary">${CIS.escape(issue.current_summary || "—")}</td><td data-label="Priority">${CIS.escape(issue.current_priority || "—")}</td><td data-label="Assignee">${CIS.escape(issue.current_assignee || "—")}</td><td data-label="Pending review">${issue.pending_translation_count || 0}</td><td data-label="Anomaly">${issue.open_anomaly_count || 0}</td><td data-label="Action"><a class="btn btn-sm btn-outline-primary" href="${CIS.attr(CIS.projectPath(`/cis-issues/${encodeURIComponent(issue.id)}`, project.id))}">Open Editor</a></td></tr>`).join("")}</tbody></table></div>` : `<div class="card-body text-center py-6"><h2 class="h3">${hasFilters ? "No issues match these filters" : "No CIS issues found"}</h2><p class="text-secondary">${hasFilters ? "Adjust or clear filters to broaden the result." : "Create the first canonical issue in this Project."}</p></div>`}
+      ${pagination(meta, params)}</section>`;
+  }
+
+  async function updateIssueRegister(params) {
+    const register = document.querySelector("#issue-register");
+    register.innerHTML = '<div class="card-body" aria-busy="true"><span class="spinner-border spinner-border-sm me-2"></span>Loading issues…</div>';
+    try {
+      const result = await CIS.projectApi(project.id, `/issues?${issueQuery(params)}`);
+      register.outerHTML = issueRegister(result, params);
+      bindIssueRegister();
+    } catch (error) {
+      register.innerHTML = `<div class="card-body">${CIS.alert(error.message)}<button class="btn btn-primary" type="button" data-retry-issue-list>Retry</button></div>`;
+      register.querySelector("[data-retry-issue-list]").addEventListener("click", () => updateIssueRegister(params));
+    }
+  }
+
+  function bindIssueRegister() {
+    const register = document.querySelector("#issue-register");
+    register?.querySelector(".cis-issue-filters")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const params = new URLSearchParams(new FormData(event.currentTarget));
+      history.replaceState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}`);
+      void updateIssueRegister(params);
+    });
+    register?.querySelector("[data-issue-list-clear]")?.addEventListener("click", () => {
+      history.replaceState(null, "", location.pathname);
+      void updateIssueRegister(new URLSearchParams());
+    });
+    register?.querySelectorAll("[data-issue-page]").forEach((button) => button.addEventListener("click", () => {
+      const params = new URLSearchParams(location.search);
+      params.set("page", button.dataset.issuePage);
+      history.replaceState(null, "", `${location.pathname}?${params}`);
+      void updateIssueRegister(params);
+    }));
   }
 
   async function listPage() {
     root.innerHTML = `<div class="container-xl">${heading("CIS Issues", "Create and review canonical issue state before any outbound delivery.")}<section class="card state-card" aria-busy="true"><div class="card-body"><span class="spinner-border spinner-border-sm me-2"></span>Loading issues…</div></section></div>`;
     const params = new URLSearchParams(location.search);
-    const query = new URLSearchParams();
-    for (const field of ["q", "page"]) if (params.get(field)) query.set(field, params.get(field));
     let result;
-    try { result = await CIS.projectApi(project.id, `/issues?${query}`); }
+    try { result = await CIS.projectApi(project.id, `/issues?${issueQuery(params)}`); }
     catch (error) { root.innerHTML = CIS.state("CIS Issues unavailable", error.message, CIS.retryLink()); return; }
-    const issues = Array.isArray(result) ? result : result.items || [];
-    const meta = Array.isArray(result) ? { page: 1, page_size: 20, total: result.length, total_pages: 1 } : result.pagination;
-    const hasFilters = Boolean(params.get("q"));
     root.innerHTML = `<div class="container-xl">${heading("CIS Issues", "Create and review canonical issue state before any outbound delivery.")}
       <section class="card mb-3"><div class="card-header"><h2 class="card-title">Create manual CIS issue</h2></div><div class="card-body"><div id="create-error"></div><form id="create-issue"><div class="row g-3 align-items-end"><div class="col-md-5"><label class="form-label" for="issue-summary">Summary</label><input class="form-control" id="issue-summary" name="summary" required></div><div class="col-md-5"><label class="form-label" for="issue-description">Description</label><input class="form-control" id="issue-description" name="description"></div><div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Create issue</button></div></div></form></div></section>
-      <section class="card"><div class="card-header"><div><h2 class="card-title">Issue register</h2><div class="text-secondary small">Canonical Summary search</div></div><span class="badge bg-secondary-lt ms-auto">${meta.total}</span></div>
-        <form class="card-body border-bottom cis-issue-filters" method="get" action="${CIS.attr(CIS.projectPath("/cis-issues", project.id))}" aria-label="CIS issue filters"><div class="row g-2 align-items-end">
-          <div class="col-12"><label class="form-label" for="issue-search">Summary</label><input class="form-control" id="issue-search" name="q" value="${CIS.attr(params.get("q") || "")}" placeholder="Mục đích sửa đổi"></div>
-          <div class="col-12 cis-filter-actions"><button class="btn btn-primary" type="submit">Search issues</button>${hasFilters ? `<a class="btn btn-link" href="${CIS.attr(CIS.projectPath("/cis-issues", project.id))}">Clear filters</a>` : ""}</div>
-        </div></form>
-        ${issues.length ? `<div class="table-responsive"><table class="table table-vcenter responsive-table"><thead><tr><th>Source</th><th>Status</th><th>Summary</th><th>Priority</th><th>Assignee</th><th>Pending review</th><th>Anomaly</th><th></th></tr></thead><tbody>${issues.map((issue) => `<tr><td data-label="Source"><code>${CIS.escape(issue.backlog_issue_key || issue.jira_issue_key || "—")}</code></td><td data-label="Status">${CIS.badge(issue.sync_status || "unknown")}</td><td data-label="Summary">${CIS.escape(issue.current_summary || "—")}</td><td data-label="Priority">${CIS.escape(issue.current_priority || "—")}</td><td data-label="Assignee">${CIS.escape(issue.current_assignee || "—")}</td><td data-label="Pending review">${issue.pending_translation_count || 0}</td><td data-label="Anomaly">${issue.open_anomaly_count || 0}</td><td data-label="Action"><a class="btn btn-sm btn-outline-primary" href="${CIS.attr(CIS.projectPath(`/cis-issues/${encodeURIComponent(issue.id)}`, project.id))}">Open Editor</a></td></tr>`).join("")}</tbody></table></div>` : `<div class="card-body text-center py-6"><h2 class="h3">${hasFilters ? "No issues match these filters" : "No CIS issues found"}</h2><p class="text-secondary">${hasFilters ? "Adjust or clear filters to broaden the result." : "Create the first canonical issue in this Project."}</p></div>`}
-        ${pagination(meta, params)}</section>
+      ${issueRegister(result, params)}
     </div>`;
     document.querySelector("#create-issue").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -55,6 +101,7 @@
         button.disabled = false;
       }
     });
+    bindIssueRegister();
   }
 
   function catalogOptions(catalog, current) {

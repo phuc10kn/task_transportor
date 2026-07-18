@@ -511,13 +511,13 @@ async function verifyPhase07() {
     assert.equal(manualPullJob.issue_id, null);
     assert.equal(manualPullJob.issue_reference, "ADM-1");
     assert.equal(manualPullJob.source_issue_key, "ADM-1");
-    assert.equal(manualPullJob.target_issue_key, "ADM-1");
+    assert.equal(manualPullJob.target_issue_key, null);
     const successJob = jobs.body.data.find((row) => row.job_type === "noop_test");
     assert.ok(successJob);
     assert.ok(successJob.created_at);
     assert.ok(successJob.success_at);
     assert.equal(successJob.source_issue_key, "ADM-1");
-    assert.equal(successJob.target_issue_key, "");
+    assert.equal(successJob.target_issue_key, null);
 
     const allJournal = await requestJson(server, {
       pathname: `/api/v1/projects/${project.id}/sync-journal`,
@@ -532,7 +532,7 @@ async function verifyPhase07() {
     assert.equal(manualPullJournal.issue_id, null);
     assert.equal(manualPullJournal.issue_reference, "ADM-1");
     assert.equal(manualPullJournal.source_issue_key, "ADM-1");
-    assert.equal(manualPullJournal.target_issue_key, "ADM-1");
+    assert.equal(manualPullJournal.target_issue_key, null);
 
     const journal = await requestJson(server, {
       pathname: `/api/v1/projects/${project.id}/issues/${issue.id}/sync-journal`,

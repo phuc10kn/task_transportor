@@ -116,6 +116,9 @@ function withMockJiraServer(callback) {
         { emailAddress: "email-user@example.test", accountId: "email-account-id", displayName: "Email User", accountType: "atlassian" },
         { accountId: "old-user-account-id", displayName: "Old User", active: false, accountType: "atlassian" },
         { accountId: "slack-account-id", displayName: "Slack", accountType: "app" },
+        { accountId: "github-atlassian-account-id", displayName: "GitHub for Atlassian", accountType: "atlassian" },
+        { accountId: "jql-gadget-account-id", displayName: "Free JQL Filter Counter & KPI Dashboard Gadget for Jira", accountType: "atlassian" },
+        { accountId: "proforma-migrator-account-id", displayName: "Proforma Migrator", accountType: "atlassian" },
       ]);
       return;
     }
@@ -195,6 +198,9 @@ async function verifyJiraMappingUserPullKeepsHiddenUsers() {
     assert.ok(!values.user.includes("teams-account-id"));
     assert.ok(!values.user.includes("triage-account-id"));
     assert.ok(!values.user.includes("atlas-account-id"));
+    assert.ok(!values.user.includes("github-atlassian-account-id"));
+    assert.ok(!values.user.includes("jql-gadget-account-id"));
+    assert.ok(!values.user.includes("proforma-migrator-account-id"));
     assert.equal(values.user_labels["email-user@example.test"], "Email User");
     assert.equal(values.user_labels["multi-project-account-id"], "Hidden Multi User");
     assert.equal(values.user_labels["role-account-id"], "Role User");
@@ -212,6 +218,9 @@ async function verifyJiraMappingUserPullKeepsHiddenUsers() {
     assert.ok(values.user_directory.some((user) => user.id === "multi-project-account-id"));
     assert.ok(values.user_directory.some((user) => user.id === "role-account-id"));
     assert.ok(!values.user_directory.some((user) => user.id === "slack-account-id"));
+    assert.ok(!values.user_directory.some((user) => user.id === "github-atlassian-account-id"));
+    assert.ok(!values.user_directory.some((user) => user.id === "jql-gadget-account-id"));
+    assert.ok(!values.user_directory.some((user) => user.id === "proforma-migrator-account-id"));
   });
 }
 
