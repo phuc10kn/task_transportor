@@ -28,7 +28,7 @@ CREATE TABLE projects (
   jira_api_token_env TEXT,
   jira_webhook_secret_env TEXT,
 
-  translation_provider TEXT NOT NULL DEFAULT 'codex_exec',
+  translation_provider TEXT NOT NULL DEFAULT 'deepseek',
   translation_model TEXT,
   translation_command_profile TEXT,
   source_language TEXT NOT NULL DEFAULT 'ja',

@@ -1,6 +1,4 @@
 const assert = require("assert");
-const path = require("path");
-
 const { createApp } = require("../../src/app");
 const { createConnection } = require("../../src/infrastructure/database/connection");
 const { migrate } = require("../../src/infrastructure/database/migrate");
@@ -13,24 +11,19 @@ const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructu
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { createTranslationRepository } = require("../../src/modules/Translation/infrastructure/TranslationRepository");
 const { makeTempConfig } = require("./helpers/tempConfig");
+const { installFakeAiFetch } = require("./helpers/fake-ai-fetch");
 const { requestJson, withServer } = require("./helpers/http");
-
-const fakeCodexPath = path.resolve(__dirname, "fakes", "codex-exec.js");
-
-function fakeCommand(mode) {
-  return `"${process.execPath}" "${fakeCodexPath}" ${mode}`;
-}
 
 function setupConfig(name, mode, overrides = {}) {
   const config = makeTempConfig(name, {
-    CODEX_EXEC_COMMAND: fakeCommand(mode),
-    CODEX_EXEC_TIMEOUT_SECONDS: "2",
+    DEEPSEEK_API_KEY: "test-deepseek-key",
     ADMIN_EMAIL: `${name}@example.test`,
     ADMIN_PASSWORD: "verify-password",
     ...overrides,
   });
   ensureStorage(config.storage);
   migrate({ config });
+  installFakeAiFetch({ mode });
   return config;
 }
 
@@ -48,7 +41,7 @@ function createProject(config, suffix = "TRAN") {
       jira_site_url: "https://translation-verify.atlassian.net",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_API_TOKEN",
-      translation_ai_provider: "codex_exec",
+      translation_ai_provider: "deepseek",
       source_language: "ja",
       target_language: "vi",
       auto_translate: true,
@@ -117,7 +110,7 @@ function createIssueWithTranslations(config, count = 1, overrides = {}) {
         source_language: "ja",
         target_language: "vi",
         source_text: `${sourceText}\n#${index + 1}`,
-        ...(Object.prototype.hasOwnProperty.call(overrides, "provider") ? { provider: overrides.provider } : { provider: "codex_exec" }),
+        ...(Object.prototype.hasOwnProperty.call(overrides, "provider") ? { provider: overrides.provider } : { provider: "deepseek" }),
       },
     }));
   }
@@ -151,7 +144,7 @@ function verifyAtomicBatchRollback() {
   for (const item of items) {
     repository.markAiDraft(item.id, {
       ai_draft: `[vi] ${item.source_text}`,
-      provider: "codex_exec",
+      provider: "deepseek",
       model_or_command: "fake-success",
       confidence: 0.9,
     });
@@ -227,8 +220,8 @@ async function verifySuccessAndReviewApi() {
   assert.equal(firstWorker.job.status, "success");
   let first = getTranslation(config, items[0].id);
   assert.equal(first.review_status, "ai_draft");
-  assert.equal(first.provider, "codex_exec");
-  assert.ok(first.model_or_command.includes("codex-exec.js"));
+  assert.equal(first.provider, "deepseek");
+  assert.equal(first.model_or_command, "deepseek-v4-flash");
   assert.equal(first.confidence, 0.82);
   assert.match(first.ai_draft, new RegExp(`^【${issue.backlog_issue_key}】\\[vi\\]`));
   assert.ok(first.ai_draft.includes("```js\nconst a = 1;\n```"));
@@ -411,7 +404,6 @@ async function verifySuccessAndReviewApi() {
 
 async function verifyProviderFailure(mode, expectedErrorCode) {
   const config = setupConfig(`translation-${mode}`, mode, {
-    CODEX_EXEC_TIMEOUT_SECONDS: "1",
   });
   const { items } = createIssueWithTranslations(config, 1);
   const job = enqueueTranslate(config, items[0], { max_attempts: 1 });
@@ -419,7 +411,7 @@ async function verifyProviderFailure(mode, expectedErrorCode) {
   const result = await SyncApi.runWorkerOnce({ config, workerId: `translation-${mode}` });
   assert.equal(result.job.id, job.id);
   assert.equal(result.job.status, "failed");
-  assert.match(result.job.last_error, /codex_exec/i);
+  assert.match(result.job.last_error, /DeepSeek/i);
 
   const item = getTranslation(config, items[0].id);
   assert.equal(item.provider_error, expectedErrorCode);
@@ -757,7 +749,7 @@ async function verifyStaleQueueUsesCurrentProjectAiConfig() {
   const project = createProject(config, "STALE");
   const { items } = createIssueWithTranslations(config, 1, { project, provider: undefined });
 
-  assert.equal(items[0].provider, "codex_exec");
+  assert.equal(items[0].provider, "deepseek");
   ProjectsApi.updateProject({
     config,
     projectId: project.id,
@@ -819,8 +811,8 @@ async function main() {
   await verifySuccessAndReviewApi();
   await verifyManualEntryPointGate();
   await verifyDirectFailureFeedback();
-  await verifyProviderFailure("timeout", "CODEX_EXEC_TIMEOUT");
-  await verifyProviderFailure("invalid-json", "CODEX_EXEC_PARSE_ERROR");
+  await verifyProviderFailure("timeout", "DEEPSEEK_TIMEOUT");
+  await verifyProviderFailure("invalid-json", "DEEPSEEK_PARSE_ERROR");
   await verifyLowConfidenceAnomaly();
   await verifyDeepSeekProvider();
   await verifyDeepSeekAnthropicTransport();

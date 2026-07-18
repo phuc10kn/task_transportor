@@ -92,9 +92,7 @@ function rowToProject(row) {
 
   const translationAiProvider = row.translation_ai_provider || row.translation_provider || PROJECT_DEFAULTS.translation_ai_provider;
   const translationAiTransport = row.translation_ai_transport || PROJECT_DEFAULTS.translation_ai_transport;
-  const translationAiModel = translationAiProvider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
-    ? null
-    : (row.translation_ai_model || row.translation_model || defaultTranslationAiModelFor(translationAiProvider));
+  const translationAiModel = row.translation_ai_model || row.translation_model || defaultTranslationAiModelFor(translationAiProvider);
 
   return {
     ...row,

@@ -1,6 +1,6 @@
 # Kế hoạch External Provider Gateways cho Backlog và Jira
 
-> Trạng thái: Đã triển khai theo Draft v2; chờ manual review Admin UI.
+> Trạng thái: Đã triển khai theo Draft v2; chờ manual review Admin UI. Các mô tả path trước refactor chỉ là historical; cấu trúc active là `src/infrastructure/external/{core,providers,transports}`.
 
 ## 1. Mục tiêu
 
@@ -39,7 +39,7 @@ Gateway là technical enforcement boundary. Các business gate hiện có như `
 ### Ngoài phạm vi
 
 - Webhook ingress từ Backlog/Jira vào CIS. Hiện repo chưa có webhook route hoạt động; ingress cần một gate riêng tại HTTP boundary khi được triển khai.
-- AI/Translation transport trong `src/infrastructure/ai`.
+- AI/Translation transport và provider gateway đã thuộc cấu trúc external active, không nằm trong phạm vi thay đổi nghiệp vụ của plan này.
 - Backlog write API; hiện không có business flow ghi Backlog.
 - Thêm Jira/Backlog endpoint hoặc business action mới.
 - Thay đổi mapping, translation, dry-run, rollback hoặc canonical workflow hiện tại.
@@ -322,8 +322,7 @@ Thêm architecture verification với các rule:
    - `undici` hoặc HTTP dependency khác nếu được thêm vào package sau này.
    - Verifier phải bắt cả namespace, destructuring và alias import thông thường; không chỉ tìm chuỗi `.get()`/`.request()`.
 2. Network allowlist chỉ gồm:
-   - Provider real transport cụ thể trong `src/infrastructure/external/backlog` và `src/infrastructure/external/jira`.
-   - `src/infrastructure/ai/**` theo AI boundary hiện có.
+   - Provider real transport cụ thể trong `src/infrastructure/external/providers/backlog`, `src/infrastructure/external/providers/jira` và `src/infrastructure/external/transports/**`.
 3. Application/module code không được import concrete gateway, raw transport hoặc operation registry. Chỉ composition boundary và provider client adapter được phép import internal external-gateway files.
 4. Backlog/Jira module không export raw HTTP request function; concrete gateway constructor và custom transport injection cũng không export cho production caller.
 5. Gateway không export method nhận arbitrary `method + pathname`.

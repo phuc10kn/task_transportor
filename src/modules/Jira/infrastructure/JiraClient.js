@@ -2,13 +2,13 @@ const fs = require("fs");
 const path = require("path");
 
 const { AppError } = require("../../../http/errors/AppError");
-const { JiraRequestGateway } = require("../../../infrastructure/external/jira/JiraRequestGateway");
+const { JiraGateway } = require("../../../infrastructure/external/providers/jira/JiraGateway");
 const {
   assertScopeOperation,
   createExternalAccessScope,
   scopeState,
-} = require("../../../infrastructure/external/createExternalAccessScope");
-const { isExternalBoundaryError } = require("../../../infrastructure/external/policy");
+} = require("../../../infrastructure/external/core/createExternalAccessScope");
+const { isExternalBoundaryError } = require("../../../infrastructure/external/core/policy");
 const { markdownToAdf } = require("../support/jiraAdf");
 const { jiraStoryPointFieldId } = require("../support/jiraDryRunPayload");
 const { isRealJiraUserProfile, labelForJiraUser } = require("../support/realJiraUser");
@@ -660,7 +660,7 @@ function createJiraClient({ config, projectId, externalAccessScope }) {
 
   return new JiraClient({
     project,
-    gateway: new JiraRequestGateway({ scope, expectedProjectId: projectId }),
+    gateway: new JiraGateway({ scope, expectedProjectId: projectId }),
   });
 }
 

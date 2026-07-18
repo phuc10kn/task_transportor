@@ -177,7 +177,7 @@ async function main() {
         jira_project_key: "SYNC",
         jira_email: "sync-admin@example.test",
         jira_api_token: "jira-secret-token",
-        translation_ai_provider: "codex_exec",
+        translation_ai_provider: "deepseek",
         manual_pull_enabled: true,
         scheduled_pull_enabled: true,
         scheduled_pull_interval_minutes: 10,
@@ -185,9 +185,9 @@ async function main() {
       },
     });
     assert.equal(created.status, 201);
-    assert.equal(created.body.data.translation_ai_provider, "codex_exec");
-    assert.equal(created.body.data.translation_ai_transport, "process_exec");
-    assert.equal(created.body.data.translation_ai_model, null);
+    assert.equal(created.body.data.translation_ai_provider, "deepseek");
+    assert.equal(created.body.data.translation_ai_transport, "openai_compatible");
+    assert.equal(created.body.data.translation_ai_model, "deepseek-v4-flash");
     assert.equal(Object.prototype.hasOwnProperty.call(created.body.data, "translation_glossary_json"), false);
     assert.equal(created.body.data.manual_pull_enabled, true);
     assert.equal(created.body.data.scheduled_pull_enabled, true);
@@ -222,7 +222,7 @@ async function main() {
       body: {
         name: "Invalid Translation AI Transport",
         translation_ai_provider: "deepseek",
-        translation_ai_transport: "process_exec",
+        translation_ai_transport: "unsupported_transport",
         translation_ai_model: "deepseek-v4-flash",
       },
     });

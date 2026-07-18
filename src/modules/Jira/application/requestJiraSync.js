@@ -3,7 +3,7 @@ const CisApi = require("../../Cis/CisApi");
 const AnomalyApi = require("../../Anomaly/AnomalyApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { createJiraClient } = require("../infrastructure/JiraClient");
-const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
+const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/core/createExternalAccessScope");
 const { evaluateDryRunFreshness, evaluateJiraSyncReadiness } = require("./runJiraDryRun");
 const { jiraStoryPointFieldId, jiraUserField } = require("../support/jiraDryRunPayload");
 

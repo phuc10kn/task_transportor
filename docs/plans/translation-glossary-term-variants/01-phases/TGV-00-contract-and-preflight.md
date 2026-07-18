@@ -19,7 +19,7 @@ Khóa contract canonical/variant, xác nhận database target có thể migrate 
 
 ## Công việc
 
-1. Rà toàn bộ caller/read/write của `translation_glossary_terms`, `is_canonical`, `buildStandardTranslationInput`, `TranslationAdapter`, `ProcessTranslationAdapter`, `codexCliAdapter` và current API payload; không đọc `backlog2jira`.
+1. Rà toàn bộ caller/read/write của `translation_glossary_terms`, `is_canonical`, `buildStandardTranslationInput`, `TranslationAdapter` và current API payload; không đọc `backlog2jira`.
 2. Tạo `verify:translation-glossary-preflight -- --database <absolute-path>`: dùng direct `better-sqlite3` connection với `readonly` và `fileMustExist`, từ chối `:memory:`, temporary verifier path và đường dẫn tương đối; không gọi `createConnection`, `ensureStorage`, `migrate` hoặc WAL pragma và không ghi database.
 3. Preflight in evidence gồm database path đã resolve, migration ledger, SQLite version, generated-column support, số concept/term, count theo `(concept, language)`, blank normalized term, collision `(project, language, term_match_key)` tính bằng JavaScript normalization, ID/timestamp/FK integrity và baseline một term mỗi language.
 4. Chốt migration 016 dùng primitive generic deterministic trên standard connection, generated non-empty `term_match_key`, giữ `AUTOINCREMENT`/row ID/timestamps và transaction atomic.

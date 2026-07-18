@@ -4,12 +4,14 @@ const path = require("path");
 const root = path.resolve(__dirname, "..", "..");
 const modulesRoot = path.join(root, "src", "modules");
 const errors = [];
-const gatewayImportAllowlist = new Set([
+const providerImportAllowlist = new Set([
   "src/modules/Backlog/infrastructure/BacklogClient.js",
   "src/modules/Jira/infrastructure/JiraClient.js",
+  "src/modules/Translation/infrastructure/translationAdapterFor.js",
 ]);
 const scopeImportAllowlist = new Set([
-  ...gatewayImportAllowlist,
+  "src/modules/Backlog/infrastructure/BacklogClient.js",
+  "src/modules/Jira/infrastructure/JiraClient.js",
   "src/modules/Sync/application/runJobNow.js",
   "src/modules/Backlog/application/pullIssue.js",
   "src/modules/Backlog/application/syncCandidateToCis.js",
@@ -36,10 +38,13 @@ for (const file of files(modulesRoot)) {
   for (const pattern of networkPatterns) {
     if (pattern.test(content)) errors.push(`${relative} bypasses the external/AI transport boundary (${pattern}).`);
   }
-  if (/infrastructure\/external\/(?:backlog\/BacklogRequestGateway|jira\/JiraRequestGateway)/.test(content) && !gatewayImportAllowlist.has(relative)) {
-    errors.push(`${relative} imports a concrete external request gateway.`);
+  if (/infrastructure\/external\/providers\//.test(content) && !providerImportAllowlist.has(relative)) {
+    errors.push(`${relative} imports a concrete external provider gateway.`);
   }
-  if (/infrastructure\/external\/createExternalAccessScope/.test(content) && !scopeImportAllowlist.has(relative)) {
+  if (/infrastructure\/external\/transports\//.test(content)) {
+    errors.push(`${relative} imports an external transport directly.`);
+  }
+  if (/infrastructure\/external\/core\/createExternalAccessScope/.test(content) && !scopeImportAllowlist.has(relative)) {
     errors.push(`${relative} imports external scope internals outside the allowlist.`);
   }
 }

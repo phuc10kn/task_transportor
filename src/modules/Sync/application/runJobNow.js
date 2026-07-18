@@ -1,7 +1,7 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { createSyncJobRepository } = require("../infrastructure/SyncJobRepository");
 const { getHandler } = require("./handlerRegistry");
-const { createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
+const { createExternalAccessScope } = require("../../../infrastructure/external/core/createExternalAccessScope");
 
 const EXTERNAL_JOB_TYPES = new Set(["manual_pull", "sync_translate_jira", "push_issue", "push_comment"]);
 

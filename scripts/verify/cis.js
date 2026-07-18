@@ -45,7 +45,7 @@ function createProject(config) {
       jira_project_key: "SYNC",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_API_TOKEN",
-      translation_ai_provider: "codex_exec",
+      translation_ai_provider: "deepseek",
     },
   });
 }
@@ -105,12 +105,12 @@ async function main() {
       target_type: "issue",
       target_field: "summary",
       source_text: "Login fails",
-      provider: "codex_exec",
-      model_or_command: "codex exec",
+      provider: "deepseek",
+      model_or_command: "deepseek-v4-flash",
     },
   });
-  assert.equal(translation.provider, "codex_exec");
-  assert.equal(translation.model_or_command, "codex exec");
+  assert.equal(translation.provider, "deepseek");
+  assert.equal(translation.model_or_command, "deepseek-v4-flash");
 
   const deepSeekProject = ProjectsApi.createProject({
     config,

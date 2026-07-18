@@ -98,11 +98,6 @@ function loadConfig(env = process.env) {
       requestTimeoutSeconds: numberFromEnv(env.JIRA_REQUEST_TIMEOUT_SECONDS, 30),
     },
     translation: {
-      codexExecCommand: env.CODEX_EXEC_COMMAND || "",
-      codexExecTimeoutSeconds: numberFromEnv(env.CODEX_EXEC_TIMEOUT_SECONDS, 60),
-      codexExecWorkdir: env.CODEX_EXEC_WORKDIR
-        ? resolveFromRoot(env.CODEX_EXEC_WORKDIR)
-        : ROOT_DIR,
       deepSeekApiKey: env.DEEPSEEK_API_KEY || "",
       deepSeekOpenAiBaseUrl: env.DEEPSEEK_OPENAI_BASE_URL || env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
       deepSeekAnthropicBaseUrl: env.DEEPSEEK_ANTHROPIC_BASE_URL || "https://api.deepseek.com/anthropic",

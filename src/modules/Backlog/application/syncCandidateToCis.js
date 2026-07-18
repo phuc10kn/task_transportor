@@ -2,7 +2,7 @@ const { AppError } = require("../../../http/errors/AppError");
 const CisApi = require("../../Cis/CisApi");
 const SyncApi = require("../../Sync/SyncApi");
 const { getIssueActionReadiness } = require("./getIssueActionReadiness");
-const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
+const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/core/createExternalAccessScope");
 
 function validateBoolean(value, field) {
   if (value !== undefined && typeof value !== "boolean") {

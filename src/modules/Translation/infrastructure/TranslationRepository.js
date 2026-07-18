@@ -3,8 +3,6 @@ const { runInTransaction } = require("../../../infrastructure/database/transacti
 const { TRANSLATION_REVIEW_STATUSES } = require("../../../shared/stateConstants");
 const {
   DEFAULT_TRANSLATION_AI_TRANSPORT,
-  TRANSLATION_AI_PROVIDERS,
-  TRANSLATION_AI_TRANSPORTS,
 } = require("../../../shared/translationModels");
 
 function rowToTranslation(row) {
@@ -14,10 +12,7 @@ function rowToTranslation(row) {
 
   return {
     ...row,
-    ai_transport: row.ai_transport ||
-      (row.provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
-        ? TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC
-        : DEFAULT_TRANSLATION_AI_TRANSPORT),
+    ai_transport: row.ai_transport || DEFAULT_TRANSLATION_AI_TRANSPORT,
   };
 }
 

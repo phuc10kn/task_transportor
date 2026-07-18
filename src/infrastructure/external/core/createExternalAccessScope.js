@@ -1,12 +1,12 @@
 const { assertCapability, assertRegisteredOperation, externalError } = require("./policy");
-const { BACKLOG_OPERATIONS } = require("./backlog/operations");
-const { JIRA_OPERATIONS } = require("./jira/operations");
+const { BACKLOG_OPERATIONS } = require("../providers/backlog/operations");
+const { JIRA_OPERATIONS } = require("../providers/jira/operations");
 
 const states = new WeakMap();
 const registries = { backlog: BACKLOG_OPERATIONS, jira: JIRA_OPERATIONS };
 
 function createExternalAccessScope({ config, projectId }) {
-  const project = require("../../modules/Projects/ProjectsApi").getProject({ config, projectId });
+  const project = require("../../../modules/Projects/ProjectsApi").getProject({ config, projectId });
   const scope = Object.freeze({});
   states.set(scope, { config, project: Object.freeze({ ...project }) });
   return scope;

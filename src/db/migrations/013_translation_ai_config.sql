@@ -4,13 +4,10 @@ ALTER TABLE projects ADD COLUMN translation_ai_model TEXT;
 
 UPDATE projects
 SET translation_ai_provider = CASE
-      WHEN translation_provider IN ('deepseek', 'codex_exec') THEN translation_provider
+      WHEN translation_provider IN ('deepseek', 'openai') THEN translation_provider
       ELSE 'deepseek'
     END,
-    translation_ai_transport = CASE
-      WHEN translation_provider = 'codex_exec' THEN 'process_exec'
-      ELSE 'openai_compatible'
-    END,
+    translation_ai_transport = 'openai_compatible',
     translation_ai_model = CASE
       WHEN translation_provider = 'deepseek' AND translation_model IN ('DeepSeekV4Flash', 'DeepSeekV4', 'deepseek-v4-flash') THEN 'deepseek-v4-flash'
       WHEN translation_provider = 'deepseek' AND translation_model IN ('DeepSeekV4Pro', 'deepseek-v4-pro') THEN 'deepseek-v4-pro'
@@ -26,13 +23,11 @@ SET translation_provider = translation_ai_provider,
 ALTER TABLE translation_queue ADD COLUMN ai_transport TEXT;
 
 UPDATE translation_queue
-SET model_or_command = CASE
+SET provider = CASE WHEN provider IN ('deepseek', 'openai') THEN provider ELSE 'deepseek' END,
+    model_or_command = CASE
       WHEN provider = 'deepseek' AND model_or_command IN ('DeepSeekV4Flash', 'DeepSeekV4', 'deepseek-v4-flash') THEN 'deepseek-v4-flash'
       WHEN provider = 'deepseek' AND model_or_command IN ('DeepSeekV4Pro', 'deepseek-v4-pro') THEN 'deepseek-v4-pro'
       WHEN provider = 'deepseek' AND model_or_command IN ('DeepSeekChat', 'deepseek-chat') THEN 'deepseek-chat'
       ELSE model_or_command
     END,
-    ai_transport = CASE
-      WHEN provider = 'codex_exec' THEN 'process_exec'
-      ELSE 'openai_compatible'
-    END;
+    ai_transport = 'openai_compatible';

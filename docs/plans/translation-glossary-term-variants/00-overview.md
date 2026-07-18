@@ -46,7 +46,7 @@ Thứ tự ưu tiên khi nguồn mâu thuẫn:
 
 Nguồn ở mức thấp không được ghi đè nguồn ở mức cao. Khi nguồn mức 1 đến 3 mâu thuẫn với contract dưới đây, quay về `planner.md`, sửa plan trước và không triển khai.
 
-Translation sở hữu migration 016, state `translation_glossary_concepts`/`translation_glossary_terms`, API glossary, validation, repository, runtime context và nghĩa nghiệp vụ của prompt glossary. Projects chỉ sở hữu `source_language`/`target_language`; queue chọn direction khi dịch. Không module nào ngoài Translation ghi trực tiếp glossary tables hoặc gọi Translation repository. HTTP/Admin UI đi qua public API của Translation. `src/infrastructure/ai` chỉ vận chuyển request/instruction đã chuẩn bị, không tự quyết định canonical hay matching policy.
+Translation sở hữu migration 016, state `translation_glossary_concepts`/`translation_glossary_terms`, API glossary, validation, repository, runtime context và nghĩa nghiệp vụ của prompt glossary. Projects chỉ sở hữu `source_language`/`target_language`; queue chọn direction khi dịch. Không module nào ngoài Translation ghi trực tiếp glossary tables hoặc gọi Translation repository. HTTP/Admin UI đi qua public API của Translation. `src/infrastructure/external/transports` chỉ vận chuyển request/instruction đã chuẩn bị, không tự quyết định canonical hay matching policy.
 
 ## Quyết định đã khóa
 
@@ -59,7 +59,7 @@ Translation sở hữu migration 016, state `translation_glossary_concepts`/`tra
 7. Term cũ hiện có một row mỗi language được migrate với `is_canonical = 1` và giữ nguyên ID/text/timestamp.
 8. Một `term_match_key` chỉ thuộc một concept trong cùng `(project, language_code)`. Migration/API/storage chặn collision xuyên concept, kể cả canonical hay variant, để không gửi mapping mâu thuẫn vào AI.
 9. Từ các span không chồng lấn, runtime giữ một entry cho mỗi `(concept, target_language)`: chọn source match dài nhất; tie chọn vị trí xuất hiện nhỏ nhất, rồi `term_match_key` tăng dần. Runtime sort entries theo source-match length giảm dần, vị trí xuất hiện tăng dần, `group_key`, `concept_key`, `concept_id` tăng dần; giới hạn 40 áp dụng sau sort này.
-10. Prompt translation coi glossary match là rule bắt buộc: dùng chính xác `target` canonical, không dùng synonym hoặc target variant. `buildStandardTranslationInput` tạo instruction này; mọi transport, gồm `codex_exec`, phải truyền nguyên văn instruction vào prompt thực tế. Human review vẫn có quyền chỉnh draft.
+10. Prompt translation coi glossary match là rule bắt buộc: dùng chính xác `target` canonical, không dùng synonym hoặc target variant. `buildStandardTranslationInput` tạo instruction này; mọi chat transport phải truyền nguyên văn instruction vào prompt thực tế. Human review vẫn có quyền chỉnh draft.
 11. `project_id` của glossary concept là immutable sau create. Không dual-write, fallback hoặc giữ unique constraint cũ sau cutover.
 
 ## Target data model
@@ -129,7 +129,7 @@ Repository query mỗi source term row cùng target term row có `is_canonical =
 }
 ```
 
-`prepareGlossaryForContext` chỉ giữ span source đã match; không còn fallback đưa source variant không khớp. Nó áp dụng scan span không chồng lấn, dedupe và sort ở quyết định 5/9 trước cap 40. Prompt instruction phải nêu rõ: khi entry khớp, dùng chính xác `target` canonical. `TranslationAdapter` render `request.instructions` thành mandatory instruction block trước context JSON. Process transport truyền request JSON nguyên vẹn; bundled `codexCliAdapter` bỏ instruction glossary chung và render `request.instructions` nguyên văn. Draft đã tạo không tự thay đổi; pending job đọc variants/canonical mới nhất khi execution.
+`prepareGlossaryForContext` chỉ giữ span source đã match; không còn fallback đưa source variant không khớp. Nó áp dụng scan span không chồng lấn, dedupe và sort ở quyết định 5/9 trước cap 40. Prompt instruction phải nêu rõ: khi entry khớp, dùng chính xác `target` canonical. `TranslationAdapter` render `request.instructions` thành mandatory block trước context JSON. Draft đã tạo không tự thay đổi; pending job đọc variants/canonical mới nhất khi execution.
 
 ## Admin UI contract
 
@@ -162,7 +162,6 @@ Không backup/rollback riêng. Transaction migration là atomic; failure không 
 | `src/modules/Translation/application/collectTranslationContext.js` | Đã lọc entry match source text, giới hạn 40. |
 | `src/modules/Translation/application/buildStandardTranslationInput.js` | Chỉ yêu cầu prefer glossary, chưa bắt buộc dùng canonical target. |
 | `src/modules/Translation/infrastructure/TranslationAdapter.js` | Chưa render request instruction thành mandatory block trong chat prompt. |
-| `src/infrastructure/ai/codexCliAdapter.js` | Có prompt riêng và chưa render `request.instructions` thành hard instruction. |
 | `public/admin/app.js` | Modal có một input term/language. |
 | `scripts/verify/translation-glossary-migration.js` | Chưa chạy fixture upgrade 015 -> 016 riêng biệt. |
 
@@ -174,7 +173,7 @@ Không backup/rollback riêng. Transaction migration là atomic; failure không 
 - Nếu target SQLite không hỗ trợ generated column hoặc primitive deterministic không tạo được generated key: dừng TGV-00; không chạy migration 016.
 - Nếu migration verifier không chứng minh được upgrade 015 -> 016 preserve và collision rollback: dừng TGV-01.
 - Nếu runtime không chọn span không chồng lấn, không dedupe/sort xác định hoặc cap 40 sai vị trí: dừng TGV-01.
-- Nếu chat prompt, process stdin hoặc bundled `codex_exec` prompt chỉ coi canonical target là preference: dừng TGV-01.
+- Nếu chat prompt chỉ coi canonical target là preference: dừng TGV-01.
 - Nếu UI cho save language không có đúng một canonical: dừng TGV-02.
 - Nếu source matching trở thành fuzzy/regex hoặc scan `note`: ngoài scope, quay lại planner.
 - Nếu requirement chuyển sang quản lý nhiều translation direction cho Project: plan riêng ở Projects, không ghép vào concept variants.

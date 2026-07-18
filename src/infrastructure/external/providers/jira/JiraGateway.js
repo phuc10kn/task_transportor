@@ -1,6 +1,7 @@
-const { AppError } = require("../../../http/errors/AppError");
-const { assertScopeOperation, scopeState } = require("../createExternalAccessScope");
-const { providerOrigin } = require("../policy");
+const { AppError } = require("../../../../http/errors/AppError");
+const { assertScopeOperation, scopeState } = require("../../core/createExternalAccessScope");
+const { providerOrigin } = require("../../core/policy");
+const { createHttpTransport } = require("../../transports/http/HttpTransport");
 
 function messageFromBody(body, fallback) {
   if (!body || typeof body !== "object") return fallback;
@@ -26,13 +27,14 @@ function jiraError(code, message, status, details = {}) {
   return error;
 }
 
-class JiraRequestGateway {
-  constructor({ scope, expectedProjectId }) {
+class JiraGateway {
+  constructor({ scope, expectedProjectId, transport }) {
     this.scope = scope;
     this.expectedProjectId = expectedProjectId;
     const { config, project } = scopeState(scope, expectedProjectId);
     this.project = project;
     this.timeoutMs = Math.max(1, Number(config.jira.requestTimeoutSeconds || 10)) * 1000;
+    this.transport = transport || createHttpTransport();
   }
 
   async execute(operation, { pathParams = {}, query = {}, body } = {}) {
@@ -47,10 +49,9 @@ class JiraRequestGateway {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, value);
     }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
-      const response = await fetch(url, {
+      const response = await this.transport.request({
+        url,
         method: definition.method,
         headers: {
           Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString("base64")}`,
@@ -58,9 +59,9 @@ class JiraRequestGateway {
           ...(body ? { "Content-Type": "application/json" } : {}),
         },
         body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
+        timeoutMs: this.timeoutMs,
       });
-      const rawText = await response.text();
+      const rawText = response.rawText;
       let parsed = null;
       if (rawText) {
         try { parsed = JSON.parse(rawText); } catch (_error) { parsed = { raw_text: rawText }; }
@@ -83,7 +84,7 @@ class JiraRequestGateway {
       }
       return { body: parsed, headers: response.headers };
     } catch (error) {
-      if (error.name === "AbortError") {
+      if (error && error.code === "EXTERNAL_HTTP_TIMEOUT") {
         const timeoutError = jiraError("JIRA_REQUEST_TIMEOUT", "Jira API request timed out.", 504, { jira_operation: operation });
         timeoutError.retryable = true;
         throw timeoutError;
@@ -92,10 +93,8 @@ class JiraRequestGateway {
       const networkError = jiraError("JIRA_NETWORK_ERROR", `Jira API request failed: ${error.message}`, 502, { jira_operation: operation });
       networkError.retryable = true;
       throw networkError;
-    } finally {
-      clearTimeout(timeout);
     }
   }
 }
 
-module.exports = { JiraRequestGateway };
+module.exports = { JiraGateway };

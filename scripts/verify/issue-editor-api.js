@@ -1,6 +1,4 @@
 const assert = require("assert");
-const fs = require("fs");
-const path = require("path");
 
 const { createApp } = require("../../src/app");
 const { createConnection } = require("../../src/infrastructure/database/connection");
@@ -12,21 +10,18 @@ const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const { ISSUE_STATUSES } = require("../../src/shared/stateConstants");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
-
-function fakeCommand(mode = "", markerPath = "") {
-  const suffix = [mode, markerPath ? `"${markerPath}"` : ""].filter(Boolean).join(" ");
-  return `"${process.execPath}" "${path.join(__dirname, "fakes", "codex-exec.js")}"${suffix ? ` ${suffix}` : ""}`;
-}
+const { installFakeAiFetch } = require("./helpers/fake-ai-fetch");
 
 function setupConfig() {
   const config = makeTempConfig("issue-editor-api", {
     ADMIN_EMAIL: "issue-editor@example.test",
     ADMIN_PASSWORD: "verify-password",
-    CODEX_EXEC_COMMAND: fakeCommand(),
+    DEEPSEEK_API_KEY: "issue-editor-test-key",
   });
 
   ensureStorage(config.storage);
   migrate({ config });
+  installFakeAiFetch();
   AuthApi.bootstrapAdmin({
     config,
     email: "issue-editor@example.test",
@@ -49,7 +44,7 @@ function createProject(config) {
       jira_project_key: "IED",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_TOKEN",
-      translation_provider: "codex_exec",
+      translation_provider: "deepseek",
       jira_mapping_values_json: {
         issue_type: ["Task", "Bug"],
         priority: ["High", "Medium"],
@@ -440,15 +435,8 @@ async function main() {
     assert.equal(worklogs.body.data.summary.count, 0);
   });
 
-  const retryMarker = path.join(config.storage.root, "codex-exec-fail-once.marker");
-  fs.rmSync(retryMarker, { force: true });
-  const retryConfig = {
-    ...config,
-    translation: {
-      ...config.translation,
-      codexExecCommand: fakeCommand("fail-once", retryMarker),
-    },
-  };
+  installFakeAiFetch({ mode: "fail-once" });
+  const retryConfig = config;
   const retryProject = createProject(retryConfig);
   const retryIssue = createIssue(retryConfig, retryProject, "IE-4");
   const retryApp = createApp({ config: retryConfig });

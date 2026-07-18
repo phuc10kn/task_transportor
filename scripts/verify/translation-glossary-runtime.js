@@ -76,7 +76,7 @@ function main() {
       source_language: " JA ",
       target_language: " VI ",
       source_text: "予約",
-      provider: "codex_exec",
+      provider: "deepseek",
     },
   });
 
@@ -103,7 +103,7 @@ function main() {
       source_language: "JA",
       target_language: "EN",
       source_text: "予約",
-      provider: "codex_exec",
+      provider: "deepseek",
     },
   });
   const englishContext = TranslationApi.collectTranslationContext({ config, item: englishItem });
@@ -129,7 +129,7 @@ function main() {
       source_language: "ja",
       target_language: "vi",
       source_text: "後で",
-      provider: "codex_exec",
+      provider: "deepseek",
     },
   });
   createGlossary(config, project.id, {
@@ -152,13 +152,13 @@ function main() {
       source_language: "ja",
       target_language: "vi",
       source_text: "予約",
-      provider: "codex_exec",
+      provider: "deepseek",
     },
   });
   const translationRepository = createTranslationRepository({ config });
   translationRepository.markAiDraft(draftItem.id, {
     ai_draft: "draft stays unchanged",
-    provider: "codex_exec",
+    provider: "deepseek",
     model_or_command: "test",
   });
   TranslationApi.updateTranslationGlossaryConcept({

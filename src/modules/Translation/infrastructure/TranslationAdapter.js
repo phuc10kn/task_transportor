@@ -1,6 +1,6 @@
 const { AppError } = require("../../../http/errors/AppError");
 const { hashText } = require("../support/hashText");
-const { parseCodexExecOutput } = require("../support/parseCodexExecOutput");
+const { parseTranslationOutput } = require("../support/parseTranslationOutput");
 
 function createPrompt(request) {
   return [
@@ -79,7 +79,7 @@ function createTranslationAdapter({ aiClient, aiSource, model }) {
     }
 
     try {
-      const parsed = parseCodexExecOutput(response.content);
+      const parsed = parseTranslationOutput(response.content);
       return {
         ...parsed,
         provider: aiSource,
@@ -89,9 +89,9 @@ function createTranslationAdapter({ aiClient, aiSource, model }) {
       };
     } catch (error) {
       const identity = aiErrorIdentity(aiSource);
-      error.code = error.code === "CODEX_EXEC_PARSE_ERROR"
+      error.code = error.code === "TRANSLATION_AI_PARSE_ERROR"
         ? `${identity.code}_PARSE_ERROR`
-        : error.code === "CODEX_EXEC_INVALID_OUTPUT"
+        : error.code === "TRANSLATION_AI_INVALID_OUTPUT"
           ? `${identity.code}_INVALID_OUTPUT`
           : error.code;
       error.message = error.code === `${identity.code}_PARSE_ERROR`

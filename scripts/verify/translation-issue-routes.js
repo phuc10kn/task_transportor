@@ -1,5 +1,4 @@
 const assert = require("assert");
-const path = require("path");
 
 const { createApp } = require("../../src/app");
 const { createConnection } = require("../../src/infrastructure/database/connection");
@@ -11,20 +10,18 @@ const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const { ISSUE_STATUSES } = require("../../src/shared/stateConstants");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
-
-function fakeCommand() {
-  return `"${process.execPath}" "${path.join(__dirname, "fakes", "codex-exec.js")}"`;
-}
+const { installFakeAiFetch } = require("./helpers/fake-ai-fetch");
 
 function setupConfig() {
   const config = makeTempConfig("translation-issue-routes", {
     ADMIN_EMAIL: "translation-routes@example.test",
     ADMIN_PASSWORD: "verify-password",
-    CODEX_EXEC_COMMAND: fakeCommand(),
+    DEEPSEEK_API_KEY: "translation-routes-test-key",
   });
 
   ensureStorage(config.storage);
   migrate({ config });
+  installFakeAiFetch();
   AuthApi.bootstrapAdmin({
     config,
     email: "translation-routes@example.test",
@@ -49,7 +46,7 @@ function createProject(config) {
       jira_site_url: "https://translation-routes.atlassian.net",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_TOKEN",
-      translation_provider: "codex_exec",
+      translation_provider: "deepseek",
     },
   });
 }

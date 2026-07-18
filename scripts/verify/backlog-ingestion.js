@@ -29,7 +29,7 @@ function createBacklogProject(config, overrides = {}) {
       jira_project_key: "SYNC",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_API_TOKEN",
-      translation_provider: "codex_exec",
+      translation_provider: "deepseek",
       manual_pull_enabled: true,
       scheduled_pull_enabled: true,
       scheduled_pull_interval_minutes: 15,

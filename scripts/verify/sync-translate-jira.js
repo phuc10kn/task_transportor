@@ -12,6 +12,7 @@ const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { makeTempConfig } = require("./helpers/tempConfig");
+const { installFakeAiFetch } = require("./helpers/fake-ai-fetch");
 
 function approveMapping(config, projectId, type, from, cis, jira) {
   const inbound = MappingApi.createMappingRule({
@@ -54,10 +55,11 @@ async function main() {
     JIRA_FAKE_MODE: "1",
     JIRA_FAKE_SEED_PATH: path.join(__dirname, "fixtures", "jira-system-issues.json"),
     WORKER_ENABLED: "true",
-    CODEX_EXEC_COMMAND: `"${process.execPath}" "${path.join(__dirname, "fakes", "codex-exec.js")}" success`,
+    DEEPSEEK_API_KEY: "sync-translate-jira-test-key",
   });
   ensureStorage(config.storage);
   migrate({ config });
+  installFakeAiFetch();
   const project = ProjectsApi.createProject({
     config,
     input: {
@@ -75,7 +77,7 @@ async function main() {
       jira_project_key: "WEC",
       jira_email: "verify@example.test",
       jira_api_token: "verify-token",
-      translation_ai_provider: "codex_exec",
+      translation_ai_provider: "deepseek",
       source_language: "ja",
       target_language: "vi",
     },

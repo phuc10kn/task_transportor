@@ -29,7 +29,7 @@ Boundary này tách translation business logic khỏi transport detail AI.
 
 ## Statement
 
-`Translation` sở hữu prompt, parse output, review state và audit. HTTP/process mechanics thuộc `src/infrastructure/ai`, không thuộc `src/modules/Translation`.
+`Translation` sở hữu prompt, parse output, review state và audit. HTTP mechanics thuộc `src/infrastructure/external/transports`, provider selection/protocol mapping thuộc `src/infrastructure/external/providers`, không thuộc `src/modules/Translation`.
 
 ## Protected assets
 
@@ -39,7 +39,7 @@ Boundary này tách translation business logic khỏi transport detail AI.
 
 ## Allowed / forbidden
 
-- Được phép: `TranslationAdapter`, `ProcessTranslationAdapter`, config mapping.
+- Được phép: `TranslationAdapter`, `createConfiguredTranslationAdapter`, config mapping.
 - Bị cấm: `fetch`, `child_process`, `spawn`, `spawnSync` bên trong `src/modules/Translation`.
 
 ## Related Entities

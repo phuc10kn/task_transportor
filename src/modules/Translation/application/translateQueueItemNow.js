@@ -6,7 +6,7 @@ const { collectTranslationContext } = require("./collectTranslationContext");
 const { maybeCreateLowConfidenceAnomaly } = require("./maybeCreateLowConfidenceAnomaly");
 const { refreshTranslationAiConfigForQueueItem } = require("./refreshTranslationAiConfigForQueueItem");
 const { syncIssueTranslationState } = require("./syncIssueTranslationState");
-const { translationAdapterFor } = require("./translationAdapterFor");
+const { createConfiguredTranslationAdapter } = require("../infrastructure/translationAdapterFor");
 const { createTranslationRepository } = require("../infrastructure/TranslationRepository");
 const { hashText } = require("../support/hashText");
 
@@ -24,7 +24,7 @@ async function translateWithImmediateRetry({ config, item, request, maxAttempts 
     try {
       return {
         attempt,
-        result: await translationAdapterFor({
+        result: await createConfiguredTranslationAdapter({
           config,
           aiProvider: item.provider,
           aiTransport: item.ai_transport,
@@ -158,6 +158,6 @@ async function translateQueueItemNow({
 }
 
 module.exports = {
-  translationAdapterFor,
+  createConfiguredTranslationAdapter,
   translateQueueItemNow,
 };

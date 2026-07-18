@@ -1,6 +1,6 @@
 const { AppError } = require("../../../http/errors/AppError");
 const SyncApi = require("../../Sync/SyncApi");
-const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/createExternalAccessScope");
+const { assertScopeOperation, createExternalAccessScope } = require("../../../infrastructure/external/core/createExternalAccessScope");
 
 function projectsApi() {
   return require("../../Projects/ProjectsApi");

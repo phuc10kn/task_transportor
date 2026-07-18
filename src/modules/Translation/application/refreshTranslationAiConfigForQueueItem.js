@@ -4,7 +4,6 @@ const {
   DEFAULT_TRANSLATION_AI_MODEL,
   DEFAULT_TRANSLATION_AI_TRANSPORT,
   TRANSLATION_AI_PROVIDERS,
-  TRANSLATION_AI_TRANSPORTS,
   defaultTranslationAiModelFor,
   normalizeTranslationAiModel,
   normalizeTranslationAiProvider,
@@ -21,14 +20,6 @@ function projectAiConfig(project) {
     project.translation_provider ||
     DEFAULT_TRANSLATION_AI_PROVIDER
   );
-
-  if (provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC) {
-    return {
-      ai_transport: TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC,
-      model_or_command: project.translation_command_profile || null,
-      provider,
-    };
-  }
 
   const transport = normalizeTranslationAiTransport(
     project.translation_ai_transport ||

@@ -40,7 +40,7 @@ None
 | Migration verifier không chứng minh upgrade 015 -> 016 preserve hoặc collision failure rollback | Block TGV-01; sửa verifier trước. |
 | Trigger term insert/update không chặn normalized collision, concept project vẫn đổi được hoặc API map nhầm conflict | Block TGV-01; sửa schema/API verifier trước. |
 | Runtime không chọn span không chồng lấn, không dedupe/sort trước cap 40 hoặc đưa target variant vào context | Block TGV-01; sửa repository/preprocessing. |
-| Chat prompt, process stdin hoặc bundled `codex_exec` prompt không có hard instruction canonical | Block TGV-01; sửa request/prompt verifier trước. |
+| Chat transport không có hard instruction canonical | Block TGV-01; sửa request/prompt verifier trước. |
 | UI cần target language field trên concept | Quay lại planner; direction ownership thay đổi scope. |
 | Matching cần fuzzy/regex/tokenizer | Deferred; không lén mở rộng exact substring scope. |
 

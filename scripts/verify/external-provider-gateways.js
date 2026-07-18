@@ -3,9 +3,9 @@ const path = require("path");
 
 const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
-const { assertScopeOperation, createExternalAccessScope } = require("../../src/infrastructure/external/createExternalAccessScope");
-const { BACKLOG_OPERATIONS } = require("../../src/infrastructure/external/backlog/operations");
-const { JIRA_OPERATIONS } = require("../../src/infrastructure/external/jira/operations");
+const { assertScopeOperation, createExternalAccessScope } = require("../../src/infrastructure/external/core/createExternalAccessScope");
+const { BACKLOG_OPERATIONS } = require("../../src/infrastructure/external/providers/backlog/operations");
+const { JIRA_OPERATIONS } = require("../../src/infrastructure/external/providers/jira/operations");
 const BacklogApi = require("../../src/modules/Backlog/BacklogApi");
 const { createBacklogClient } = require("../../src/modules/Backlog/infrastructure/BacklogClient");
 const { createJiraClient } = require("../../src/modules/Jira/infrastructure/JiraClient");

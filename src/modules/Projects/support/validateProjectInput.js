@@ -330,8 +330,6 @@ function normalizeProjectInput(input, { partial = false } = {}) {
     allowed.translation_ai_model = allowed.translation_model;
   }
   const merged = partial ? allowed : { ...PROJECT_DEFAULTS, ...allowed };
-  const hasExplicitAiProvider = Object.prototype.hasOwnProperty.call(allowed, "translation_ai_provider");
-  const hasExplicitAiModel = Object.prototype.hasOwnProperty.call(allowed, "translation_ai_model");
 
   if (!partial && !merged.name) {
     throw new AppError({
@@ -466,16 +464,9 @@ function normalizeProjectInput(input, { partial = false } = {}) {
 
   if (
     normalized.translation_ai_provider &&
-    normalized.translation_ai_provider !== TRANSLATION_AI_PROVIDERS.CODEX_EXEC &&
-    !normalized.translation_ai_transport
+    normalized.translation_ai_provider && !normalized.translation_ai_transport
   ) {
     normalized.translation_ai_transport = DEFAULT_TRANSLATION_AI_TRANSPORT;
-  }
-
-  if (
-    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC
-  ) {
-    normalized.translation_ai_transport = TRANSLATION_AI_TRANSPORTS.PROCESS_EXEC;
   }
 
   if (
@@ -495,14 +486,6 @@ function normalizeProjectInput(input, { partial = false } = {}) {
   }
 
   if (
-    normalized.translation_ai_provider === TRANSLATION_AI_PROVIDERS.CODEX_EXEC &&
-    (!partial || hasExplicitAiProvider || hasExplicitAiModel)
-  ) {
-    normalized.translation_ai_model = null;
-  }
-
-  if (
-    normalized.translation_ai_provider !== TRANSLATION_AI_PROVIDERS.CODEX_EXEC &&
     normalized.translation_ai_model &&
     !isTranslationAiModelAllowed(
       normalized.translation_ai_provider,

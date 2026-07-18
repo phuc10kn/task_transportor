@@ -15,13 +15,10 @@ Thay unique một-term-per-language bằng canonical/variant terms trong một c
 - `src/modules/Translation/application/collectTranslationContext.js`.
 - `src/modules/Translation/application/buildStandardTranslationInput.js`.
 - `src/modules/Translation/infrastructure/TranslationAdapter.js`.
-- `src/modules/Translation/infrastructure/ProcessTranslationAdapter.js`.
-- `src/infrastructure/ai/codexCliAdapter.js`.
 - `scripts/verify/translation-glossary-migration.js`.
 - `scripts/verify/translation-glossary-api.js`.
 - `scripts/verify/translation-glossary-runtime.js`.
 - `scripts/verify/translation-review.js`.
-- `scripts/verify/fakes/codex-exec.js`.
 
 ## Điều kiện mở phase
 
@@ -37,7 +34,7 @@ Thay unique một-term-per-language bằng canonical/variant terms trong một c
 4. Map marker term trigger và unique race term sang `409 TRANSLATION_GLOSSARY_CONFLICT` với `details.field = "terms"`. Giữ unique `(project_id, group_key, concept_key)` là conflict riêng với `details.field = "concept_key"`; không map mọi `SQLITE_CONSTRAINT_UNIQUE` vào một lỗi.
 5. Thay repository aggregate read/write/sort/search để trả và lưu variants nhưng không lộ `term_match_key`. Public update không đổi `project_id`; direct SQL update bị trigger chặn.
 6. Thay runtime query: source join tất cả terms của source language, target join chỉ `is_canonical = 1`. `prepareGlossaryForContext` scan span source không chồng lấn, dedupe theo `(concept, target_language)`, sort deterministic rồi cap 40 theo overview.
-7. Thay `buildStandardTranslationInput` bằng hard instruction dùng chính xác target canonical khi glossary match. `TranslationAdapter` render instruction thành mandatory block trước context JSON. `ProcessTranslationAdapter` phải truyền request JSON nguyên vẹn. Bundled `codexCliAdapter` bỏ instruction glossary chung và render `request.instructions` nguyên văn; infrastructure không tự tạo glossary policy mới.
+7. Thay `buildStandardTranslationInput` bằng hard instruction dùng chính xác target canonical khi glossary match. `TranslationAdapter` render instruction thành mandatory block trước context JSON; infrastructure không tự tạo glossary policy mới.
 8. Mở rộng verifier theo ownership sau: migration verifier chỉ cover fresh và upgrade 015 -> 016; API verifier cover aggregate/collision/error mapping; runtime verifier cover source matching/span/dedupe/cap; review verifier cover chat prompt, process stdin và bundled adapter prompt.
 9. Migration verifier dựng fixture bằng cách apply đến 015, insert concept/term có ID/timestamp xác định, rồi chỉ apply 016. Verify success preserve schema/data và failure normalized collision rollback: table schema 015, rows và `schema_migrations` không đổi.
 10. Chạy `npm run verify:translation-glossary`, `npm run verify:translation-review`, `npm run verify:phase04`, `npm run verify:phase01` và `npm test`.
@@ -53,7 +50,7 @@ Thay unique một-term-per-language bằng canonical/variant terms trong một c
 - [x] Runtime `ja` variants cùng concept đều map sang một `vi` canonical; span overlap chỉ giữ match dài nhất; context dedupe/sort xác định trước cap 40.
 - [x] Runtime direction đảo dùng source variants của language mới và canonical target tương ứng.
 - [x] Không match source variant thì context không có entry; `note` không match; cap là 40 sau span selection, dedupe và sort.
-- [x] Chat prompt, process stdin và bundled `codex_exec` prompt có hard instruction dùng chính xác target canonical khi glossary match.
+- [x] Chat prompt có hard instruction dùng chính xác target canonical khi glossary match.
 - [x] Pending item dùng variants/canonical mới nhất; draft đã có không tự đổi.
 - [x] `npm run verify:translation-glossary` pass.
 - [x] `npm run verify:translation-review` pass.

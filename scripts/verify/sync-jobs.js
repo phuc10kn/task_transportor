@@ -21,7 +21,7 @@ function createProjectAndIssue(config) {
       jira_project_key: "SYNC",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_API_TOKEN",
-      translation_provider: "codex_exec",
+      translation_provider: "deepseek",
     },
   });
   const issue = CisApi.createIssue({

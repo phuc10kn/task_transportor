@@ -58,6 +58,7 @@ Verification command:
 - `npm run verify:phase05`: mapping, anomaly và dry-run.
 - `npm run verify:phase06`: Jira outbound.
 - `npm run verify:external-provider-gateways`: contract/gate/worker evidence local.
+- `npm run verify:external-http-transport`: HTTP transport giữ nguyên status, text/binary body và timeout mapping.
 - `npm run verify:external-egress-boundary`: static guard chống module tự gọi network.
 - `npm run verify:phase07`: Admin UI acceptance.
 - `npm run admin:ci`: kiểm tra cú pháp JavaScript, asset/route foundation và chặn dependency Next/React/TypeScript/Tailwind trong Admin Web.

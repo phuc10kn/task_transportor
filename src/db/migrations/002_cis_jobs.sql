@@ -111,7 +111,7 @@ CREATE TABLE translation_queue (
   ai_draft TEXT,
   reviewed_text TEXT,
   review_status TEXT NOT NULL DEFAULT 'pending' CHECK(review_status IN ('pending', 'ai_draft', 'approved', 'rejected', 'edited')),
-  provider TEXT NOT NULL DEFAULT 'codex_exec',
+  provider TEXT NOT NULL DEFAULT 'deepseek',
   model_or_command TEXT,
   provider_request_id TEXT,
   confidence REAL,

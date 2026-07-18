@@ -2,12 +2,12 @@ const fs = require("fs");
 const path = require("path");
 
 const { AppError } = require("../../../http/errors/AppError");
-const { BacklogRequestGateway } = require("../../../infrastructure/external/backlog/BacklogRequestGateway");
+const { BacklogGateway } = require("../../../infrastructure/external/providers/backlog/BacklogGateway");
 const {
   assertScopeOperation,
   createExternalAccessScope,
   scopeState,
-} = require("../../../infrastructure/external/createExternalAccessScope");
+} = require("../../../infrastructure/external/core/createExternalAccessScope");
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -343,7 +343,7 @@ function createBacklogClient({ config, projectId, externalAccessScope }) {
 
   return new BacklogClient({
     project,
-    gateway: new BacklogRequestGateway({ scope, expectedProjectId: projectId }),
+    gateway: new BacklogGateway({ scope, expectedProjectId: projectId }),
   });
 }
 

@@ -15,6 +15,7 @@ const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
+const { installFakeAiFetch } = require("./helpers/fake-ai-fetch");
 
 function tableCount(config, table) {
   const db = createConnection({ config });
@@ -61,10 +62,11 @@ async function main() {
     JIRA_FAKE_MODE: "1",
     JIRA_FAKE_SEED_PATH: path.join(__dirname, "fixtures", "jira-system-issues.json"),
     WORKER_ENABLED: "true",
-    CODEX_EXEC_COMMAND: `"${process.execPath}" "${path.join(__dirname, "fakes", "codex-exec.js")}" success`,
+    DEEPSEEK_API_KEY: "system-issues-test-key",
   });
   ensureStorage(config.storage);
   migrate({ config });
+  installFakeAiFetch();
   AuthApi.bootstrapAdmin({ config, email: "system-issues@example.test", password: "verify-password" });
   const project = ProjectsApi.createProject({
     config,
@@ -81,7 +83,7 @@ async function main() {
       jira_project_key: "WEC",
       jira_email: "system-issues@example.test",
       jira_api_token: "system-issues-token",
-      translation_ai_provider: "codex_exec",
+      translation_ai_provider: "deepseek",
       source_language: "ja",
       target_language: "vi",
       auto_translate: true,
@@ -114,7 +116,7 @@ async function main() {
       jira_project_key: "WEC",
       jira_email_env: "JIRA_EMAIL",
       jira_api_token_env: "JIRA_TOKEN",
-      translation_provider: "codex_exec"
+      translation_provider: "deepseek"
     }
   });
   await runConcurrentUpsert(config, project.id, "WEC-RACE");

@@ -1,4 +1,4 @@
-const { AppError } = require("../../http/errors/AppError");
+const { AppError } = require("../../../http/errors/AppError");
 
 const BOUNDARY_ERROR_CODES = new Set([
   "EXTERNAL_GATE_BLOCKED",
