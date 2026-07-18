@@ -5,12 +5,13 @@ const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const { makeTempConfig } = require("./helpers/tempConfig");
 
 function createProjectAndIssue(config) {
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Sync Jobs Verify Project",

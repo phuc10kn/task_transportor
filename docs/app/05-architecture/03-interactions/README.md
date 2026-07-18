@@ -15,6 +15,7 @@ Concern này định nghĩa các loại flow chuẩn cho custom modular monolith
 
 ## Codebase hiện tại đang dùng mạnh nhất
 
+- Login password/Google cùng resolve một enabled user và phát cùng user JWT. Project create ghi Team + owner lead + Project atomically; mọi Project HTTP flow resolve membership trước business action, rồi owner/lead guard áp dụng theo loại mutation.
 - Repo hiện tại có ngữ liệu rõ cho `InboundIngestFlow`, `HumanReviewFlow`, `CanonicalEditFlow`, `OutboundDryRunFlow`, `OutboundSyncFlow`, `ScheduledScanFlow`.
 - `WebhookFlow` là type chuẩn nhưng chưa là đường chính của bản Lite hiện tại.
 - `InteractionFlow` vẫn giữ như bucket tổng quát để không ép project phải chia flow quá sớm.

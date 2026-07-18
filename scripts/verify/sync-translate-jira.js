@@ -9,6 +9,7 @@ const CisApi = require("../../src/modules/Cis/CisApi");
 const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const JiraApi = require("../../src/modules/Jira/JiraApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { makeTempConfig } = require("./helpers/tempConfig");
@@ -60,7 +61,7 @@ async function main() {
   ensureStorage(config.storage);
   migrate({ config });
   installFakeAiFetch();
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Project 1 only",

@@ -38,6 +38,8 @@ Lite được coi là đạt ở mức product khi:
 - Job lỗi retry theo policy, hết retry chuyển `failed`, admin retry được.
 - Dashboard/Admin UI hiển thị pending review, missing mapping, failed job và open anomaly.
 - Workspace sau chọn Project chỉ hiển thị/cho thao tác dữ liệu Project đó; Backend enforce Project path + owner lookup, không fallback hoặc tiết lộ resource Project khác. Dashboard dùng cùng scope; Project `enabled=false` chặn toàn bộ workspace read/mutation.
+- Password và Google login phải trả cùng safe user shape; Google từ chối origin sai, token không hợp lệ, email chưa verify, user không tồn tại hoặc disabled. Chỉ `system_admin` quản lý user và không được hạ system admin enabled cuối cùng.
+- Project create phải tạo dedicated Team, creator owner + lead trong cùng transaction. User ngoài Team (kể cả `system_admin`) không thấy Project; member không sửa config; lead quản lý member; owner không thể bị xóa/hạ role; xóa Project dọn Team/membership atomically.
 
 Quality objectives Lite hiện tại:
 

@@ -11,6 +11,7 @@ const { getLogger } = require("../../src/infrastructure/observability/logger");
 const { withTraceContext } = require("../../src/infrastructure/observability/traceContext");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const { makeTempConfig } = require("./helpers/tempConfig");
 const { requestJson, withServer } = require("./helpers/http");
@@ -55,7 +56,7 @@ async function verifyHttpAndDurableJob(config) {
 
   const traceId = "trc_observability_contract";
   const correlationId = "cor_observability_contract";
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Observability Contract",

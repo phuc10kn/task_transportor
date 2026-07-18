@@ -7,6 +7,7 @@ const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const { ISSUE_STATUSES } = require("../../src/shared/stateConstants");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
@@ -22,7 +23,7 @@ function setupConfig() {
   ensureStorage(config.storage);
   migrate({ config });
   installFakeAiFetch();
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "issue-editor@example.test",
     password: "verify-password",
@@ -32,7 +33,7 @@ function setupConfig() {
 }
 
 function createProject(config) {
-  return ProjectsApi.createProject({
+  return createVerifyProject({
     config,
     input: {
       name: "Issue Editor Verify",

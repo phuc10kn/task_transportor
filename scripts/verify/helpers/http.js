@@ -1,6 +1,6 @@
 const http = require("http");
 
-function requestJson(server, { method = "GET", pathname, token, body }) {
+function requestJson(server, { method = "GET", pathname, token, body, headers = {} }) {
   const { port } = server.address();
   const payload = body === undefined ? undefined : JSON.stringify(body);
 
@@ -12,6 +12,7 @@ function requestJson(server, { method = "GET", pathname, token, body }) {
         path: pathname,
         method,
         headers: {
+          ...headers,
           ...(payload ? { "content-type": "application/json", "content-length": Buffer.byteLength(payload) } : {}),
           ...(token ? { authorization: `Bearer ${token}` } : {}),
         },

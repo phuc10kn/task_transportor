@@ -23,6 +23,7 @@ Source organization:
 - SQL migrations nằm ở `src/db/migrations`.
 - Module app nằm dưới `src/modules/<ModuleName>`.
 - Module hiện có: `Auth`, `Projects`, `Cis`, `Backlog`, `Translation`, `Mapping`, `Anomaly`, `Sync`, `Jira`, `Dashboard`.
+- Auth runtime dùng `UserRepository`, user JWT và Google ID-token verifier tại external provider boundary. Projects tạo Project + Team + owner lead atomically, lọc Project list theo membership và dùng cùng membership guard cho mọi workspace route.
 
 Module implementation pattern:
 

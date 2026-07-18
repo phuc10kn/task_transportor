@@ -5,6 +5,7 @@ const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const { makeTempConfig } = require("./helpers/tempConfig");
 const { requestJson, withServer } = require("./helpers/http");
 
@@ -15,16 +16,16 @@ async function main() {
   });
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "glossary-api@example.test",
     password: "verify-password",
   });
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: { name: "Glossary API Project", source_language: " JA ", target_language: " VI " },
   });
-  const secondProject = ProjectsApi.createProject({ config, input: { name: "Other Glossary Project" } });
+  const secondProject = createVerifyProject({ config, input: { name: "Other Glossary Project" } });
 
   const app = createApp({ config });
   await withServer(app, async (server) => {

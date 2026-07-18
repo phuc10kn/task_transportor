@@ -13,6 +13,7 @@ const CisApi = require("../../src/modules/Cis/CisApi");
 const JiraApi = require("../../src/modules/Jira/JiraApi");
 const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { JiraClient } = require("../../src/modules/Jira/infrastructure/JiraClient");
@@ -30,7 +31,7 @@ function setupConfig(name, overrides = {}) {
   });
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: `${name}@example.test`,
     password: "verify-password",
@@ -225,7 +226,7 @@ async function verifyJiraMappingUserPullKeepsHiddenUsers() {
 }
 
 function createProject(config, suffix, options = {}) {
-  return ProjectsApi.createProject({
+  return createVerifyProject({
     config,
     input: {
       name: `Jira Outbound ${suffix}`,
@@ -696,7 +697,7 @@ async function verifyMissingCredentialFailure() {
   const config = setupConfig("jira-outbound-credential-missing", {
     JIRA_FAKE_MODE: "",
   });
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       jira_external_read_enabled: true,

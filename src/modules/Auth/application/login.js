@@ -1,7 +1,7 @@
 const { AppError } = require("../../../http/errors/AppError");
-const { signJwt } = require("../../../infrastructure/security/jwt");
 const { verifyPassword } = require("../../../infrastructure/security/passwordHasher");
-const { createAdminUserRepository, rowToAdmin } = require("../infrastructure/AdminUserRepository");
+const { createUserRepository } = require("../infrastructure/UserRepository");
+const { issueUserSession } = require("./session");
 
 function login({ config, email, password }) {
   if (!email || !password) {
@@ -12,7 +12,7 @@ function login({ config, email, password }) {
     });
   }
 
-  const repository = createAdminUserRepository({ config });
+  const repository = createUserRepository({ config });
   const row = repository.findByEmail(email);
 
   if (!row || !row.enabled || !verifyPassword(password, row.password_hash)) {
@@ -23,25 +23,7 @@ function login({ config, email, password }) {
     });
   }
 
-  const admin = repository.touchLogin(row.id);
-  const token = signJwt(
-    {
-      sub: String(row.id),
-      email: row.email,
-      type: "admin",
-    },
-    {
-      secret: config.security.jwtSecret,
-      expiresInSeconds: config.security.jwtExpiresInSeconds,
-    }
-  );
-
-  return {
-    token,
-    token_type: "Bearer",
-    expires_in: config.security.jwtExpiresInSeconds,
-    admin: rowToAdmin({ ...row, ...admin }),
-  };
+  return issueUserSession({ config, user: repository.touchLogin(row.id) });
 }
 
 module.exports = {

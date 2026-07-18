@@ -5,7 +5,7 @@ const AuthApi = require("../src/modules/Auth/AuthApi");
 function main() {
   const config = loadConfig();
   migrate({ config });
-  const result = AuthApi.bootstrapAdmin({
+  const result = AuthApi.bootstrapSystemAdmin({
     config,
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,
@@ -14,8 +14,8 @@ function main() {
 
   console.log(
     result.created
-      ? `Admin created: ${result.admin.email}`
-      : `Admin already exists: ${result.admin.email}`
+      ? `System admin created: ${result.user.email}`
+      : `System admin already exists: ${result.user.email}`
   );
 }
 

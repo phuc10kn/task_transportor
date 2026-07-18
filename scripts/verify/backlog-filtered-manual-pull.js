@@ -9,6 +9,7 @@ const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
@@ -56,8 +57,8 @@ async function main() {
   });
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({ config, email: "filtered-pull@example.test", password: "verify-password" });
-  const project = ProjectsApi.createProject({
+  AuthApi.bootstrapSystemAdmin({ config, email: "filtered-pull@example.test", password: "verify-password" });
+  const project = createVerifyProject({
     config,
     input: {
       name: "Filtered manual pull",

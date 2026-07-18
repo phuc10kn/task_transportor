@@ -7,6 +7,7 @@ const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
 
@@ -17,8 +18,8 @@ async function main() {
   });
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({ config, email: "cis-list@example.test", password: "verify-password" });
-  const project = ProjectsApi.createProject({ config, input: { name: "Project 1", enabled: true, sync_enabled: true } });
+  AuthApi.bootstrapSystemAdmin({ config, email: "cis-list@example.test", password: "verify-password" });
+  const project = createVerifyProject({ config, input: { name: "Project 1", enabled: true, sync_enabled: true } });
   assert.equal(project.id, 1);
 
   let target;

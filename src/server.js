@@ -13,7 +13,7 @@ function startServer() {
   ensureStorage(config.storage);
   migrate({ config });
   if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-    AuthApi.bootstrapAdmin({ config });
+    AuthApi.bootstrapSystemAdmin({ config });
   }
 
   const app = createApp({ config });

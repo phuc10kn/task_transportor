@@ -7,7 +7,7 @@ entity_type: Module
 layer: 05-architecture
 concern: 01-structure
 status: active
-summary: Module xác thực admin cho toàn bộ admin UI và API nội bộ của hệ thống.
+summary: Module sở hữu user identity, password/Google login, system role và user JWT cho Admin UI/API.
 theory_basis:
   - TH-MOD-01
 ---
@@ -15,17 +15,17 @@ theory_basis:
 
 ## Summary
 
-Module xác thực admin cho toàn bộ admin UI và API nội bộ của hệ thống.
+Module sở hữu user identity, password/Google login, system role và user JWT cho Admin UI/API.
 
 ## Meaning
 
-Module xác thực admin cho toàn bộ admin UI và API nội bộ của hệ thống.
+Module sở hữu user identity, password/Google login, system role và user JWT cho Admin UI/API.
 
 ## Responsibility
 
-- Login admin.
-- Bootstrap admin khi có env phù hợp.
-- Cấp và đọc JWT identity hiện tại.
+- Login user bằng password hoặc verified Google email đã tồn tại.
+- Bootstrap system admin khi có env phù hợp.
+- System-admin CRUD user tối thiểu và cấp/đọc user JWT.
 - Expose middleware authenticate cho HTTP layer.
 
 ## Key properties
@@ -33,15 +33,16 @@ Module xác thực admin cho toàn bộ admin UI và API nội bộ của hệ t
 | Property | Value |
 |----------|-------|
 | Public surface | `src/modules/Auth/AuthApi.js`, `src/modules/Auth/http/routes.js` |
-| Owned behavior | admin identity, bootstrap admin, logout semantics đơn giản |
-| Main consumers | gần như toàn bộ route admin |
+| Owned behavior | user identity, credential login, Google identity mapping, system role |
+| Main consumers | toàn bộ authenticated route và `Projects` safe user lookup |
 | Runtime impact | cross-cutting security entry point |
 
 ## Rules / constraints
 
 - Auth không sở hữu policy của từng domain module.
 - Business authorization chi tiết nếu có phải nằm ở owner use case.
-- Bootstrap admin chỉ là convenience hiện tại, không được kéo business logic vào đây.
+- Project/Team role thuộc `Projects`; `system_admin` không bypass membership.
+- Google không auto-provision và không lưu/log ID token.
 
 ## Related Entities
 

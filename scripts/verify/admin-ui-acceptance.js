@@ -11,6 +11,7 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { requestJson, withServer } = require("./helpers/http");
@@ -25,7 +26,7 @@ function setupConfig() {
   });
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "admin-ui@example.test",
     password: "verify-password",
@@ -79,7 +80,7 @@ async function login(server) {
 }
 
 function createProject(config) {
-  return ProjectsApi.createProject({
+  return createVerifyProject({
     config,
     input: {
       name: "Admin UI Seed",
@@ -347,7 +348,7 @@ async function verifyPhase07() {
       token,
     });
     assert.equal(me.status, 200);
-    assert.equal(me.body.data.admin.email, "admin-ui@example.test");
+    assert.equal(me.body.data.user.email, "admin-ui@example.test");
 
     const createdProject = await requestJson(server, {
       method: "POST",

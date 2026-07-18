@@ -22,6 +22,8 @@ Lite in scope:
 
 - Admin login và project config tối thiểu.
 - Admin chọn hoặc tạo đúng một Project trước khi vào workspace nghiệp vụ; Dashboard, issue, translation, mapping, anomaly, job và journal chỉ đọc/ghi Project đã chọn bằng Project-scoped API. Đổi Project chỉ thực hiện tại Project Config.
+- Người dùng đăng nhập bằng email/password hoặc Google. Google chỉ nhận email đã verify của tài khoản CIS đang enabled, không tự tạo user. `system_admin` quản lý danh sách user và system role; role hệ thống không cấp quyền ngầm vào Project.
+- Mỗi Project có đúng một Team. Người tạo Project đồng thời là Project owner và Team lead; chỉ thành viên Team mới thấy và làm việc với Project. Owner quản lý cấu hình/vòng đời Project, lead quản lý thành viên, member dùng workspace; owner không thể bị xóa hoặc hạ khỏi lead.
 - `BE-PROJECT-SCOPE-01/02` đã đóng: Backend enforce object isolation theo Project path, Dashboard đã mở cho active Project, route workspace legacy đã bị xóa và Project `enabled=false` chặn toàn bộ workspace.
 - Backlog manual pull một issue vào CIS; resync áp dụng lại approved Backlog→CIS mappings cho Issue type, Priority, Status và Assignee mà không tạo source revision mới khi payload Backlog không đổi.
 - Manual project pull cũ và scheduled pull bị disable; các API disabled đó không query Backlog hoặc enqueue job.

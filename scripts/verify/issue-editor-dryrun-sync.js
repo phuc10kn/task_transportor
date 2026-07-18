@@ -7,6 +7,7 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { ISSUE_STATUSES } = require("../../src/shared/stateConstants");
 const { requestJson, withServer } = require("./helpers/http");
@@ -21,7 +22,7 @@ function setupConfig() {
 
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "issue-editor-dryrun@example.test",
     password: "verify-password",
@@ -31,7 +32,7 @@ function setupConfig() {
 }
 
 function createProject(config) {
-  return ProjectsApi.createProject({
+  return createVerifyProject({
     config,
     input: {
       name: "Issue Editor Dry-run Verify",
@@ -146,7 +147,7 @@ async function main() {
     const token = await login(server);
     const legacyDryRun = await requestJson(server, { method: "POST", pathname: ["", "api", "v1", "issues", issue.id, "dry-run", "jira"].join("/"), token });
     assert.equal(legacyDryRun.status, 404);
-    const otherProject = ProjectsApi.createProject({ config, input: { name: "Other Project" } });
+    const otherProject = createVerifyProject({ config, input: { name: "Other Project" } });
     const jobsBeforeIsolationChecks = SyncApi.listJobs({ config, filters: {} }).length;
     const journalBeforeIsolationChecks = SyncApi.listJournal({ config, filters: {} }).length;
     const crossProjectDryRun = await requestJson(server, {

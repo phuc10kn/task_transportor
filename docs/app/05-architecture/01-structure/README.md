@@ -29,8 +29,8 @@ Concern này định nghĩa khung structure chuẩn cho custom modular monolith,
 - [MOD-005-anomaly](./modules/MOD-005-anomaly/README.md) - anomaly log và blocking checks
 - [MOD-006-sync](./modules/MOD-006-sync/README.md) - queue, worker, retry, journal
 - [MOD-007-jira](./modules/MOD-007-jira/README.md) - dry-run và outbound sync sang Jira
-- [MOD-008-projects](./modules/MOD-008-projects/README.md) - project config và integration toggle
-- [MOD-009-auth](./modules/MOD-009-auth/README.md) - admin auth và identity
+- [MOD-008-projects](./modules/MOD-008-projects/README.md) - Project config, Team, membership và Project access
+- [MOD-009-auth](./modules/MOD-009-auth/README.md) - user identity, password/Google login và system role
 - [MOD-010-dashboard](./modules/MOD-010-dashboard/README.md) - reporting và operations read model
 
 ## Rule structure đang áp dụng

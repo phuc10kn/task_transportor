@@ -3,6 +3,7 @@
 const nav = [
   ["/dashboard", "Dashboard"],
   ["/projects", "Projects"],
+  ["/users", "Users"],
   ["/mappings", "Mappings"],
   { label: "Issues", slug: "issues", children: [["/backlog-issues", "Backlog Issues"], ["/cis-issues", "CIS Issues"]] },
   { label: "Translation", slug: "translation", children: [["/translation-queue", "Translation Queue"], ["/translation-glossary", "Translation Glossary"]] },
@@ -16,15 +17,16 @@ function projectIdFrom(pathname) {
 }
 
 function scopedHref(projectId, href) {
-  if (href === "/projects") return href;
+  if (["/projects", "/users"].includes(href)) return href;
   return projectId ? `/project/${projectId}${href}` : "/projects";
 }
 
 function navLink(pathname, projectId, [path, label]) {
   const href = scopedHref(projectId, path);
   const active = pathname === href || pathname.startsWith(`${href}/`);
-  const workspace = path === "/projects" ? "" : ` data-workspace-path="${path}"`;
-  return `<li class="nav-item${active ? " active" : ""}"><a class="nav-link${active ? " active" : ""}" href="${href}"${workspace}${active ? ' aria-current="page"' : ""}><span class="nav-link-title">${label}</span></a></li>`;
+  const workspace = ["/projects", "/users"].includes(path) ? "" : ` data-workspace-path="${path}"`;
+  const id = path === "/users" ? ' id="users-nav" hidden' : "";
+  return `<li class="nav-item${active ? " active" : ""}"${id}><a class="nav-link${active ? " active" : ""}" href="${href}"${workspace}${active ? ' aria-current="page"' : ""}><span class="nav-link-title">${label}</span></a></li>`;
 }
 
 function navItems(pathname) {
@@ -52,6 +54,7 @@ function loginBody() {
           <div class="mb-3"><label class="form-label" for="email">Email</label><input class="form-control" id="email" name="email" type="email" autocomplete="username" required></div>
           <div class="mb-3"><label class="form-label" for="password">Password</label><input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required></div>
           <button class="btn btn-primary w-100" type="submit">Sign in</button>
+          <div id="google-login" class="mt-3" hidden><div class="text-secondary text-center small mb-2">or continue with</div><div id="google-button" class="d-flex justify-content-center"></div></div>
         </div>
       </form>
       <div class="text-center text-secondary mt-3"><a href="/api/v1/health">Verify API proxy</a></div>
@@ -79,7 +82,7 @@ function consoleBody(route, pathname) {
         <div class="navbar-nav flex-row order-md-last ms-auto gap-2">
           <button class="btn btn-icon btn-ghost-secondary" id="refresh-route" type="button" aria-label="Refresh current route" title="Refresh current route">↻</button>
           <button class="btn btn-icon btn-ghost-secondary" id="theme-toggle" type="button" aria-label="Switch to dark mode" title="Toggle theme">◐</button>
-          <span class="navbar-text" id="admin-email"></span>
+          <span class="navbar-text" id="user-email"></span>
           <button class="btn btn-outline-secondary btn-sm" id="logout" type="button">Logout</button>
         </div>
       </div></header>

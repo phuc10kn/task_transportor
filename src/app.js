@@ -10,8 +10,9 @@ const {
 const { requireProjectWorkspace } = require("./http/middleware/requireProjectWorkspace");
 const { notFoundHandler, errorHandler } = require("./http/middleware/errorHandlers");
 const { success } = require("./http/response/envelope");
-const { createAuthRouter } = require("./modules/Auth/http/routes");
-const { createAuthenticateAdmin } = require("./modules/Auth/http/middleware/authenticate");
+const { createAuthRouter, createUsersRouter } = require("./modules/Auth/http/routes");
+const { createAuthenticateUser } = require("./modules/Auth/http/middleware/authenticate");
+const { createGoogleIdTokenVerifier } = require("./infrastructure/external/providers/google/GoogleIdTokenVerifier");
 const { createProjectsRouter } = require("./modules/Projects/http/routes");
 const { createCisRouter } = require("./modules/Cis/http/routes");
 const { createDashboardRouter } = require("./modules/Dashboard/http/routes");
@@ -40,6 +41,9 @@ function createApp(options = {}) {
 
   app.locals.config = config;
   app.locals.logger = logger;
+  app.locals.googleVerifier = options.googleVerifier || (config.auth.google.enabled
+    ? createGoogleIdTokenVerifier({ clientId: config.auth.google.clientId })
+    : null);
 
   app.use(createRequestObservabilityMiddleware({ logger }));
   app.use(cors());
@@ -63,72 +67,73 @@ function createApp(options = {}) {
   });
 
   app.use("/api/v1/auth", createAuthRouter());
+  app.use("/api/v1/users", createUsersRouter());
   app.use(
     "/api/v1",
     createDashboardRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1/projects",
     createProjectsRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
     })
   );
   app.use(
     "/api/v1",
     createCisRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1/projects",
     createBacklogRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1/projects",
     createBacklogAttachmentRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createSyncRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createTranslationRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createMappingRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createAnomalyRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );
   app.use(
     "/api/v1",
     createJiraRouter({
-      authenticate: createAuthenticateAdmin(),
+      authenticate: createAuthenticateUser(),
       requireProjectWorkspace,
     })
   );

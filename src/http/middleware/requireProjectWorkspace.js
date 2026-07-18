@@ -27,7 +27,7 @@ function requireProjectWorkspace(req, res, next) {
       throw new AppError({ code: "PROJECT_NOT_FOUND", message: "Project not found.", status: 404 });
     }
 
-    const project = ProjectsApi.getProject({ config: req.app.locals.config, projectId });
+    const project = ProjectsApi.getProjectForUser({ config: req.app.locals.config, projectId, userId: req.user.id });
     if (project.enabled === false) {
       throw new AppError({ code: "PROJECT_DISABLED", message: "Project is disabled.", status: 409 });
     }
@@ -35,6 +35,7 @@ function requireProjectWorkspace(req, res, next) {
     assertMatchingScope(req.query && req.query.project_id, projectId, "query");
     assertMatchingScope(req.body && req.body.project_id, projectId, "body");
     req.project = project;
+    req.projectAccess = project.access;
     updateTraceContext({ project_id: projectId });
     if (req.app.locals.logger) {
       req.app.locals.logger.info({

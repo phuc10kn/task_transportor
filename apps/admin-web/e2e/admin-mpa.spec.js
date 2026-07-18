@@ -2,19 +2,20 @@
 
 const { expect, test } = require("@playwright/test");
 
-const project = { id: 1, name: "Demo Hub", enabled: true, source_language: "ja", target_language: "vi", backlog_issue_key_prefix: "BLG" };
+const project = { id: 1, name: "Demo Hub", enabled: true, source_language: "ja", target_language: "vi", backlog_issue_key_prefix: "BLG", access: { team_role: "lead", is_owner: true } };
 const workspace = (path, projectId = 1) => path.startsWith("/project/") || path.startsWith("/projects") ? path : `/project/${projectId}${path}`;
 
 async function mockSession(page, projects = [project]) {
-  await page.route("**/api/v1/auth/login", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { token: "mpa-token", admin: { id: 1, email: "admin@example.test" } } }) }));
-  await page.route("**/api/v1/auth/me", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { admin: { id: 1, email: "admin@example.test" } } }) }));
+  await page.route("**/api/v1/auth/login", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { token: "mpa-token", user: { id: 1, email: "admin@example.test", system_role: "system_admin" } } }) }));
+  await page.route("**/api/v1/auth/me", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { user: { id: 1, email: "admin@example.test", system_role: "system_admin" } } }) }));
   await page.route("**/api/v1/projects", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: projects }) }));
+  await page.route("**/api/v1/projects/1/team", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: 1, project_id: 1, owner_user_id: 1, members: [{ id: 1, email: "admin@example.test", role: "lead", is_owner: true }] } }) }));
 }
 
 async function enter(page, path, projects = [project]) {
   await mockSession(page, projects);
   await page.addInitScript(({ path }) => {
-    localStorage.setItem("cis_admin_token", "mpa-token");
+    localStorage.setItem("cis_user_token", "mpa-token");
     sessionStorage.setItem("cis_active_project_id", "1");
     window.__expectedPath = path;
   }, { path });
@@ -103,7 +104,7 @@ test("projectId in the document path overrides the remembered Project", async ({
   await page.route("**/api/v1/projects/2/dashboard/summary", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { health: { status: "ok" }, counts: { issues_total: 2 } } }) }));
   await page.route("**/api/v1/projects/2/dashboard/alerts", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [] }) }));
   await page.addInitScript(() => {
-    localStorage.setItem("cis_admin_token", "mpa-token");
+    localStorage.setItem("cis_user_token", "mpa-token");
     sessionStorage.setItem("cis_active_project_id", "1");
   });
   await page.goto("/project/2/dashboard");
@@ -149,7 +150,7 @@ test("dashboard does not fetch without an enabled active Project", async ({ page
     return route.abort();
   });
   await mockSession(page, []);
-  await page.addInitScript(() => localStorage.setItem("cis_admin_token", "mpa-token"));
+  await page.addInitScript(() => localStorage.setItem("cis_user_token", "mpa-token"));
   await page.goto(workspace("/dashboard"));
   await expect(page.getByRole("heading", { name: "Choose a Project first" })).toBeVisible();
   expect(dashboardRequests).toBe(0);

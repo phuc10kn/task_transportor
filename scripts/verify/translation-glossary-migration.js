@@ -30,9 +30,7 @@ function prepareLegacyDatabase(name) {
 
   const files = fs
     .readdirSync(migrationsDir)
-    .filter((fileName) => fileName.endsWith(".sql")
-      && fileName !== "015_translation_glossary_tables.sql"
-      && fileName !== "016_translation_glossary_term_variants.sql")
+    .filter((fileName) => fileName.endsWith(".sql") && Number(fileName.slice(0, 3)) < 15)
     .sort();
 
   for (const fileName of files) {
@@ -43,6 +41,9 @@ function prepareLegacyDatabase(name) {
         .run(fileName, checksum(content));
     })();
   }
+
+  db.prepare("INSERT INTO admin_users (email, password_hash, name) VALUES (?, ?, ?)")
+    .run("legacy-owner@example.test", "legacy-password-hash", "Legacy Owner");
 
   db.close();
   return config;

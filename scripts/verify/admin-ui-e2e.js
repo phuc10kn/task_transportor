@@ -57,7 +57,7 @@ async function main() {
   });
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({ config, email: "admin-ui@example.test", password: "verify-password" });
+  AuthApi.bootstrapSystemAdmin({ config, email: "admin-ui@example.test", password: "verify-password" });
 
   const api = createApp({ config });
   const apiServer = api.listen(0);

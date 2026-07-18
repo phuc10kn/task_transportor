@@ -10,6 +10,7 @@ const SENSITIVE_KEYS = new Set([
   "authorization", "proxyauthorization", "cookie", "setcookie", "password", "passwd",
   "secret", "token", "apikey", "apitoken", "accesstoken", "refreshtoken", "jwttoken",
   "jiraapitoken", "backlogapikey", "openaikey", "deepseekapikey",
+  "credential", "initialpassword", "passwordhash",
 ]);
 const cache = new WeakMap();
 

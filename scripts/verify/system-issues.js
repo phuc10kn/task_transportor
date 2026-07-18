@@ -10,6 +10,7 @@ const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
@@ -67,8 +68,8 @@ async function main() {
   ensureStorage(config.storage);
   migrate({ config });
   installFakeAiFetch();
-  AuthApi.bootstrapAdmin({ config, email: "system-issues@example.test", password: "verify-password" });
-  const project = ProjectsApi.createProject({
+  AuthApi.bootstrapSystemAdmin({ config, email: "system-issues@example.test", password: "verify-password" });
+  const project = createVerifyProject({
     config,
     input: {
       name: "System Issues",
@@ -102,7 +103,7 @@ async function main() {
   createApprovedMapping(config, project.id, "issue_type", "Task", "task", "Task");
   createApprovedMapping(config, project.id, "status", "Open", "open", "To Do");
   createApprovedMapping(config, project.id, "priority", "Normal", "normal", "Medium");
-  const secondProject = ProjectsApi.createProject({
+  const secondProject = createVerifyProject({
     config,
     input: {
       name: "System Issues Two",

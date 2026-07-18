@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const AUTH_KEY = "cis_admin_token";
+  const AUTH_KEY = "cis_user_token";
   const PROJECT_KEY = "cis_active_project_id";
   const THEME_KEY = "cis_theme";
   const callbacks = [];
@@ -33,7 +33,7 @@
     if (!value || !value.startsWith("/") || value.startsWith("//")) return "/projects";
     try {
       const url = new URL(value, location.origin);
-      return url.pathname === "/projects" || workspacePattern.test(url.pathname) ? `${url.pathname}${url.search}` : "/projects";
+      return ["/projects", "/users"].includes(url.pathname) || workspacePattern.test(url.pathname) ? `${url.pathname}${url.search}` : "/projects";
     } catch {
       return "/projects";
     }
@@ -186,7 +186,7 @@
 
     try {
       const [me, projects] = await Promise.all([api("/api/v1/auth/me"), api("/api/v1/projects")]);
-      document.querySelector("#admin-email").textContent = me.admin.email;
+      document.querySelector("#user-email").textContent = me.user.email;
       const pathProjectId = projectIdFromPath();
       const requestedId = pathProjectId || storedProjectId();
       const project = projects.find((item) => item.id === requestedId) || null;
@@ -200,7 +200,8 @@
       document.querySelectorAll("[data-workspace-path]").forEach((link) => {
         link.href = project ? projectPath(link.dataset.workspacePath, project.id) : "/projects";
       });
-      context = { admin: me.admin, projects, project, projectId: project?.id || null };
+      document.querySelector("#users-nav")?.toggleAttribute("hidden", me.user.system_role !== "system_admin");
+      context = { user: me.user, projects, project, projectId: project?.id || null };
       if (page !== "projects" && !project) {
         renderWorkspaceGate();
         return;

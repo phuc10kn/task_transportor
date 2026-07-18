@@ -54,6 +54,39 @@
     </form>`;
   }
 
+  function teamCard(project) {
+    return `<section class="card mt-4" id="team-card"><div class="card-header"><div><div class="route-kicker">Project access</div><h2 class="card-title mt-1">Team</h2></div>${CIS.badge(project.access?.is_owner ? "owner" : project.access?.team_role || "member", project.access?.is_owner ? "azure" : "secondary")}</div><div class="card-body" id="team-content" aria-busy="true"><span class="spinner-border spinner-border-sm me-2"></span>Loading team…</div></section>`;
+  }
+
+  async function loadTeam(project) {
+    const region = document.querySelector("#team-content");
+    if (!region) return;
+    try {
+      const team = await CIS.api(`/api/v1/projects/${project.id}/team`);
+      const canManage = project.access?.team_role === "lead";
+      region.removeAttribute("aria-busy");
+      region.innerHTML = `${canManage ? `<form class="row g-2 align-items-end mb-4" id="team-add"><div class="col-md-7"><label class="form-label" for="member-email">Add enabled user by exact email</label><input class="form-control" id="member-email" name="email" type="email" required></div><div class="col-md-3"><label class="form-label" for="member-role">Role</label><select class="form-select" id="member-role" name="role"><option value="member">Member</option><option value="lead">Lead</option></select></div><div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Add</button></div><div class="col-12" id="team-error"></div></form>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>User</th><th>Team role</th>${canManage ? "<th>Actions</th>" : ""}</tr></thead><tbody>${team.members.map((member) => `<tr><td><strong>${CIS.escape(member.name || member.email)}</strong><div class="text-secondary small">${CIS.escape(member.email)}</div></td><td>${canManage && !member.is_owner ? `<select class="form-select form-select-sm" data-member-role="${member.id}"><option value="member" ${member.role === "member" ? "selected" : ""}>Member</option><option value="lead" ${member.role === "lead" ? "selected" : ""}>Lead</option></select>` : `${CIS.badge(member.role, member.role === "lead" ? "azure" : "secondary")} ${member.is_owner ? CIS.badge("owner", "green") : ""}`}</td>${canManage ? `<td>${member.is_owner ? '<span class="text-secondary small">Protected owner</span>' : `<button class="btn btn-sm btn-outline-danger" type="button" data-remove-member="${member.id}">Remove</button>`}</td>` : ""}</tr>`).join("")}</tbody></table></div>`;
+      bindTeam(project);
+    } catch (error) { region.innerHTML = CIS.alert(error.message); }
+  }
+
+  function bindTeam(project) {
+    document.querySelector("#team-add")?.addEventListener("submit", async (event) => {
+      event.preventDefault(); const form = event.currentTarget; if (!form.reportValidity()) return;
+      try { await CIS.api(`/api/v1/projects/${project.id}/team/members`, { method: "POST", body: CIS.formJson(form) }); CIS.toast("Team member added."); await loadTeam(project); }
+      catch (error) { document.querySelector("#team-error").innerHTML = CIS.alert(error.message); }
+    });
+    document.querySelectorAll("[data-member-role]").forEach((select) => select.addEventListener("change", async () => {
+      try { await CIS.api(`/api/v1/projects/${project.id}/team/members/${select.dataset.memberRole}`, { method: "PATCH", body: { role: select.value } }); CIS.toast("Team role updated."); await loadTeam(project); }
+      catch (error) { CIS.toast(error.message, "danger"); await loadTeam(project); }
+    }));
+    document.querySelectorAll("[data-remove-member]").forEach((button) => button.addEventListener("click", async () => {
+      if (!confirm("Remove this user from the Project team?")) return;
+      try { await CIS.api(`/api/v1/projects/${project.id}/team/members/${button.dataset.removeMember}`, { method: "DELETE" }); CIS.toast("Team member removed."); await loadTeam(project); }
+      catch (error) { CIS.toast(error.message, "danger"); }
+    }));
+  }
+
   function render() {
     const current = selected();
     root.innerHTML = `<div class="container-xl">
@@ -61,7 +94,7 @@
       ${activeProject ? `<div class="alert alert-blue" role="status">Active workspace: <strong>${CIS.escape(activeProject.name)} · #${activeProject.id}</strong></div>` : ""}
       <div class="row g-4"><div class="col-xl-4"><section class="card"><div class="card-header"><h2 class="card-title">Project directory</h2><span class="badge bg-secondary-lt ms-auto">${projects.length}</span></div><div class="list-group list-group-flush">
         ${projects.length ? projects.map((project) => `<div class="list-group-item"><div class="d-flex align-items-start gap-3"><a class="flex-fill text-reset text-decoration-none" href="/projects?project_id=${project.id}"><strong>${CIS.escape(project.name)}</strong><div class="text-secondary small mt-1">${CIS.escape(project.backlog_project_key || "No Backlog")} · ${CIS.escape(project.jira_project_key || "No Jira")} · ${project.enabled === false ? "Disabled" : "Enabled"}</div></a><button class="btn btn-sm btn-outline-primary" type="button" data-open-project="${project.id}" ${project.enabled === false ? 'disabled title="Bật Project trong cấu hình trước khi mở workspace"' : ""}>${project.enabled === false ? "Workspace disabled" : "Open workspace"}</button></div></div>`).join("") : '<div class="card-body text-secondary">No projects configured.</div>'}
-      </div></section></div><div class="col-xl-8">${creating ? projectForm(null) : current ? projectForm(current) : CIS.state("Select a Project", "Choose a Project from the directory or create a new one.")}</div></div>
+      </div></section></div><div class="col-xl-8">${creating ? projectForm(null) : current ? `${projectForm(current)}${teamCard(current)}` : CIS.state("Select a Project", "Choose a Project from the directory or create a new one.")}</div></div>
     </div>`;
     bind();
   }
@@ -92,7 +125,12 @@
     const form = document.querySelector("#project-form");
     if (!form) return;
     const current = selected() || defaults;
+    if (selected()) void loadTeam(selected());
     syncAiControls({ transport: current.translation_ai_transport, model: current.translation_ai_model });
+    if (selected() && !selected().access?.is_owner) {
+      form.querySelectorAll("input, select, button[type=submit]").forEach((control) => { control.disabled = true; });
+      document.querySelector("#project-error").innerHTML = CIS.alert("Only the Project owner can change Project configuration.", "warning");
+    }
     document.querySelector("#translation_ai_provider").addEventListener("change", () => syncAiControls());
     document.querySelector("#translation_ai_model").addEventListener("change", () => syncAiControls({ transport: document.querySelector("#translation_ai_transport").value, model: document.querySelector("#translation_ai_model").value }));
     let dirty = false;

@@ -35,6 +35,7 @@ Cách app áp dụng custom modular monolith hiện tại:
 - Product architecture giữ invariant `System -> CIS -> System`; Backlog/Jira là external adapter, không sở hữu business state của CIS.
 - Module source đặt trong `src/modules/<ModuleName>`.
 - Module code hiện có: `Auth`, `Projects`, `Cis`, `Backlog`, `Translation`, `Mapping`, `Anomaly`, `Sync`, `Jira`, `Dashboard`.
+- `Auth` sở hữu user identity, password/Google login và `system_role`. `Projects` sở hữu Project, Team, membership và Project role; `system_role` không bypass membership.
 - Cross-module access phải đi qua public API/module boundary.
 - Không import sâu vào `application/`, `infrastructure`, `support` của module khác.
 - CIS sở hữu canonical issue state và source snapshot.

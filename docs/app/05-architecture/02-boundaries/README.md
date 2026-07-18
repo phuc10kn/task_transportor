@@ -36,6 +36,8 @@ Concern này định nghĩa taxonomy boundary chuẩn cho custom modular monolit
 Nội dung cleanup cũ không còn là task list sống, nhưng giữ lại các rule còn áp dụng:
 
 - Cross-module write phải gom về owner API hoặc owner use case; module khác không được ghi trực tiếp state của `Cis`, `Translation`, `Sync`, `Projects`, `Mapping`, `Anomaly`.
+- `Auth` là owner của `users` và công bố safe identity lookup; `Projects` là owner của `teams`, `team_members`, `projects.team_id` và `projects.owner_user_id`. Projects dùng `AuthApi.resolveEnabledUserByEmail` khi thêm member.
+- Mọi public route `/api/v1/projects/:projectId/**` resolve membership qua `ProjectsApi.getProjectForUser`. System admin vẫn nhận `404 PROJECT_NOT_FOUND` nếu không thuộc Team; chỉ owner được sửa/xóa/config Project và Team lead mới quản lý membership.
 - `Dashboard`, `Jira`, `Translation` có thể đọc chéo theo allowlist để phục vụ read model, preview hoặc translation context; mọi read exception phải được ghi rõ trong boundary docs.
 - `Sync` được điều phối job/retry/journal, nhưng business outcome vẫn thuộc owner module.
 - `Jira` outbound không được bỏ qua dry-run, readiness gate, stale preview guard và journal.

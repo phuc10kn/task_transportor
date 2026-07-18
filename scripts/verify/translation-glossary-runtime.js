@@ -4,6 +4,7 @@ const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { prepareGlossaryForContext } = require("../../src/modules/Translation/application/collectTranslationContext");
 const { createTranslationRepository } = require("../../src/modules/Translation/infrastructure/TranslationRepository");
@@ -34,7 +35,7 @@ function main() {
   const config = makeTempConfig("translation-glossary-runtime");
   ensureStorage(config.storage);
   migrate({ config });
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Glossary Runtime Project",

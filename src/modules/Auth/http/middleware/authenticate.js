@@ -3,8 +3,8 @@ const { verifyJwt } = require("../../../../infrastructure/security/jwt");
 const { updateTraceContext } = require("../../../../infrastructure/observability/traceContext");
 const AuthApi = require("../../AuthApi");
 
-function createAuthenticateAdmin() {
-  return function authenticateAdmin(req, res, next) {
+function createAuthenticateUser() {
+  return function authenticateUser(req, res, next) {
     try {
       const header = req.get("authorization") || "";
       const match = header.match(/^Bearer\s+(.+)$/i);
@@ -30,9 +30,12 @@ function createAuthenticateAdmin() {
         });
       }
 
-      req.user = AuthApi.getCurrentAdmin({
+      if (payload.type !== "user") {
+        throw new AppError({ code: "UNAUTHENTICATED", message: "Invalid or expired token.", status: 401 });
+      }
+      req.user = AuthApi.getCurrentUser({
         config: req.app.locals.config,
-        adminId: Number(payload.sub),
+        userId: Number(payload.sub),
       });
       updateTraceContext({ user_id: req.user.id });
       next();
@@ -43,5 +46,5 @@ function createAuthenticateAdmin() {
 }
 
 module.exports = {
-  createAuthenticateAdmin,
+  createAuthenticateUser,
 };

@@ -8,6 +8,7 @@ const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
 const { makeTempConfig } = require("./helpers/tempConfig");
 const { requestJson, withServer } = require("./helpers/http");
@@ -19,7 +20,7 @@ function setupConfig(name) {
   });
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: `${name}@example.test`,
     password: "verify-password",
@@ -28,7 +29,7 @@ function setupConfig(name) {
 }
 
 function createProject(config, suffix, overrides = {}) {
-  return ProjectsApi.createProject({
+  return createVerifyProject({
     config,
     input: {
       name: `Dry-run Verify ${suffix}`,

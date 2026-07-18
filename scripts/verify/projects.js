@@ -36,9 +36,16 @@ function verifyLegacyEnvCredentialMigration() {
 
   ensureStorage(config.storage);
   migrate({ config, env });
+  const legacyOwner = AuthApi.bootstrapSystemAdmin({
+    config,
+    email: "legacy-owner@example.test",
+    password: "verify-password",
+  }).user;
 
   const db = createConnection({ config });
   try {
+    const teamId = db.prepare("INSERT INTO teams (name) VALUES (?)").run("Legacy Env Credential Team").lastInsertRowid;
+    db.prepare("INSERT INTO team_members (team_id, user_id, role) VALUES (?, ?, 'lead')").run(teamId, legacyOwner.id);
     db
       .prepare(
         `INSERT INTO projects (
@@ -46,16 +53,20 @@ function verifyLegacyEnvCredentialMigration() {
           backlog_api_key_env,
           jira_email_env,
           jira_api_token_env,
-          scheduled_pull_filter_json
+          scheduled_pull_filter_json,
+          team_id,
+          owner_user_id
         )
-        VALUES (?, ?, ?, ?, ?)`
+        VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         "Legacy Env Credential Project",
         "LEGACY_BACKLOG_API_KEY",
         "LEGACY_JIRA_EMAIL",
         "LEGACY_JIRA_API_TOKEN",
-        JSON.stringify({})
+        JSON.stringify({}),
+        teamId,
+        legacyOwner.id
       );
 
     const result = syncProjectCredentialsFromEnv({ db, env });
@@ -93,7 +104,7 @@ async function main() {
 
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "admin@example.test",
     password: "correct-horse-battery",
@@ -114,6 +125,17 @@ async function main() {
       },
     });
     const token = login.body.data.token;
+
+    const memberCreated = await requestJson(server, {
+      method: "POST", pathname: "/api/v1/users", token,
+      body: { email: "member@example.test", password: "member-password", name: "Team Member", system_role: "user" },
+    });
+    assert.equal(memberCreated.status, 201);
+    const outsiderAdminCreated = await requestJson(server, {
+      method: "POST", pathname: "/api/v1/users", token,
+      body: { email: "outsider-admin@example.test", password: "outsider-password", system_role: "system_admin" },
+    });
+    assert.equal(outsiderAdminCreated.status, 201);
 
     const defaultTranslationProject = await requestJson(server, {
       method: "POST",
@@ -246,6 +268,31 @@ async function main() {
     const projectId = created.body.data.id;
     assertProjectCredentialsAreStored(config, projectId);
 
+    const memberLogin = await requestJson(server, { method: "POST", pathname: "/api/v1/auth/login", body: { email: "member@example.test", password: "member-password" } });
+    const memberToken = memberLogin.body.data.token;
+    const hiddenBeforeMembership = await requestJson(server, { pathname: `/api/v1/projects/${projectId}`, token: memberToken });
+    assert.equal(hiddenBeforeMembership.status, 404);
+
+    const outsiderLogin = await requestJson(server, { method: "POST", pathname: "/api/v1/auth/login", body: { email: "outsider-admin@example.test", password: "outsider-password" } });
+    const outsiderProjects = await requestJson(server, { pathname: "/api/v1/projects", token: outsiderLogin.body.data.token });
+    assert.deepEqual(outsiderProjects.body.data, []);
+
+    const addedMember = await requestJson(server, {
+      method: "POST", pathname: `/api/v1/projects/${projectId}/team/members`, token,
+      body: { email: "member@example.test", role: "member" },
+    });
+    assert.equal(addedMember.status, 201);
+    const memberProjects = await requestJson(server, { pathname: "/api/v1/projects", token: memberToken });
+    assert.equal(memberProjects.body.data.length, 1);
+    assert.equal(memberProjects.body.data[0].access.team_role, "member");
+    const memberCannotConfigure = await requestJson(server, { method: "PATCH", pathname: `/api/v1/projects/${projectId}`, token: memberToken, body: { name: "Forbidden rename" } });
+    assert.equal(memberCannotConfigure.status, 403);
+
+    const ownerTeam = await requestJson(server, { pathname: `/api/v1/projects/${projectId}/team`, token });
+    const ownerMember = ownerTeam.body.data.members.find((item) => item.is_owner);
+    const ownerRemoval = await requestJson(server, { method: "DELETE", pathname: `/api/v1/projects/${projectId}/team/members/${ownerMember.id}`, token });
+    assert.equal(ownerRemoval.status, 409);
+
     const enabled = await requestJson(server, {
       method: "POST",
       pathname: `/api/v1/projects/${projectId}/sync/enable`,
@@ -304,6 +351,15 @@ async function main() {
     assert.equal(aliasCredentials.body.data.backlog_api_key_env, null);
     assert.equal(aliasCredentials.body.data.jira_email_env, null);
     assert.equal(aliasCredentials.body.data.jira_api_token_env, null);
+    const disposableTeamId = aliasCredentials.body.data.team_id;
+    const deletedProject = await requestJson(server, {
+      method: "DELETE", pathname: `/api/v1/projects/${aliasCredentials.body.data.id}`, token,
+    });
+    assert.equal(deletedProject.status, 200);
+    const lifecycleDb = createConnection({ config });
+    assert.equal(lifecycleDb.prepare("SELECT COUNT(*) AS total FROM teams WHERE id = ?").get(disposableTeamId).total, 0);
+    assert.equal(lifecycleDb.prepare("SELECT COUNT(*) AS total FROM team_members WHERE team_id = ?").get(disposableTeamId).total, 0);
+    lifecycleDb.close();
   });
 
   console.log("Projects verification passed.");

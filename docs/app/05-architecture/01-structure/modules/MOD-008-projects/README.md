@@ -7,7 +7,7 @@ entity_type: Module
 layer: 05-architecture
 concern: 01-structure
 status: active
-summary: Module giữ project profile và integration config. Nó là nơi user bật tắt sync, giữ reference env/config và điều phối một số operation theo project.
+summary: Module sở hữu Project profile, dedicated Team, membership, owner/lead role và integration config.
 theory_basis:
   - TH-MOD-01
   - TH-MOD-06
@@ -19,15 +19,17 @@ relations:
 
 ## Summary
 
-Module giữ project profile và integration config. Nó là nơi user bật tắt sync, giữ reference env/config và điều phối một số operation theo project.
+Module sở hữu Project profile, dedicated Team, membership, owner/lead role và integration config.
 
 ## Meaning
 
-Module giữ project profile và integration config. Nó là nơi user bật tắt sync, giữ reference env/config và điều phối một số operation theo project.
+Module sở hữu Project profile, dedicated Team, membership, owner/lead role và integration config.
 
 ## Responsibility
 
 - CRUD project.
+- Tạo dedicated Team với creator là owner + lead trong cùng transaction.
+- Quản lý membership/Team role và enforce Project access cho mọi workspace route.
 - Enable hoặc disable sync.
 - Giữ config tích hợp và reference env keys.
 - Giữ Project identity/language config; không sở hữu translation glossary state.
@@ -38,7 +40,7 @@ Module giữ project profile và integration config. Nó là nơi user bật t�
 | Property | Value |
 |----------|-------|
 | Public surface | `src/modules/Projects/ProjectsApi.js`, `src/modules/Projects/http/routes.js` |
-| Owned state | `projects` |
+| Owned state | `projects`, `teams`, `team_members` |
 | Main consumers | `Backlog`, `Jira`, `Dashboard` |
 | Main role | context và enablement cho integration flows |
 
@@ -48,6 +50,7 @@ Module giữ project profile và integration config. Nó là nơi user bật t�
 - Enable/disable sync phải do owner `Projects` quyết định.
 - Env binding là part của project integration state, không phải concern của Dashboard.
 - Glossary normalized thuộc `Translation`; Project Config không nhận hoặc serialize glossary legacy.
+- Owner không thể bị xóa hoặc hạ khỏi lead; system role không bypass Team membership.
 
 ## Related Entities
 

@@ -6,6 +6,7 @@ const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructure/SyncJobRepository");
 const TranslationApi = require("../../src/modules/Translation/TranslationApi");
@@ -28,7 +29,7 @@ function setupConfig(name, mode, overrides = {}) {
 }
 
 function createProject(config, suffix = "TRAN") {
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: `Translation Verify ${suffix}`,
@@ -192,7 +193,7 @@ function assertJournalHas(config, action, issueId) {
 
 async function verifySuccessAndReviewApi() {
   const config = setupConfig("translation-success", "success");
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "translation-success@example.test",
     password: "verify-password",
@@ -419,7 +420,7 @@ async function verifyProviderFailure(mode, expectedErrorCode) {
 
 async function verifyManualEntryPointGate() {
   const config = setupConfig("translation-entry-gate", "success");
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "translation-entry-gate@example.test",
     password: "verify-password",
@@ -472,7 +473,7 @@ async function verifyManualEntryPointGate() {
 
 async function verifyDirectFailureFeedback() {
   const config = setupConfig("translation-direct-failure", "invalid-json");
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "translation-direct-failure@example.test",
     password: "verify-password",
@@ -520,7 +521,7 @@ async function verifyDeepSeekProvider() {
   const config = setupConfig("translation-deepseek", "success", {
     DEEPSEEK_API_KEY: "test-deepseek-key",
   });
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Translation Verify DeepSeek",
@@ -589,7 +590,7 @@ async function verifyDeepSeekAnthropicTransport() {
   const config = setupConfig("translation-deepseek-anthropic", "success", {
     DEEPSEEK_API_KEY: "test-deepseek-key",
   });
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Translation Verify DeepSeek Anthropic",
@@ -655,7 +656,7 @@ async function verifyOpenAiProvider() {
   const config = setupConfig("translation-openai", "success", {
     OPENAI_API_KEY: "test-openai-key",
   });
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Translation Verify OpenAI",
@@ -719,7 +720,7 @@ async function verifyOpenAiProvider() {
 
 async function verifyOpenAiMissingKey() {
   const config = setupConfig("translation-openai-missing-key", "success");
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Translation Verify OpenAI Missing Key",

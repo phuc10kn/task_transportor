@@ -10,6 +10,7 @@ const BacklogApi = require("../../src/modules/Backlog/BacklogApi");
 const { createBacklogClient } = require("../../src/modules/Backlog/infrastructure/BacklogClient");
 const { createJiraClient } = require("../../src/modules/Jira/infrastructure/JiraClient");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { makeTempConfig } = require("./helpers/tempConfig");
 
@@ -26,17 +27,17 @@ async function main() {
   ensureStorage(config.storage);
   migrate({ config });
 
-  const defaults = ProjectsApi.createProject({ config, input: { name: "Gate defaults" } });
+  const defaults = createVerifyProject({ config, input: { name: "Gate defaults" } });
   assert.equal(defaults.backlog_external_read_enabled, true);
   assert.equal(defaults.jira_external_read_enabled, true);
   assert.equal(defaults.jira_external_write_enabled, false);
 
-  assert.throws(() => ProjectsApi.createProject({
+  assert.throws(() => createVerifyProject({
     config,
     input: { name: "Bad URL", backlog_space_url: "http://backlog.example.test/path" },
   }), (error) => error.code === "VALIDATION_ERROR" && error.details.field === "backlog_space_url");
 
-  const project = ProjectsApi.createProject({
+  const project = createVerifyProject({
     config,
     input: {
       name: "Guarded Project",
@@ -51,7 +52,7 @@ async function main() {
       jira_project_key: "JRA",
     },
   });
-  const other = ProjectsApi.createProject({ config, input: { name: "Other Project" } });
+  const other = createVerifyProject({ config, input: { name: "Other Project" } });
 
   const backlogClient = createBacklogClient({ config, projectId: project.id });
   assert.equal((await backlogClient.getIssue("WEC-1")).issueKey, "WEC-1");

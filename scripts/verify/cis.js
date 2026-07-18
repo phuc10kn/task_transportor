@@ -5,6 +5,7 @@ const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const { makeTempConfig } = require("./helpers/tempConfig");
 
 function assertTablesExist(config) {
@@ -34,7 +35,7 @@ function assertTablesExist(config) {
 }
 
 function createProject(config) {
-  return ProjectsApi.createProject({
+  return createVerifyProject({
     config,
     input: {
       name: "CIS Verify Project",
@@ -112,7 +113,7 @@ async function main() {
   assert.equal(translation.provider, "deepseek");
   assert.equal(translation.model_or_command, "deepseek-v4-flash");
 
-  const deepSeekProject = ProjectsApi.createProject({
+  const deepSeekProject = createVerifyProject({
     config,
     input: {
       name: "CIS DeepSeek Project",

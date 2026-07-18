@@ -9,6 +9,7 @@ const { success } = require("../../src/http/response/envelope");
 const { migrate } = require("../../src/infrastructure/database/migrate");
 const { ensureStorage } = require("../../src/infrastructure/storage/bootstrap");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const AuthApi = require("../../src/modules/Auth/AuthApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { createSyncRouter } = require("../../src/modules/Sync/http/routes");
@@ -18,8 +19,8 @@ const { createSyncJobRepository } = require("../../src/modules/Sync/infrastructu
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
 
-function createProject(config, name, enabled = true) {
-  return ProjectsApi.createProject({ config, input: { name, enabled } });
+function createProject(config, creatorUserId, name, enabled = true) {
+  return ProjectsApi.createProject({ config, creatorUserId, input: { name, enabled } });
 }
 
 function enqueue(config, projectId, key) {
@@ -54,10 +55,11 @@ async function main() {
   const config = makeTempConfig("project-scope");
   ensureStorage(config.storage);
   migrate({ config });
+  const owner = AuthApi.bootstrapSystemAdmin({ config, email: "scope-owner@example.test", password: "verify-password" }).user;
 
-  const projectA = createProject(config, "Project A");
-  const projectB = createProject(config, "Project B");
-  const projectC = createProject(config, "Project C", false);
+  const projectA = createProject(config, owner.id, "Project A");
+  const projectB = createProject(config, owner.id, "Project B");
+  const projectC = createProject(config, owner.id, "Project C", false);
   const jobA = enqueue(config, projectA.id, "A-1");
   const jobB = enqueue(config, projectB.id, "B-1");
   const failedJobB = SyncApi.enqueueJob({
@@ -82,6 +84,7 @@ async function main() {
   const app = express();
   app.locals.config = config;
   app.use(express.json());
+  app.use((req, res, next) => { req.user = owner; next(); });
   app.all("/probe/:projectId", requireProjectWorkspace, (req, res) => success(res, { project_id: req.project.id }));
   app.use("/api/v1", createDashboardRouter({ authenticate: (req, res, next) => next(), requireProjectWorkspace }));
   app.use("/api/v1", createSyncRouter({ authenticate: (req, res, next) => next(), requireProjectWorkspace }));

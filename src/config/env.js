@@ -66,6 +66,10 @@ function loadConfig(env = process.env) {
   const databasePath = resolveFromRoot(env.DATABASE_PATH, "storage/db/cis.sqlite");
   const storageRoot = resolveFromRoot(env.STORAGE_ROOT, "storage");
   const attachmentPath = resolveFromRoot(env.ATTACHMENT_STORAGE_PATH, "storage/attachments");
+  const googleLoginEnabled = boolFromEnv(env.GOOGLE_LOGIN_ENABLED, false);
+  if (googleLoginEnabled && (!env.GOOGLE_CLIENT_ID || !env.PUBLIC_ORIGIN)) {
+    throw new Error("GOOGLE_CLIENT_ID and PUBLIC_ORIGIN are required when GOOGLE_LOGIN_ENABLED is true.");
+  }
 
   return {
     env: env.NODE_ENV || "development",
@@ -85,6 +89,13 @@ function loadConfig(env = process.env) {
     security: {
       jwtSecret: env.JWT_SECRET || "local-development-jwt-secret",
       jwtExpiresInSeconds: numberFromEnv(env.JWT_EXPIRES_IN_SECONDS, 7 * 24 * 60 * 60),
+    },
+    auth: {
+      google: {
+        enabled: googleLoginEnabled,
+        clientId: env.GOOGLE_CLIENT_ID || "",
+        publicOrigin: String(env.PUBLIC_ORIGIN || "").replace(/\/$/, ""),
+      },
     },
     http: {
       jsonLimit: env.HTTP_JSON_LIMIT || "1mb",

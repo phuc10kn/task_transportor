@@ -11,12 +11,13 @@ const BacklogApi = require("../../src/modules/Backlog/BacklogApi");
 const CisApi = require("../../src/modules/Cis/CisApi");
 const MappingApi = require("../../src/modules/Mapping/MappingApi");
 const ProjectsApi = require("../../src/modules/Projects/ProjectsApi");
+const { createVerifyProject } = require("./helpers/project");
 const SyncApi = require("../../src/modules/Sync/SyncApi");
 const { requestJson, withServer } = require("./helpers/http");
 const { makeTempConfig } = require("./helpers/tempConfig");
 
 function createBacklogProject(config, overrides = {}) {
-  return ProjectsApi.createProject({
+  return createVerifyProject({
     config,
     input: {
       name: "Backlog Ingestion Project",
@@ -58,7 +59,7 @@ async function main() {
 
   ensureStorage(config.storage);
   migrate({ config });
-  AuthApi.bootstrapAdmin({
+  AuthApi.bootstrapSystemAdmin({
     config,
     email: "admin@example.test",
     password: "correct-horse-battery",
@@ -150,7 +151,7 @@ async function main() {
       attachmentId: children.attachments[0].id,
       errorMessage: "Forced retry verification failure",
     });
-    const otherProject = ProjectsApi.createProject({ config, input: { name: "Other attachment Project" } });
+    const otherProject = createVerifyProject({ config, input: { name: "Other attachment Project" } });
     const jobCountBeforeRetry = SyncApi.listJobs({ config, filters: {} }).length;
     const journalCountBeforeRetry = SyncApi.listJournal({ config, filters: {} }).length;
     const crossProjectRetry = await requestJson(server, {
