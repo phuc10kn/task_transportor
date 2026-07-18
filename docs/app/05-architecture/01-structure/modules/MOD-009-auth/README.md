@@ -23,9 +23,11 @@ Module sở hữu user identity, password/Google login, system role và user JWT
 
 ## Responsibility
 
-- Login user bằng password hoặc verified Google email đã tồn tại.
+- Login user bằng password hoặc linked Google `sub`; Google-first tạo CIS user role `user`.
+- Sở hữu `user_identities`, explicit Google linking và one-time password setup cho Google-first user.
+- Owner-write self-profile display name; email identity và system role không thuộc self-service mutation.
 - Bootstrap system admin khi có env phù hợp.
-- System-admin CRUD user tối thiểu và cấp/đọc user JWT.
+- System-admin CRUD user tối thiểu, gồm hard-delete có guard, và cấp/đọc user JWT.
 - Expose middleware authenticate cho HTTP layer.
 
 ## Key properties
@@ -42,7 +44,10 @@ Module sở hữu user identity, password/Google login, system role và user JWT
 - Auth không sở hữu policy của từng domain module.
 - Business authorization chi tiết nếu có phải nằm ở owner use case.
 - Project/Team role thuộc `Projects`; `system_admin` không bypass membership.
-- Google không auto-provision và không lưu/log ID token.
+- Google-first chỉ auto-provision role `user`; Google không cấp Project access hoặc system role khác.
+- Password-first chỉ link Google explicit khi verified email trùng CIS email; không auto-merge theo email.
+- Không lưu/log Google ID/access/refresh token; chỉ lưu provider `sub` và verified email.
+- Hard-delete user không cascade xóa Project; self-delete, system admin enabled cuối cùng và Project owner còn được tham chiếu đều bị chặn.
 
 ## Related Entities
 

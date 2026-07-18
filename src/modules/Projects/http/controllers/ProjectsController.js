@@ -9,6 +9,21 @@ function list(req, res, next) {
   }
 }
 
+function ownerships(req, res, next) {
+  try { success(res, ProjectsApi.listProjectOwnerships({ config: req.app.locals.config, actorUserId: req.user.id })); } catch (error) { next(error); }
+}
+
+function transferOwner(req, res, next) {
+  try {
+    success(res, ProjectsApi.transferProjectOwnership({
+      config: req.app.locals.config,
+      projectId: Number(req.params.projectId),
+      actorUserId: req.user.id,
+      newOwnerUserId: Number(req.body && req.body.new_owner_user_id),
+    }));
+  } catch (error) { next(error); }
+}
+
 function create(req, res, next) {
   try {
     success(
@@ -137,11 +152,13 @@ module.exports = {
   disableSync,
   enableSync,
   list,
+  ownerships,
   remove,
   removeTeamMember,
   show,
   syncCisMappingValues,
   team,
+  transferOwner,
   update,
   updateTeamMember,
 };

@@ -54,7 +54,7 @@ function loginBody() {
           <div class="mb-3"><label class="form-label" for="email">Email</label><input class="form-control" id="email" name="email" type="email" autocomplete="username" required></div>
           <div class="mb-3"><label class="form-label" for="password">Password</label><input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required></div>
           <button class="btn btn-primary w-100" type="submit">Sign in</button>
-          <div id="google-login" class="mt-3" hidden><div class="text-secondary text-center small mb-2">or continue with</div><div id="google-button" class="d-flex justify-content-center"></div></div>
+          <div id="google-login" hidden aria-live="polite"><div class="auth-divider"><span>or</span></div><div id="google-button" class="d-flex justify-content-center"></div><div class="text-secondary text-center small mt-2" id="google-login-status">Use Google to sign in or create your CIS user.</div></div>
         </div>
       </form>
       <div class="text-center text-secondary mt-3"><a href="/api/v1/health">Verify API proxy</a></div>
@@ -82,7 +82,7 @@ function consoleBody(route, pathname) {
         <div class="navbar-nav flex-row order-md-last ms-auto gap-2">
           <button class="btn btn-icon btn-ghost-secondary" id="refresh-route" type="button" aria-label="Refresh current route" title="Refresh current route">↻</button>
           <button class="btn btn-icon btn-ghost-secondary" id="theme-toggle" type="button" aria-label="Switch to dark mode" title="Toggle theme">◐</button>
-          <span class="navbar-text" id="user-email"></span>
+          <a class="navbar-text user-account-link" href="/account" aria-label="Open My account"><span id="user-email"></span></a>
           <button class="btn btn-outline-secondary btn-sm" id="logout" type="button">Logout</button>
         </div>
       </div></header>

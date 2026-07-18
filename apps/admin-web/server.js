@@ -24,6 +24,7 @@ const proxyLogger = getLogger(proxyLogConfig, { service: "admin-web" });
 const routes = [
   { match: /^\/login\/?$/, page: "login", title: "Sign in", script: "auth.js" },
   { match: /^\/projects\/?$/, page: "projects", title: "Project Config", script: "projects.js" },
+  { match: /^\/account\/?$/, page: "account", title: "My account", script: "account.js" },
   { match: /^\/users\/?$/, page: "users", title: "Users", script: "users.js" },
   { match: /^\/project\/[1-9]\d*\/dashboard\/?$/, page: "dashboard", title: "Dashboard", script: "operations.js" },
   { match: /^\/project\/[1-9]\d*\/mappings\/?$/, page: "mappings", title: "Mappings", script: "mappings.js" },
@@ -44,6 +45,7 @@ const assets = new Map([
   ["/assets/shared.js", path.join(PUBLIC, "shared.js")],
   ["/assets/pages/auth.js", path.join(PUBLIC, "pages", "auth.js")],
   ["/assets/pages/projects.js", path.join(PUBLIC, "pages", "projects.js")],
+  ["/assets/pages/account.js", path.join(PUBLIC, "pages", "account.js")],
   ["/assets/pages/users.js", path.join(PUBLIC, "pages", "users.js")],
   ["/assets/pages/backlog.js", path.join(PUBLIC, "pages", "backlog.js")],
   ["/assets/pages/mappings.js", path.join(PUBLIC, "pages", "mappings.js")],

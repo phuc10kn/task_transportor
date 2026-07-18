@@ -15,7 +15,7 @@ function login({ config, email, password }) {
   const repository = createUserRepository({ config });
   const row = repository.findByEmail(email);
 
-  if (!row || !row.enabled || !verifyPassword(password, row.password_hash)) {
+  if (!row || !row.enabled || !row.password_configured || !verifyPassword(password, row.password_hash)) {
     throw new AppError({
       code: "INVALID_CREDENTIALS",
       message: "Invalid email or password.",

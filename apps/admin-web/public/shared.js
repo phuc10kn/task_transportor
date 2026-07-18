@@ -33,7 +33,7 @@
     if (!value || !value.startsWith("/") || value.startsWith("//")) return "/projects";
     try {
       const url = new URL(value, location.origin);
-      return ["/projects", "/users"].includes(url.pathname) || workspacePattern.test(url.pathname) ? `${url.pathname}${url.search}` : "/projects";
+      return ["/account", "/projects", "/users"].includes(url.pathname) || workspacePattern.test(url.pathname) ? `${url.pathname}${url.search}` : "/projects";
     } catch {
       return "/projects";
     }
@@ -202,11 +202,12 @@
       });
       document.querySelector("#users-nav")?.toggleAttribute("hidden", me.user.system_role !== "system_admin");
       context = { user: me.user, projects, project, projectId: project?.id || null };
-      if (page !== "projects" && !project) {
+      const isGlobalPage = ["account", "projects", "users"].includes(page);
+      if (!isGlobalPage && !project) {
         renderWorkspaceGate();
         return;
       }
-      if (project?.enabled === false && page !== "projects") {
+      if (project?.enabled === false && !isGlobalPage) {
         document.querySelector("#page-content").innerHTML = state("Project is disabled", "Re-enable this Project in Project Config before opening its workspace.", `<a class="btn btn-primary" href="/projects?project_id=${project.id}">Open Projects</a>`);
         return;
       }

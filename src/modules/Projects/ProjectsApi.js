@@ -8,6 +8,7 @@ const { setProjectSyncEnabled } = require("./application/setProjectSyncEnabled")
 const { syncCisMappingValuesFromTarget } = require("./application/syncCisMappingValuesFromTarget");
 const { updateProject } = require("./application/updateProject");
 const { getProjectForUser } = require("./application/projectAccess");
+const { listProjectOwnerships, transferProjectOwnership } = require("./application/ownership");
 const { addProjectTeamMember, getProjectTeam, removeProjectTeamMember, updateProjectTeamMember } = require("./application/team");
 
 module.exports = {
@@ -20,10 +21,12 @@ module.exports = {
   importProjects,
   listProjectsForScheduledPull,
   listProjectsForUser,
+  listProjectOwnerships,
   removeProjectTeamMember,
   saveProjectMappingValues,
   setProjectSyncEnabled,
   syncCisMappingValuesFromTarget,
+  transferProjectOwnership,
   updateProject,
   updateProjectTeamMember,
 };

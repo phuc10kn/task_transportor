@@ -6,6 +6,9 @@
   const errorRegion = document.querySelector("#login-error");
   const submit = form.querySelector("button[type=submit]");
   const params = new URLSearchParams(location.search);
+  const googleRegion = document.querySelector("#google-login");
+  const googleButton = document.querySelector("#google-button");
+  const googleStatus = document.querySelector("#google-login-status");
 
   function finishLogin(result) {
     localStorage.removeItem("cis_admin_token");
@@ -38,19 +41,25 @@
 
   CIS.api("/api/v1/auth/google/config").then((config) => {
     if (!config.enabled || !config.client_id) return;
-    const region = document.querySelector("#google-login");
-    region.hidden = false;
+    googleRegion.hidden = false;
     window.handleGoogleCredential = async ({ credential }) => {
       errorRegion.innerHTML = "";
-      try { finishLogin(await CIS.api("/api/v1/auth/google", { method: "POST", body: { credential } })); }
-      catch (error) { errorRegion.innerHTML = CIS.alert(error.message); }
+      try {
+        finishLogin(await CIS.api("/api/v1/auth/google", { method: "POST", body: { credential } }));
+      } catch (error) {
+        errorRegion.innerHTML = CIS.alert(error.message);
+      }
     };
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.onload = () => {
       google.accounts.id.initialize({ client_id: config.client_id, callback: window.handleGoogleCredential });
-      google.accounts.id.renderButton(document.querySelector("#google-button"), { theme: "outline", size: "large", width: 320 });
+      google.accounts.id.renderButton(googleButton, { theme: "outline", size: "large", width: 320 });
+    };
+    script.onerror = () => {
+      googleButton.hidden = true;
+      googleStatus.textContent = "Google sign-in could not be loaded. Email and password sign-in is still available.";
     };
     document.head.append(script);
   }).catch(() => {});

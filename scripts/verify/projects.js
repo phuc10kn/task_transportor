@@ -274,8 +274,67 @@ async function main() {
     assert.equal(hiddenBeforeMembership.status, 404);
 
     const outsiderLogin = await requestJson(server, { method: "POST", pathname: "/api/v1/auth/login", body: { email: "outsider-admin@example.test", password: "outsider-password" } });
+    const outsiderToken = outsiderLogin.body.data.token;
     const outsiderProjects = await requestJson(server, { pathname: "/api/v1/projects", token: outsiderLogin.body.data.token });
     assert.deepEqual(outsiderProjects.body.data, []);
+
+    const ownershipProject = await requestJson(server, {
+      method: "POST", pathname: "/api/v1/projects", token,
+      body: { name: "Ownership Transfer Project" },
+    });
+    assert.equal(ownershipProject.status, 201);
+    const ownershipProjectId = ownershipProject.body.data.id;
+
+    const memberCannotListOwnerships = await requestJson(server, { pathname: "/api/v1/projects/ownerships", token: memberToken });
+    assert.equal(memberCannotListOwnerships.status, 403);
+
+    const ownerships = await requestJson(server, { pathname: "/api/v1/projects/ownerships", token: outsiderToken });
+    assert.equal(ownerships.status, 200);
+    assert.equal(ownerships.body.data.find((item) => item.project_id === ownershipProjectId).owner.email, "admin@example.test");
+
+    const memberCannotTransferOwner = await requestJson(server, {
+      method: "PATCH", pathname: `/api/v1/projects/${ownershipProjectId}/owner`, token: memberToken,
+      body: { new_owner_user_id: memberCreated.body.data.id },
+    });
+    assert.equal(memberCannotTransferOwner.status, 403);
+
+    const missingNewOwner = await requestJson(server, {
+      method: "PATCH", pathname: `/api/v1/projects/${ownershipProjectId}/owner`, token: outsiderToken,
+      body: { new_owner_user_id: 999999 },
+    });
+    assert.equal(missingNewOwner.status, 404);
+    assert.equal(missingNewOwner.body.error.code, "USER_NOT_FOUND");
+
+    const transferred = await requestJson(server, {
+      method: "PATCH", pathname: `/api/v1/projects/${ownershipProjectId}/owner`, token: outsiderToken,
+      body: { new_owner_user_id: memberCreated.body.data.id },
+    });
+    assert.equal(transferred.status, 200);
+    assert.equal(transferred.body.data.owner_user_id, memberCreated.body.data.id);
+    assert.equal(transferred.body.data.owner.email, "member@example.test");
+
+    const newOwnerProject = await requestJson(server, { pathname: `/api/v1/projects/${ownershipProjectId}`, token: memberToken });
+    assert.equal(newOwnerProject.status, 200);
+    assert.equal(newOwnerProject.body.data.access.is_owner, true);
+    assert.equal(newOwnerProject.body.data.access.team_role, "lead");
+
+    const previousOwnerProject = await requestJson(server, { pathname: `/api/v1/projects/${ownershipProjectId}`, token });
+    assert.equal(previousOwnerProject.status, 200);
+    assert.equal(previousOwnerProject.body.data.access.is_owner, false);
+    assert.equal(previousOwnerProject.body.data.access.team_role, "member");
+
+    const outsiderStillCannotReadProject = await requestJson(server, { pathname: `/api/v1/projects/${ownershipProjectId}`, token: outsiderToken });
+    assert.equal(outsiderStillCannotReadProject.status, 404);
+    const outsiderStillHasNoWorkspace = await requestJson(server, { pathname: "/api/v1/projects", token: outsiderToken });
+    assert.deepEqual(outsiderStillHasNoWorkspace.body.data, []);
+
+    const transferredTeam = await requestJson(server, { pathname: `/api/v1/projects/${ownershipProjectId}/team`, token: memberToken });
+    const newOwnerMembership = transferredTeam.body.data.members.find((item) => item.id === memberCreated.body.data.id);
+    const previousOwnerMembership = transferredTeam.body.data.members.find((item) => item.email === "admin@example.test");
+    assert.equal(newOwnerMembership.role, "lead");
+    assert.equal(newOwnerMembership.is_owner, true);
+    assert.equal(previousOwnerMembership.role, "member");
+    assert.equal(previousOwnerMembership.is_owner, false);
 
     const addedMember = await requestJson(server, {
       method: "POST", pathname: `/api/v1/projects/${projectId}/team/members`, token,
@@ -283,8 +342,8 @@ async function main() {
     });
     assert.equal(addedMember.status, 201);
     const memberProjects = await requestJson(server, { pathname: "/api/v1/projects", token: memberToken });
-    assert.equal(memberProjects.body.data.length, 1);
-    assert.equal(memberProjects.body.data[0].access.team_role, "member");
+    assert.equal(memberProjects.body.data.length, 2);
+    assert.equal(memberProjects.body.data.find((item) => item.id === projectId).access.team_role, "member");
     const memberCannotConfigure = await requestJson(server, { method: "PATCH", pathname: `/api/v1/projects/${projectId}`, token: memberToken, body: { name: "Forbidden rename" } });
     assert.equal(memberCannotConfigure.status, 403);
 

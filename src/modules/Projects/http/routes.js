@@ -6,10 +6,12 @@ function createProjectsRouter({ authenticate }) {
   const router = express.Router();
 
   router.use(authenticate);
+  router.get("/ownerships", ProjectsController.ownerships);
   router.get("/", ProjectsController.list);
   router.post("/", ProjectsController.create);
   router.get("/:projectId", ProjectsController.show);
   router.patch("/:projectId", ProjectsController.update);
+  router.patch("/:projectId/owner", ProjectsController.transferOwner);
   router.delete("/:projectId", ProjectsController.remove);
   router.post("/:projectId/sync/enable", ProjectsController.enableSync);
   router.post("/:projectId/sync/disable", ProjectsController.disableSync);

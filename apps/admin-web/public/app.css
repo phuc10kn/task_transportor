@@ -118,6 +118,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dialog-body { padding: 1.25rem; }
 .login-page { background: radial-gradient(circle at 50% -20%, color-mix(in srgb, var(--tblr-primary) 12%, transparent), transparent 45%), var(--tblr-bg-surface-secondary); }
 .login-page .card { border-top: 3px solid var(--tblr-primary); }
+.auth-divider { display: flex; align-items: center; gap: .75rem; margin: 1.25rem 0 .75rem; color: var(--tblr-secondary); font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.auth-divider::before, .auth-divider::after { height: 1px; flex: 1; background: var(--tblr-border-color); content: ""; }
+.user-account-link { color: var(--tblr-body-color); font-weight: 600; text-decoration: none; }
+.user-account-link:hover { color: var(--tblr-primary); }
+.account-page { max-width: 64rem; }
+.account-card { overflow: hidden; }
+.account-identity { min-height: 5rem; }
+.account-auth-list { border-left: 4px solid var(--tblr-primary); }
+.account-auth-row { display: grid; min-height: 6rem; grid-template-columns: 2.5rem minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; }
+.account-auth-row + .account-auth-row { border-top: 1px solid var(--tblr-border-color); }
+.account-auth-row--form { align-items: start; }
+.account-auth-mark { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border: 1px solid var(--tblr-border-color); border-radius: 50%; background: var(--tblr-bg-surface-secondary); color: var(--tblr-primary); font-weight: 800; }
+.account-auth-copy { min-width: 0; }
+.account-auth-copy > strong, .account-auth-copy > span { display: block; }
+.account-auth-copy > span { margin-top: .2rem; color: var(--tblr-secondary); font-size: .8rem; }
+.account-password-form { max-width: 42rem; margin-top: 1rem; }
 .job-evidence { margin-top: .5rem; font-family: var(--tblr-font-monospace); font-size: .72rem; color: var(--tblr-secondary); }
 .language-block + .language-block { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--tblr-border-color); }
 .term-row { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: .5rem; margin-top: .5rem; }
@@ -217,6 +233,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .markdown-editor__header .btn { flex: 1; }
   .issue-editor-rail { grid-template-columns: 1fr; }
   .dashboard-metrics { grid-template-columns: 1fr; }
+  .account-auth-row { grid-template-columns: 2.5rem minmax(0, 1fr); }
+  .account-auth-row > .badge, .account-auth-row > .btn { grid-column: 2; justify-self: start; }
 }
 
 .cis-issue-filters { background: var(--tblr-bg-surface-secondary, #f8fafc); }

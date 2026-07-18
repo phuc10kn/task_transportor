@@ -21,10 +21,10 @@ Không triển khai Google UI trước khi user/password contract ổn định.
 ## Điểm cần user review khi hoàn tất
 
 - Password login và Google login đều chạy.
-- Google account không có user CIS tương ứng bị từ chối.
+- Google-first tạo CIS user role `user`; existing password user phải link Google tại `My account`.
 - `system_admin` quản lý được user; ordinary user bị từ chối.
 - Không có auto-registration hoặc quyền Project đến từ Google.
 
 ## Quy tắc mở rộng scope
 
-Google-only account, auto-provision, password reset, MFA, Google unlink/relink hoặc shared SSO chỉ được thêm bằng yêu cầu/decision mới.
+Password reset/đổi password đã cấu hình, MFA, Google unlink/relink, link email khác hoặc shared SSO chỉ được thêm bằng yêu cầu/decision mới.

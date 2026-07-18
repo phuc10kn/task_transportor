@@ -3,11 +3,11 @@
 const { expect, test } = require("@playwright/test");
 
 const project = { id: 1, name: "Demo Hub", enabled: true, source_language: "ja", target_language: "vi", backlog_issue_key_prefix: "BLG", access: { team_role: "lead", is_owner: true } };
-const workspace = (path, projectId = 1) => path.startsWith("/project/") || path.startsWith("/projects") ? path : `/project/${projectId}${path}`;
+const workspace = (path, projectId = 1) => path.startsWith("/project/") || ["/account", "/projects", "/users"].some((globalPath) => path.startsWith(globalPath)) ? path : `/project/${projectId}${path}`;
 
-async function mockSession(page, projects = [project]) {
-  await page.route("**/api/v1/auth/login", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { token: "mpa-token", user: { id: 1, email: "admin@example.test", system_role: "system_admin" } } }) }));
-  await page.route("**/api/v1/auth/me", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { user: { id: 1, email: "admin@example.test", system_role: "system_admin" } } }) }));
+async function mockSession(page, projects = [project], sessionUser = { id: 1, email: "admin@example.test", system_role: "system_admin", has_password: true, google_linked: false }) {
+  await page.route("**/api/v1/auth/login", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { token: "mpa-token", user: sessionUser } }) }));
+  await page.route("**/api/v1/auth/me", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { user: sessionUser } }) }));
   await page.route("**/api/v1/projects", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: projects }) }));
   await page.route("**/api/v1/projects/1/team", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: 1, project_id: 1, owner_user_id: 1, members: [{ id: 1, email: "admin@example.test", role: "lead", is_owner: true }] } }) }));
 }
@@ -23,11 +23,32 @@ async function enter(page, path, projects = [project]) {
 }
 
 test("real URL navigation: login, Project gate and full-document routes", async ({ page }) => {
+  await page.route("**/api/v1/projects/1/backlog/issues/action-readiness", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ data: { actions: {
+      browse: { ready: true, disabled_reasons: [] },
+      pull_one: { ready: true, disabled_reasons: [] },
+      sync_to_cis: { ready: true, disabled_reasons: [] },
+      sync_translate_jira: { ready: false, disabled_reasons: ["Jira is not configured"] },
+    } } }),
+  }));
+  await page.route("**/api/v1/projects/1/backlog/issues/filter-options", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ data: { statuses: [], assignees: [] } }),
+  }));
+  await page.route("**/api/v1/auth/google/config", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ data: { enabled: false, client_id: "" } }),
+  }));
   await mockSession(page);
   const legacy = await page.goto("/backlog-issues");
   expect(legacy.status()).toBe(404);
   await page.goto(workspace("/backlog-issues"));
   await expect(page).toHaveURL(/\/login\?next=%2Fproject%2F1%2Fbacklog-issues/);
+  await expect(page.locator("#google-login")).toBeHidden();
   await page.getByLabel("Email").fill("admin@example.test");
   await page.getByLabel("Password").fill("secret");
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -40,6 +61,156 @@ test("real URL navigation: login, Project gate and full-document routes", async 
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => page.locator(".navbar-vertical").evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightSidebar);
+});
+
+test("login renders the Google Identity action when server configuration is enabled", async ({ page }) => {
+  const googleUser = { id: 7, email: "new-google@example.test", system_role: "user", has_password: false, google_linked: true };
+  await mockSession(page, [], googleUser);
+  await page.route("**/api/v1/auth/google", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ data: { token: "google-session", user: googleUser } }),
+  }));
+  await page.route("**/api/v1/auth/google/config", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ data: { enabled: true, client_id: "google-client.example.test" } }),
+  }));
+  await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/javascript",
+    body: `window.google={accounts:{id:{initialize(options){window.__googleCallback=options.callback;},renderButton(root){const button=document.createElement("button");button.type="button";button.textContent="Continue with Google";button.onclick=()=>window.__googleCallback({credential:"new-google-token"});root.append(button);}}}};`,
+  }));
+
+  await page.goto("/login");
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+  await expect(page.getByText("sign in or create your CIS user", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await expect(page).toHaveURL(/\/projects$/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("cis_user_token"))).toBe("google-session");
+});
+
+test("Users stays focused on CIS user and role management", async ({ page }) => {
+  const users = [
+    { id: 1, email: "admin@example.test", name: "System Admin", enabled: true, system_role: "system_admin" },
+    { id: 2, email: "member@example.test", name: "Team Member", enabled: true, system_role: "user" },
+    { id: 3, email: "future-owner@example.test", name: "Future Owner", enabled: true, system_role: "user" },
+  ];
+  let ownership = { project_id: 1, project_name: "Demo Hub", enabled: true, team_id: 1, owner_user_id: 1, owner: { id: 1, email: "admin@example.test", name: "System Admin" } };
+  let deletedUserId;
+  let transferBody;
+  await page.route("**/api/v1/users", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: users }) }));
+  await page.route("**/api/v1/users/*", (route) => {
+    deletedUserId = Number(route.request().url().split("/").pop());
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { id: deletedUserId, deleted: true } }) });
+  });
+  await page.route("**/api/v1/projects/ownerships", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: [ownership] }) }));
+  await page.route("**/api/v1/projects/1/owner", async (route) => {
+    transferBody = route.request().postDataJSON();
+    ownership = { ...ownership, owner_user_id: 3, owner: { id: 3, email: "future-owner@example.test", name: "Future Owner" } };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: ownership }) });
+  });
+  await mockSession(page);
+  await page.addInitScript(() => localStorage.setItem("cis_user_token", "mpa-token"));
+  await page.goto("/users");
+
+  await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Authentication methods" })).toHaveCount(0);
+  await expect(page.getByRole("columnheader", { name: "Sign-in methods" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Create user" }).click();
+  await expect(page.getByRole("dialog", { name: "Create user" })).toBeVisible();
+  await page.getByRole("dialog", { name: "Create user" }).getByRole("button", { name: "Cancel" }).click();
+
+  await expect(page.getByRole("heading", { name: "Project ownership" })).toBeVisible();
+  await page.locator('[data-user-row="2"]').evaluate((element) => { element.dataset.stable = "yes"; });
+  await page.getByLabel("New owner for Demo Hub").selectOption("3");
+  await page.getByRole("button", { name: "Transfer Demo Hub" }).click();
+  const transferDialog = page.getByRole("dialog", { name: "Transfer Project ownership" });
+  await expect(transferDialog).toContainText("System Admin · admin@example.test");
+  await expect(transferDialog).toContainText("Future Owner · future-owner@example.test");
+  await expect(transferDialog).toContainText("The new owner becomes Team lead");
+  await transferDialog.getByRole("button", { name: "Transfer ownership" }).click();
+  expect(transferBody).toEqual({ new_owner_user_id: 3 });
+  await expect(page.locator('[data-project-ownership="1"] [data-current-owner]')).toHaveText("Future Owner");
+  await expect(page.locator('[data-user-row="2"]')).toHaveAttribute("data-stable", "yes");
+
+  await expect(page.getByRole("button", { name: "Delete admin@example.test" })).toBeDisabled();
+  await page.getByRole("button", { name: "Delete member@example.test" }).click();
+  const deleteDialog = page.getByRole("dialog", { name: "Delete user" });
+  await expect(deleteDialog).toContainText("member@example.test");
+  await deleteDialog.getByRole("button", { name: "Delete user" }).click();
+  expect(deletedUserId).toBe(2);
+  await expect(page.locator('[data-user-row="2"]')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/users$/);
+});
+
+test("normal user updates profile and links Google from My account", async ({ page }) => {
+  const normalUser = { id: 2, email: "normal@example.test", name: "Normal User", system_role: "user", has_password: true, google_linked: false, google_email: null };
+  let linkBody;
+  let profileBody;
+  await page.route("**/api/v1/auth/google/config", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { enabled: true, client_id: "google-client.example.test" } }) }));
+  await page.route("**/api/v1/auth/google/link", (route) => {
+    linkBody = route.request().postDataJSON();
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { ...normalUser, google_linked: true, google_email: normalUser.email } }) });
+  });
+  await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/javascript",
+    body: `window.google={accounts:{id:{initialize(options){window.__googleLinkCallback=options.callback;},renderButton(root){const button=document.createElement("button");button.type="button";button.textContent="Continue with Google";button.onclick=()=>window.__googleLinkCallback({credential:"link-token"});root.append(button);}}}};`,
+  }));
+  await mockSession(page, [], normalUser);
+  await page.route("**/api/v1/auth/me", (route) => {
+    if (route.request().method() === "PATCH") {
+      profileBody = route.request().postDataJSON();
+      if (profileBody.name === "Rejected Name") {
+        return route.fulfill({ status: 422, contentType: "application/json", body: JSON.stringify({ error: { code: "PROFILE_INVALID", message: "Profile could not be saved." } }) });
+      }
+      normalUser.name = String(profileBody.name || "").trim() || null;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: normalUser }) });
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { user: normalUser } }) });
+  });
+  await page.addInitScript(() => localStorage.setItem("cis_user_token", "mpa-token"));
+  await page.goto("/account");
+
+  await expect(page.getByRole("heading", { name: "My account" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open My account" })).toBeVisible();
+  await expect(page.getByText("Configured", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Email identity")).toHaveAttribute("readonly", "");
+  await page.getByLabel("Name", { exact: true }).fill("Rejected Name");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect(page.getByText("Profile could not be saved.")).toBeVisible();
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Rejected Name");
+  await page.getByLabel("Name", { exact: true }).fill("Updated Normal User");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  expect(profileBody).toEqual({ name: "Updated Normal User" });
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Updated Normal User");
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  expect(linkBody).toEqual({ credential: "link-token" });
+  await expect(page.getByText("Linked to normal@example.test.")).toBeVisible();
+  await expect(page.getByText("Linked", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".account-card")).toHaveCount(2);
+  expect(await page.locator(".account-card").evaluateAll((elements) => elements.every((element) => element.getBoundingClientRect().right <= window.innerWidth))).toBe(true);
+});
+
+test("Google-first user configures password from My account", async ({ page }) => {
+  const googleUser = { id: 3, email: "google-first@example.test", name: "Google First", system_role: "user", has_password: false, google_linked: true, google_email: "google-first@example.test" };
+  let passwordBody;
+  await page.route("**/api/v1/auth/google/config", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { enabled: true, client_id: "google-client.example.test" } }) }));
+  await page.route("**/api/v1/auth/password", (route) => {
+    passwordBody = route.request().postDataJSON();
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { ...googleUser, has_password: true } }) });
+  });
+  await mockSession(page, [], googleUser);
+  await page.addInitScript(() => localStorage.setItem("cis_user_token", "mpa-token"));
+  await page.goto("/account");
+
+  await page.getByLabel("New password").fill("new-password-value");
+  await page.getByLabel("Confirm password").fill("new-password-value");
+  await page.getByRole("button", { name: "Set password" }).click();
+  expect(passwordBody).toEqual({ password: "new-password-value" });
+  await expect(page.getByText("Configured", { exact: true })).toBeVisible();
 });
 
 test("Project form exposes provider-specific external access gates", async ({ page }) => {

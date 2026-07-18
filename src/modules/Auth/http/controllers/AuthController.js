@@ -32,25 +32,59 @@ function me(req, res, next) {
   }
 }
 
+function updateMe(req, res, next) {
+  try {
+    success(res, AuthApi.updateOwnProfile({
+      config: req.app.locals.config,
+      userId: req.user.id,
+      input: req.body || {},
+    }));
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function verifyGoogleRequest(req) {
+  const config = req.app.locals.config;
+  if (!config.auth.google.enabled || !req.app.locals.googleVerifier) {
+    throw new AppError({ code: "GOOGLE_LOGIN_DISABLED", message: "Google login is not available.", status: 404 });
+  }
+  if (!req.is("application/json") || req.get("origin") !== config.auth.google.publicOrigin) {
+    throw new AppError({ code: "GOOGLE_LOGIN_REJECTED", message: "Google login could not be completed.", status: 403 });
+  }
+  try {
+    return await req.app.locals.googleVerifier.verify(req.body && req.body.credential);
+  } catch (_) {
+    throw new AppError({ code: "GOOGLE_LOGIN_REJECTED", message: "Google login could not be completed.", status: 401 });
+  }
+}
+
 async function google(req, res, next) {
   try {
-    const config = req.app.locals.config;
-    if (!config.auth.google.enabled || !req.app.locals.googleVerifier) {
-      throw new AppError({ code: "GOOGLE_LOGIN_DISABLED", message: "Google login is not available.", status: 404 });
-    }
-    if (!req.is("application/json") || req.get("origin") !== config.auth.google.publicOrigin) {
-      throw new AppError({ code: "GOOGLE_LOGIN_REJECTED", message: "Google login could not be completed.", status: 403 });
-    }
-    let identity;
-    try { identity = await req.app.locals.googleVerifier.verify(req.body && req.body.credential); }
-    catch (_) { identity = null; }
-    const user = identity && identity.email_verified
-      ? AuthApi.resolveEnabledUserByEmail({ config, email: identity.email })
-      : null;
-    if (!user) {
-      throw new AppError({ code: "GOOGLE_LOGIN_REJECTED", message: "Google login could not be completed.", status: 401 });
-    }
-    success(res, AuthApi.issueUserSession({ config, user: AuthApi.touchUserLogin({ config, userId: user.id }) }));
+    success(res, AuthApi.loginWithGoogle({
+      config: req.app.locals.config,
+      identity: await verifyGoogleRequest(req),
+    }));
+  } catch (error) { next(error); }
+}
+
+async function linkGoogle(req, res, next) {
+  try {
+    success(res, AuthApi.linkGoogleIdentity({
+      config: req.app.locals.config,
+      userId: req.user.id,
+      identity: await verifyGoogleRequest(req),
+    }));
+  } catch (error) { next(error); }
+}
+
+function configurePassword(req, res, next) {
+  try {
+    success(res, AuthApi.configurePassword({
+      config: req.app.locals.config,
+      userId: req.user.id,
+      password: req.body && req.body.password,
+    }));
   } catch (error) { next(error); }
 }
 
@@ -59,9 +93,12 @@ function googleConfig(req, res) {
 }
 
 module.exports = {
+  configurePassword,
   login,
   google,
   googleConfig,
+  linkGoogle,
   logout,
   me,
+  updateMe,
 };

@@ -130,6 +130,23 @@ function insertProject(db, input) {
   return result.lastInsertRowid;
 }
 
+const OWNERSHIP_SELECT = `
+  SELECT p.id AS project_id, p.name AS project_name, p.enabled, p.team_id, p.owner_user_id,
+    u.email AS owner_email, u.name AS owner_name
+  FROM projects p JOIN users u ON u.id = p.owner_user_id`;
+
+function rowToOwnership(row) {
+  if (!row) return null;
+  return {
+    project_id: row.project_id,
+    project_name: row.project_name,
+    enabled: Boolean(row.enabled),
+    team_id: row.team_id,
+    owner_user_id: row.owner_user_id,
+    owner: { id: row.owner_user_id, email: row.owner_email, name: row.owner_name || null },
+  };
+}
+
 function createProjectRepository({ config }) {
   function withDb(callback) {
     const db = createConnection({ config });
@@ -168,6 +185,10 @@ function createProjectRepository({ config }) {
          FROM projects p JOIN team_members tm ON tm.team_id = p.team_id
          WHERE tm.user_id = ? ORDER BY p.id ASC`
       ).all(userId, userId).map(rowToProject));
+    },
+
+    listOwnerships() {
+      return withDb((db) => db.prepare(`${OWNERSHIP_SELECT} ORDER BY p.id ASC`).all().map(rowToOwnership));
     },
 
     findById(id) {
@@ -226,6 +247,25 @@ function createProjectRepository({ config }) {
       });
     },
 
+    transferOwnership(projectId, newOwnerUserId) {
+      return withDb((db) => db.transaction(() => {
+        const project = db.prepare("SELECT id, team_id, owner_user_id FROM projects WHERE id = ?").get(projectId);
+        if (!project) return null;
+        if (project.owner_user_id !== newOwnerUserId) {
+          db.prepare(
+            `INSERT INTO team_members (team_id, user_id, role)
+             VALUES (?, ?, 'lead')
+             ON CONFLICT(team_id, user_id) DO UPDATE SET role = 'lead', updated_at = datetime('now')`
+          ).run(project.team_id, newOwnerUserId);
+          db.prepare("UPDATE projects SET owner_user_id = ?, updated_at = datetime('now') WHERE id = ?")
+            .run(newOwnerUserId, projectId);
+          db.prepare("UPDATE team_members SET role = 'member', updated_at = datetime('now') WHERE team_id = ? AND user_id = ?")
+            .run(project.team_id, project.owner_user_id);
+        }
+        return rowToOwnership(db.prepare(`${OWNERSHIP_SELECT} WHERE p.id = ?`).get(projectId));
+      })());
+    },
+
     update(id, input) {
       return withDb((db) => {
         const columns = PROJECT_COLUMNS.filter((column) => input[column] !== undefined);
@@ -261,5 +301,6 @@ function createProjectRepository({ config }) {
 
 module.exports = {
   createProjectRepository,
+  rowToOwnership,
   rowToProject,
 };

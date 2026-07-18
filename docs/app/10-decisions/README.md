@@ -25,7 +25,7 @@
 | [Admin UI dùng Tabler + JavaScript thuần + client-rendered MPA (`DEC-004`)](01-decision-making/01-decisions/DEC-004-tabler-vanilla-mpa-admin-ui/README.md) | accepted | Mỗi route trả document thật; Node chỉ phục vụ HTML/assets và proxy API. Next.js/React/Vue/SPA router không còn trong implementation active. |
 | [Workspace API scope theo Project (`DEC-005`)](01-decision-making/01-decisions/DEC-005-project-scoped-workspace-api/README.md) | accepted | Mọi data-plane endpoint mang `projectId`; owner repository enforce isolation; Backend và Admin Web cutover cùng capability, không giữ route legacy. |
 | Project-first Admin UI dùng Project-scoped workspace | accepted | Mỗi login chọn/tạo Project và chỉ đổi tại Projects; Dashboard cùng mọi data-plane API enforce active Project, `enabled=false` chặn workspace. `BE-PROJECT-SCOPE-01/02` đã đóng bởi `DEC-005`. |
-| User auth và Team-scoped Project access | accepted | Password/Google dùng chung enabled user; Google không auto-provision. Mỗi Project có dedicated Team, creator là owner + lead; system role không bypass membership. |
+| User auth và Team-scoped Project access | accepted | Password/Google là sign-in methods của cùng CIS user. Google-first tạo user role `user`; password-first link Google explicit tại `My account`; Google không cấp quyền. Mỗi Project có dedicated Team, creator là owner + lead; system role không bypass membership. |
 | SQLite là database MVP/Lite | accepted | Phù hợp server nội bộ và workload nhỏ. |
 | Một service Express + worker nội bộ | accepted | Chưa tách worker process riêng trong Lite. |
 | Translation dùng một draft chung nhưng human approval giữ quyền quyết định | accepted | AI/operator cùng chỉnh `ai_draft`; Save Draft không đổi canonical, chỉ Approve mới apply. |

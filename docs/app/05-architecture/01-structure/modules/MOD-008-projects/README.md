@@ -30,6 +30,7 @@ Module sở hữu Project profile, dedicated Team, membership, owner/lead role v
 - CRUD project.
 - Tạo dedicated Team với creator là owner + lead trong cùng transaction.
 - Quản lý membership/Team role và enforce Project access cho mọi workspace route.
+- Cung cấp control-plane system-admin để liệt kê và chuyển Project owner; owner mới được promote/thêm làm lead, owner cũ được demote thành member trong cùng transaction.
 - Công bố query actor-scoped riêng với trusted system query; không dùng optional actor để đổi trust mode.
 - Enable hoặc disable sync.
 - Giữ config tích hợp và reference env keys.
@@ -52,6 +53,7 @@ Module sở hữu Project profile, dedicated Team, membership, owner/lead role v
 - Env binding là part của project integration state, không phải concern của Dashboard.
 - Glossary normalized thuộc `Translation`; Project Config không nhận hoặc serialize glossary legacy.
 - Owner không thể bị xóa hoặc hạ khỏi lead; system role không bypass Team membership.
+- Quyền system-admin chuyển owner là capability riêng, không thêm actor vào Team và không bypass actor-scoped workspace query.
 - `listProjectsForUser` và `getProjectForUser` bắt buộc `actorUserId`; thiếu actor phải fail với `AUTH_REQUIRED`.
 - `listProjectsForScheduledPull` và `getProjectConfig` chỉ dành cho trusted in-process consumer, không được mount trực tiếp vào HTTP controller.
 - `updateProject`, `deleteProject`, `setProjectSyncEnabled` và `syncCisMappingValuesFromTarget` tự enforce owner trong application layer.

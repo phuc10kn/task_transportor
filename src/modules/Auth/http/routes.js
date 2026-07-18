@@ -11,9 +11,12 @@ function createAuthRouter() {
 
   router.get("/google/config", AuthController.googleConfig);
   router.post("/google", AuthController.google);
+  router.post("/google/link", authenticate, AuthController.linkGoogle);
   router.post("/login", AuthController.login);
   router.post("/logout", authenticate, AuthController.logout);
+  router.post("/password", authenticate, AuthController.configurePassword);
   router.get("/me", authenticate, AuthController.me);
+  router.patch("/me", authenticate, AuthController.updateMe);
 
   return router;
 }
@@ -24,6 +27,7 @@ function createUsersRouter() {
   router.get("/", UsersController.list);
   router.post("/", UsersController.create);
   router.patch("/:userId", UsersController.update);
+  router.delete("/:userId", UsersController.remove);
   return router;
 }
 
